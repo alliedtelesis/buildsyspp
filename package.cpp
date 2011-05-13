@@ -1,5 +1,14 @@
 #include <buildsys.h>
 
+std::list<Package *>::iterator Package::dependsStart()
+{
+	return this->depends.begin();
+}
+std::list<Package *>::iterator Package::dependsEnd()
+{
+	return this->depends.end();
+}
+
 BuildDir *Package::builddir()
 {
 	if(this->bd == NULL)

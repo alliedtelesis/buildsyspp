@@ -53,7 +53,7 @@ std::string World::getFeature(std::string key)
 
 bool World::basePackage(char *filename)
 {
-	this->p = new Package(filename, filename);
+	this->p = findPackage(filename, filename);
 
 	this->p->process();
 

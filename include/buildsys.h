@@ -16,6 +16,18 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <boost/config.hpp>
+#include <boost/utility.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/visitors.hpp>
+#include <boost/graph/breadth_first_search.hpp>
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/graph_utility.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/property_map/property_map.hpp>
+#include <boost/graph/connected_components.hpp>
+
+
 #define error(M) \
 	do {\
 		fprintf(stderr, "%s:%s():%i: %s\n", __FILE__, __FUNCTION__ , __LINE__, M.c_str()); \
@@ -231,6 +243,9 @@ namespace buildsys {
 			void addCommand(PackageCmd *pc) { this->commands.push_back(pc); };
 			void setInstallFile(char *i) { this->installFile = i; };
 			bool process();
+
+			std::list<Package *>::iterator dependsStart();
+			std::list<Package *>::iterator dependsEnd();
 	};
 
 	class World {
@@ -241,8 +256,6 @@ namespace buildsys {
 			std::string name;
 			Package *p;
 			std::list<Package *> packages;
-			std::list<Package *>::iterator packagesStart();
-			std::list<Package *>::iterator packagesEnd();
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
 					lua(new Lua())  {};
@@ -260,11 +273,15 @@ namespace buildsys {
 			
 			bool basePackage(char *filename);
 			Package *findPackage(std::string name, std::string file);
+
+			std::list<Package *>::iterator packagesStart();
+			std::list<Package *>::iterator packagesEnd();
 	};
 	
 	void interfaceSetup(Lua *lua);
 	
 	extern World *WORLD;
+	void graph();
 };
 
 extern "C" {

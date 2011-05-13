@@ -2,6 +2,68 @@
 
 World *buildsys::WORLD;
 
+using namespace boost;
+
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
+typedef boost::graph_traits < Graph >::vertex_descriptor Vertex;
+typedef boost::graph_traits < Graph >::edge_descriptor Edge;
+typedef std::map<Package *, Vertex > NodeVertexMap;
+typedef std::map<Vertex, Package * > VertexNodeMap;
+
+template<class Name>
+class graphnode_property_writer {
+	private:
+		Name names;
+	public:
+		graphnode_property_writer(Name _name) : names(_name) {};
+		template <class VertexOrEdge>
+		void operator()(std::ostream& out, VertexOrEdge v)
+		{
+			if(names[v] != NULL)
+				out << "[label=\"" << names[v]->getName() << "\"]";
+		}
+};
+
+void buildsys::graph()
+{
+	// Setup for graphing
+        NodeVertexMap *Nodes = new NodeVertexMap();
+	VertexNodeMap *NodeMap = new VertexNodeMap(); 
+        Graph g;
+
+	for(std::list<Package *>::iterator I = WORLD->packagesStart();
+		I != WORLD->packagesEnd(); I++)
+	{
+		NodeVertexMap::iterator pos;
+		bool inserted;
+		boost::tie(pos, inserted) = Nodes->insert(std::make_pair(*I, Vertex()));
+		if(inserted)
+		{
+			Vertex u = add_vertex(g);
+			pos->second = u;
+			NodeMap->insert(std::make_pair(u, *I));
+		}
+	}
+
+	for(std::list<Package *>::iterator I = WORLD->packagesStart();
+		I != WORLD->packagesEnd(); I++)
+	{
+		for(std::list<Package *>::iterator J = (*I)->dependsStart();
+			J != (*I)->dependsEnd(); J++)
+		{
+			Edge e;
+			bool inserted;
+			boost::tie(e, inserted) = add_edge((*Nodes)[(*I)],(*Nodes)[(*J)],g);
+		}
+	}
+
+	std::ofstream dotFile("dependencies.dot");
+	write_graphviz(dotFile, g, graphnode_property_writer<VertexNodeMap>(*NodeMap));
+        dotFile.flush();
+
+
+}
+
 int main(int argc, char *argv[])
 {
 	struct timespec start, end;
@@ -74,6 +136,9 @@ int main(int argc, char *argv[])
 	{
 		error(E.error_msg());
 	}
+	
+	// Graph the dependency tree
+	buildsys::graph();
 
 	clock_gettime(CLOCK_REALTIME, &end);
 	
