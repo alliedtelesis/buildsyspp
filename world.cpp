@@ -54,11 +54,8 @@ std::string World::getFeature(std::string key)
 bool World::basePackage(char *filename)
 {
 	this->p = new Package(filename, filename);
-	this->lua->setGlobal(std::string("P"), this->p);
 
-	this->lua->processFile(filename);
-
-	this->p->processDepends();
+	this->p->process();
 
 	return true;
 }
@@ -66,10 +63,10 @@ bool World::basePackage(char *filename)
 Package *World::findPackage(std::string name, std::string file)
 {
 	std::list<Package *>::iterator iter = this->packagesStart();
-	std::list<Package *>::iterator iterEnd = this->packagesStart();
+	std::list<Package *>::iterator iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++)
 	{
-		if((*iter)->getName() == name)
+		if((*iter)->getName().compare(name) == 0)
 			return (*iter);
 	}
 	Package *p = new Package(name, file);

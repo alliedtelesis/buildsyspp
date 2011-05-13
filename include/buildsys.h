@@ -132,7 +132,7 @@ namespace buildsys {
 				if(state == NULL) throw LuaException();
 				luaL_openlibs(state);
 			};
-			void processFile(char *filename) {
+			void processFile(const char *filename) {
 
 				int res = luaL_dofile(state, filename);
 	
@@ -140,8 +140,6 @@ namespace buildsys {
 				{
 					throw CustomException(lua_tostring(state, -1));
 				}
-
-				lua_close(state);
 			}
 			void registerFunc(std::string name, lua_CFunction fn)
 			{
@@ -185,6 +183,7 @@ namespace buildsys {
 						LUA_ADD_TABLE_FUNC(L, "install", li_bd_install);
 						super::lua_table_r(L); }
 			virtual void lua_table(lua_State *L) { lua_table_r(L); 
+					LUA_ADD_TABLE_STRING(L, "path", path.c_str());
 					LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
 					LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
 					LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
