@@ -19,6 +19,17 @@ BuildDir *Package::builddir()
 	return this->bd;
 }
 
+void Package::printLabel(std::ostream& out)
+{
+	out << "[label=\"";
+	
+	out << this->getName() << "\\n";
+	out << "Cmds:" << this->commands.size();
+	
+	out << "\"]";
+	
+}
+
 bool Package::process()
 {
 	if(this->visiting == true)

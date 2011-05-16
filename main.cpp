@@ -20,7 +20,7 @@ class graphnode_property_writer {
 		void operator()(std::ostream& out, VertexOrEdge v)
 		{
 			if(names[v] != NULL)
-				out << "[label=\"" << names[v]->getName() << "\"]";
+				names[v]->printLabel(out);
 		}
 };
 

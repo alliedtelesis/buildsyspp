@@ -246,6 +246,8 @@ namespace buildsys {
 
 			std::list<Package *>::iterator dependsStart();
 			std::list<Package *>::iterator dependsEnd();
+			
+			void printLabel(std::ostream& out);
 	};
 
 	class World {
