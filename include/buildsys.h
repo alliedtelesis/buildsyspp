@@ -74,6 +74,10 @@ extern "C" {
 	int li_bd_install(lua_State *L);
 };
 
+extern "C" {
+	int run(char *program, char *argv[], const char *path, char *newenvp[]);
+};
+
 namespace buildsys {
 	typedef std::map<std::string, std::string> key_value;
 	typedef std::list<std::string> string_list;
@@ -215,10 +219,18 @@ namespace buildsys {
 			void addArg(const char *arg)
 			{
 				this->arg_count++;
-				this->args = (char **)realloc(args, sizeof(char *) * (this->arg_count + 1));
+				this->args = (char **)realloc(this->args, sizeof(char *) * (this->arg_count + 1));
 				this->args[this->arg_count-1] = strdup(arg);
 				this->args[this->arg_count] = NULL;
 			}
+			void addEnv(const char *env)
+			{
+				this->envp_count++;
+				this->envp = (char **)realloc(this->envp, sizeof(char *) * (this->envp_count + 1));
+				this->envp[this->envp_count-1] = strdup(env);
+				this->envp[this->envp_count] = NULL;
+			}
+			bool Run();
 	};
 	
 	class Package {
@@ -233,8 +245,12 @@ namespace buildsys {
 			char *installFile;
 			bool visiting;
 			bool processed;
+			bool built;
+		protected:
+			bool extract_staging(const char *dir, std::list<std::string> *done);
+			bool extract_install(const char *dir, std::list<std::string> *done);
 		public:
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false) {};
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false) {};
 			BuildDir *builddir();
 			void setIntercept() { this->intercept = true; };
 			std::string getName() { return this->name; };
@@ -243,6 +259,7 @@ namespace buildsys {
 			void addCommand(PackageCmd *pc) { this->commands.push_back(pc); };
 			void setInstallFile(char *i) { this->installFile = i; };
 			bool process();
+			bool build();
 
 			std::list<Package *>::iterator dependsStart();
 			std::list<Package *>::iterator dependsEnd();
@@ -284,10 +301,6 @@ namespace buildsys {
 	
 	extern World *WORLD;
 	void graph();
-};
-
-extern "C" {
-	int run(char *program, char *argv[], const char *path, char *newenvp[]);
 };
 
 using namespace buildsys;

@@ -56,6 +56,8 @@ bool World::basePackage(char *filename)
 	this->p = findPackage(filename, filename);
 
 	this->p->process();
+	
+	this->p->build();
 
 	return true;
 }

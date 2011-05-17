@@ -1,4 +1,4 @@
-CXX_FILES:=main.cpp interface.cpp world.cpp package.cpp run.c \
+CXX_FILES:=main.cpp interface.cpp world.cpp package.cpp packagecmd.cpp run.c \
 		$(addprefix dir/, dir.cpp builddir.cpp)
 
 HEADERS:=include/*.h

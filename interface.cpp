@@ -283,28 +283,16 @@ int li_bd_cmd(lua_State *L)
 		lua_pop(L, 1);
 	}
 
-	char **envs = (char **)calloc(1, sizeof(char *));
-	size_t env_count = 0;
-
 	if(argc == 5)
 	{
 		lua_pushnil(L);  /* first key */
 		while (lua_next(L, 5) != 0) {
 			/* uses 'key' (at index -2) and 'value' (at index -1) */
 			if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("cmd() requires a table of strings as the fourth argument\n");
-			env_count++;
-			envs = (char **)realloc(envs, sizeof(char *) * (env_count + 1));
-			envs[env_count-1] = strdup(lua_tostring(L, -1));
-			envs[env_count] = NULL;
+			pc->addEnv(lua_tostring(L, -1));
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
 		}
-	}
-
-	if(env_count == 0)
-	{
-		free(envs);
-		envs = NULL;
 	}
 
 	P->addCommand(pc);
