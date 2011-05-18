@@ -286,6 +286,7 @@ namespace buildsys {
 
 			bool forcedMode() {return !forcedDeps->empty(); };
 			void forceBuild(std::string name) { forcedDeps->push_back(name); };
+			bool isForced(std::string name);
 			void setFeature(std::string key, std::string value, bool override=false);
 			void setFeature(char *kv);
 			std::string getFeature(std::string key);

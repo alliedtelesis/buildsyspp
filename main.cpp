@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 	// first we take a list of package names to exclusevily build
 	// this will over-ride any dependency checks and force them to be built
 	// without first building their dependencies
-	int a = 1;
+	int a = 2;
 	bool foundDashDash = false;
 	while(a < argc && !foundDashDash)
 	{

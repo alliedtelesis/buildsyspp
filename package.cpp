@@ -94,7 +94,7 @@ bool Package::extract_staging(const char *dir, std::list<std::string> *done)
 	{
 		char **args = (char **)calloc(6, sizeof(char *));
 		args[0] = strdup("pax");
-		args[1] = strdup("-rjf");
+		args[1] = strdup("-rf");
 		asprintf(&args[2], "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 		args[3] = strdup("-p");
 		args[4] = strdup("p");
@@ -165,7 +165,7 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 			}
 		} else {
 			args[0] = strdup("pax");
-			args[1] = strdup("-rjf");
+			args[1] = strdup("-rf");
 			asprintf(&args[2], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 			args[3] = strdup("-p");
 			args[4] = strdup("p");
@@ -217,6 +217,12 @@ bool Package::build()
 				return false;
 		}
 		std::cout << "Done (dependencies): " << this->name << std::endl;
+	}
+
+	if(WORLD->forcedMode() && !WORLD->isForced(this->name))
+	{
+		std::cout << "Force Build (not required): " << this->name << std::endl;
+		return true;
 	}
 	
 	
@@ -310,7 +316,7 @@ bool Package::build()
 		args[0] = strdup("pax");
 		args[1] = strdup("-x");
 		args[2] = strdup("cpio");
-		args[3] = strdup("-wjf");
+		args[3] = strdup("-wf");
 		asprintf(&args[4], "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 		args[5] = strdup(".");
 
@@ -351,7 +357,7 @@ bool Package::build()
 			args[0] = strdup("pax");
 			args[1] = strdup("-x");
 			args[2] = strdup("cpio");
-			args[3] = strdup("-wjf");
+			args[3] = strdup("-wf");
 			asprintf(&args[4], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 			args[5] = strdup(".");
 

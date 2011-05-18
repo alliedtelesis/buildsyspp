@@ -75,3 +75,15 @@ Package *World::findPackage(std::string name, std::string file)
 	this->packages.push_back(p);
 	return p;
 }
+
+bool World::isForced(std::string name)
+{
+	string_list::iterator fIt = this->forcedDeps->begin();
+	string_list::iterator fEnd = this->forcedDeps->end();
+	
+	for(; fIt != fEnd; fIt++)
+	{
+		if((*fIt).compare(name)==0) return true;
+	}
+	return false;
+}
