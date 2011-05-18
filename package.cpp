@@ -200,8 +200,6 @@ bool Package::build()
 {
 	struct timespec start, end;
 	
-	clock_gettime(CLOCK_REALTIME, &start);
-	
 	if(this->built == true)
 	{
 		std::cout << "Already Built: " << this->name << std::endl;
@@ -230,6 +228,7 @@ bool Package::build()
 		return true;
 	}
 	
+	clock_gettime(CLOCK_REALTIME, &start);
 	
 	if(this->bd != NULL)
 	{
