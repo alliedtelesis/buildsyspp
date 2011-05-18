@@ -24,7 +24,8 @@ void Package::printLabel(std::ostream& out)
 	out << "[label=\"";
 	
 	out << this->getName() << "\\n";
-	out << "Cmds:" << this->commands.size();
+	out << "Cmds:" << this->commands.size() << "\\n";
+	out << "Time: " << this->run_secs << "s";
 	
 	out << "\"]";
 	
@@ -197,6 +198,10 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 
 bool Package::build()
 {
+	struct timespec start, end;
+	
+	clock_gettime(CLOCK_REALTIME, &start);
+	
 	if(this->built == true)
 	{
 		std::cout << "Already Built: " << this->name << std::endl;
@@ -381,6 +386,12 @@ bool Package::build()
 	
 	free(pwd);
 
+	clock_gettime(CLOCK_REALTIME, &end);
+	
+	this->run_secs = (end.tv_sec - start.tv_sec);
+	
+	std::cout << "Build time(" << this->name << "): " <<  this->run_secs << "s and " << (end.tv_nsec - start.tv_nsec) / 1000 << " ms" << std::endl;
+	
 	this->built = true;
 
 	return true;

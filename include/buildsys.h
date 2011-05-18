@@ -246,11 +246,12 @@ namespace buildsys {
 			bool visiting;
 			bool processed;
 			bool built;
+			time_t run_secs;
 		protected:
 			bool extract_staging(const char *dir, std::list<std::string> *done);
 			bool extract_install(const char *dir, std::list<std::string> *done);
 		public:
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false) {};
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), run_secs(0) {};
 			BuildDir *builddir();
 			void setIntercept() { this->intercept = true; };
 			std::string getName() { return this->name; };
