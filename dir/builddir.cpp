@@ -157,3 +157,11 @@ BuildDir::BuildDir(std::string name)
 	free(pwd);
 
 }
+
+void BuildDir::clean()
+{
+	char *cmd = NULL;
+	asprintf(&cmd, "rm -fr %s/*", this->path.c_str());
+	system(cmd);
+	free(cmd);	
+}

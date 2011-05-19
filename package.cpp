@@ -224,7 +224,6 @@ bool Package::build()
 
 	if(WORLD->forcedMode() && !WORLD->isForced(this->name))
 	{
-		std::cout << "Force Build (not required): " << this->name << std::endl;
 		return true;
 	}
 	

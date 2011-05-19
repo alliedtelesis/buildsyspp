@@ -443,9 +443,10 @@ static int li_feature(lua_State *L)
 
 int li_builddir(lua_State *L)
 {
-	if(lua_gettop(L) != 0)
+	int args = lua_gettop(L);
+	if(args > 1)
 	{
-		throw CustomException("builddir() takes no arguments");
+		throw CustomException("builddir() takes 1 or no arguments");
 	}
 
 	lua_getglobal(L, "P");
@@ -453,7 +454,13 @@ int li_builddir(lua_State *L)
 	
 	// create a table, since this is actually an object
 	CREATE_TABLE(L,P->builddir());
-	P->builddir()->lua_table(L);	
+	P->builddir()->lua_table(L);
+
+	if(args == 1 && lua_toboolean(L, 1))
+	{
+		// clean out the build directory
+		P->builddir()->clean();
+	}
 
 	return 1;
 }

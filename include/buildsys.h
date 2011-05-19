@@ -191,6 +191,8 @@ namespace buildsys {
 			const char *getNewStaging() { return this->new_staging.c_str(); };
 			const char *getNewInstall() { return this->new_install.c_str(); };
 
+			void clean();
+
 			static void lua_table_r(lua_State *L) { LUA_SET_TABLE_TYPE(L,BuildDir)
 						LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
 						LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
