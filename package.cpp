@@ -48,8 +48,6 @@ bool Package::process()
 
 	WORLD->getLua()->processFile(file.c_str());
 
-	std::cout << "Done: " << this->name << std::endl;
-
 	this->processed = true;
 
 	std::list<Package *>::iterator iter = this->depends.begin();
@@ -202,24 +200,19 @@ bool Package::build()
 	
 	if(this->built == true)
 	{
-		std::cout << "Already Built: " << this->name << std::endl;
 		return true;
 	}
-	
-	std::cout << "Building " << this->name << " ..." << std::endl;
 	
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
 	
 	if(dIt != dEnds)
 	{
-		std::cout << "Building dependencies ..." << std::endl;
 		for(; dIt != dEnds; dIt++)
 		{
 			if(!(*dIt)->build())
 				return false;
 		}
-		std::cout << "Done (dependencies): " << this->name << std::endl;
 	}
 
 	if(WORLD->forcedMode() && !WORLD->isForced(this->name))
@@ -231,10 +224,11 @@ bool Package::build()
 	
 	if(this->bd != NULL)
 	{
+		std::cout << "Building " << this->name << " ..." << std::endl;
 		// Extract the dependency staging directories
 		char *staging_dir = NULL;
 		asprintf(&staging_dir, "output/%s/%s/staging", WORLD->getName().c_str(), this->name.c_str());
-		printf("Generating staging directory ...\n");
+		std::cout << "Generating staging directory ..." << std::endl;
 		std::list<std::string> *done = new std::list<std::string>();
 		for(dIt = this->depends.begin(); dIt != dEnds; dIt++)
 		{
@@ -250,7 +244,7 @@ bool Package::build()
 		if(this->depsExtraction != NULL)
 		{
 			// Extract installed files to a given location
-			printf("Removing old install files ...\n");
+			std::cout << "Removing old install files ..." << std::endl;
 			{
 				char *pwd = getcwd(NULL, 0);
 				char **args = (char **)calloc(4, sizeof(char *));
@@ -294,7 +288,7 @@ bool Package::build()
 					return false;
 			}
 			delete done;
-			printf("Done\n");
+			std::cout << "Done" << std::endl;
 		}
 		
 		std::list<PackageCmd *>::iterator cIt = this->commands.begin();
