@@ -260,7 +260,7 @@ int li_bd_cmd(lua_State *L)
 	if(!lua_istable(L, 4)) throw CustomException("cmd() expects a table of strings as the third argument");
 	if(argc == 5 && !lua_istable(L, 5)) throw CustomException("cmd() expects a table of strings as the fourth argument, if present");
 
-	CHECK_ARGUMENT_TYPE("fetch",1,BuildDir,d);
+	CHECK_ARGUMENT_TYPE("cmd",1,BuildDir,d);
 
 	lua_getglobal(L, "P");
 	Package *P = (Package *)lua_topointer(L, -1);
