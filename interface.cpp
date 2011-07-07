@@ -35,6 +35,11 @@ int li_bd_fetch(lua_State *L)
 	
 	char **argv = NULL;
 	
+	if(WORLD->forcedMode() && !WORLD->isForced(P->getName()))
+	{
+		return 0;
+	}
+	
 	if(strcmp(method, "dl") == 0)
 	{
 		int res = mkdir("dl", 0700);
@@ -210,6 +215,14 @@ int li_bd_extract(lua_State *L)
 	if(!lua_islightuserdata(L, -1)) throw CustomException("extract() must be called using : not .");
 	BuildDir *d = (BuildDir *)lua_topointer(L, -1);
 	lua_pop(L, 1);
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	if(WORLD->forcedMode() && !WORLD->isForced(P->getName()))
+	{
+		return 0;
+	}
 	
 	const char *fName = lua_tostring(L, 2);
 
@@ -313,6 +326,11 @@ int li_bd_patch(lua_State *L)
 	lua_getglobal(L, "P");
 	Package *P = (Package *)lua_topointer(L, -1);
 	
+	if(WORLD->forcedMode() && !WORLD->isForced(P->getName()))
+	{
+		return true;
+	}
+
 	CHECK_ARGUMENT_TYPE("fetch",1,BuildDir,d);
 
 	char *patch_path = NULL;
@@ -459,7 +477,10 @@ int li_builddir(lua_State *L)
 	if(args == 1 && lua_toboolean(L, 1))
 	{
 		// clean out the build directory
-		P->builddir()->clean();
+		if(!(WORLD->forcedMode() && !WORLD->isForced(P->getName())))
+		{
+			P->builddir()->clean();
+		}
 	}
 
 	return 1;

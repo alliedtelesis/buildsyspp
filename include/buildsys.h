@@ -184,7 +184,7 @@ namespace buildsys {
 			std::string new_staging;
 			std::string new_install;
 		public:
-			BuildDir(std::string pname);
+			BuildDir(std::string pname, bool clean);
 			
 			const char *getPath() { return this->path.c_str(); };
 			const char *getStaging() { return this->staging.c_str(); };

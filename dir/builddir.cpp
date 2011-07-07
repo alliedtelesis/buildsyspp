@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <errno.h>
 
-BuildDir::BuildDir(std::string name)
+BuildDir::BuildDir(std::string name, bool clean)
 {
 	const char *gname = WORLD->getName().c_str();
 	const char *pname = name.c_str();
@@ -88,17 +88,19 @@ BuildDir::BuildDir(std::string name)
 			throw DirException(path, strerror(errno));
 			
 		}
-		// We need to remove the staging dir first, then create it
-		char *cmd = NULL;
-		asprintf(&cmd, "rm -fr %s", path);
-		system(cmd);
-		res = mkdir(path, 0700);
-		if(res < 0)
+		if(clean)
 		{
-			throw DirException(path, strerror(errno));
-						
+			// We need to remove the staging dir first, then create it
+			char *cmd = NULL;
+			asprintf(&cmd, "rm -fr %s", path);
+			system(cmd);
+			res = mkdir(path, 0700);
+			if(res < 0)
+			{
+				throw DirException(path, strerror(errno));
+			}
+			free(cmd);
 		}
-		free(cmd);
 	}
 	this->staging = std::string(path);
 	free(path);
@@ -115,16 +117,18 @@ BuildDir::BuildDir(std::string name)
 			
 		}
 		// We need to remove the new staging dir first, then create it
-		char *cmd = NULL;
-		asprintf(&cmd, "rm -fr %s", path);
-		system(cmd);
-		res = mkdir(path, 0700);
-		if(res < 0)
+		if(clean)
 		{
-			throw DirException(path, strerror(errno));
-						
+			char *cmd = NULL;
+			asprintf(&cmd, "rm -fr %s", path);
+			system(cmd);
+			res = mkdir(path, 0700);
+			if(res < 0)
+			{
+				throw DirException(path, strerror(errno));
+			}
+			free(cmd);
 		}
-		free(cmd);
 	}
 	this->new_staging = std::string(path);
 	free(path);
@@ -140,17 +144,19 @@ BuildDir::BuildDir(std::string name)
 			throw DirException(path, strerror(errno));
 			
 		}
-		// We need to remove the install dir first, then create it
-		char *cmd = NULL;
-		asprintf(&cmd, "rm -fr %s", path);
-		system(cmd);
-		res = mkdir(path, 0700);
-		if(res < 0)
+		if(clean)
 		{
-			throw DirException(path, strerror(errno));
-				
+			// We need to remove the install dir first, then create it
+			char *cmd = NULL;
+			asprintf(&cmd, "rm -fr %s", path);
+			system(cmd);
+			res = mkdir(path, 0700);
+			if(res < 0)
+			{
+				throw DirException(path, strerror(errno));
+			}
+			free(cmd);
 		}
-		free(cmd);
 	}
 	this->new_install = std::string(path);	
 	free(path);

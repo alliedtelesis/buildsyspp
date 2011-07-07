@@ -13,7 +13,12 @@ BuildDir *Package::builddir()
 {
 	if(this->bd == NULL)
 	{
-		this->bd = new BuildDir(this->name);
+		if(WORLD->forcedMode() && !WORLD->isForced(this->name))
+		{
+			this->bd = new BuildDir(this->name, false);
+		} else {
+			this->bd = new BuildDir(this->name, true);
+		}
 	}
 	
 	return this->bd;
