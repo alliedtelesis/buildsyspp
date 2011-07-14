@@ -119,7 +119,7 @@ int li_bd_fetch(lua_State *L)
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("ln");
-		argv[1] = strdup("-s");
+		argv[1] = strdup("-sf");
 		if(location[0] == '.')
 		{
 			char *pwd = getcwd(NULL, 0);
