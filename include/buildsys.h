@@ -8,6 +8,13 @@ extern "C" {
 	#include <lauxlib.h>
 };
 
+#ifdef UNDERSCORE
+extern "C" {
+	#include <us_datacoding.h>	
+	#include <us_client.h>
+};
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +37,7 @@ extern "C" {
 
 #define error(M) \
 	do {\
-		fprintf(stderr, "%s:%s():%i: %s\n", __FILE__, __FUNCTION__ , __LINE__, M.c_str()); \
+		log((char *)"BuildSys","%s:%s():%i: %s", __FILE__, __FUNCTION__ , __LINE__, M.c_str()); \
 		exit(-1); \
 	} while(0)
 
@@ -285,7 +292,7 @@ namespace buildsys {
 			Lua *getLua() { return this->lua; };
 
 			std::string getName() { return this->name; };
-			void setName(std::string n) { this->name = n; };
+			void setName(std::string n);
 
 			bool forcedMode() {return !forcedDeps->empty(); };
 			void forceBuild(std::string name) { forcedDeps->push_back(name); };
@@ -305,6 +312,25 @@ namespace buildsys {
 	
 	extern World *WORLD;
 	void graph();
+	void log(const char *package, const char *fmt, ...);
+
+#ifdef UNDERSCORE
+	void sendTarget(const char *name);
+#endif
+
 };
 
 using namespace buildsys;
+
+#ifdef UNDERSCORE
+// lm/linux.c
+extern unsigned long kb_main_buffers;
+extern unsigned long kb_main_cached;
+extern unsigned long kb_main_free;
+extern unsigned long kb_main_total;
+extern unsigned long kb_swap_free;
+extern unsigned long kb_swap_total;
+void meminfo(void);
+void loadavg(double *av1, double *av5, double *av15);
+
+#endif

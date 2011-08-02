@@ -9,6 +9,15 @@ std::list<Package *>::iterator World::packagesEnd()
 	return this->packages.end();
 }
 
+void World::setName(std::string n)
+{
+	this->name = n;
+
+#ifdef UNDERSCORE
+	sendTarget(this->name.c_str());
+#endif
+}
+
 void World::setFeature(std::string key, std::string value, bool override)
 {
 	// look for this key
