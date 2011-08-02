@@ -94,7 +94,7 @@ int li_bd_fetch(lua_State *L)
 				char *ext = strrchr(fname, '.');
 				if(ext == NULL)
 				{
-					fprintf(stderr, "Could not guess decompression based on extension: %s\n", fname);
+					log(P->getName().c_str(), (char *)"Could not guess decompression based on extension: %s\n", fname);
 				}
 				
 				if(strcmp(ext, ".bz2")==0)
@@ -144,7 +144,7 @@ int li_bd_fetch(lua_State *L)
 			}
 			l2++;
 			rmargv[2] = strdup(l2);
-			fprintf(stderr, "%s %s %s\n", rmargv[0], rmargv[1], rmargv[2]);
+			log(P->getName().c_str(), (char *)"%s %s %s\n", rmargv[0], rmargv[1], rmargv[2]);
 			if(run((char *)"/bin/rm", rmargv , d->getPath(), NULL) != 0)
 				throw CustomException("Failed to ln (symbolically), could not remove target first");
 			if(run((char *)"ln", argv, d->getPath(), NULL) != 0)
@@ -361,7 +361,7 @@ int li_bd_patch(lua_State *L)
 			argv[5] = strdup("--dry-run");
 			if(run((char *)"patch", argv , patch_path, NULL) != 0)
 			{
-				fprintf(stderr, "Patch file: %s\n", argv[4]);
+				log(P->getName().c_str(), "Patch file: %s", argv[4]);
 				throw CustomException("Will fail to patch");
 			}
 			free(argv[5]);
@@ -514,7 +514,7 @@ int li_depend(lua_State *L)
 	FILE *f = fopen(luaFile, "r");
 	if(f == NULL)
 	{
-		fprintf(stderr, "Opening %s: %s\n", luaFile, strerror(errno));
+		log(lua_tostring(L, 1), "Opening %s: %s", luaFile, strerror(errno));
 		throw CustomException("Failed opening Package");
 	}
 	fclose(f);
