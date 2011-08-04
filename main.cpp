@@ -2,79 +2,23 @@
 
 World *buildsys::WORLD;
 
-using namespace boost;
-
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
-typedef boost::graph_traits < Graph >::vertex_descriptor Vertex;
-typedef boost::graph_traits < Graph >::edge_descriptor Edge;
-typedef std::map<Package *, Vertex > NodeVertexMap;
-typedef std::map<Vertex, Package * > VertexNodeMap;
-
-template<class Name>
-class graphnode_property_writer {
-	private:
-		Name names;
-	public:
-		graphnode_property_writer(Name _name) : names(_name) {};
-		template <class VertexOrEdge>
-		void operator()(std::ostream& out, VertexOrEdge v)
-		{
-			if(names[v] != NULL)
-				names[v]->printLabel(out);
-		}
-};
-
-void buildsys::graph()
-{
-	// Setup for graphing
-        NodeVertexMap *Nodes = new NodeVertexMap();
-	VertexNodeMap *NodeMap = new VertexNodeMap(); 
-        Graph g;
-
-	for(std::list<Package *>::iterator I = WORLD->packagesStart();
-		I != WORLD->packagesEnd(); I++)
-	{
-		NodeVertexMap::iterator pos;
-		bool inserted;
-		boost::tie(pos, inserted) = Nodes->insert(std::make_pair(*I, Vertex()));
-		if(inserted)
-		{
-			Vertex u = add_vertex(g);
-			pos->second = u;
-			NodeMap->insert(std::make_pair(u, *I));
-		}
-	}
-
-	for(std::list<Package *>::iterator I = WORLD->packagesStart();
-		I != WORLD->packagesEnd(); I++)
-	{
-		for(std::list<Package *>::iterator J = (*I)->dependsStart();
-			J != (*I)->dependsEnd(); J++)
-		{
-			Edge e;
-			bool inserted;
-			boost::tie(e, inserted) = add_edge((*Nodes)[(*I)],(*Nodes)[(*J)],g);
-		}
-	}
-
-	std::ofstream dotFile("dependencies.dot");
-	write_graphviz(dotFile, g, graphnode_property_writer<VertexNodeMap>(*NodeMap));
-        dotFile.flush();
-
-
-}
-
 #ifdef UNDERSCORE
 static us_job_queue *jq;
 static us_event_set *es;
 static us_delay_set *ds;
 us_net_connection *buildsys_conn;
+us_queue_fifo *buildsys_send_queue = NULL;
+
+struct bs_send_msg_s {
+	uint32_t code;
+	us_string_length sl;
+};
 
 static bool buildsys_server_message(us_net_message *m)
 {
 	fprintf(stderr, "Got message from buildsys server (ID = %x)\n", m->ID);
 	us_datacoding_set *ds = us_datacoding_set_create_string(m->sl);
-	us_datacoding_data *d = us_datacoding_get(ds);
+//	us_datacoding_data *d = us_datacoding_get(ds);
 	switch(m->ID)
 	{
 		default:
@@ -82,6 +26,31 @@ static bool buildsys_server_message(us_net_message *m)
 	}
 	us_datacoding_set_destroy(ds);
 	return true;
+}
+
+void *send_buildsys_thread(us_thread *t)
+{
+	us_queue_fifo *f = (us_queue_fifo *)t->priv;
+	while(1)
+	{
+		struct bs_send_msg_s *sm = (struct bs_send_msg_s *)us_fifo_get(f);
+		if(sm == NULL)
+		{
+			sleep(1); continue;
+		}
+		us_net_send(buildsys_conn, sm->sl, sm->code);
+		free(sm->sl.string);
+		free(sm);
+	}
+	return NULL;
+}
+
+void send_buildsys_message(uint32_t code, us_string_length sl)
+{
+	struct bs_send_msg_s *msg = (struct bs_send_msg_s *)calloc(1, sizeof(struct bs_send_msg_s));
+	msg->code = code;
+	msg->sl = sl;
+	us_fifo_put(buildsys_send_queue, msg);
 }
 
 static bool buildsys_update_metric()
@@ -101,8 +70,7 @@ static bool buildsys_update_metric()
 		us_string_length sl = us_datacoding_string(ds);
 		us_datacoding_set_destroy(ds);
 		// send to the buildsys server
-		us_net_send(buildsys_conn, sl, 0x10101010);
-		free(sl.string);
+		send_buildsys_message(0x10101010, sl);
 	}
 	return true;
 }
@@ -137,19 +105,16 @@ static void* update_thread(us_thread *t)
 		buildsys_update_metric();
 		sleep(1);
 	}
+	return NULL;
 }
 
 void buildsys::sendTarget(const char *name)
 {
-	if(buildsys_conn != NULL)
-	{
-		us_datacoding_set *ds = us_datacoding_set_create();
-		us_datacoding_add_string(ds,'T',name);
-		us_string_length sl = us_datacoding_string(ds);
-		us_datacoding_set_destroy(ds);
-		us_net_send(buildsys_conn, sl, 0x11111111);
-		free(sl.string);
-	}
+	us_datacoding_set *ds = us_datacoding_set_create();
+	us_datacoding_add_string(ds,'T',name);
+	us_string_length sl = us_datacoding_string(ds);
+	us_datacoding_set_destroy(ds);
+	send_buildsys_message(0x11111111, sl);
 }
 
 #endif
@@ -164,19 +129,29 @@ void buildsys::log(const char *package, const char *fmt, ...)
 
 	fprintf(stderr, "%s: %s\n", package, message);
 #ifdef UNDERSCORE
-	if(buildsys_conn != NULL)
-	{
-		us_datacoding_set *ds = us_datacoding_set_create();
-		us_datacoding_add_string(ds,'P',package);
-		us_datacoding_add_string(ds,'M',message);
-		us_string_length sl = us_datacoding_string(ds);
-		us_datacoding_set_destroy(ds);
-		us_net_send(buildsys_conn, sl, 0x01010101);
-		free(sl.string);
-	}
+	us_datacoding_set *ds = us_datacoding_set_create();
+	us_datacoding_add_string(ds,'P',package);
+	us_datacoding_add_string(ds,'M',message);
+	us_string_length sl = us_datacoding_string(ds);
+	us_datacoding_set_destroy(ds);
+	send_buildsys_message(0x01010101, sl);
 #endif
 	free(message);
 }
+
+void buildsys::program_output(const char *package, const char *mesg)
+{
+	fprintf(stdout, "%s: %s\n", package, mesg);
+#ifdef UNDERSCORE
+	us_datacoding_set *ds = us_datacoding_set_create();
+	us_datacoding_add_string(ds,'P',package);
+	us_datacoding_add_string(ds,'M',mesg);
+	us_string_length sl = us_datacoding_string(ds);
+	us_datacoding_set_destroy(ds);
+	send_buildsys_message(0x01010102, sl);
+#endif	
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -193,14 +168,17 @@ int main(int argc, char *argv[])
 	jq = us_jq_create(5);
 	es = us_event_set_create(jq);
 	ds = us_delay_set_create(jq);
-
+	
 	if(!us_client_core_connect(NULL, (us_net_connection_type){ true , false }, (char *)"buildsys", es, ds, NULL, NULL, NULL, client_callback_server, client_callback_server_start))
 		exit(EXIT_FAILURE);
 	
+	buildsys_send_queue = us_fifo_create();
+	
 	us_thread_create(update_thread, 0, NULL);
+	us_thread_create(send_buildsys_thread, 0, buildsys_send_queue);
 
 	// Let it connect before we start sending messages at it
-	sleep(5);
+	sleep(1);
 #endif
 	
 	if(argc <= 1)
@@ -210,6 +188,9 @@ int main(int argc, char *argv[])
 	
 	try {
 		WORLD = new World();
+#ifdef UNDERSCORE
+		WORLD->setES(es);
+#endif
 	}
 	catch(Exception &E)
 	{
@@ -265,9 +246,9 @@ int main(int argc, char *argv[])
 	{
 		error(E.error_msg());
 	}
-	
-	// Graph the dependency tree
-	buildsys::graph();
+
+	// Write out the dependency graph
+	WORLD->output_graph();
 
 	clock_gettime(CLOCK_REALTIME, &end);
 	

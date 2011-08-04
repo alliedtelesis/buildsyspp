@@ -60,13 +60,71 @@ std::string World::getFeature(std::string key)
 	throw NoKeyException();
 }
 
+#ifdef UNDERSCORE
+static us_condition *t_cond = NULL;
+
+static void *build_thread(us_thread *t)
+{
+	Package *p = (Package *)t->priv;
+	
+	log(p->getName().c_str(), "Build Thread");
+
+	bool skip = false;
+
+	if(p->isBuilding())
+	{
+		skip = true;
+	}
+	if(!skip)
+		p->setBuilding();
+	us_cond_lock(t_cond);
+	us_cond_signal(t_cond, true);
+	us_cond_unlock(t_cond);
+	if(!skip)
+	{
+		try {
+			p->build();
+		} catch(Exception &E)
+		{
+			error(E.error_msg());
+		}
+	}
+	WORLD->condTrigger();
+	return NULL;
+}
+#endif
+
 bool World::basePackage(char *filename)
 {
 	this->p = findPackage(filename, filename);
 
 	this->p->process();
 	
+	this->graph = new Internal_Graph();
+	this->topo_graph = new Internal_Graph();
+
+	this->topo_graph->topological();
+#ifdef UNDERSCORE
+	t_cond = us_cond_create();
+	while(!this->p->isBuilt())
+	{
+		us_cond_lock(this->cond);
+		Package *toBuild = this->topo_graph->topoNext();
+		if(toBuild != NULL)
+		{
+			us_cond_unlock(this->cond);
+			us_cond_lock(t_cond);
+			us_thread_create(build_thread, 0, toBuild);
+			us_cond_wait(t_cond);
+			us_cond_unlock(t_cond);
+		} else {
+			us_cond_wait(this->cond);
+			us_cond_unlock(this->cond);
+		}
+	}
+#else
 	this->p->build();
+#endif
 
 	return true;
 }
@@ -95,4 +153,18 @@ bool World::isForced(std::string name)
 		if((*fIt).compare(name)==0) return true;
 	}
 	return false;
+}
+
+bool World::packageFinished(Package *p)
+{
+#ifdef UNDERSCORE
+	us_cond_lock(this->cond);
+#endif
+	this->topo_graph->deleteNode(p);
+	this->topo_graph->topological();
+#ifdef UNDERSCORE
+	us_cond_signal(this->cond, true);
+	us_cond_unlock(this->cond);
+#endif
+	return true;
 }
