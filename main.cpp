@@ -2,7 +2,7 @@
 
 World *buildsys::WORLD;
 
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 static us_job_queue *jq;
 static us_event_set *es;
 static us_delay_set *ds;
@@ -128,7 +128,7 @@ void buildsys::log(const char *package, const char *fmt, ...)
 	va_end(args);
 
 	fprintf(stderr, "%s: %s\n", package, message);
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 	us_datacoding_set *ds = us_datacoding_set_create();
 	us_datacoding_add_string(ds,'P',package);
 	us_datacoding_add_string(ds,'M',message);
@@ -142,7 +142,7 @@ void buildsys::log(const char *package, const char *fmt, ...)
 void buildsys::program_output(const char *package, const char *mesg)
 {
 	fprintf(stdout, "%s: %s\n", package, mesg);
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 	us_datacoding_set *ds = us_datacoding_set_create();
 	us_datacoding_add_string(ds,'P',package);
 	us_datacoding_add_string(ds,'M',mesg);
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 	log((char *)"BuildSys",(char *)"Buildsys (C++ version)");
 	log((char *)"BuildSys", "Built: %s %s", __TIME__, __DATE__);
 
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 	log((char *)"BuildSys", "Underscore support is enabled, performance impact unknown");
 
 	jq = us_jq_create(5);
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 	
 	try {
 		WORLD = new World();
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 		WORLD->setES(es);
 #endif
 	}

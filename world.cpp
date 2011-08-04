@@ -13,7 +13,7 @@ void World::setName(std::string n)
 {
 	this->name = n;
 
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 	sendTarget(this->name.c_str());
 #endif
 }

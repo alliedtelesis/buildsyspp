@@ -267,7 +267,11 @@ namespace buildsys {
 			bool extract_staging(const char *dir, std::list<std::string> *done);
 			bool extract_install(const char *dir, std::list<std::string> *done);
 		public:
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), lock(us_mutex_create(true)), run_secs(0) {};
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false),
+#ifdef UNDERSCORE
+			lock(us_mutex_create(true)),
+#endif
+			 run_secs(0) {};
 			BuildDir *builddir();
 			void setIntercept() { this->intercept = true; };
 			std::string getName() { return this->name; };
@@ -316,13 +320,19 @@ namespace buildsys {
 			std::list<Package *> packages;
 			Internal_Graph *graph;
 			Internal_Graph *topo_graph;
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 			us_event_set *es;
+#endif
+#ifdef UNDERSCORE
 			us_condition *cond;
 #endif
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
-					lua(new Lua()), graph(NULL), cond(us_cond_create())  {};
+					lua(new Lua()), graph(NULL)
+#ifdef UNDERSCORE
+					,cond(us_cond_create()) 
+#endif
+					{};
 
 			Lua *getLua() { return this->lua; };
 
@@ -344,11 +354,12 @@ namespace buildsys {
 			
 			bool packageFinished(Package *p);
 			//Package *scheduleNextPackage();
+#ifdef UNDERSCORE
 			void condTrigger() { us_cond_lock(this->cond); us_cond_signal(this->cond, true); us_cond_unlock(this->cond); };
-
+#endif
 			bool output_graph() { if(this->graph != NULL) { graph->output(); } ; return true; };
 
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 			bool setES(us_event_set *es) { this->es = es; return true; };
 			us_event_set *getES(void) { return this->es; };
 #endif
@@ -363,7 +374,7 @@ namespace buildsys {
 
 	int run(const char *, char *program, char *argv[], const char *path, char *newenvp[]);
 
-#ifdef UNDERSCORE
+#ifdef UNDERSCORE_MONITOR
 	void sendTarget(const char *name);
 #endif
 
