@@ -85,7 +85,7 @@ int li_bd_fetch(lua_State *L)
 			argv = (char **)calloc(4, sizeof(char *));
 			argv[0] = strdup("wget");
 			argv[1] = strdup(location);
-			if(run((char *)"wget", argv , "dl", NULL) != 0)
+			if(run(P->getName().c_str(), (char *)"wget", argv , "dl", NULL) != 0)
 				throw CustomException("Failed to fetch file");
 			if(decompress)
 			{
@@ -114,7 +114,7 @@ int li_bd_fetch(lua_State *L)
 		argv[0] = strdup("git");
 		argv[1] = strdup("clone");
 		argv[2] = strdup(location);
-		if(run((char *)"git", argv , d->getPath(), NULL) != 0)
+		if(run(P->getName().c_str(), (char *)"git", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to git clone");
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
@@ -129,7 +129,7 @@ int li_bd_fetch(lua_State *L)
 			argv[2] = strdup(location);
 		}
 		argv[3] = strdup(".");
-		if(run((char *)"ln", argv , d->getPath(), NULL) != 0)
+		if(run(P->getName().c_str(), (char *)"ln", argv , d->getPath(), NULL) != 0)
 		{
 			// An error occured, try remove the file, then relink
 			char **rmargv = (char **)calloc(4, sizeof(char *));
@@ -145,9 +145,9 @@ int li_bd_fetch(lua_State *L)
 			l2++;
 			rmargv[2] = strdup(l2);
 			log(P->getName().c_str(), (char *)"%s %s %s\n", rmargv[0], rmargv[1], rmargv[2]);
-			if(run((char *)"/bin/rm", rmargv , d->getPath(), NULL) != 0)
+			if(run(P->getName().c_str(), (char *)"/bin/rm", rmargv , d->getPath(), NULL) != 0)
 				throw CustomException("Failed to ln (symbolically), could not remove target first");
-			if(run((char *)"ln", argv, d->getPath(), NULL) != 0)
+			if(run(P->getName().c_str(), (char *)"ln", argv, d->getPath(), NULL) != 0)
 				throw CustomException("Failed to ln (symbolically), even after removing target first");
 			free(rmargv[0]);
 			free(rmargv[1]);
@@ -175,7 +175,7 @@ int li_bd_fetch(lua_State *L)
 			free(pwd);
 		}
 		argv[3] = strdup(".");
-		if(run((char *)"cp", argv , d->getPath(), NULL) != 0)
+		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to copy (recursively)");
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = NULL;
@@ -245,7 +245,7 @@ int li_bd_extract(lua_State *L)
 		argv[2] = strdup(fName);
 	}
 	
-	if(run((char *)"tar", argv , d->getPath(), NULL) != 0)
+	if(run(P->getName().c_str(), (char *)"tar", argv , d->getPath(), NULL) != 0)
 		throw CustomException("Failed to extract file");
 	
 	if(argv != NULL)
@@ -359,14 +359,14 @@ int li_bd_patch(lua_State *L)
 				asprintf(&argv[4], "%s/package/%s/%s", pwd, P->getName().c_str(), lua_tostring(L, -1));
 			}
 			argv[5] = strdup("--dry-run");
-			if(run((char *)"patch", argv , patch_path, NULL) != 0)
+			if(run(P->getName().c_str(), (char *)"patch", argv , patch_path, NULL) != 0)
 			{
 				log(P->getName().c_str(), "Patch file: %s", argv[4]);
 				throw CustomException("Will fail to patch");
 			}
 			free(argv[5]);
 			argv[5] = NULL;
-			if(run((char *)"patch", argv , patch_path, NULL) != 0)
+			if(run(P->getName().c_str(), (char *)"patch", argv , patch_path, NULL) != 0)
 				throw CustomException("Truely failed to patch");
 			free(argv[4]);
 			argv[4] = NULL;

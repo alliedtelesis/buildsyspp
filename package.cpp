@@ -103,7 +103,7 @@ bool Package::extract_staging(const char *dir, std::list<std::string> *done)
 		args[3] = strdup("-p");
 		args[4] = strdup("p");
 
-		if(run((char *)"pax", args, dir, NULL) != 0)
+		if(run(this->name.c_str(), (char *)"pax", args, dir, NULL) != 0)
 		{
 			log(this->name.c_str(), (char *)"Failed to extract staging_dir");
 			return false;
@@ -162,7 +162,7 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 			asprintf(&args[1], "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
 			args[2] = strdup(this->installFile);
 
-			if(run((char *)"cp", args, dir, NULL) != 0)
+			if(run(this->name.c_str(), (char *)"cp", args, dir, NULL) != 0)
 			{
 				log(this->name.c_str(), "Failed to copy %s (for install)\n", this->installFile);
 				return false;
@@ -173,7 +173,7 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 			asprintf(&args[2], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 			args[3] = strdup("-p");
 			args[4] = strdup("p");
-			if(run((char *)"pax", args, dir, NULL) != 0)
+			if(run(this->name.c_str(), (char *)"pax", args, dir, NULL) != 0)
 			{
 				log(this->name.c_str(), "Failed to extract install_dir\n");
 				return false;
@@ -257,7 +257,7 @@ bool Package::build()
 				args[1] = strdup("-fr");
 				args[2] = strdup(this->depsExtraction);
 
-				if(run((char *)"rm", args, pwd, NULL) != 0)
+				if(run(this->name.c_str(), (char *)"rm", args, pwd, NULL) != 0)
 				{
 					log(this->name.c_str(), (char *)"Failed to remove %s (pre-install)", this->depsExtraction);
 					return false;
@@ -302,7 +302,7 @@ bool Package::build()
 		log(this->name.c_str(), (char *)"Running Commands");
 		for(; cIt != cEnd; cIt++)
 		{
-			if(!(*cIt)->Run())
+			if(!(*cIt)->Run(this->name.c_str()))
 				return false;
 		}
 		log(this->name.c_str(), (char *)"Done Commands");
@@ -322,7 +322,7 @@ bool Package::build()
 		asprintf(&args[4], "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 		args[5] = strdup(".");
 
-		if(run((char *)"pax", args, this->bd->getNewStaging(), NULL) != 0)
+		if(run(this->name.c_str(), (char *)"pax", args, this->bd->getNewStaging(), NULL) != 0)
 		{
 			log(this->name.c_str(), (char *)"Failed to compress staging directory");
 			return false;
@@ -350,7 +350,7 @@ bool Package::build()
 			args[1] = strdup(this->installFile);
 			asprintf(&args[2], "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
 		
-			if(run((char *)"cp", args, this->bd->getNewInstall(), NULL) != 0)
+			if(run(this->name.c_str(), (char *)"cp", args, this->bd->getNewInstall(), NULL) != 0)
 			{
 				log(this->name.c_str(), (char *)"Failed to copy install file (%s) ", this->installFile);
 				return false;
@@ -363,7 +363,7 @@ bool Package::build()
 			asprintf(&args[4], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 			args[5] = strdup(".");
 
-			if(run((char *)"pax", args, this->bd->getNewInstall(), NULL) != 0)
+			if(run(this->name.c_str(), (char *)"pax", args, this->bd->getNewInstall(), NULL) != 0)
 			{
 				log(this->name.c_str(), (char *)"Failed to compress install directory");
 				return false;
