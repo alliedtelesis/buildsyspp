@@ -1,9 +1,9 @@
-CXX_FILES:=main.cpp interface.cpp world.cpp package.cpp packagecmd.cpp run.c \
+CXX_FILES:=main.cpp interface.cpp world.cpp package.cpp packagecmd.cpp run.cpp \
 		$(addprefix dir/, dir.cpp builddir.cpp)
 CFILES:= 
 
 HEADERS:=include/*.h
-CXXFLAGS:=-Wall -ggdb2 -Iinclude `pkg-config --cflags --libs lua` -lrt
+CXXFLAGS:=-Wall -ggdb2 -Iinclude `pkg-config --cflags --libs lua` -lrt $(USER_DEFINES)
 
 ifeq ($(UNDERSCORE),y)
 	CXXFLAGS+= $(addprefix -I$(UNDERSCORE_PATH)/lib/, \

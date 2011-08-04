@@ -81,10 +81,6 @@ extern "C" {
 	int li_bd_install(lua_State *L);
 };
 
-extern "C" {
-	int run(char *program, char *argv[], const char *path, char *newenvp[]);
-};
-
 namespace buildsys {
 	typedef std::map<std::string, std::string> key_value;
 	typedef std::list<std::string> string_list;
@@ -239,7 +235,7 @@ namespace buildsys {
 				this->envp[this->envp_count-1] = strdup(env);
 				this->envp[this->envp_count] = NULL;
 			}
-			bool Run();
+			bool Run(const char *package);
 	};
 	
 	class Package {
@@ -313,6 +309,8 @@ namespace buildsys {
 	extern World *WORLD;
 	void graph();
 	void log(const char *package, const char *fmt, ...);
+	
+	int run(const char *, char *program, char *argv[], const char *path, char *newenvp[]);
 
 #ifdef UNDERSCORE
 	void sendTarget(const char *name);

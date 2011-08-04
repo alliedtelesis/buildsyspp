@@ -1,6 +1,6 @@
 #include <buildsys.h>
 
-bool PackageCmd::Run()
+bool PackageCmd::Run(const char *package)
 {
 	char **ne = NULL;
 	size_t ne_cnt = 0;
@@ -27,7 +27,7 @@ bool PackageCmd::Run()
 		}
 	}
 	bool res = true;
-	if(run(args[0], this->args, this->path, ne) != 0) res = false;
+	if(run(package, this->args[0], this->args, this->path, ne) != 0) res = false;
 	
 	if(ne != NULL)
 	{
