@@ -12,6 +12,7 @@ extern "C" {
 extern "C" {
 	#include <us_datacoding.h>	
 	#include <us_client.h>
+	#include <us_fifo.h>
 };
 #endif
 
@@ -33,7 +34,13 @@ extern "C" {
 #include <boost/graph/graphviz.hpp>
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/topological_sort.hpp>
 
+using namespace boost;
+
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
+typedef boost::graph_traits < Graph >::vertex_descriptor Vertex;
+typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 
 #define error(M) \
 	do {\
@@ -251,12 +258,16 @@ namespace buildsys {
 			bool visiting;
 			bool processed;
 			bool built;
+			bool building;
+#ifdef UNDERSCORE
+			us_mutex *lock;
+#endif
 			time_t run_secs;
 		protected:
 			bool extract_staging(const char *dir, std::list<std::string> *done);
 			bool extract_install(const char *dir, std::list<std::string> *done);
 		public:
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), run_secs(0) {};
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), lock(us_mutex_create(true)), run_secs(0) {};
 			BuildDir *builddir();
 			void setIntercept() { this->intercept = true; };
 			std::string getName() { return this->name; };
@@ -265,12 +276,34 @@ namespace buildsys {
 			void addCommand(PackageCmd *pc) { this->commands.push_back(pc); };
 			void setInstallFile(char *i) { this->installFile = i; };
 			bool process();
+			bool canBuild();
+			bool isBuilt();
 			bool build();
+			bool isBuilding();
+			void setBuilding();
 
 			std::list<Package *>::iterator dependsStart();
 			std::list<Package *>::iterator dependsEnd();
 			
 			void printLabel(std::ostream& out);
+	};
+	
+	class Internal_Graph {
+		private:
+			typedef std::map<Package *, Vertex > NodeVertexMap;
+			typedef std::map<Vertex, Package * > VertexNodeMap;
+			typedef std::vector< Vertex > container;
+			Graph g;
+			NodeVertexMap *Nodes;
+			VertexNodeMap *NodeMap;
+			container *c;
+		public:
+			Internal_Graph();
+			void output();
+			void topological();
+			Package *topoNext();
+			void deleteNode(Package *p);
+
 	};
 
 	class World {
@@ -281,9 +314,15 @@ namespace buildsys {
 			std::string name;
 			Package *p;
 			std::list<Package *> packages;
+			Internal_Graph *graph;
+			Internal_Graph *topo_graph;
+#ifdef UNDERSCORE
+			us_event_set *es;
+			us_condition *cond;
+#endif
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
-					lua(new Lua())  {};
+					lua(new Lua()), graph(NULL), cond(us_cond_create())  {};
 
 			Lua *getLua() { return this->lua; };
 
@@ -302,14 +341,26 @@ namespace buildsys {
 
 			std::list<Package *>::iterator packagesStart();
 			std::list<Package *>::iterator packagesEnd();
+			
+			bool packageFinished(Package *p);
+			//Package *scheduleNextPackage();
+			void condTrigger() { us_cond_lock(this->cond); us_cond_signal(this->cond, true); us_cond_unlock(this->cond); };
+
+			bool output_graph() { if(this->graph != NULL) { graph->output(); } ; return true; };
+
+#ifdef UNDERSCORE
+			bool setES(us_event_set *es) { this->es = es; return true; };
+			us_event_set *getES(void) { return this->es; };
+#endif
 	};
 	
 	void interfaceSetup(Lua *lua);
 	
 	extern World *WORLD;
-	void graph();
+
 	void log(const char *package, const char *fmt, ...);
-	
+	void program_output(const char *pacakge, const char *mesg);
+
 	int run(const char *, char *program, char *argv[], const char *path, char *newenvp[]);
 
 #ifdef UNDERSCORE

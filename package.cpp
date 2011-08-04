@@ -198,12 +198,75 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 	return true;
 }
 
+bool Package::canBuild()
+{
+	if(this->isBuilt())
+	{
+		return true;
+	}
+	
+	std::list<Package *>::iterator dIt = this->depends.begin();
+	std::list<Package *>::iterator dEnds = this->depends.end();
+	
+	if(dIt != dEnds)
+	{
+		for(; dIt != dEnds; dIt++)
+		{
+			if(!(*dIt)->isBuilt())
+				return false;
+		}
+	}
+	return true;
+}
+
+bool Package::isBuilt()
+{
+	bool ret = false;
+#ifdef UNDERSCORE
+	// lock
+	us_mutex_lock(this->lock);
+#endif
+	ret = this->built;
+#ifdef UNDERSCORE
+	// unlock
+	us_mutex_unlock(this->lock);
+#endif
+	return ret;
+}
+
+bool Package::isBuilding()
+{
+	bool ret = false;
+#ifdef UNDERSCORE
+	// lock
+	us_mutex_lock(this->lock);
+#endif
+	ret = this->building;
+#ifdef UNDERSCORE
+	// unlock
+	us_mutex_unlock(this->lock);
+#endif
+	return ret;
+}
+
+void Package::setBuilding()
+{
+#ifdef UNDERSCORE
+	// lock
+	us_mutex_lock(this->lock);
+#endif
+	this->building = true;
+#ifdef UNDERSCORE
+	// unlock
+	us_mutex_unlock(this->lock);
+#endif
+}
 
 bool Package::build()
 {
 	struct timespec start, end;
 	
-	if(this->built == true)
+	if(this->isBuilt())
 	{
 		return true;
 	}
@@ -222,9 +285,21 @@ bool Package::build()
 
 	if(WORLD->forcedMode() && !WORLD->isForced(this->name))
 	{
+#ifdef UNDERSCORE
+		// lock
+		us_mutex_lock(this->lock);
+#endif
+		log(this->name.c_str(), "Not required");
+		// Just pretend we are built
+		this->built = true;
+#ifdef UNDERSCORE
+		// unlock
+		us_mutex_unlock(this->lock);
+#endif
+		WORLD->packageFinished(this);
 		return true;
 	}
-	
+
 	clock_gettime(CLOCK_REALTIME, &start);
 	
 	if(this->bd != NULL)
@@ -389,7 +464,18 @@ bool Package::build()
 	
 	log(this->name.c_str(), (char *)"Built in %d seconds",  this->run_secs);
 	
+#ifdef UNDERSCORE
+	// lock
+	us_mutex_lock(this->lock);
+#endif
+	this->building = false;
 	this->built = true;
+#ifdef UNDERSCORE
+	// unlock
+	us_mutex_unlock(this->lock);
+#endif
+
+	WORLD->packageFinished(this);
 
 	return true;
 }
