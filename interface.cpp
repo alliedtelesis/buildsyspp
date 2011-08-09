@@ -536,11 +536,12 @@ int li_depend(lua_State *L)
 	return 0;
 }
 
-void buildsys::interfaceSetup(Lua *lua)
+bool buildsys::interfaceSetup(Lua *lua)
 {
 	lua->registerFunc("name",     li_name);
 	lua->registerFunc("feature",  li_feature);
 	lua->registerFunc("depend",   li_depend);
 	lua->registerFunc("builddir", li_builddir);
 	lua->registerFunc("intercept",li_intercept);
+	return true;
 }

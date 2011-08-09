@@ -44,8 +44,7 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 
 #define error(M) \
 	do {\
-		log((char *)"BuildSys","%s:%s():%i: %s", __FILE__, __FUNCTION__ , __LINE__, M.c_str()); \
-		exit(-1); \
+		log((char *)"BuildSys","%s:%s():%i: %s", __FILE__, __FUNCTION__ , __LINE__, M); \
 	} while(0)
 
 #define LUA_SET_TABLE_TYPE(L,T) \
@@ -320,6 +319,7 @@ namespace buildsys {
 			std::list<Package *> packages;
 			Internal_Graph *graph;
 			Internal_Graph *topo_graph;
+			bool failed;
 #ifdef UNDERSCORE_MONITOR
 			us_event_set *es;
 #endif
@@ -328,7 +328,7 @@ namespace buildsys {
 #endif
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
-					lua(new Lua()), graph(NULL)
+					lua(new Lua()), graph(NULL), failed(false)
 #ifdef UNDERSCORE
 					,cond(us_cond_create()) 
 #endif
@@ -342,8 +342,8 @@ namespace buildsys {
 			bool forcedMode() {return !forcedDeps->empty(); };
 			void forceBuild(std::string name) { forcedDeps->push_back(name); };
 			bool isForced(std::string name);
-			void setFeature(std::string key, std::string value, bool override=false);
-			void setFeature(char *kv);
+			bool setFeature(std::string key, std::string value, bool override=false);
+			bool setFeature(char *kv);
 			std::string getFeature(std::string key);
 			
 			bool basePackage(char *filename);
@@ -352,8 +352,10 @@ namespace buildsys {
 			std::list<Package *>::iterator packagesStart();
 			std::list<Package *>::iterator packagesEnd();
 			
+			void setFailed() { this->failed = true; };
+			bool isFailed() { return this->failed; }
 			bool packageFinished(Package *p);
-			//Package *scheduleNextPackage();
+
 #ifdef UNDERSCORE
 			void condTrigger() { us_cond_lock(this->cond); us_cond_signal(this->cond, true); us_cond_unlock(this->cond); };
 #endif
@@ -365,7 +367,7 @@ namespace buildsys {
 #endif
 	};
 	
-	void interfaceSetup(Lua *lua);
+	bool interfaceSetup(Lua *lua);
 	
 	extern World *WORLD;
 

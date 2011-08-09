@@ -356,7 +356,8 @@ bool Package::build()
 				int res = mkdir(this->depsExtraction, 0700);
 				if((res < 0) && (errno != EEXIST))
 				{
-					throw new DirException(this->depsExtraction, strerror(errno));
+					error(this->depsExtraction);
+					return false;
 				}
 			}
 			
