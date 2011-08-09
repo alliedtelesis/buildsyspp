@@ -18,7 +18,7 @@ void World::setName(std::string n)
 #endif
 }
 
-void World::setFeature(std::string key, std::string value, bool override)
+bool World::setFeature(std::string key, std::string value, bool override)
 {
 	// look for this key
 	if(features->find(key) != features->end())
@@ -28,26 +28,32 @@ void World::setFeature(std::string key, std::string value, bool override)
 			// only over-write the value if we are explicitly told to
 			(*features)[key] = value;
 		}
-		return;
+		return true;
 	}
 	features->insert(std::pair<std::string, std::string>(key, value));
+	return true;
 }
 
-void World::setFeature(char *kv)
+bool World::setFeature(char *kv)
 {
 	char *eq = strchr(kv, '=');
-	if(eq == NULL) throw CustomException("Features must be described as feature=value\n");
+	if(eq == NULL)
+	{
+		error("Features must be described as feature=value\n");
+		return false;
+	}
 	char *temp = (char *)calloc(1, (eq - kv) + 1);
-	if(temp == NULL) throw MemoryException();
+	if(temp == NULL) return false;
 	strncpy(temp, kv, (eq-kv));
 	std::string key(temp);
 	free(temp);
 	eq++;
 	temp = strdup(eq);
-	if(temp == NULL) throw MemoryException();
+	if(temp == NULL) return false;
 	std::string value(temp);
 	free(temp);
 	this->setFeature(key, value, true);
+	return true;
 }
 
 
@@ -82,12 +88,7 @@ static void *build_thread(us_thread *t)
 	us_cond_unlock(t_cond);
 	if(!skip)
 	{
-		try {
-			p->build();
-		} catch(Exception &E)
-		{
-			error(E.error_msg());
-		}
+		if(!p->build()) WORLD->setFailed();
 	}
 	WORLD->condTrigger();
 	return NULL;
@@ -98,15 +99,19 @@ bool World::basePackage(char *filename)
 {
 	this->p = findPackage(filename, filename);
 
-	this->p->process();
-	
+	try {
+		this->p->process();
+	} catch (Exception &E)
+	{
+		error(E.error_msg().c_str());
+	}
 	this->graph = new Internal_Graph();
 	this->topo_graph = new Internal_Graph();
 
 	this->topo_graph->topological();
 #ifdef UNDERSCORE
 	t_cond = us_cond_create();
-	while(!this->p->isBuilt())
+	while(!this->isFailed() && !this->p->isBuilt())
 	{
 		us_cond_lock(this->cond);
 		Package *toBuild = this->topo_graph->topoNext();
@@ -126,7 +131,7 @@ bool World::basePackage(char *filename)
 	this->p->build();
 #endif
 
-	return true;
+	return !this->failed;
 }
 
 Package *World::findPackage(std::string name, std::string file)

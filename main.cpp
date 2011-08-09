@@ -183,26 +183,19 @@ int main(int argc, char *argv[])
 	
 	if(argc <= 1)
 	{
-		error(std::string("At least 1 parameter is required"));
+		error((char *)"At least 1 parameter is required");
+		exit(-1);
 	}
 	
-	try {
-		WORLD = new World();
+	WORLD = new World();
 #ifdef UNDERSCORE_MONITOR
-		WORLD->setES(es);
+	WORLD->setES(es);
 #endif
-	}
-	catch(Exception &E)
-	{
-		error(E.error_msg());
-	}
 	
-	try {
-		interfaceSetup(WORLD->getLua());
-	}
-	catch(Exception &E)
+	if(!interfaceSetup(WORLD->getLua()))
 	{
-		error(E.error_msg());
+		error((char *)"interfaceSetup: Failed");
+		exit(-1);
 	}
 	
 	// process arguments ...
@@ -225,26 +218,21 @@ int main(int argc, char *argv[])
 	// then we find a --
 	if(foundDashDash)
 	{
-		try {
-		
-			// then we can preload the feature set
-			while(a < argc)
-			{
-				WORLD->setFeature(argv[a]);
-				a++;
-			}
-		}
-		catch(Exception &E)
+		// then we can preload the feature set
+		while(a < argc)
 		{
-			error(E.error_msg());
+			if(!WORLD->setFeature(argv[a]))
+			{
+				error("setFeature: Failed");
+				exit(-1);
+			}
+			a++;
 		}
 	}
-	try {
-		WORLD->basePackage(argv[1]);
-	}
-	catch(Exception &E)
+	if(!WORLD->basePackage(argv[1]))
 	{
-		error(E.error_msg());
+		error("Building: Failed");
+		exit(-1);
 	}
 
 	// Write out the dependency graph
