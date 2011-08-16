@@ -104,6 +104,7 @@ bool World::basePackage(char *filename)
 	} catch (Exception &E)
 	{
 		error(E.error_msg().c_str());
+		return false;
 	}
 	this->graph = new Internal_Graph();
 	this->topo_graph = new Internal_Graph();
