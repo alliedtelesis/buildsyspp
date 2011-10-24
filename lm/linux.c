@@ -50,10 +50,10 @@ static char buf[1024];
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Library General Public License for more details.
  */
-
+/*! A map between a name, and the storage location */
 typedef struct mem_table_struct {
-  const char *name;     /* memory type name */
-  unsigned long *slot; /* slot in return struct */
+  const char *name;     /*!< memory type name */
+  unsigned long *slot; /*!< slot in return struct */
 } mem_table_struct;
 
 static int compare_mem_table_structs(const void *a, const void *b){

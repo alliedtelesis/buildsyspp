@@ -91,15 +91,21 @@ namespace buildsys {
 	typedef std::map<std::string, std::string> key_value;
 	typedef std::list<std::string> string_list;
 
+	/*! The catchable exception */
 	class Exception {
 		public:
+			//! Return the error message for this exception 
 			virtual std::string error_msg() = 0;
 	};
 	
+	/*! An exception with a custom error message */
 	class CustomException : public Exception {
 		private:
 			std::string errmsg;
 		public:
+			//! Construct an exception with a specific error message
+			/** \param err The erorr message
+			  */
 			CustomException(std::string err) : errmsg(err) {};
 			virtual std::string error_msg()
 			{
@@ -107,6 +113,7 @@ namespace buildsys {
 			}
 	};
 
+	/*! A Lua fault */
 	class LuaException : public Exception {
 		public:
 			virtual std::string error_msg()
@@ -115,6 +122,7 @@ namespace buildsys {
 			}
 	};
 	
+	/*! A Memory fault */
 	class MemoryException : public Exception {
 		public:
 			virtual std::string error_msg()
@@ -123,6 +131,7 @@ namespace buildsys {
 			}
 	};
 	
+	/*! No Such Key fault */
 	class NoKeyException : public Exception {
 		public:
 			virtual std::string error_msg()
@@ -131,10 +140,15 @@ namespace buildsys {
 			}
 	};
 	
+	/*! Error using/creating directory */
 	class DirException : public Exception {
 		private:
 			std::string errmsg;
 		public:
+			//! Create a directory exception
+			/** \param location The directory path
+			  * \param err The error message
+			  */
 			DirException(char *location, char *err)
 			{
 				char *em = NULL;
@@ -148,15 +162,22 @@ namespace buildsys {
 			}
 	};
 	
+	/*! A C++ wrapper for a lua state (instance) */
 	class Lua {
 		private:
 			lua_State *state;
 		public:
+			//! Create a lua state
+			/** Creates a new lua state, and opens loads our libraries into it
+			  */
 			Lua() {
 				state = luaL_newstate();
 				if(state == NULL) throw LuaException();
 				luaL_openlibs(state);
 			};
+			//! Load and exexcute a lua file in this instance
+			/** \param filename The name of the lua file to load and run
+			  */
 			void processFile(const char *filename) {
 
 				int res = luaL_dofile(state, filename);
@@ -166,10 +187,18 @@ namespace buildsys {
 					throw CustomException(lua_tostring(state, -1));
 				}
 			}
+			//! Register a function in this lua instance
+			/** \param name The name of the function
+			  * \param fn The function to call
+			  */
 			void registerFunc(std::string name, lua_CFunction fn)
 			{
 				lua_register(state, name.c_str(), fn);
 			}
+			//! Set a global variable to given data
+			/** \param name the name to store this data as
+			  * \param data the data
+			  */
 			void setGlobal(std::string name, void *data)
 			{
 				lua_pushlightuserdata(state, data);
@@ -177,14 +206,21 @@ namespace buildsys {
 			}
 	};
 	
+	//! A directory to perform actions on
 	class Dir {
 		private:
 		public:
+			//! Create a directory
 			Dir() {};
+			//! Set this as a Dir for lua
 			static void lua_table_r(lua_State *L) { LUA_SET_TABLE_TYPE(L,Dir) }
+			//! Register as a lua table for return from a function
 			virtual void lua_table(lua_State *L) { lua_table_r(L); };
 	};
 	
+	//! A directory for building a package in
+	/** Each package has one build directory which is used to run all the commands in
+	  */
 	class BuildDir : public Dir {
 		private:
 			typedef Dir super;
@@ -193,13 +229,21 @@ namespace buildsys {
 			std::string new_staging;
 			std::string new_install;
 		public:
+			//! Create a build directory
+			/** \param pname The package name
+			  * \param clean If true, this directory will be emptied before creation
+			  */
 			BuildDir(std::string pname, bool clean);
-			
+			//! Return the full path to this directory
 			const char *getPath() { return this->path.c_str(); };
+			//! Return the full path to the staging directory
 			const char *getStaging() { return this->staging.c_str(); };
+			//! Return the full path to the new staging directory
 			const char *getNewStaging() { return this->new_staging.c_str(); };
+			//! Return the full path to the new install directory
 			const char *getNewInstall() { return this->new_install.c_str(); };
 
+			//! Remove all the contents of this directory
 			void clean();
 
 			static void lua_table_r(lua_State *L) { LUA_SET_TABLE_TYPE(L,BuildDir)
@@ -217,6 +261,10 @@ namespace buildsys {
 				};
 	};
 	
+	//! A command to run as part of a packages build step
+	/** Stores the enviroment and arguements for a given command
+	  * Used to hold commands betwen the config loading step and package build steps.
+	  */
 	class PackageCmd {
 		private:
 			char *path;
@@ -226,7 +274,14 @@ namespace buildsys {
 			char **envp;
 			size_t envp_count;
 		public:
+			//! Create a Package Command
+			/** \param path The path to run this command in
+			  * \param app The program to invoke
+			  */
 			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
+			//! Add an argument to this command
+			/** \param arg The argument to append to this command
+			  */
 			void addArg(const char *arg)
 			{
 				this->arg_count++;
@@ -234,6 +289,9 @@ namespace buildsys {
 				this->args[this->arg_count-1] = strdup(arg);
 				this->args[this->arg_count] = NULL;
 			}
+			//! Add an enviroment variable to this command
+			/** \param env The enviroment variable to append to this command
+			  */
 			void addEnv(const char *env)
 			{
 				this->envp_count++;
@@ -241,9 +299,13 @@ namespace buildsys {
 				this->envp[this->envp_count-1] = strdup(env);
 				this->envp[this->envp_count] = NULL;
 			}
+			//! Run this command
+			/** \param package The package name to use in the command logging
+			 */
 			bool Run(const char *package);
 	};
 	
+	//! A package to build
 	class Package {
 		private:
 			std::list<Package *> depends;
@@ -263,34 +325,78 @@ namespace buildsys {
 #endif
 			time_t run_secs;
 		protected:
+			//! Extract the new staging directory this package created in the given path
 			bool extract_staging(const char *dir, std::list<std::string> *done);
+			//! Extract the new install directory this package created in the given path
 			bool extract_install(const char *dir, std::list<std::string> *done);
 		public:
+			//! Create a package
+			/** Constucts a package with a given name, based on a specific file
+			  * \param name The name of this package
+			  * \param file The lua file describing this package
+			  */
 			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
 			 run_secs(0) {};
+			//! Returns the build directory being used by this package
 			BuildDir *builddir();
+			//! Convert this package to the intercepting type
+			/** Intercepting packages stop the extract install method from recursing past them.
+			  */
 			void setIntercept() { this->intercept = true; };
+			//! Return the name of this package
 			std::string getName() { return this->name; };
+			//! Depend on another package
+			/** \param p The package to depend on
+			  */
 			void depend(Package *p) { this->depends.push_back(p); };
+			//! Set the location to extract install directories to
+			/** During the build, all files that all dependencies have installed
+			  * will be extracted to the given path
+			  * \param de relative path to extract dependencies to
+			  */
 			void setDepsExtract(char *de) { this->depsExtraction = de; };
+			//! Add a command to run during the build stage
+			/** \param pc The comamnd to run
+			  */
 			void addCommand(PackageCmd *pc) { this->commands.push_back(pc); };
+			//! Set the file to install
+			/** Setting this overrides to standard zipping up of the entire new install directory
+			  * and just installs this specific file 
+			  * \param i the file to install
+			  */
 			void setInstallFile(char *i) { this->installFile = i; };
+			//! Parse and load the lua file for this package
 			bool process();
+			//! Is this package ready for building yet ?
+			/** \return true iff all all dependencies are built
+			  */
 			bool canBuild();
+			//! Is this package already built ?
+			/** \return true if this package has already been built during this invocation of buildsys
+			  */
 			bool isBuilt();
+			//! Build this package
 			bool build();
+			//! Has building of this package already started ?
 			bool isBuilding();
+			//! Tell this package it is now building
 			void setBuilding();
 
+			//! Get the start iterator for the dependencies list
 			std::list<Package *>::iterator dependsStart();
+			//! Get the end iterator for the dependencies list
 			std::list<Package *>::iterator dependsEnd();
 			
+			//! Print the label for use on the graph
+			/** Prints the package name, number of commands to run, and time spent building
+			  */
 			void printLabel(std::ostream& out);
 	};
 	
+	//! A graph of dependencies between packages
 	class Internal_Graph {
 		private:
 			typedef std::map<Package *, Vertex > NodeVertexMap;
@@ -301,14 +407,20 @@ namespace buildsys {
 			VertexNodeMap *NodeMap;
 			container *c;
 		public:
+			//! Create an Internal_Graph
 			Internal_Graph();
+			//! Output the graph to dependencies.dot
 			void output();
+			//! Perform a topological sort
 			void topological();
+			//! Find a package with no dependencies
 			Package *topoNext();
+			//! Remove a package from this graph
 			void deleteNode(Package *p);
 
 	};
 
+	//! The world, everything that everything needs to access
 	class World {
 		private:
 			key_value *features;
@@ -334,31 +446,63 @@ namespace buildsys {
 #endif
 					{};
 
+			//! Return the lua instance being used
 			Lua *getLua() { return this->lua; };
 
+			//! Return the global name, in lua this is name()
 			std::string getName() { return this->name; };
+			//! Set the global name, in lua this is name('somevalue')
 			void setName(std::string n);
 
+			//! Are we operating in 'forced' mode
+			/** If more than 1 parameter was passed on the command line,
+			  * we are operating in forced mode.
+			  * This means that we ignore any detection of what needs building,
+			  * and build only a specific set of packages (all the arguments, except the first one)
+			  */
 			bool forcedMode() {return !forcedDeps->empty(); };
+			//! Add a package to 'forced' mode
+			/** This will automatically turn on forced mode
+			  */
 			void forceBuild(std::string name) { forcedDeps->push_back(name); };
+			//! Check if a specific package is being forced
 			bool isForced(std::string name);
+			//! Set a feature to a specific value
+			/** Note that the default is to not set already-set features to new values
+			  * pass override=true to ignore this safety
+			  * lua: feature('magic-support','yes',true)
+			  */
 			bool setFeature(std::string key, std::string value, bool override=false);
+			//! Set a feature using a key=value string
+			/** This is used to handle the command line input of feature/value settings
+			  */
 			bool setFeature(char *kv);
+			//! Get the value of a specific feature
+			/** lua: feature('magic-support')
+			  */
 			std::string getFeature(std::string key);
 			
+			//! Start the processing and building steps with the given meta package
 			bool basePackage(char *filename);
+			//! Find or create a package with the given name, using the filename if needed
 			Package *findPackage(std::string name, std::string file);
 
+			//! Get the start iterator for the package list
 			std::list<Package *>::iterator packagesStart();
+			//! Get the end iterator for the package list
 			std::list<Package *>::iterator packagesEnd();
 			
+			//! Tell everything that we have failed
 			void setFailed() { this->failed = true; };
+			//! Test if we have failed
 			bool isFailed() { return this->failed; }
+			//! Declare a package built
 			bool packageFinished(Package *p);
 
 #ifdef UNDERSCORE
 			void condTrigger() { us_cond_lock(this->cond); us_cond_signal(this->cond, true); us_cond_unlock(this->cond); };
 #endif
+			//! output the dependency graph
 			bool output_graph() { if(this->graph != NULL) { graph->output(); } ; return true; };
 
 #ifdef UNDERSCORE_MONITOR
