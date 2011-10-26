@@ -1,11 +1,22 @@
 #include <buildsys.h>
 
+//! Used to print out the names of packages in the dependency graph
+/** Allows a package to print any information it likes for its label
+  */
 template<class Name>
 class graphnode_property_writer {
 	private:
 		Name names;
 	public:
+		//! Construct a property writer
+		/** \param _name the mapping from vertices/edges to objects
+		  */
 		graphnode_property_writer(Name _name) : names(_name) {};
+		//! The outputting function
+		/** Gets the given vertex or edge label
+		  * \param out The stream to write the data to
+		  * \param v The vertex or edge to get the data from
+		  */
 		template <class VertexOrEdge>
 		void operator()(std::ostream& out, VertexOrEdge v)
 		{
