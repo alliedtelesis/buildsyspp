@@ -1,4 +1,4 @@
-CXX_FILES:=main.cpp interface.cpp world.cpp package.cpp packagecmd.cpp run.cpp graph.cpp \
+CXX_FILES:=main.cpp interface.cpp world.cpp package.cpp packagecmd.cpp extraction.cpp run.cpp graph.cpp \
 		$(addprefix dir/, dir.cpp builddir.cpp)
 CFILES:= 
 

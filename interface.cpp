@@ -116,6 +116,7 @@ int li_bd_fetch(lua_State *L)
 		argv[2] = strdup(location);
 		if(run(P->getName().c_str(), (char *)"git", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to git clone");
+		P->setCodeUpdated();
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("ln");
@@ -155,6 +156,7 @@ int li_bd_fetch(lua_State *L)
 			free(rmargv);
 			free(l);
 		}
+		P->setCodeUpdated();
 	} else if(strcmp(method, "copy") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");
@@ -177,6 +179,7 @@ int li_bd_fetch(lua_State *L)
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to copy (recursively)");
+		P->setCodeUpdated();
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = NULL;
 		asprintf(&path, "%s/%s", d->getPath(), location);
@@ -184,6 +187,7 @@ int li_bd_fetch(lua_State *L)
 		lua_getglobal(L, "P");
 		Package *P = (Package *)lua_topointer(L, -1);
 		P->setDepsExtract(path);
+		P->setCodeUpdated();
 	} else {
 		throw CustomException("Unsupported fetch method");
 	}
@@ -225,40 +229,20 @@ int li_bd_extract(lua_State *L)
 	}
 	
 	const char *fName = lua_tostring(L, 2);
-
-	char **argv = NULL;
-	
-	int res = mkdir("dl", 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
-		throw CustomException("Error: Creating download directory");
-	}
-	argv = (char **)calloc(4, sizeof(char *));
-	argv[0] = strdup("tar");
-	argv[1] = strdup("xf");
+	char *realFName = NULL;
 	if(!strncmp(fName, "dl/", 3))
 	{
 		char *pwd = getcwd(NULL, 0);
-		asprintf(&argv[2], "%s/%s", pwd, fName);
+		asprintf(&realFName, "%s/%s", pwd, fName);
 		free(pwd);
 	} else {
-		argv[2] = strdup(fName);
+		asprintf(&realFName, "%s/%s", d->getPath(), fName);
 	}
 	
-	if(run(P->getName().c_str(), (char *)"tar", argv , d->getPath(), NULL) != 0)
-		throw CustomException("Failed to extract file");
-	
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
-	
+	TarExtractionUnit *teu = new TarExtractionUnit(realFName);
+	P->extraction()->add(teu);
+
+	free(realFName);
 	return 0;
 }
 
@@ -331,7 +315,7 @@ int li_bd_patch(lua_State *L)
 		return true;
 	}
 
-	CHECK_ARGUMENT_TYPE("fetch",1,BuildDir,d);
+	CHECK_ARGUMENT_TYPE("patch",1,BuildDir,d);
 
 	char *patch_path = NULL;
 	asprintf(&patch_path, "%s/%s", d->getPath(), lua_tostring(L, 2));
@@ -339,54 +323,32 @@ int li_bd_patch(lua_State *L)
 	int patch_depth = lua_tonumber(L, 3);
 
 
-	char **argv = (char **)calloc(7, sizeof(char *));
-	argv[0] = strdup("patch");
-	asprintf(&argv[1], "-p%i", patch_depth);
-	argv[2] = strdup("-stN");
-	argv[3] = strdup("-i");
-	
 	char *pwd = getcwd(NULL, 0);
 		
 	lua_pushnil(L);  /* first key */
 	while (lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 		{
+			char *uri = NULL;
 			if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("patch() requires a table of strings as the third argument\n");
 			if(!strncmp(lua_tostring(L, -1), "dl/", 3))
 			{
-				asprintf(&argv[4], "%s/%s", pwd,  lua_tostring(L, -1));
+				asprintf(&uri, "%s/%s", pwd,  lua_tostring(L, -1));
 			} else {
-				asprintf(&argv[4], "%s/package/%s/%s", pwd, P->getName().c_str(), lua_tostring(L, -1));
+				asprintf(&uri, "%s/package/%s/%s", pwd, P->getName().c_str(), lua_tostring(L, -1));
 			}
-			argv[5] = strdup("--dry-run");
-			if(run(P->getName().c_str(), (char *)"patch", argv , patch_path, NULL) != 0)
-			{
-				log(P->getName().c_str(), "Patch file: %s", argv[4]);
-				throw CustomException("Will fail to patch");
-			}
-			free(argv[5]);
-			argv[5] = NULL;
-			if(run(P->getName().c_str(), (char *)"patch", argv , patch_path, NULL) != 0)
-				throw CustomException("Truely failed to patch");
-			free(argv[4]);
-			argv[4] = NULL;
+			PatchExtractionUnit *peu = new PatchExtractionUnit(patch_depth, patch_path, uri);
+			P->extraction()->add(peu);
+
+			free(uri);
 		}
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);
 	}
 	
 	free(pwd);
-	
-	if(argv != NULL) {
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
-	
+	free(patch_path);
+
 	return 0;
 }
 

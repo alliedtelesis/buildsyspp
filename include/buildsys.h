@@ -90,6 +90,8 @@ extern "C" {
 namespace buildsys {
 	typedef std::map<std::string, std::string> key_value;
 	typedef std::list<std::string> string_list;
+	
+	class Package;
 
 	/*! The catchable exception */
 	class Exception {
@@ -305,6 +307,101 @@ namespace buildsys {
 			bool Run(const char *package);
 	};
 	
+	//! An extraction unit
+	/** Describes a single step required to re-extract a package
+	  */
+	class ExtractionUnit {
+		protected:
+			std::string uri; //!< URI of this unit
+			std::string hash; //!< Hash of this unit
+		public:
+			ExtractionUnit() : uri(std::string()), hash(std::string()) {};
+			virtual bool same(ExtractionUnit *eu) = 0;
+			virtual bool print(std::ostream& out) = 0;
+			virtual std::string type() = 0;
+			virtual bool extract(Package *P, BuildDir *b) = 0;
+			virtual std::string URI() { return this->uri; };
+			virtual std::string HASH() { return this->hash; };
+	};
+	
+	//! A tar extraction unit
+	class TarExtractionUnit : public ExtractionUnit {
+		public:
+			//! Create an extraction unit for a tar file
+			TarExtractionUnit(const char *fName);
+			virtual bool same(ExtractionUnit *eu)
+			{
+				if(eu->type().compare("TarFile") != 0) return false;
+				if(eu->URI().compare(this->uri) != 0) return false;
+				if(eu->HASH().compare(this->hash) != 0) return false;
+				return true;
+			}
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("TarFile");
+			}
+			virtual bool extract(Package *P, BuildDir *b);
+	};
+	
+	//! A patch file as part of the extraction step
+	class PatchExtractionUnit : public ExtractionUnit {
+		private:
+			int level;
+			char *patch_path;
+		public:
+			PatchExtractionUnit(int level, char *patch_path, char *patch);
+			virtual bool same(ExtractionUnit *eu)
+			{
+				if(eu->type().compare("PatchFile") != 0) return false;
+				if(eu->URI().compare(this->uri) != 0) return false;
+				if(eu->HASH().compare(this->hash) != 0) return false;
+				return true;
+			}
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->level << " " << this->patch_path << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("PatchFile");
+			}
+			virtual bool extract(Package *P, BuildDir *b);
+	};
+	//! An extraction description
+	/** Describes all the steps and files required to re-extract a package
+	  * Used for checking a package needs extracting again
+	  */
+	class Extraction {
+		private:
+			ExtractionUnit **EUs;
+			size_t EU_count;
+		public:
+			Extraction() : EUs(NULL), EU_count(0) {};
+			bool add(ExtractionUnit *eu);
+			bool print(std::ostream& out)
+			{
+				for(size_t i = 0; i < this->EU_count; i++)
+				{
+					if(!EUs[i]->print(out)) return false;
+				}
+				return true;
+			}
+			bool extract(Package *P, BuildDir *d)
+			{
+				for(size_t i = 0; i < this->EU_count; i++)
+				{
+					if(!EUs[i]->extract(P,d)) return false;
+				}
+				return true;
+			};
+	};
+	
 	//! A package to build
 	class Package {
 		private:
@@ -313,6 +410,7 @@ namespace buildsys {
 			std::string name;
 			std::string file;
 			BuildDir *bd;
+			Extraction *Extract;
 			bool intercept;
 			char *depsExtraction;
 			char *installFile;
@@ -320,6 +418,8 @@ namespace buildsys {
 			bool processed;
 			bool built;
 			bool building;
+			bool extracted;
+			bool codeUpdated;
 #ifdef UNDERSCORE
 			us_mutex *lock;
 #endif
@@ -335,13 +435,15 @@ namespace buildsys {
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
 			 run_secs(0) {};
 			//! Returns the build directory being used by this package
 			BuildDir *builddir();
+			//! Returns the extraction
+			Extraction *extraction() { return this->Extract; };
 			//! Convert this package to the intercepting type
 			/** Intercepting packages stop the extract install method from recursing past them.
 			  */
@@ -370,6 +472,10 @@ namespace buildsys {
 			void setInstallFile(char *i) { this->installFile = i; };
 			//! Parse and load the lua file for this package
 			bool process();
+			//! Extract all the sources required for this package
+			bool extract();
+			//! Sets the code updated flag
+			void setCodeUpdated() { this->codeUpdated = true; };
 			//! Is this package ready for building yet ?
 			/** \return true iff all all dependencies are built
 			  */
