@@ -71,6 +71,61 @@ bool Package::process()
 	return true;
 }
 
+bool Package::extract()
+{
+	if(this->extracted)
+	{
+		return true;
+	}
+
+	if(this->bd)
+	{
+		// Dont bother extracting if we are running in forced mode, and this package isn't forced
+		if(!(WORLD->forcedMode() && !WORLD->isForced(this->getName())))
+		{
+			// Create the new extraction info file
+			char *exinfoFname = NULL;
+			asprintf(&exinfoFname, "%s/.extraction.info.new", this->bd->getPath());
+			std::ofstream exInfo(exinfoFname);
+			this->Extract->print(exInfo);
+			free(exinfoFname);
+		
+			char *cmd = NULL;
+			asprintf(&cmd, "cmp -s %s/.extraction.info.new %s/.extraction.info", this->bd->getPath(), this->bd->getPath());
+			int res = system(cmd);
+			free(cmd);
+			cmd = NULL;
+		
+			// if there are changes,
+			if(res != 0)
+			{	// Extract our source code
+				log(this->name.c_str(), (char *)"Extracting sources and patching");
+				this->Extract->extract(this, this->bd);
+				this->setCodeUpdated();
+			}
+			// mv the file into the regular place
+			asprintf(&cmd, "mv %s/.extraction.info.new %s/.extraction.info", this->bd->getPath(), this->bd->getPath());
+			system(cmd);
+			free(cmd);
+		}
+	}
+
+	std::list<Package *>::iterator iter = this->depends.begin();
+	std::list<Package *>::iterator end = this->depends.end();
+
+	for(; iter != end; iter++)
+	{
+		if(!(*iter)->extract())
+		{
+			log(this->name.c_str(),(char *)"dependency extract failed");
+			return false;
+		}
+	}
+	
+	this->extracted = true;
+	return true;
+}
+
 bool Package::extract_staging(const char *dir, std::list<std::string> *done)
 {
 	{

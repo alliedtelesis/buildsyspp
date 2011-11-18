@@ -100,7 +100,10 @@ bool World::basePackage(char *filename)
 	this->p = findPackage(filename, filename);
 
 	try {
+		// Load all the lua files
 		this->p->process();
+		// Extract all the source code
+		this->p->extract();
 	} catch (Exception &E)
 	{
 		error(E.error_msg().c_str());
