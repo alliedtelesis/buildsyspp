@@ -167,7 +167,12 @@ BuildDir::BuildDir(std::string name, bool clean)
 void BuildDir::clean()
 {
 	char *cmd = NULL;
-	asprintf(&cmd, "rm -fr %s/* %s/.*", this->path.c_str(),this->path.c_str());
+	asprintf(&cmd, "rm -fr %s", this->path.c_str());
 	system(cmd);
 	free(cmd);	
+	int res = mkdir(this->path.c_str(),0700);
+	if(res < 0)
+	{
+		// We should complain here
+	}
 }

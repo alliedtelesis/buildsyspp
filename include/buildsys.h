@@ -323,6 +323,16 @@ namespace buildsys {
 			virtual std::string URI() { return this->uri; };
 			virtual std::string HASH() { return this->hash; };
 	};
+
+	//! A build unit
+	/** Describes a single piece required to re-build a package
+	  */
+	class BuildUnit {
+		public:
+			BuildUnit() {};
+			virtual bool print(std::ostream& out) = 0;
+			virtual std::string type() = 0;
+	};
 	
 	//! A tar extraction unit
 	class TarExtractionUnit : public ExtractionUnit {
@@ -373,6 +383,84 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 	};
+
+	//! A file copy as part of the extraction step
+	class FileCopyExtractionUnit : public ExtractionUnit {
+		private:
+		public:
+			FileCopyExtractionUnit(const char *file);
+			virtual bool same(ExtractionUnit *eu)
+			{
+				if(eu->type().compare("FileCopy") != 0) return false;
+				if(eu->URI().compare(this->uri) != 0) return false;
+				if(eu->HASH().compare(this->hash) != 0) return false;
+				return true;
+			}
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("FileCopy");
+			}
+			virtual bool extract(Package *P, BuildDir *b);
+	};
+	
+	//! A feature/value as part of the build step
+	class FeatureValueUnit : public BuildUnit {
+		private:
+			std::string feature;
+			std::string value;
+		public:
+			FeatureValueUnit(const char *feature, const char *value) : feature(std::string(feature)), value(std::string(value)) {};
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->feature << " " << this->value << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("FeatureValue");
+			}
+	};
+
+	//! A feature that is nil as part of the build step
+	class FeatureNilUnit : public BuildUnit {
+		private:
+			std::string feature;
+		public:
+			FeatureNilUnit(const char *feature) : feature(std::string(feature)) {};
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->feature << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("FeatureNil");
+			}
+	};
+	
+	//! A lua package file as part of the build step
+	class PackageFileUnit : public BuildUnit {
+		private:
+			std::string uri; //!< URI of this package file
+			std::string hash; //!< Hash of this package file
+		public:
+			PackageFileUnit(const char *file);
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("PackageFile");
+			}
+	};
+
 	//! An extraction description
 	/** Describes all the steps and files required to re-extract a package
 	  * Used for checking a package needs extracting again
@@ -401,6 +489,26 @@ namespace buildsys {
 				return true;
 			};
 	};
+
+	//! A build description
+	/** Describes relevant information to determine if a package needs rebuilding
+	  */
+	class BuildDescription {
+		private:
+			BuildUnit **BUs;
+			size_t BU_count;
+		public:
+			BuildDescription() : BUs(NULL), BU_count(0) {};
+			bool add(BuildUnit *bu);
+			bool print(std::ostream& out)
+			{
+				for(size_t i = 0; i < this->BU_count; i++)
+				{
+					if(!BUs[i]->print(out)) return false;
+				}
+				return true;
+			}
+	};
 	
 	//! A package to build
 	class Package {
@@ -411,6 +519,7 @@ namespace buildsys {
 			std::string file;
 			BuildDir *bd;
 			Extraction *Extract;
+			BuildDescription *build_description;
 			bool intercept;
 			char *depsExtraction;
 			char *installFile;
@@ -435,7 +544,7 @@ namespace buildsys {
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
@@ -444,6 +553,8 @@ namespace buildsys {
 			BuildDir *builddir();
 			//! Returns the extraction
 			Extraction *extraction() { return this->Extract; };
+			//! Returns the builddescription
+			BuildDescription *buildDescription() { return this->build_description; };
 			//! Convert this package to the intercepting type
 			/** Intercepting packages stop the extract install method from recursing past them.
 			  */
@@ -484,6 +595,13 @@ namespace buildsys {
 			/** \return true if this package has already been built during this invocation of buildsys
 			  */
 			bool isBuilt();
+			//! Should this package be rebuilt ?
+			/** This returns true when any of the following occur:
+			  * - The output staging or install tarballs are removed
+			  * - The package file changes
+			  * - Any of the feature values that are used by the package change
+			  */
+			bool shouldBuild();
 			//! Build this package
 			bool build();
 			//! Has building of this package already started ?

@@ -116,6 +116,7 @@ int li_bd_fetch(lua_State *L)
 		argv[2] = strdup(location);
 		if(run(P->getName().c_str(), (char *)"git", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to git clone");
+		fprintf(stderr, "Git clone, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
@@ -156,7 +157,25 @@ int li_bd_fetch(lua_State *L)
 			free(rmargv);
 			free(l);
 		}
+		fprintf(stderr, "Linked data in, considering updated\n");
 		P->setCodeUpdated();
+	} else if(strcmp(method, "copyfile") == 0) {
+		char *file_path = NULL;
+		if(location[0] == '/')
+		{
+			file_path = strdup(location);
+		} else {
+			char *pwd = getcwd(NULL, 0);
+			if(location[0] == '.')
+			{
+				asprintf(&file_path, "%s/%s", pwd, location);
+			} else {
+				asprintf(&file_path, "%s/package/%s/%s", pwd, P->getName().c_str(), location);
+			}
+			free(pwd);
+		}
+		P->extraction()->add(new FileCopyExtractionUnit(file_path));
+		free(file_path);
 	} else if(strcmp(method, "copy") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");
@@ -179,6 +198,7 @@ int li_bd_fetch(lua_State *L)
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to copy (recursively)");
+		fprintf(stderr, "Copyed data in, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = NULL;
@@ -187,6 +207,7 @@ int li_bd_fetch(lua_State *L)
 		lua_getglobal(L, "P");
 		Package *P = (Package *)lua_topointer(L, -1);
 		P->setDepsExtract(path);
+		fprintf(stderr, "Will add installed files, considering code updated\n");
 		P->setCodeUpdated();
 	} else {
 		throw CustomException("Unsupported fetch method");
@@ -394,15 +415,20 @@ static int li_feature(lua_State *L)
 	}
 	if(lua_gettop(L) == 1)
 	{
+		lua_getglobal(L, "P");
+		Package *P = (Package *)lua_topointer(L, -1);
+		
 		if(lua_type(L, 1) != LUA_TSTRING) throw CustomException("Argument to feature() must be a string");
 		const char *key = lua_tostring(L, 1);
 		try {
 			std::string value = WORLD->getFeature(std::string(key));
 			lua_pushstring(L, value.c_str());
+			P->buildDescription()->add(new FeatureValueUnit(key,value.c_str()));
 		}
 		catch(NoKeyException &E)
 		{
 			lua_pushnil(L);
+			P->buildDescription()->add(new FeatureNilUnit(key));
 		}
 		return 1;
 	}

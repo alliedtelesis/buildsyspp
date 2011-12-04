@@ -107,3 +107,61 @@ bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 	}
 	return true;
 }
+
+FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
+bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
+{
+	char **argv = NULL;
+	
+	argv = (char **)calloc(5, sizeof(char *));
+	argv[0] = strdup("cp");
+	argv[1] = strdup("-a");
+	argv[2] = strdup(this->uri.c_str());
+	argv[3] = strdup(".");
+	
+	if(run(P->getName().c_str(), (char *)"cp", argv , bd->getPath(), NULL) != 0)
+		throw CustomException("Failed to copy file");
+	
+	if(argv != NULL)
+	{
+		int i = 0;
+		while(argv[i] != NULL)
+		{
+			free(argv[i]);
+			i++;
+		}
+		free(argv);
+	}
+	return true;
+}
+
+bool BuildDescription::add(BuildUnit *bu)
+{
+	BuildUnit **t = this->BUs;
+	this->BU_count++;
+	this->BUs = (BuildUnit **)realloc(t, sizeof(BuildUnit *) * this->BU_count);
+	if(this->BUs == NULL)
+	{
+		this->BUs = t;
+		this->BU_count--;
+		return false;
+	}
+	this->BUs[this->BU_count-1] = bu;
+	return true;
+}
+
+PackageFileUnit::PackageFileUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
