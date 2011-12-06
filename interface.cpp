@@ -118,6 +118,30 @@ int li_bd_fetch(lua_State *L)
 			throw CustomException("Failed to git clone");
 		fprintf(stderr, "Git clone, considering code updated\n");
 		P->setCodeUpdated();
+	} else if(strcmp(method, "linkgit") == 0) {
+		argv = (char **)calloc(5, sizeof(char *));
+		argv[0] = strdup("ln");
+		argv[1] = strdup("-sf");
+		if(location[0] == '.')
+		{
+			char *pwd = getcwd(NULL, 0);
+			asprintf(&argv[2], "%s/%s", pwd, location);
+			free(pwd);
+		} else {
+			argv[2] = strdup(location);
+		}
+		argv[3] = strdup(".");
+		if(run(P->getName().c_str(), (char *)"ln", argv , d->getPath(), NULL) != 0)
+		{
+			throw CustomException("Failed to symbolically link to git directory");
+		}
+		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(argv[2]);
+		if(gdeu->isDirty())
+		{
+			std::cout << "Git directory is dirty, considering code updated" << std::endl;
+			P->setCodeUpdated();
+		}
+		P->extraction()->add(gdeu);
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("ln");
@@ -176,6 +200,35 @@ int li_bd_fetch(lua_State *L)
 		}
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
 		free(file_path);
+	} else if(strcmp(method, "copygit") == 0) {
+		char *src_path = NULL;
+		if(location[0] == '/')
+		{
+			src_path = strdup(location);
+		} else {
+			char *pwd = getcwd(NULL, 0);
+			if(location[0] == '.')
+			{
+				asprintf(&src_path, "%s/%s", pwd, location);
+			} else {
+				asprintf(&src_path, "%s/package/%s/%s", pwd, P->getName().c_str(), location);
+			}
+			free(pwd);
+		}
+		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path);
+		if(gdeu->isDirty())
+		{
+			std::cout << "Git directory is dirty, considering code updated" << std::endl;
+			P->setCodeUpdated();
+		}
+		P->extraction()->add(gdeu);
+		argv = (char **)calloc(5, sizeof(char *));
+		argv[0] = strdup("cp");
+		argv[1] = strdup("-dpRuf");
+		argv[2] = src_path;
+		argv[3] = strdup(".");
+		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
+			throw CustomException("Failed to copy (recursively)");		
 	} else if(strcmp(method, "copy") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");
@@ -198,7 +251,7 @@ int li_bd_fetch(lua_State *L)
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to copy (recursively)");
-		fprintf(stderr, "Copyed data in, considering code updated\n");
+		fprintf(stderr, "Copied data in, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = NULL;

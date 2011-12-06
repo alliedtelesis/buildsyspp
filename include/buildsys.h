@@ -408,6 +408,31 @@ namespace buildsys {
 			virtual bool extract(Package *P, BuildDir *b);
 	};
 	
+	//! A git directory as part of the extraction step
+	class GitDirExtractionUnit : public ExtractionUnit {
+		private:
+		public:
+			GitDirExtractionUnit(const char *git_dir);
+			virtual bool same(ExtractionUnit *eu)
+			{
+				if(eu->type().compare("GitDir") != 0) return false;
+				if(eu->URI().compare(this->uri) != 0) return false;
+				if(eu->HASH().compare(this->hash) != 0) return false;
+				return true;
+			}
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << " " << (this->isDirty() ? "Dirty" : "")  << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("GitDir");
+			}
+			virtual bool extract(Package *P, BuildDir *b);
+			virtual bool isDirty();
+	};
+	
 	//! A feature/value as part of the build step
 	class FeatureValueUnit : public BuildUnit {
 		private:

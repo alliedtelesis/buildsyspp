@@ -99,7 +99,7 @@ bool Package::extract()
 			cmd = NULL;
 		
 			// if there are changes,
-			if(res != 0)
+			if(res != 0 || this->codeUpdated)
 			{	// Extract our source code
 				log(this->name.c_str(), (char *)"Extracting sources and patching");
 				this->Extract->extract(this, this->bd);

@@ -12,6 +12,20 @@ static char * hash_file(const char *fname)
 	return Hash;	
 }
 
+static char * git_hash(const char *gdir)
+{
+	char *pwd = getcwd(NULL,0);
+	char *cmd = NULL;
+	asprintf(&cmd, "git rev-parse HEAD");
+	chdir(gdir);
+	FILE *f = popen(cmd, "r");
+	free(cmd);
+	char *Commit = (char *)calloc(41, sizeof(char));
+	fread(Commit, sizeof(char), 40, f);
+	chdir(pwd);
+	return Commit;
+}
+
 bool Extraction::add(ExtractionUnit *eu)
 {
 	ExtractionUnit **t = this->EUs;
@@ -139,6 +153,31 @@ bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 		}
 		free(argv);
 	}
+	return true;
+}
+
+GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir)
+{
+	this->uri = std::string(git_dir);
+	char *Hash = git_hash(git_dir);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
+bool GitDirExtractionUnit::isDirty()
+{
+	char *pwd = getcwd(NULL,0);
+	char *cmd = NULL;
+	asprintf(&cmd, "git diff-index --quiet HEAD");
+	chdir(this->uri.c_str());
+	int res = system(cmd);
+	free(cmd);
+	chdir(pwd);
+	return (res != 0);
+}
+
+bool GitDirExtractionUnit::extract(Package *P, BuildDir *bd)
+{
 	return true;
 }
 
