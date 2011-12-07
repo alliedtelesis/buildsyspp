@@ -351,7 +351,6 @@ bool Package::shouldBuild()
 	}
 	free(fname);
 	fname = NULL;
-	if(ret) return true;
 	// Now lets check that the staging file (still) exists
 	asprintf(&fname, "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 	f = fopen(fname, "r");
