@@ -556,6 +556,7 @@ std::endl;
 			bool building;
 			bool extracted;
 			bool codeUpdated;
+			bool was_built;
 #ifdef UNDERSCORE
 			us_mutex *lock;
 #endif
@@ -571,7 +572,7 @@ std::endl;
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
@@ -622,6 +623,10 @@ std::endl;
 			/** \return true if this package has already been built during this invocation of buildsys
 			  */
 			bool isBuilt();
+			//! Was this package actually built ?
+			/** \return true iff this package's build commands were actually run
+			  */
+			bool wasBuilt() { return this->was_built; }
 			//! Should this package be rebuilt ?
 			/** This returns true when any of the following occur:
 			  * - The output staging or install tarballs are removed

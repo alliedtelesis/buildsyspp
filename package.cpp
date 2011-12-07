@@ -393,19 +393,25 @@ bool Package::build()
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
 	
+	bool dependency_built = false;
 	if(dIt != dEnds)
 	{
 		for(; dIt != dEnds; dIt++)
 		{
 			if(!(*dIt)->build())
 				return false;
+			if((*dIt)->wasBuilt())
+			{
+				std::cout << "Dependency: " << (*dIt)->getName() << " was built" << std::endl;
+				dependency_built = true;
+			}
 		}
 	}
 
 	bool sb = this->shouldBuild();
 
 	if((WORLD->forcedMode() && !WORLD->isForced(this->name)) ||
-		(!sb))
+		(!sb && !dependency_built))
 	{
 #ifdef UNDERSCORE
 		// lock
@@ -602,6 +608,7 @@ bool Package::build()
 #endif
 	this->building = false;
 	this->built = true;
+	this->was_built = true;
 #ifdef UNDERSCORE
 	// unlock
 	us_mutex_unlock(this->lock);
