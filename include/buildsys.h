@@ -422,7 +422,8 @@ namespace buildsys {
 			}
 			virtual bool print(std::ostream& out)
 			{
-				out << this->type() << " " << this->uri << " " << this->hash << " " << (this->isDirty() ? "Dirty" : "")  << std::endl;
+				out << this->type() << " " << this->uri << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << 
+std::endl;
 				return true;
 			}
 			virtual std::string type()
@@ -431,6 +432,7 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 			virtual bool isDirty();
+			virtual std::string dirtyHash();
 	};
 	
 	//! A feature/value as part of the build step

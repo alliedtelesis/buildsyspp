@@ -136,11 +136,6 @@ int li_bd_fetch(lua_State *L)
 			throw CustomException("Failed to symbolically link to git directory");
 		}
 		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(argv[2]);
-		if(gdeu->isDirty())
-		{
-			std::cout << "Git directory is dirty, considering code updated" << std::endl;
-			P->setCodeUpdated();
-		}
 		P->extraction()->add(gdeu);
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
@@ -216,11 +211,6 @@ int li_bd_fetch(lua_State *L)
 			free(pwd);
 		}
 		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path);
-		if(gdeu->isDirty())
-		{
-			std::cout << "Git directory is dirty, considering code updated" << std::endl;
-			P->setCodeUpdated();
-		}
 		P->extraction()->add(gdeu);
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");

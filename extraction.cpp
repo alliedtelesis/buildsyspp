@@ -26,6 +26,20 @@ static char * git_hash(const char *gdir)
 	return Commit;
 }
 
+static char * git_diff_hash(const char *gdir)
+{
+	char *pwd = getcwd(NULL,0);
+	char *cmd = NULL;
+	asprintf(&cmd, "git diff HEAD | git patch-id");
+	chdir(gdir);
+	FILE *f = popen(cmd, "r");
+	free(cmd);
+	char *Commit = (char *)calloc(41, sizeof(char));
+	fread(Commit, sizeof(char), 40, f);
+	chdir(pwd);
+	return Commit;
+}
+
 bool Extraction::add(ExtractionUnit *eu)
 {
 	ExtractionUnit **t = this->EUs;
@@ -174,6 +188,14 @@ bool GitDirExtractionUnit::isDirty()
 	free(cmd);
 	chdir(pwd);
 	return (res != 0);
+}
+
+std::string GitDirExtractionUnit::dirtyHash()
+{
+	char *phash = git_diff_hash(this->uri.c_str());
+	std::string ret(phash);
+	free(phash);
+	return ret;
 }
 
 bool GitDirExtractionUnit::extract(Package *P, BuildDir *bd)
