@@ -1,21 +1,16 @@
-CXX_FILES:=main.cpp interface.cpp world.cpp package.cpp packagecmd.cpp extraction.cpp run.cpp graph.cpp \
-		$(addprefix dir/, dir.cpp builddir.cpp)
-CFILES:= 
+CXXFILES	:= $(wildcard *.cpp) $(wildcard dir/*.cpp)
+CFILES		:= 
 
-HEADERS:=include/*.h
-CXXFLAGS:=-Wall -ggdb2 -Iinclude `pkg-config --cflags --libs lua` -lrt $(USER_DEFINES)
+HEADERS		:= $(wildcard include/*.h)
+
+CPPFLAGS	:= -Iinclude -D_GNU_SOURCE
+CXXFLAGS	:= -Wall -Werror -ggdb2 `pkg-config --cflags lua` $(USER_DEFINES)
+CFLAGS		:= -std=c99 $(CXXFLAGS)
+LDFLAGS		:= `pkg-config --libs lua` -lrt
 
 ifeq ($(UNDERSCORE),y)
-	CXXFLAGS+= $(addprefix -I$(UNDERSCORE_PATH)/lib/, \
-				common/include/ datacoding/include/ \
-				lock/include/ tree/include/ \
-				thread/include/ encryption/include/ \
-				event/include/ queue/include/ \
-				jq/include/ network/include/ \
-				delay/include/ _core/include/ client/include/) \
-				-DUNDERSCORE
-	CXX_FILES+= $(addprefix lm/, linux.c)
-	CFILES+= $(addprefix $(UNDERSCORE_PATH)/lib/, \
+#	CXXFILES += $(addprefix lm/, linux.c)
+	CFILES += $(addprefix $(UNDERSCORE_PATH)/lib/, \
 				$(addprefix datacoding/, datacoding.c) \
 				$(addprefix lock/, lock.c cond.c) \
 				$(addprefix tree/, avl.c bst.c heap.c mbtree.c splay.c) \
@@ -29,20 +24,28 @@ ifeq ($(UNDERSCORE),y)
 				$(addprefix delay/, delay_main.c) \
 				$(addprefix _core/, core_main.c) \
 				$(addprefix client/, client_main.c))
-	LDFLAGS+= -lz
+	UCPPFLAGS += $(addprefix -I$(UNDERSCORE_PATH)/lib/, \
+				common/include/ datacoding/include/ \
+				lock/include/ tree/include/ \
+				thread/include/ encryption/include/ \
+				event/include/ queue/include/ \
+				jq/include/ network/include/ \
+				delay/include/ _core/include/ client/include/) \
+				-DUNDERSCORE
+	CXXFLAGS += $(UCPPFLAGS)
+	CFLAGS += $(UCPPFLAGS)
+	LDFLAGS += -lz
 endif
 
-COBJS:= $(CFILES:.c=.o)
+OBJS		:= $(CXXFILES:.cpp=.o) $(CFILES:.c=.o)
 
 
 all: buildsys
 
-%.o: %.c Makefile
-	gcc -c -o $(@) $(<) $(CXXFLAGS) -std=c99 -D_GNU_SOURCE
+$(OBJS): Makefile $(HEADERS)
 
-buildsys: $(CXX_FILES) $(COBJS) Makefile $(HEADERS)
-	g++ -o $(@) $(CXX_FILES) $(CXXFLAGS) $(COBJS) $(LDFLAGS)
+buildsys: Makefile $(OBJS)
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
 
 clean:
-	rm -f $(COBJS) buildsys
-
+	rm -f $(OBJS) buildsys
