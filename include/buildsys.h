@@ -80,11 +80,15 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 	lua_settable(L, -3);
 
 extern "C" {
-	int li_bd_fetch(lua_State *L);
-	int li_bd_extract(lua_State *L);
-	int li_bd_patch(lua_State *L);
+	int li_bd_autoreconf(lua_State *L);
 	int li_bd_cmd(lua_State *L);
-	int li_bd_install(lua_State *L);
+	int li_bd_configure(lua_State *L);
+	int li_bd_extract(lua_State *L);
+	int li_bd_fetch(lua_State *L);
+	int li_bd_installfile(lua_State *L);
+	int li_bd_make(lua_State *L);
+	int li_bd_patch(lua_State *L);
+	int li_bd_shell(lua_State *L);
 };
 
 namespace buildsys {
@@ -230,6 +234,8 @@ namespace buildsys {
 			std::string staging;
 			std::string new_staging;
 			std::string new_install;
+			std::string work_build;
+			std::string work_src;
 		public:
 			//! Create a build directory
 			/** \param pname The package name
@@ -244,22 +250,30 @@ namespace buildsys {
 			const char *getNewStaging() { return this->new_staging.c_str(); };
 			//! Return the full path to the new install directory
 			const char *getNewInstall() { return this->new_install.c_str(); };
+			const char *getWorkBuild() { return this->work_build.c_str(); };
+			const char *getWorkSrc() { return this->work_src.c_str(); };
 
 			//! Remove all the contents of this directory
 			void clean();
 
 			static void lua_table_r(lua_State *L) { LUA_SET_TABLE_TYPE(L,BuildDir)
-						LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
-						LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
+						LUA_ADD_TABLE_FUNC(L, "autoreconf", li_bd_autoreconf);
 						LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
+						LUA_ADD_TABLE_FUNC(L, "configure", li_bd_configure);
+						LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
+						LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
+						LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
+						LUA_ADD_TABLE_FUNC(L, "make", li_bd_make);
 						LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
-						LUA_ADD_TABLE_FUNC(L, "install", li_bd_install);
+						LUA_ADD_TABLE_FUNC(L, "shell", li_bd_shell);
 						super::lua_table_r(L); }
 			virtual void lua_table(lua_State *L) { lua_table_r(L); 
-					LUA_ADD_TABLE_STRING(L, "path", path.c_str());
-					LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
 					LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
 					LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
+					LUA_ADD_TABLE_STRING(L, "path", path.c_str());
+					LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
+					LUA_ADD_TABLE_STRING(L, "work_build", work_build.c_str());
+					LUA_ADD_TABLE_STRING(L, "work_src", work_src.c_str());
 				};
 	};
 	
@@ -281,6 +295,10 @@ namespace buildsys {
 			  * \param app The program to invoke
 			  */
 			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
+			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {}
+			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {}
+			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {}
+
 			//! Add an argument to this command
 			/** \param arg The argument to append to this command
 			  */
@@ -291,6 +309,8 @@ namespace buildsys {
 				this->args[this->arg_count-1] = strdup(arg);
 				this->args[this->arg_count] = NULL;
 			}
+			void addArg(std::string const &arg) { addArg(arg.c_str()); }
+
 			//! Add an enviroment variable to this command
 			/** \param env The enviroment variable to append to this command
 			  */
@@ -301,6 +321,8 @@ namespace buildsys {
 				this->envp[this->envp_count-1] = strdup(env);
 				this->envp[this->envp_count] = NULL;
 			}
+			void addEnv(std::string const &env) { addEnv(env.c_str()); }
+
 			//! Run this command
 			/** \param package The package name to use in the command logging
 			 */
