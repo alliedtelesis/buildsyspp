@@ -538,6 +538,7 @@ namespace buildsys {
 			Internal_Graph *graph;
 			Internal_Graph *topo_graph;
 			bool failed;
+			bool cleaning;
 #ifdef UNDERSCORE_MONITOR
 			us_event_set *es;
 #endif
@@ -546,7 +547,7 @@ namespace buildsys {
 #endif
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
-					lua(new Lua()), graph(NULL), failed(false)
+					lua(new Lua()), graph(NULL), failed(false), cleaning(false)
 #ifdef UNDERSCORE
 					,cond(us_cond_create()) 
 #endif
@@ -573,6 +574,15 @@ namespace buildsys {
 			void forceBuild(std::string name) { forcedDeps->push_back(name); };
 			//! Check if a specific package is being forced
 			bool isForced(std::string name);
+			//! Are we operating in 'cleaning' mode
+			/** If --clean is parsed as a parameter, we run in cleaning mode
+			  * This will make any package that would have been built
+			  * clean out its working directory instead
+			  * (Ignoring dependency scanning, but obeying forced mode)
+			  */
+			bool areCleaning() { return this->cleaning; }
+			//! Set cleaning mode
+			void setCleaning() { this->cleaning = true; }
 			//! Set a feature to a specific value
 			/** Note that the default is to not set already-set features to new values
 			  * pass override=true to ignore this safety
