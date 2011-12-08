@@ -206,6 +206,10 @@ int main(int argc, char *argv[])
 	bool foundDashDash = false;
 	while(a < argc && !foundDashDash)
 	{
+		if(!strcmp(argv[a],"--clean"))
+		{
+			WORLD->setCleaning();
+		} else
 		if(!strcmp(argv[a],"--"))
 		{
 			foundDashDash = true;

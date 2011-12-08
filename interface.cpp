@@ -772,13 +772,11 @@ int li_builddir(lua_State *L)
 	CREATE_TABLE(L,P->builddir());
 	P->builddir()->lua_table(L);
 
-	if(args == 1 && lua_toboolean(L, 1))
+	if((args == 1 && lua_toboolean(L, 1)) || 
+		(WORLD->areCleaning() && 
+		!(WORLD->forcedMode() && !WORLD->isForced(P->getName()))))
 	{
-		// clean out the build directory
-		if(!(WORLD->forcedMode() && !WORLD->isForced(P->getName())))
-		{
-			P->builddir()->clean();
-		}
+		P->builddir()->clean();
 	}
 
 	return 1;
