@@ -295,9 +295,8 @@ namespace buildsys {
 			  * \param app The program to invoke
 			  */
 			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
-			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {}
-			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {}
-			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {}
+			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
+			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
 
 			//! Add an argument to this command
 			/** \param arg The argument to append to this command
