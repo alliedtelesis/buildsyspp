@@ -12,6 +12,34 @@ static char * hash_file(const char *fname)
 	return Hash;	
 }
 
+static char * git_hash(const char *gdir)
+{
+	char *pwd = getcwd(NULL,0);
+	char *cmd = NULL;
+	asprintf(&cmd, "git rev-parse HEAD");
+	chdir(gdir);
+	FILE *f = popen(cmd, "r");
+	free(cmd);
+	char *Commit = (char *)calloc(41, sizeof(char));
+	fread(Commit, sizeof(char), 40, f);
+	chdir(pwd);
+	return Commit;
+}
+
+static char * git_diff_hash(const char *gdir)
+{
+	char *pwd = getcwd(NULL,0);
+	char *cmd = NULL;
+	asprintf(&cmd, "git diff HEAD | git patch-id");
+	chdir(gdir);
+	FILE *f = popen(cmd, "r");
+	free(cmd);
+	char *Commit = (char *)calloc(41, sizeof(char));
+	fread(Commit, sizeof(char), 40, f);
+	chdir(pwd);
+	return Commit;
+}
+
 bool Extraction::add(ExtractionUnit *eu)
 {
 	ExtractionUnit **t = this->EUs;
@@ -107,3 +135,94 @@ bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 	}
 	return true;
 }
+
+FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
+bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
+{
+	char **argv = NULL;
+	
+	argv = (char **)calloc(5, sizeof(char *));
+	argv[0] = strdup("cp");
+	argv[1] = strdup("-a");
+	argv[2] = strdup(this->uri.c_str());
+	argv[3] = strdup(".");
+	
+	if(run(P->getName().c_str(), (char *)"cp", argv , bd->getPath(), NULL) != 0)
+		throw CustomException("Failed to copy file");
+	
+	if(argv != NULL)
+	{
+		int i = 0;
+		while(argv[i] != NULL)
+		{
+			free(argv[i]);
+			i++;
+		}
+		free(argv);
+	}
+	return true;
+}
+
+GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir)
+{
+	this->uri = std::string(git_dir);
+	char *Hash = git_hash(git_dir);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
+bool GitDirExtractionUnit::isDirty()
+{
+	char *pwd = getcwd(NULL,0);
+	char *cmd = NULL;
+	asprintf(&cmd, "git diff-index --quiet HEAD");
+	chdir(this->uri.c_str());
+	int res = system(cmd);
+	free(cmd);
+	chdir(pwd);
+	return (res != 0);
+}
+
+std::string GitDirExtractionUnit::dirtyHash()
+{
+	char *phash = git_diff_hash(this->uri.c_str());
+	std::string ret(phash);
+	free(phash);
+	return ret;
+}
+
+bool GitDirExtractionUnit::extract(Package *P, BuildDir *bd)
+{
+	return true;
+}
+
+bool BuildDescription::add(BuildUnit *bu)
+{
+	BuildUnit **t = this->BUs;
+	this->BU_count++;
+	this->BUs = (BuildUnit **)realloc(t, sizeof(BuildUnit *) * this->BU_count);
+	if(this->BUs == NULL)
+	{
+		this->BUs = t;
+		this->BU_count--;
+		return false;
+	}
+	this->BUs[this->BU_count-1] = bu;
+	return true;
+}
+
+PackageFileUnit::PackageFileUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+

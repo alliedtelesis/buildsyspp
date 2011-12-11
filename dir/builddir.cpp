@@ -66,6 +66,8 @@ BuildDir::BuildDir(std::string name, bool clean)
 		throw DirException(path, strerror(errno));
 	}
 	this->path = std::string(path);
+	this->work_src = this->path + "/" + name;
+	this->work_build = this->path + "/" + name + "-build";
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/new", pwd, gname, pname) == -1) {
 		fprintf(stderr, "Failed creating output/global-name/package-name/new path: %s\n", strerror(errno));
@@ -167,7 +169,12 @@ BuildDir::BuildDir(std::string name, bool clean)
 void BuildDir::clean()
 {
 	char *cmd = NULL;
-	asprintf(&cmd, "rm -fr %s/* %s/.*", this->path.c_str(),this->path.c_str());
+	asprintf(&cmd, "rm -fr %s", this->path.c_str());
 	system(cmd);
 	free(cmd);	
+	int res = mkdir(this->path.c_str(),0700);
+	if(res < 0)
+	{
+		// We should complain here
+	}
 }

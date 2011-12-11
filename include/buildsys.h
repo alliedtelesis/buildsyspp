@@ -80,11 +80,15 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 	lua_settable(L, -3);
 
 extern "C" {
-	int li_bd_fetch(lua_State *L);
-	int li_bd_extract(lua_State *L);
-	int li_bd_patch(lua_State *L);
+	int li_bd_autoreconf(lua_State *L);
 	int li_bd_cmd(lua_State *L);
-	int li_bd_install(lua_State *L);
+	int li_bd_configure(lua_State *L);
+	int li_bd_extract(lua_State *L);
+	int li_bd_fetch(lua_State *L);
+	int li_bd_installfile(lua_State *L);
+	int li_bd_make(lua_State *L);
+	int li_bd_patch(lua_State *L);
+	int li_bd_shell(lua_State *L);
 };
 
 namespace buildsys {
@@ -230,6 +234,8 @@ namespace buildsys {
 			std::string staging;
 			std::string new_staging;
 			std::string new_install;
+			std::string work_build;
+			std::string work_src;
 		public:
 			//! Create a build directory
 			/** \param pname The package name
@@ -244,22 +250,30 @@ namespace buildsys {
 			const char *getNewStaging() { return this->new_staging.c_str(); };
 			//! Return the full path to the new install directory
 			const char *getNewInstall() { return this->new_install.c_str(); };
+			const char *getWorkBuild() { return this->work_build.c_str(); };
+			const char *getWorkSrc() { return this->work_src.c_str(); };
 
 			//! Remove all the contents of this directory
 			void clean();
 
 			static void lua_table_r(lua_State *L) { LUA_SET_TABLE_TYPE(L,BuildDir)
-						LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
-						LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
+						LUA_ADD_TABLE_FUNC(L, "autoreconf", li_bd_autoreconf);
 						LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
+						LUA_ADD_TABLE_FUNC(L, "configure", li_bd_configure);
+						LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
+						LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
+						LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
+						LUA_ADD_TABLE_FUNC(L, "make", li_bd_make);
 						LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
-						LUA_ADD_TABLE_FUNC(L, "install", li_bd_install);
+						LUA_ADD_TABLE_FUNC(L, "shell", li_bd_shell);
 						super::lua_table_r(L); }
 			virtual void lua_table(lua_State *L) { lua_table_r(L); 
-					LUA_ADD_TABLE_STRING(L, "path", path.c_str());
-					LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
 					LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
 					LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
+					LUA_ADD_TABLE_STRING(L, "path", path.c_str());
+					LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
+					LUA_ADD_TABLE_STRING(L, "work_build", work_build.c_str());
+					LUA_ADD_TABLE_STRING(L, "work_src", work_src.c_str());
 				};
 	};
 	
@@ -281,6 +295,9 @@ namespace buildsys {
 			  * \param app The program to invoke
 			  */
 			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
+			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
+			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
+
 			//! Add an argument to this command
 			/** \param arg The argument to append to this command
 			  */
@@ -291,6 +308,8 @@ namespace buildsys {
 				this->args[this->arg_count-1] = strdup(arg);
 				this->args[this->arg_count] = NULL;
 			}
+			void addArg(std::string const &arg) { addArg(arg.c_str()); }
+
 			//! Add an enviroment variable to this command
 			/** \param env The enviroment variable to append to this command
 			  */
@@ -301,6 +320,8 @@ namespace buildsys {
 				this->envp[this->envp_count-1] = strdup(env);
 				this->envp[this->envp_count] = NULL;
 			}
+			void addEnv(std::string const &env) { addEnv(env.c_str()); }
+
 			//! Run this command
 			/** \param package The package name to use in the command logging
 			 */
@@ -322,6 +343,16 @@ namespace buildsys {
 			virtual bool extract(Package *P, BuildDir *b) = 0;
 			virtual std::string URI() { return this->uri; };
 			virtual std::string HASH() { return this->hash; };
+	};
+
+	//! A build unit
+	/** Describes a single piece required to re-build a package
+	  */
+	class BuildUnit {
+		public:
+			BuildUnit() {};
+			virtual bool print(std::ostream& out) = 0;
+			virtual std::string type() = 0;
 	};
 	
 	//! A tar extraction unit
@@ -373,6 +404,111 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 	};
+
+	//! A file copy as part of the extraction step
+	class FileCopyExtractionUnit : public ExtractionUnit {
+		private:
+		public:
+			FileCopyExtractionUnit(const char *file);
+			virtual bool same(ExtractionUnit *eu)
+			{
+				if(eu->type().compare("FileCopy") != 0) return false;
+				if(eu->URI().compare(this->uri) != 0) return false;
+				if(eu->HASH().compare(this->hash) != 0) return false;
+				return true;
+			}
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("FileCopy");
+			}
+			virtual bool extract(Package *P, BuildDir *b);
+	};
+	
+	//! A git directory as part of the extraction step
+	class GitDirExtractionUnit : public ExtractionUnit {
+		private:
+		public:
+			GitDirExtractionUnit(const char *git_dir);
+			virtual bool same(ExtractionUnit *eu)
+			{
+				if(eu->type().compare("GitDir") != 0) return false;
+				if(eu->URI().compare(this->uri) != 0) return false;
+				if(eu->HASH().compare(this->hash) != 0) return false;
+				return true;
+			}
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << 
+std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("GitDir");
+			}
+			virtual bool extract(Package *P, BuildDir *b);
+			virtual bool isDirty();
+			virtual std::string dirtyHash();
+	};
+	
+	//! A feature/value as part of the build step
+	class FeatureValueUnit : public BuildUnit {
+		private:
+			std::string feature;
+			std::string value;
+		public:
+			FeatureValueUnit(const char *feature, const char *value) : feature(std::string(feature)), value(std::string(value)) {};
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->feature << " " << this->value << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("FeatureValue");
+			}
+	};
+
+	//! A feature that is nil as part of the build step
+	class FeatureNilUnit : public BuildUnit {
+		private:
+			std::string feature;
+		public:
+			FeatureNilUnit(const char *feature) : feature(std::string(feature)) {};
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->feature << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("FeatureNil");
+			}
+	};
+	
+	//! A lua package file as part of the build step
+	class PackageFileUnit : public BuildUnit {
+		private:
+			std::string uri; //!< URI of this package file
+			std::string hash; //!< Hash of this package file
+		public:
+			PackageFileUnit(const char *file);
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("PackageFile");
+			}
+	};
+
 	//! An extraction description
 	/** Describes all the steps and files required to re-extract a package
 	  * Used for checking a package needs extracting again
@@ -401,6 +537,26 @@ namespace buildsys {
 				return true;
 			};
 	};
+
+	//! A build description
+	/** Describes relevant information to determine if a package needs rebuilding
+	  */
+	class BuildDescription {
+		private:
+			BuildUnit **BUs;
+			size_t BU_count;
+		public:
+			BuildDescription() : BUs(NULL), BU_count(0) {};
+			bool add(BuildUnit *bu);
+			bool print(std::ostream& out)
+			{
+				for(size_t i = 0; i < this->BU_count; i++)
+				{
+					if(!BUs[i]->print(out)) return false;
+				}
+				return true;
+			}
+	};
 	
 	//! A package to build
 	class Package {
@@ -411,6 +567,7 @@ namespace buildsys {
 			std::string file;
 			BuildDir *bd;
 			Extraction *Extract;
+			BuildDescription *build_description;
 			bool intercept;
 			char *depsExtraction;
 			char *installFile;
@@ -420,6 +577,7 @@ namespace buildsys {
 			bool building;
 			bool extracted;
 			bool codeUpdated;
+			bool was_built;
 #ifdef UNDERSCORE
 			us_mutex *lock;
 #endif
@@ -435,7 +593,7 @@ namespace buildsys {
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
@@ -444,6 +602,8 @@ namespace buildsys {
 			BuildDir *builddir();
 			//! Returns the extraction
 			Extraction *extraction() { return this->Extract; };
+			//! Returns the builddescription
+			BuildDescription *buildDescription() { return this->build_description; };
 			//! Convert this package to the intercepting type
 			/** Intercepting packages stop the extract install method from recursing past them.
 			  */
@@ -484,6 +644,17 @@ namespace buildsys {
 			/** \return true if this package has already been built during this invocation of buildsys
 			  */
 			bool isBuilt();
+			//! Was this package actually built ?
+			/** \return true iff this package's build commands were actually run
+			  */
+			bool wasBuilt() { return this->was_built; }
+			//! Should this package be rebuilt ?
+			/** This returns true when any of the following occur:
+			  * - The output staging or install tarballs are removed
+			  * - The package file changes
+			  * - Any of the feature values that are used by the package change
+			  */
+			bool shouldBuild();
 			//! Build this package
 			bool build();
 			//! Has building of this package already started ?

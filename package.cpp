@@ -49,6 +49,8 @@ bool Package::process()
 
 	log(this->name.c_str(), (char *)"Processing (%s)", this->file.c_str());
 
+	this->build_description->add(new PackageFileUnit(this->file.c_str()));
+
 	WORLD->getLua()->setGlobal(std::string("P"), this);
 
 	WORLD->getLua()->processFile(file.c_str());
@@ -97,7 +99,7 @@ bool Package::extract()
 			cmd = NULL;
 		
 			// if there are changes,
-			if(res != 0)
+			if(res != 0 || this->codeUpdated)
 			{	// Extract our source code
 				log(this->name.c_str(), (char *)"Extracting sources and patching");
 				this->Extract->extract(this, this->bd);
@@ -317,6 +319,67 @@ void Package::setBuilding()
 #endif
 }
 
+bool Package::shouldBuild()
+{
+	// we dont need to build if we don't have a build directory
+	if(this->bd == NULL) return false;
+	// Create the new build info file
+	char *buildInfoFname = NULL;
+	asprintf(&buildInfoFname, "%s/.build.info.new", this->bd->getPath());
+	std::ofstream buildInfo(buildInfoFname);
+	this->build_description->print(buildInfo);
+	free(buildInfoFname);
+
+	// we need to rebuild if the code is updated
+	if(this->codeUpdated) return true;
+	char *pwd = getcwd(NULL, 0);
+	// lets make sure the install file (still) exists
+	bool ret = false;
+	char *fname = NULL;
+	if(this->installFile)
+	{
+		asprintf(&fname, "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
+	} else {
+		asprintf(&fname, "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+	}
+	FILE *f = fopen(fname, "r");
+	if(f == NULL)
+	{
+		ret = true;
+	} else {
+		fclose(f);
+	}
+	free(fname);
+	fname = NULL;
+	// Now lets check that the staging file (still) exists
+	asprintf(&fname, "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+	f = fopen(fname, "r");
+	if(f == NULL)
+	{
+		ret = true;
+	} else {
+		fclose(f);
+	}
+	free(fname);
+	fname = NULL;
+	
+	char *cmd = NULL;
+	asprintf(&cmd, "cmp -s %s/.build.info.new %s/.build.info", this->bd->getPath(), this->bd->getPath());
+	int res = system(cmd);
+	free(cmd);
+	cmd = NULL;
+
+	// if there are changes,
+	if(res != 0)
+	{	// make sure we get (re)built
+		ret = true;
+	}
+	
+	free(pwd);
+	
+	return ret;
+}
+
 bool Package::build()
 {
 	struct timespec start, end;
@@ -329,16 +392,25 @@ bool Package::build()
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
 	
+	bool dependency_built = false;
 	if(dIt != dEnds)
 	{
 		for(; dIt != dEnds; dIt++)
 		{
 			if(!(*dIt)->build())
 				return false;
+			if((*dIt)->wasBuilt())
+			{
+				std::cout << "Dependency: " << (*dIt)->getName() << " was built" << std::endl;
+				dependency_built = true;
+			}
 		}
 	}
 
-	if(WORLD->forcedMode() && !WORLD->isForced(this->name))
+	bool sb = this->shouldBuild();
+
+	if((WORLD->forcedMode() && !WORLD->isForced(this->name)) ||
+		(!sb && !dependency_built))
 	{
 #ifdef UNDERSCORE
 		// lock
@@ -511,6 +583,15 @@ bool Package::build()
 			free(args);
 		}
 	}
+
+	if(this->bd != NULL)
+	{
+		char *cmd = NULL;
+		// mv the build info file into the regular place
+		asprintf(&cmd, "mv %s/.build.info.new %s/.build.info", this->bd->getPath(), this->bd->getPath());
+		system(cmd);
+		free(cmd);
+	}
 	
 	free(pwd);
 
@@ -526,6 +607,7 @@ bool Package::build()
 #endif
 	this->building = false;
 	this->built = true;
+	this->was_built = true;
 #ifdef UNDERSCORE
 	// unlock
 	us_mutex_unlock(this->lock);
