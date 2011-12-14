@@ -509,6 +509,24 @@ std::endl;
 			}
 	};
 
+	//! A lua extraction info file as part of the build step
+	class ExtractionInfoFileUnit : public BuildUnit {
+		private:
+			std::string uri; //!< URI of this package file
+			std::string hash; //!< Hash of this package file
+		public:
+			ExtractionInfoFileUnit(const char *file);
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("ExtractionInfoFile");
+			}
+	};
+
 	//! An extraction description
 	/** Describes all the steps and files required to re-extract a package
 	  * Used for checking a package needs extracting again

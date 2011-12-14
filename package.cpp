@@ -323,6 +323,11 @@ bool Package::shouldBuild()
 {
 	// we dont need to build if we don't have a build directory
 	if(this->bd == NULL) return false;
+	// Add the extraction info file
+	char *extractionInfoFname = NULL;
+	asprintf(&extractionInfoFname, "%s/.extraction.info", this->bd->getPath());
+	this->build_description->add(new ExtractionInfoFileUnit(extractionInfoFname));
+	free(extractionInfoFname);
 	// Create the new build info file
 	char *buildInfoFname = NULL;
 	asprintf(&buildInfoFname, "%s/.build.info.new", this->bd->getPath());
