@@ -13,12 +13,7 @@ BuildDir *Package::builddir()
 {
 	if(this->bd == NULL)
 	{
-		if(WORLD->forcedMode() && !WORLD->isForced(this->name))
-		{
-			this->bd = new BuildDir(this->name, false);
-		} else {
-			this->bd = new BuildDir(this->name, true);
-		}
+		this->bd = new BuildDir(this->name, false);
 	}
 	
 	return this->bd;
@@ -441,6 +436,39 @@ bool Package::build()
 		char *staging_dir = NULL;
 		asprintf(&staging_dir, "output/%s/%s/staging", WORLD->getName().c_str(), this->name.c_str());
 		log(this->name.c_str(), (char *)"Generating staging directory ...");
+		
+		{ // remove any current version of the staging directory
+			char *pwd = getcwd(NULL, 0);
+			char **args = (char **)calloc(4, sizeof(char *));
+			args[0] = strdup("rm");
+			args[1] = strdup("-fr");
+			args[2] = strdup(staging_dir);
+			if(run(this->name.c_str(), (char *)"rm", args, pwd, NULL) != 0)
+			{
+				log(this->name.c_str(), (char *)"Failed to remove %s (staging creation)", this->depsExtraction);
+			}
+			free(args[0]);
+			free(args[1]);
+			args[1] = args[2];
+			args[2] = NULL;
+			args[0] = strdup("mkdir");
+			if(run(this->name.c_str(), (char *)"mkdir", args, pwd, NULL) != 0)
+			{
+				log(this->name.c_str(), (char *)"Failed to create %s (staging creation)", this->depsExtraction);
+			}
+			if(args != NULL)
+			{
+				int i = 0;
+				while(args[i] != NULL)
+				{
+					free(args[i]);
+					i++;
+				}
+				free(args);
+			}
+			free(pwd);
+		}
+
 		std::list<std::string> *done = new std::list<std::string>();
 		for(dIt = this->depends.begin(); dIt != dEnds; dIt++)
 		{
