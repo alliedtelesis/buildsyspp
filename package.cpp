@@ -13,7 +13,7 @@ BuildDir *Package::builddir()
 {
 	if(this->bd == NULL)
 	{
-		this->bd = new BuildDir(this->name, false);
+		this->bd = new BuildDir(this->name);
 	}
 	
 	return this->bd;
@@ -429,6 +429,8 @@ bool Package::build()
 
 	clock_gettime(CLOCK_REALTIME, &start);
 	
+	char *pwd = getcwd(NULL, 0);
+	
 	if(this->bd != NULL)
 	{
 		log(this->name.c_str(), (char *)"Building ...");
@@ -437,36 +439,19 @@ bool Package::build()
 		asprintf(&staging_dir, "output/%s/%s/staging", WORLD->getName().c_str(), this->name.c_str());
 		log(this->name.c_str(), (char *)"Generating staging directory ...");
 		
-		{ // remove any current version of the staging directory
-			char *pwd = getcwd(NULL, 0);
-			char **args = (char **)calloc(4, sizeof(char *));
-			args[0] = strdup("rm");
-			args[1] = strdup("-fr");
-			args[2] = strdup(staging_dir);
-			if(run(this->name.c_str(), (char *)"rm", args, pwd, NULL) != 0)
-			{
-				log(this->name.c_str(), (char *)"Failed to remove %s (staging creation)", this->depsExtraction);
-			}
-			free(args[0]);
-			free(args[1]);
-			args[1] = args[2];
-			args[2] = NULL;
-			args[0] = strdup("mkdir");
-			if(run(this->name.c_str(), (char *)"mkdir", args, pwd, NULL) != 0)
-			{
-				log(this->name.c_str(), (char *)"Failed to create %s (staging creation)", this->depsExtraction);
-			}
-			if(args != NULL)
-			{
-				int i = 0;
-				while(args[i] != NULL)
-				{
-					free(args[i]);
-					i++;
-				}
-				free(args);
-			}
-			free(pwd);
+		{ // Clean out the (new) staging/install directories
+			char *cmd = NULL;
+			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd, WORLD->getName().c_str(), this->name.c_str());
+			system(cmd);
+			free(cmd);
+			cmd = NULL;
+			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/staging/*", pwd, WORLD->getName().c_str(), this->name.c_str());
+			system(cmd);
+			free(cmd);
+			cmd = NULL;
+			asprintf(&cmd, "rm -fr %s/output/%s/%s/staging/*", pwd, WORLD->getName().c_str(), this->name.c_str());
+			system(cmd);
+			free(cmd);
 		}
 
 		std::list<std::string> *done = new std::list<std::string>();
@@ -486,7 +471,6 @@ bool Package::build()
 			// Extract installed files to a given location
 			log(this->name.c_str(), (char *)"Removing old install files ...");
 			{
-				char *pwd = getcwd(NULL, 0);
 				char **args = (char **)calloc(4, sizeof(char *));
 				args[0] = strdup("rm");
 				args[1] = strdup("-fr");
@@ -508,7 +492,6 @@ bool Package::build()
 					}
 					free(args);
 				}
-				free(pwd);
 			}
 			
 			// Create the directory			
@@ -545,8 +528,6 @@ bool Package::build()
 	}
 	
 	log(this->name.c_str(), (char *)"BUILT");
-	
-	char *pwd = getcwd(NULL, 0);
 	
 	if(this->bd != NULL)
 	{
