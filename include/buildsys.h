@@ -239,9 +239,8 @@ namespace buildsys {
 		public:
 			//! Create a build directory
 			/** \param pname The package name
-			  * \param clean If true, this directory will be emptied before creation
 			  */
-			BuildDir(std::string pname, bool clean);
+			BuildDir(std::string pname);
 			//! Return the full path to this directory
 			const char *getPath() { return this->path.c_str(); };
 			//! Return the full path to the staging directory
