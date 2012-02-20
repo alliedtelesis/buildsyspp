@@ -210,6 +210,10 @@ int main(int argc, char *argv[])
 		{
 			WORLD->setCleaning();
 		} else
+		if(!strcmp(argv[a],"--skip-configure"))
+		{
+			WORLD->setSkipConfigure();
+		} else
 		if(!strcmp(argv[a],"--"))
 		{
 			foundDashDash = true;

@@ -2,6 +2,9 @@
 
 bool PackageCmd::Run(const char *package)
 {
+	if (this->skip)
+		return true;
+
 	char **ne = NULL;
 	size_t ne_cnt = 0;
 	if(this->envp != NULL)

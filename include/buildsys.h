@@ -288,14 +288,18 @@ namespace buildsys {
 			size_t arg_count;
 			char **envp;
 			size_t envp_count;
+			bool skip;
 		public:
 			//! Create a Package Command
 			/** \param path The path to run this command in
 			  * \param app The program to invoke
 			  */
-			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
-			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
-			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0) {};
+			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) {};
+			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) {};
+			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) {};
+
+			//! Mark a command to allow skiping its execution
+			void skipCommand(void) { this->skip = true; }
 
 			//! Add an argument to this command
 			/** \param arg The argument to append to this command
@@ -727,6 +731,7 @@ std::endl;
 			Internal_Graph *topo_graph;
 			bool failed;
 			bool cleaning;
+			bool skipConfigure;
 #ifdef UNDERSCORE_MONITOR
 			us_event_set *es;
 #endif
@@ -735,7 +740,8 @@ std::endl;
 #endif
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
-					lua(new Lua()), graph(NULL), failed(false), cleaning(false)
+					lua(new Lua()), graph(NULL), failed(false),
+					cleaning(false), skipConfigure(false)
 #ifdef UNDERSCORE
 					,cond(us_cond_create()) 
 #endif
@@ -771,6 +777,14 @@ std::endl;
 			bool areCleaning() { return this->cleaning; }
 			//! Set cleaning mode
 			void setCleaning() { this->cleaning = true; }
+			//! Are we operating in 'skip configure' mode
+			/** If --skip-configure is parsed as a parameter, we run in 'skip-configure' mode
+			  * This will make any package that performs a ':autoreconf()'
+			  * or ':configure()' call, to siliently ignore this request.
+			  */
+			bool areSkipConfigure() { return this->skipConfigure; }
+			//! Set skip configure mode
+			void setSkipConfigure() { this->skipConfigure = true; }
 			//! Set a feature to a specific value
 			/** Note that the default is to not set already-set features to new values
 			  * pass override=true to ignore this safety

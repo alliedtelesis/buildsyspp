@@ -487,6 +487,9 @@ int li_bd_autoreconf(lua_State *L)
 	Package *P = (Package *)lua_topointer(L, -1);
 
 	PackageCmd *pc = new PackageCmd(d->getWorkSrc(), "autoreconf");
+
+	if (WORLD->areSkipConfigure())
+		pc->skipCommand();
 	
 	std::string incdir = d->getStaging();
 	incdir += "/usr/local/aclocal";
@@ -532,6 +535,9 @@ int li_bd_configure(lua_State *L)
 	app += "/configure";
 
 	PackageCmd *pc = new PackageCmd(path, app);
+	
+	if (WORLD->areSkipConfigure())
+		pc->skipCommand();
 	
 	pc->addArg(app);
 
