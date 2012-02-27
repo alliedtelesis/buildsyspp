@@ -737,13 +737,14 @@ std::endl;
 #endif
 #ifdef UNDERSCORE
 			us_condition *cond;
+			bool outputPrefix;
 #endif
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
 					lua(new Lua()), graph(NULL), failed(false),
 					cleaning(false), skipConfigure(false)
 #ifdef UNDERSCORE
-					,cond(us_cond_create()) 
+					,cond(us_cond_create()),outputPrefix(true) 
 #endif
 					{};
 
@@ -785,6 +786,16 @@ std::endl;
 			bool areSkipConfigure() { return this->skipConfigure; }
 			//! Set skip configure mode
 			void setSkipConfigure() { this->skipConfigure = true; }
+#ifdef UNDERSCORE
+			//! Are we expected to output the package name as a prefix
+			/** If --no-output-prefix is parsed as a parameter, we don't prefix package output.
+			  * This will make it so that menuconfig doesn't look horrible.
+			  * At the expense of making it much harder to debug when the build breaks.
+			  */
+			bool areOutputPrefix() { return this->outputPrefix; }			
+			//! clear output prefix mode
+			void clearOutputPrefix() { this->outputPrefix = false; }
+#endif
 			//! Set a feature to a specific value
 			/** Note that the default is to not set already-set features to new values
 			  * pass override=true to ignore this safety

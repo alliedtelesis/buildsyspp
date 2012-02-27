@@ -139,6 +139,7 @@ void buildsys::log(const char *package, const char *fmt, ...)
 	free(message);
 }
 
+#ifdef UNDERSCORE
 void buildsys::program_output(const char *package, const char *mesg)
 {
 	fprintf(stdout, "%s: %s\n", package, mesg);
@@ -151,7 +152,7 @@ void buildsys::program_output(const char *package, const char *mesg)
 	send_buildsys_message(0x01010102, sl);
 #endif	
 }
-
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -214,6 +215,17 @@ int main(int argc, char *argv[])
 		{
 			WORLD->setSkipConfigure();
 		} else
+#ifdef UNDERSCORE
+		if(!strcmp(argv[a],"--no-output-prefix") || !strcmp(argv[a],"--nop"))
+		{
+			WORLD->clearOutputPrefix();
+		} else
+#else
+		if(!strcmp(argv[a],"--no-output-prefix") || !strcmp(argv[a],"--nop"))
+		{
+			std::cerr << argv[0] << ": " << argv[a] << " is only supported with UNDERSCORE=y, ignoring" << std::endl;
+		} else
+#endif
 		if(!strcmp(argv[a],"--"))
 		{
 			foundDashDash = true;
