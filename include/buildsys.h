@@ -88,6 +88,7 @@ extern "C" {
 	int li_bd_installfile(lua_State *L);
 	int li_bd_make(lua_State *L);
 	int li_bd_patch(lua_State *L);
+	int li_bd_restore(lua_State *L);
 	int li_bd_shell(lua_State *L);
 };
 
@@ -264,6 +265,7 @@ namespace buildsys {
 						LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
 						LUA_ADD_TABLE_FUNC(L, "make", li_bd_make);
 						LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
+						LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
 						LUA_ADD_TABLE_FUNC(L, "shell", li_bd_shell);
 						super::lua_table_r(L); }
 			virtual void lua_table(lua_State *L) { lua_table_r(L); 
