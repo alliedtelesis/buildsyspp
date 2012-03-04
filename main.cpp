@@ -260,7 +260,14 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_REALTIME, &end);
 	
-	log(argv[1], (char *)"Total time: %ds and %dms", (end.tv_sec - start.tv_sec) , (end.tv_nsec - start.tv_nsec) / 1000);
+	if (end.tv_nsec >= start.tv_nsec)
+	    log(argv[1], (char *)"Total time: %ds and %dms",
+		(end.tv_sec - start.tv_sec),
+		(end.tv_nsec - start.tv_nsec) / 1000000);
+	else
+	    log(argv[1], (char *)"Total time: %ds and %dms",
+		(end.tv_sec - start.tv_sec - 1),
+		(end.tv_nsec + start.tv_nsec) / 1000000);
 	
 	return 0;
 }
