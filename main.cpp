@@ -139,6 +139,7 @@ void buildsys::log(const char *package, const char *fmt, ...)
 	free(message);
 }
 
+#ifdef UNDERSCORE
 void buildsys::program_output(const char *package, const char *mesg)
 {
 	fprintf(stdout, "%s: %s\n", package, mesg);
@@ -151,7 +152,7 @@ void buildsys::program_output(const char *package, const char *mesg)
 	send_buildsys_message(0x01010102, sl);
 #endif	
 }
-
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -210,6 +211,21 @@ int main(int argc, char *argv[])
 		{
 			WORLD->setCleaning();
 		} else
+		if(!strcmp(argv[a],"--skip-configure"))
+		{
+			WORLD->setSkipConfigure();
+		} else
+#ifdef UNDERSCORE
+		if(!strcmp(argv[a],"--no-output-prefix") || !strcmp(argv[a],"--nop"))
+		{
+			WORLD->clearOutputPrefix();
+		} else
+#else
+		if(!strcmp(argv[a],"--no-output-prefix") || !strcmp(argv[a],"--nop"))
+		{
+			std::cerr << argv[0] << ": " << argv[a] << " is only supported with UNDERSCORE=y, ignoring" << std::endl;
+		} else
+#endif
 		if(!strcmp(argv[a],"--"))
 		{
 			foundDashDash = true;
@@ -244,7 +260,14 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_REALTIME, &end);
 	
-	log(argv[1], (char *)"Total time: %ds and %dms", (end.tv_sec - start.tv_sec) , (end.tv_nsec - start.tv_nsec) / 1000);
+	if (end.tv_nsec >= start.tv_nsec)
+	    log(argv[1], (char *)"Total time: %ds and %dms",
+		(end.tv_sec - start.tv_sec),
+		(end.tv_nsec - start.tv_nsec) / 1000000);
+	else
+	    log(argv[1], (char *)"Total time: %ds and %dms",
+		(end.tv_sec - start.tv_sec - 1),
+		(end.tv_nsec + start.tv_nsec) / 1000000);
 	
 	return 0;
 }

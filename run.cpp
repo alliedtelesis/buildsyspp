@@ -68,15 +68,17 @@ int buildsys::run(const char *package, char *program, char *argv[], const char *
 
 #ifdef UNDERSCORE
 	int fds[2];
-	
-	int res = pipe(fds);
-	
-	if(res != 0)
+	if(WORLD->areOutputPrefix())
 	{
-		log(package, (char *)"pipe() failed: %s", strerror(errno));
-	}
+		int res = pipe(fds);
 	
-	us_thread_create(pipe_data_thread, fds[0], strdup(package));
+		if(res != 0)
+		{
+			log(package, (char *)"pipe() failed: %s", strerror(errno));
+		}
+	
+		us_thread_create(pipe_data_thread, fds[0], strdup(package));
+	}
 #endif
 	// call the program ...
 	int pid = fork();
@@ -88,10 +90,13 @@ int buildsys::run(const char *package, char *program, char *argv[], const char *
 	else if(pid == 0)
 	{ // child process
 #ifdef UNDERSCORE
-		close(fds[0]);
-		dup2(fds[1], STDOUT_FILENO);
-		dup2(fds[1], STDERR_FILENO);
-		close(fds[1]);
+		if(WORLD->areOutputPrefix())
+		{
+			close(fds[0]);
+			dup2(fds[1], STDOUT_FILENO);
+			dup2(fds[1], STDERR_FILENO);
+			close(fds[1]);
+		}
 #endif
 		if(chdir(path) != 0)
 		{
@@ -108,7 +113,10 @@ int buildsys::run(const char *package, char *program, char *argv[], const char *
 	else
 	{
 #ifdef UNDERSCORE
-		close(fds[1]);
+		if(WORLD->areOutputPrefix())
+		{
+			close(fds[1]);
+		}
 #endif
 		int status = 0;
 		waitpid(pid, &status, 0);

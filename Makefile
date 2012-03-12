@@ -1,7 +1,7 @@
 CXXFILES	:= $(wildcard *.cpp) $(wildcard dir/*.cpp)
 CFILES		:= 
 
-HEADERS		:= $(wildcard include/*.h)
+HEADERS		:= $(wildcard include/*.h) include/buildsys.h.gch
 
 CPPFLAGS	:= -Iinclude -D_GNU_SOURCE
 CXXFLAGS	:= -Wall -Werror -ggdb2 `pkg-config --cflags lua` $(USER_DEFINES)
@@ -44,8 +44,11 @@ all: buildsys
 
 $(OBJS): Makefile $(HEADERS)
 
+%.h.gch : %.h
+	$(COMPILE.cpp) $(OUTPUT_OPTION) $<
+
 buildsys: Makefile $(OBJS)
-	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
+	$(LINK.cpp) -o $@ $(OBJS) $(LDFLAGS)
 
 clean:
 	rm -f $(OBJS) buildsys

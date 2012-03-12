@@ -331,6 +331,82 @@ int li_bd_fetch(lua_State *L)
 	return 0;
 }
 
+int li_bd_restore(lua_State *L)
+{
+	/* the first argument is the table, and is implicit */
+	int argc = lua_gettop(L);
+	if(argc < 1)
+	{
+		throw CustomException("restore() requires at least 2 arguments");
+	}
+	if(!lua_istable(L, 1)) throw CustomException("restore() must be called using : not .");
+	if(!lua_isstring(L, 2)) throw CustomException("restore() expects a string as the first argument");
+	if(!lua_isstring(L, 3)) throw CustomException("restore() expects a string as the second argument");
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	CHECK_ARGUMENT_TYPE("restore",1,BuildDir,d);
+	
+	char *location = strdup(lua_tostring(L, 2));
+	const char *method = lua_tostring(L, 3);
+
+	char **argv = NULL;
+	
+	if(WORLD->forcedMode() && !WORLD->isForced(P->getName()))
+	{
+		return 0;
+	}
+	
+	if(strcmp(method, "copyfile") == 0) {
+		PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
+
+		pc->addArg("cp");
+		pc->addArg("-dpRuf");
+
+		char const* fn = strrchr(location, '/');
+		pc->addArg(fn != NULL ? fn + 1 : location);
+
+		if(location[0] == '/')
+		{
+			pc->addArg(location);
+		}
+		else
+		{
+			char *pwd = getcwd(NULL, 0);
+			char *fn;
+			if(location[0] == '.')
+			{
+				asprintf(&fn, "%s/%s", pwd, location);
+			} else {
+				asprintf(&fn, "%s/package/%s/%s", pwd, P->getName().c_str(), location);
+			}
+			pc->addArg(fn);
+			free(pwd);
+			free(fn);
+		}
+
+		P->addCommand(pc);
+	} else {
+		throw CustomException("Unsupported restore method");
+	}
+	
+	free(location);
+	
+	if(argv != NULL)
+	{
+		int i = 0;
+		while(argv[i] != NULL)
+		{
+			free(argv[i]);
+			i++;
+		}
+		free(argv);
+	}
+	
+	return 0;
+}
+
 int li_bd_extract(lua_State *L)
 {
 	if(lua_gettop(L) != 2) throw CustomException("extract() requires exactly 1 argument");
@@ -487,6 +563,9 @@ int li_bd_autoreconf(lua_State *L)
 	Package *P = (Package *)lua_topointer(L, -1);
 
 	PackageCmd *pc = new PackageCmd(d->getWorkSrc(), "autoreconf");
+
+	if (WORLD->areSkipConfigure())
+		pc->skipCommand();
 	
 	std::string incdir = d->getStaging();
 	incdir += "/usr/local/aclocal";
@@ -532,6 +611,9 @@ int li_bd_configure(lua_State *L)
 	app += "/configure";
 
 	PackageCmd *pc = new PackageCmd(path, app);
+	
+	if (WORLD->areSkipConfigure())
+		pc->skipCommand();
 	
 	pc->addArg(app);
 
