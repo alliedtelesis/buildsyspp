@@ -323,6 +323,25 @@ bool Package::shouldBuild()
 	asprintf(&extractionInfoFname, "%s/.extraction.info", this->bd->getPath());
 	this->build_description->add(new ExtractionInfoFileUnit(extractionInfoFname));
 	free(extractionInfoFname);
+	
+	// Add each of our dependencies build info files
+	std::list<Package *>::iterator dIt = this->depends.begin();
+	std::list<Package *>::iterator dEnds = this->depends.end();
+	
+	if(dIt != dEnds)
+	{
+		for(; dIt != dEnds; dIt++)
+		{
+			if((*dIt)->bd != NULL)
+			{
+				char *buildInfo_file = NULL;
+				asprintf(&buildInfo_file, "%s/.build.info", (*dIt)->bd->getPath());
+				this->build_description->add(new BuildInfoFileUnit(buildInfo_file));
+				free(buildInfo_file);
+			}
+		}
+	}
+	
 	// Create the new build info file
 	char *buildInfoFname = NULL;
 	asprintf(&buildInfoFname, "%s/.build.info.new", this->bd->getPath());
