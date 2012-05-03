@@ -132,7 +132,8 @@ bool World::basePackage(char *filename)
 		}
 	}
 #else
-	this->p->build();
+	if(!this->p->build())
+		return false;
 #endif
 
 	return !this->failed;
