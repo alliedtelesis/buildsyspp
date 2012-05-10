@@ -30,7 +30,7 @@ static char * git_diff_hash(const char *gdir)
 {
 	char *pwd = getcwd(NULL,0);
 	char *cmd = NULL;
-	asprintf(&cmd, "git diff HEAD | git patch-id");
+	asprintf(&cmd, "git diff HEAD | sha1sum");
 	chdir(gdir);
 	FILE *f = popen(cmd, "r");
 	free(cmd);
