@@ -8,7 +8,7 @@ static char * hash_file(const char *fname)
 	free(cmd);
 	char *Hash = (char *)calloc(65, sizeof(char));
 	fread(Hash, sizeof(char), 64, f);
-	fclose(f);
+	pclose(f);
 	return Hash;	
 }
 
@@ -23,6 +23,7 @@ static char * git_hash(const char *gdir)
 	char *Commit = (char *)calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	chdir(pwd);
+	pclose(f);
 	return Commit;
 }
 
@@ -37,6 +38,7 @@ static char * git_diff_hash(const char *gdir)
 	char *Commit = (char *)calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	chdir(pwd);
+	pclose(f);
 	return Commit;
 }
 
