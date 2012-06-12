@@ -135,7 +135,7 @@ int li_bd_fetch(lua_State *L)
 		{
 			throw CustomException("Failed to symbolically link to git directory");
 		}
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(argv[2]);
+		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location);
 		P->extraction()->add(gdeu);
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
@@ -180,18 +180,11 @@ int li_bd_fetch(lua_State *L)
 		P->setCodeUpdated();
 	} else if(strcmp(method, "copyfile") == 0) {
 		char *file_path = NULL;
-		if(location[0] == '/')
+		if(location[0] == '/' || location[0] == '.')
 		{
 			file_path = strdup(location);
 		} else {
-			char *pwd = getcwd(NULL, 0);
-			if(location[0] == '.')
-			{
-				asprintf(&file_path, "%s/%s", pwd, location);
-			} else {
-				asprintf(&file_path, "%s/package/%s/%s", pwd, P->getName().c_str(), location);
-			}
-			free(pwd);
+			asprintf(&file_path, "package/%s/%s", P->getName().c_str(), location);
 		}
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
 		free(file_path);
@@ -201,21 +194,26 @@ int li_bd_fetch(lua_State *L)
 		{
 			src_path = strdup(location);
 		} else {
-			char *pwd = getcwd(NULL, 0);
 			if(location[0] == '.')
 			{
-				asprintf(&src_path, "%s/%s", pwd, location);
+				asprintf(&src_path, "%s", location);
 			} else {
-				asprintf(&src_path, "%s/package/%s/%s", pwd, P->getName().c_str(), location);
+				asprintf(&src_path, "package/%s/%s", P->getName().c_str(), location);
 			}
-			free(pwd);
 		}
 		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path);
 		P->extraction()->add(gdeu);
+		char *pwd = getcwd(NULL, 0);
+		char *src_full_path = NULL;
+		asprintf(&src_full_path, "%s/%s", pwd, src_path);
+		free(src_path);
+		src_path = NULL;
+		free(pwd);
+		pwd = NULL;
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");
 		argv[1] = strdup("-dpRuf");
-		argv[2] = src_path;
+		argv[2] = src_full_path;
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to copy (recursively)");		
@@ -276,7 +274,7 @@ int li_bd_fetch(lua_State *L)
 			free(rmargv[2]);
 			free(rmargv);
 		}
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(argv[2]);
+		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location);
 		P->extraction()->add(gdeu);
 	} else if(strcmp(method, "copy") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
@@ -431,11 +429,9 @@ int li_bd_extract(lua_State *L)
 	char *realFName = NULL;
 	if(!strncmp(fName, "dl/", 3))
 	{
-		char *pwd = getcwd(NULL, 0);
-		asprintf(&realFName, "%s/%s", pwd, fName);
-		free(pwd);
+		asprintf(&realFName, "%s", fName);
 	} else {
-		asprintf(&realFName, "%s/%s", d->getPath(), fName);
+		asprintf(&realFName, "%s/%s", d->getShortPath(), fName);
 	}
 	
 	TarExtractionUnit *teu = new TarExtractionUnit(realFName);
@@ -732,13 +728,11 @@ int li_bd_patch(lua_State *L)
 	CHECK_ARGUMENT_TYPE("patch",1,BuildDir,d);
 
 	char *patch_path = NULL;
-	asprintf(&patch_path, "%s/%s", d->getPath(), lua_tostring(L, 2));
+	asprintf(&patch_path, "%s/%s", d->getShortPath(), lua_tostring(L, 2));
 
 	int patch_depth = lua_tonumber(L, 3);
 
 
-	char *pwd = getcwd(NULL, 0);
-		
 	lua_pushnil(L);  /* first key */
 	while (lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
@@ -747,9 +741,9 @@ int li_bd_patch(lua_State *L)
 			if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("patch() requires a table of strings as the third argument\n");
 			if(!strncmp(lua_tostring(L, -1), "dl/", 3))
 			{
-				asprintf(&uri, "%s/%s", pwd,  lua_tostring(L, -1));
+				asprintf(&uri, "%s", lua_tostring(L, -1));
 			} else {
-				asprintf(&uri, "%s/package/%s/%s", pwd, P->getName().c_str(), lua_tostring(L, -1));
+				asprintf(&uri, "package/%s/%s", P->getName().c_str(), lua_tostring(L, -1));
 			}
 			PatchExtractionUnit *peu = new PatchExtractionUnit(patch_depth, patch_path, uri);
 			P->extraction()->add(peu);
@@ -760,7 +754,6 @@ int li_bd_patch(lua_State *L)
 		lua_pop(L, 1);
 	}
 	
-	free(pwd);
 	free(patch_path);
 
 	return 0;

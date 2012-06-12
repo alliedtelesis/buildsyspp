@@ -232,6 +232,7 @@ namespace buildsys {
 		private:
 			typedef Dir super;
 			std::string path;
+			std::string rpath;
 			std::string staging;
 			std::string new_staging;
 			std::string new_install;
@@ -244,6 +245,8 @@ namespace buildsys {
 			BuildDir(std::string pname);
 			//! Return the full path to this directory
 			const char *getPath() { return this->path.c_str(); };
+			//! Get the short version (relative only) of the working directory
+			const char *getShortPath() { return this->rpath.c_str(); };
 			//! Return the full path to the staging directory
 			const char *getStaging() { return this->staging.c_str(); };
 			//! Return the full path to the new staging directory
