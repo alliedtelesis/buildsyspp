@@ -68,16 +68,21 @@ TarExtractionUnit::TarExtractionUnit(const char *fname)
 bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	char **argv = NULL;
-	
+	char *pwd = getcwd(NULL, 0);
+
 	int res = mkdir("dl", 0700);
 	if((res < 0) && (errno != EEXIST))
 	{
 		throw CustomException("Error: Creating download directory");
 	}
+	char *t_full_path = NULL;
+	asprintf(&t_full_path, "%s/%s", pwd, this->uri.c_str());
+	free(pwd);
+	pwd = NULL;
 	argv = (char **)calloc(4, sizeof(char *));
 	argv[0] = strdup("tar");
 	argv[1] = strdup("xf");
-	argv[2] = strdup(this->uri.c_str());
+	argv[2] = t_full_path;
 	
 	if(run(P->getName().c_str(), (char *)"tar", argv , bd->getPath(), NULL) != 0)
 		throw CustomException("Failed to extract file");
@@ -107,13 +112,20 @@ PatchExtractionUnit::PatchExtractionUnit(int level, char *pp, char *uri)
 
 bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 {
+	char *pwd = getcwd(NULL, 0);
 	char **argv = (char **)calloc(7, sizeof(char *));
 	argv[0] = strdup("patch");
 	asprintf(&argv[1], "-p%i", this->level);
 	argv[2] = strdup("-stN");
 	argv[3] = strdup("-i");
 	
-	argv[4] = strdup(this->uri.c_str());
+	char *p_full_path = NULL;
+	asprintf(&p_full_path, "%s/%s", pwd, this->uri.c_str());
+	free(pwd);
+	pwd = NULL;
+	
+	argv[4] = p_full_path;
+	p_full_path = NULL;
 	argv[5] = strdup("--dry-run");
 	if(run(P->getName().c_str(), (char *)"patch", argv , patch_path, NULL) != 0)
 	{
@@ -135,6 +147,7 @@ bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 		}
 		free(argv);
 	}
+
 	return true;
 }
 
@@ -148,12 +161,19 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
 
 bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 {
+	char *pwd = getcwd(NULL, 0);
 	char **argv = NULL;
+	
+	char *f_full_path = NULL;
+	asprintf(&f_full_path, "%s/%s", pwd, this->uri.c_str());
+	free(pwd);
+	pwd = NULL;
 	
 	argv = (char **)calloc(5, sizeof(char *));
 	argv[0] = strdup("cp");
 	argv[1] = strdup("-a");
-	argv[2] = strdup(this->uri.c_str());
+	argv[2] = f_full_path;
+	f_full_path = NULL;
 	argv[3] = strdup(".");
 	
 	if(run(P->getName().c_str(), (char *)"cp", argv , bd->getPath(), NULL) != 0)

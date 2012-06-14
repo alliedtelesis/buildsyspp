@@ -320,7 +320,7 @@ bool Package::shouldBuild()
 	if(this->bd == NULL) return false;
 	// Add the extraction info file
 	char *extractionInfoFname = NULL;
-	asprintf(&extractionInfoFname, "%s/.extraction.info", this->bd->getPath());
+	asprintf(&extractionInfoFname, "%s/.extraction.info", this->bd->getShortPath());
 	this->build_description->add(new ExtractionInfoFileUnit(extractionInfoFname));
 	free(extractionInfoFname);
 	
@@ -335,7 +335,7 @@ bool Package::shouldBuild()
 			if((*dIt)->bd != NULL)
 			{
 				char *buildInfo_file = NULL;
-				asprintf(&buildInfo_file, "%s/.build.info", (*dIt)->bd->getPath());
+				asprintf(&buildInfo_file, "%s/.build.info", (*dIt)->bd->getShortPath());
 				this->build_description->add(new BuildInfoFileUnit(buildInfo_file));
 				free(buildInfo_file);
 			}
