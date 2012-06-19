@@ -1,17 +1,5 @@
 #include <buildsys.h>
 
-static char * hash_file(const char *fname)
-{
-	char *cmd = NULL;
-	asprintf(&cmd, "sha256sum %s", fname);
-	FILE *f = popen(cmd,"r");
-	free(cmd);
-	char *Hash = (char *)calloc(65, sizeof(char));
-	fread(Hash, sizeof(char), 64, f);
-	pclose(f);
-	return Hash;	
-}
-
 static char * git_hash(const char *gdir)
 {
 	char *pwd = getcwd(NULL,0);

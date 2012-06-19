@@ -226,6 +226,11 @@ int main(int argc, char *argv[])
 			std::cerr << argv[0] << ": " << argv[a] << " is only supported with UNDERSCORE=y, ignoring" << std::endl;
 		} else
 #endif
+		if(!strcmp(argv[a],"--cache-server") || !strcmp(argv[a],"--ff"))
+		{
+			WORLD->setFetchFrom(argv[a+1]);
+			a++;
+		} else
 		if(!strcmp(argv[a],"--"))
 		{
 			foundDashDash = true;

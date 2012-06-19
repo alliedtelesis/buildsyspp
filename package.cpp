@@ -98,7 +98,7 @@ bool Package::extract()
 			{	// Extract our source code
 				log(this->name.c_str(), (char *)"Extracting sources and patching");
 				this->Extract->extract(this, this->bd);
-				this->setCodeUpdated();
+				//this->setCodeUpdated();
 			}
 			// mv the file into the regular place
 			asprintf(&cmd, "mv %s/.extraction.info.new %s/.extraction.info", this->bd->getPath(), this->bd->getPath());
@@ -389,9 +389,53 @@ bool Package::shouldBuild()
 	cmd = NULL;
 
 	// if there are changes,
-	if(res != 0)
-	{	// make sure we get (re)built
-		ret = true;
+	if(res != 0 || (ret && !this->codeUpdated))
+	{	
+		// see if we can grab new staging/install files
+		if(WORLD->canFetchFrom())
+		{
+			ret = false;
+			const char *ffrom = WORLD->fetchFrom().c_str();
+			char *build_info_file = NULL;
+			asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
+			char *hash = hash_file(build_info_file);
+			char *url = NULL;
+			asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+			// try wget the file
+			char *cmd = NULL;
+			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2\n", url, WORLD->getName().c_str(), this->name.c_str());
+			res = system(cmd);
+			if(res != 0)
+			{
+				ret = true;
+			}
+			asprintf(&url, "%s/%s/%s/%s/install.tar.bz2", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+			// try wget the file
+			asprintf(&cmd, "wget -q %s -O output/%s/install/%s.tar.bz2\n", url, WORLD->getName().c_str(), this->name.c_str());
+			res = system(cmd);
+			if(res != 0)
+			{
+				ret = true;
+			}
+			free(cmd);
+			free(url);
+			free(hash);
+			if(ret)
+			{
+				log(this->name.c_str(), "Could not optimize away building");
+			}
+			else
+			{
+				char *cmd = NULL;
+				// mv the build info file into the regular place (faking that we have built this package)
+				asprintf(&cmd, "mv %s/.build.info.new %s/.build.info", this->bd->getPath(), this->bd->getPath());
+				system(cmd);
+				free(cmd);
+			}
+		} else {
+			// otherwise, make sure we get (re)built
+			ret = true;
+		}
 	}
 	
 	free(pwd);

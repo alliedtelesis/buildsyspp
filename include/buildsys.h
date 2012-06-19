@@ -752,6 +752,7 @@ std::endl;
 			std::list<Package *> packages;
 			Internal_Graph *graph;
 			Internal_Graph *topo_graph;
+			std::string fetch_from;
 			bool failed;
 			bool cleaning;
 			bool skipConfigure;
@@ -851,6 +852,13 @@ std::endl;
 			//! Declare a package built
 			bool packageFinished(Package *p);
 
+
+			//! Allow the fetch from location to be set
+			void setFetchFrom(std::string from) { this->fetch_from = from; }
+			//! Test if the fetch from location is set
+			bool canFetchFrom() { return (this->fetch_from != ""); }
+			//! Test if the fetch from location is set
+			std::string fetchFrom() { return this->fetch_from; }
 #ifdef UNDERSCORE
 			void condTrigger() { us_cond_lock(this->cond); us_cond_signal(this->cond, true); us_cond_unlock(this->cond); };
 #endif
@@ -892,3 +900,15 @@ void meminfo(void);
 void loadavg(double *av1, double *av5, double *av15);
 
 #endif
+
+static inline char * hash_file(const char *fname)
+{
+	char *cmd = NULL;
+	asprintf(&cmd, "sha256sum %s", fname);
+	FILE *f = popen(cmd,"r");
+	free(cmd);
+	char *Hash = (char *)calloc(65, sizeof(char));
+	fread(Hash, sizeof(char), 64, f);
+	pclose(f);
+	return Hash;	
+}
