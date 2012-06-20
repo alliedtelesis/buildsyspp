@@ -473,7 +473,10 @@ std::endl;
 			FeatureValueUnit(const char *feature, const char *value) : feature(std::string(feature)), value(std::string(value)) {};
 			virtual bool print(std::ostream& out)
 			{
-				out << this->type() << " " << this->feature << " " << this->value << std::endl;
+				if(this->feature != "load-limit" && this->feature != "job-limit")
+				{
+					out << this->type() << " " << this->feature << " " << this->value << std::endl;
+				}
 				return true;
 			}
 			virtual std::string type()
