@@ -455,7 +455,6 @@ bool Package::build()
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
 	
-	bool dependency_built = false;
 	if(dIt != dEnds)
 	{
 		for(; dIt != dEnds; dIt++)
@@ -465,7 +464,6 @@ bool Package::build()
 			if((*dIt)->wasBuilt())
 			{
 				std::cout << "Dependency: " << (*dIt)->getName() << " was built" << std::endl;
-				dependency_built = true;
 			}
 		}
 	}
@@ -473,7 +471,7 @@ bool Package::build()
 	bool sb = this->shouldBuild();
 
 	if((WORLD->forcedMode() && !WORLD->isForced(this->name)) ||
-		(!sb && !dependency_built))
+		(!sb))
 	{
 #ifdef UNDERSCORE
 		// lock
