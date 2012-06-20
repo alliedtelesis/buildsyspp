@@ -625,6 +625,7 @@ std::endl;
 			bool extracted;
 			bool codeUpdated;
 			bool was_built;
+			bool no_fetch_from;
 #ifdef UNDERSCORE
 			us_mutex *lock;
 #endif
@@ -640,7 +641,7 @@ std::endl;
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false), no_fetch_from(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
@@ -695,6 +696,10 @@ std::endl;
 			/** \return true iff this package's build commands were actually run
 			  */
 			bool wasBuilt() { return this->was_built; }
+			//! Disable fetch-from for this package
+			void disableFetchFrom() { this->no_fetch_from = true; };
+			//! Can we fetch-from ?
+			bool canFetchFrom() { return !this->no_fetch_from; };
 			//! Should this package be rebuilt ?
 			/** This returns true when any of the following occur:
 			  * - The output staging or install tarballs are removed

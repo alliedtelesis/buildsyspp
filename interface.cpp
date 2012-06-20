@@ -907,13 +907,31 @@ int li_depend(lua_State *L)
 	return 0;
 }
 
+int li_buildlocally(lua_State *L)
+{
+	if(lua_gettop(L) != 0)
+	{
+		throw CustomException("buildlocally() takes no arguments");
+	}
+	
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	// Do not try and download the final result for this package
+	// probably because it breaks something else that builds later
+	P->disableFetchFrom();
+
+	return 0;
+}
+
 bool buildsys::interfaceSetup(Lua *lua)
 {
-	lua->registerFunc("builddir", li_builddir);
-	lua->registerFunc("depend",   li_depend);
-	lua->registerFunc("feature",  li_feature);
-	lua->registerFunc("intercept",li_intercept);
-	lua->registerFunc("name",     li_name);
+	lua->registerFunc("builddir",     li_builddir);
+	lua->registerFunc("depend",       li_depend);
+	lua->registerFunc("feature",      li_feature);
+	lua->registerFunc("intercept",    li_intercept);
+	lua->registerFunc("name",         li_name);
+	lua->registerFunc("buildlocally", li_buildlocally);
 
 	return true;
 }

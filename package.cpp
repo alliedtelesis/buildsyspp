@@ -392,7 +392,7 @@ bool Package::shouldBuild()
 	if(res != 0 || (ret && !this->codeUpdated))
 	{	
 		// see if we can grab new staging/install files
-		if(WORLD->canFetchFrom())
+		if(this->canFetchFrom() && WORLD->canFetchFrom())
 		{
 			ret = false;
 			const char *ffrom = WORLD->fetchFrom().c_str();
