@@ -877,7 +877,15 @@ int li_depend(lua_State *L)
 	
 	// check that the dependency exists
 	char *luaFile = NULL;
-	if(asprintf(&luaFile, "package/%s/%s.lua", lua_tostring(L, 1), lua_tostring(L, 1)) <= 0)
+	char *dependPath  = strdup(lua_tostring(L, 1));
+	char *lastPart = strrchr(dependPath, '/');
+	if(lastPart == NULL)
+	{
+		lastPart = strdup(dependPath);
+	} else {
+		lastPart = strdup(lastPart+1);
+	}
+	if(asprintf(&luaFile, "package/%s/%s.lua", dependPath, lastPart) <= 0)
 	{
 		throw CustomException("Error with asprintf");
 	}
@@ -891,7 +899,7 @@ int li_depend(lua_State *L)
 	fclose(f);
 
 	// create the Package
-	Package *p = WORLD->findPackage(std::string(lua_tostring(L, 1)),std::string(luaFile));
+	Package *p = WORLD->findPackage(std::string(dependPath),std::string(luaFile));
 	if(p == NULL)
 	{
 		free(luaFile);
@@ -904,6 +912,8 @@ int li_depend(lua_State *L)
 
 	P->depend(p);
 	
+	free(dependPath);
+	free(lastPart);
 	return 0;
 }
 
