@@ -490,6 +490,11 @@ int li_bd_cmd(lua_State *L)
 		}
 	}
 
+	char *pn_env = NULL;
+	asprintf(&pn_env, "PACKAGE_NAME=%s", P->getName().c_str());
+	pc->addEnv(pn_env);
+	free(pn_env);
+ 
 	P->addCommand(pc);
 
 	free(path);
