@@ -400,9 +400,17 @@ bool Package::shouldBuild()
 			asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
 			char *hash = hash_file(build_info_file);
 			char *url = NULL;
-			asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+			asprintf(&url, "%s/%s/%s/%s/usable", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
 			// try wget the file
 			char *cmd = NULL;
+			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2.ff\n", url, WORLD->getName().c_str(), this->name.c_str());
+			res = system(cmd);
+			if(res != 0)
+			{
+				ret = true;
+			}
+			asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+			// try wget the file
 			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2\n", url, WORLD->getName().c_str(), this->name.c_str());
 			res = system(cmd);
 			if(res != 0)
