@@ -254,11 +254,21 @@ int main(int argc, char *argv[])
 			a++;
 		}
 	}
-	if(!WORLD->basePackage(argv[1]))
+	char *target = NULL;
+	int tn_len = strlen(argv[1]);
+	if(argv[1][tn_len-4] != '.')
+	{
+		asprintf(&target, "%s.lua", argv[1]);
+	} else {
+		target = strdup(argv[1]);
+	}
+	if(!WORLD->basePackage(target))
 	{
 		error("Building: Failed");
+		free(target);
 		exit(-1);
 	}
+	free(target);
 
 	// Write out the dependency graph
 	WORLD->output_graph();
