@@ -231,6 +231,10 @@ int main(int argc, char *argv[])
 			WORLD->setFetchFrom(argv[a+1]);
 			a++;
 		} else
+		if(!strcmp(argv[a],"--extract-only"))
+		{
+			WORLD->setExtractOnly();
+		} else
 		if(!strcmp(argv[a],"--"))
 		{
 			foundDashDash = true;

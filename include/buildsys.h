@@ -764,6 +764,7 @@ std::endl;
 			bool failed;
 			bool cleaning;
 			bool skipConfigure;
+			bool extractOnly;
 #ifdef UNDERSCORE_MONITOR
 			us_event_set *es;
 #endif
@@ -774,7 +775,7 @@ std::endl;
 		public:
 			World() : features(new key_value()), forcedDeps(new string_list()),
 					lua(new Lua()), graph(NULL), failed(false),
-					cleaning(false), skipConfigure(false)
+					cleaning(false), skipConfigure(false), extractOnly(false)
 #ifdef UNDERSCORE
 					,cond(us_cond_create()),outputPrefix(true) 
 #endif
@@ -818,6 +819,13 @@ std::endl;
 			bool areSkipConfigure() { return this->skipConfigure; }
 			//! Set skip configure mode
 			void setSkipConfigure() { this->skipConfigure = true; }
+			//! Are we operating in 'extract only' mode
+			/** If --extract-only is parsed as a parameter, we run in 'extract-only' mode
+			  * This will make buildsys stop after extracting all sources (obeying all other package filtering rules)
+			  */
+			bool areExtractOnly() { return this->extractOnly; }
+			//! Set extract only mode
+			void setExtractOnly() { this->extractOnly = true; }
 #ifdef UNDERSCORE
 			//! Are we expected to output the package name as a prefix
 			/** If --no-output-prefix is parsed as a parameter, we don't prefix package output.

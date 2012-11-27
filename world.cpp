@@ -109,6 +109,11 @@ bool World::basePackage(char *filename)
 		error(E.error_msg().c_str());
 		return false;
 	}
+	if(this->areExtractOnly())
+	{
+		// We are done, no building required
+		return true;
+	}
 	this->graph = new Internal_Graph();
 	this->topo_graph = new Internal_Graph();
 
