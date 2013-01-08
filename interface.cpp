@@ -119,24 +119,17 @@ int li_bd_fetch(lua_State *L)
 		fprintf(stderr, "Git clone, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "linkgit") == 0) {
-		argv = (char **)calloc(5, sizeof(char *));
-		argv[0] = strdup("ln");
-		argv[1] = strdup("-sf");
-		if(location[0] == '.')
+		char *l = strdup(location);
+		char *l2 = strrchr(l,'/');
+		if(l2[1] == '\0')
 		{
-			char *pwd = getcwd(NULL, 0);
-			asprintf(&argv[2], "%s/%s", pwd, location);
-			free(pwd);
-		} else {
-			argv[2] = strdup(location);
+			l2[0] = '\0';
+			l2 = strrchr(l,'/');
 		}
-		argv[3] = strdup(".");
-		if(run(P->getName().c_str(), (char *)"ln", argv , d->getPath(), NULL) != 0)
-		{
-			throw CustomException("Failed to symbolically link to git directory");
-		}
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location);
+		l2++;
+		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location,l2,true);
 		P->extraction()->add(gdeu);
+		free(l);
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("ln");
@@ -201,61 +194,9 @@ int li_bd_fetch(lua_State *L)
 				asprintf(&src_path, "package/%s/%s", P->getName().c_str(), location);
 			}
 		}
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path);
+		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path,".",false);
 		P->extraction()->add(gdeu);
-		char *pwd = getcwd(NULL, 0);
-		char *src_full_path = NULL;
-		asprintf(&src_full_path, "%s/%s", pwd, src_path);
-		free(src_path);
-		src_path = NULL;
-		free(pwd);
-		pwd = NULL;
-		argv = (char **)calloc(5, sizeof(char *));
-		argv[0] = strdup("cp");
-		argv[1] = strdup("-dpRuf");
-		argv[2] = src_full_path;
-		argv[3] = strdup(".");
-		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
-			throw CustomException("Failed to copy (recursively)");		
 	} else if(strcmp(method, "sm") == 0) {
-		argv = (char **)calloc(5, sizeof(char *));
-		argv[0] = strdup("ln");
-		argv[1] = strdup("-sfT");
-		if(location[0] == '.')
-		{
-			char *pwd = getcwd(NULL, 0);
-			asprintf(&argv[2], "%s/%s", pwd, location);
-			free(pwd);
-		} else {
-			argv[2] = strdup(location);
-		}
-		argv[3] = strdup(d->getWorkSrc());
-		if(run(P->getName().c_str(), (char *)"ln", argv , d->getPath(), NULL) != 0)
-		{
-			// An error occured, try remove the file, then relink
-			char **rmargv = (char **)calloc(4, sizeof(char *));
-			rmargv[0] = strdup("rm");
-			rmargv[1] = strdup("-fr");
-			char *l = strdup(argv[2]);
-			char *l2 = strrchr(l,'/');
-			if(l2[1] == '\0')
-			{
-				l2[0] = '\0';
-				l2 = strrchr(l,'/');
-			}
-			l2++;
-			rmargv[2] = strdup(l2);
-			log(P->getName().c_str(), (char *)"%s %s %s\n", rmargv[0], rmargv[1], rmargv[2]);
-			if(run(P->getName().c_str(), (char *)"/bin/rm", rmargv , d->getPath(), NULL) != 0)
-				throw CustomException("Failed to ln (symbolically), could not remove target first");
-			if(run(P->getName().c_str(), (char *)"ln", argv, d->getPath(), NULL) != 0)
-				throw CustomException("Failed to ln (symbolically), even after removing target first");
-			free(rmargv[0]);
-			free(rmargv[1]);
-			free(rmargv[2]);
-			free(rmargv);
-			free(l);
-		}
 		if (mkdir(d->getWorkBuild(), 0777) && errno != EEXIST)
 		{
 			// An error occured, try remove the direcotry, then recreate
@@ -274,8 +215,17 @@ int li_bd_fetch(lua_State *L)
 			free(rmargv[2]);
 			free(rmargv);
 		}
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location);
+		char *l = strdup(d->getWorkSrc());
+		char *l2 = strrchr(l,'/');
+		if(l2[1] == '\0')
+		{
+			l2[0] = '\0';
+			l2 = strrchr(l,'/');
+		}
+		l2++;
+		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location,l2,true);
 		P->extraction()->add(gdeu);
+		free(l);
 	} else if(strcmp(method, "copy") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");

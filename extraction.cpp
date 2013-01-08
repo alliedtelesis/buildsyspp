@@ -180,12 +180,14 @@ bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 	return true;
 }
 
-GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir)
+GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_dir, bool link)
 {
 	this->uri = std::string(git_dir);
 	char *Hash = git_hash(git_dir);
 	this->hash = std::string(Hash);
 	free(Hash);
+	this->toDir = std::string(to_dir);
+	this->linked = link;
 }
 
 bool GitDirExtractionUnit::isDirty()
@@ -210,6 +212,42 @@ std::string GitDirExtractionUnit::dirtyHash()
 
 bool GitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 {
+	char **argv = (char **)calloc(5, sizeof(char *));
+	int argp = 0;
+	if(this->linked)
+	{
+		argv[argp++] = strdup("ln");
+		argv[argp++] = strdup("-sfT");
+	} else {
+		argv[argp++] = strdup("cp");
+		argv[argp++] = strdup("-dpRuf");
+	}
+	if(this->uri[0] == '.')
+	{
+		char *pwd = getcwd(NULL, 0);
+		asprintf(&argv[argp++], "%s/%s", pwd, this->uri.c_str());
+		free(pwd);
+	} else {
+		argv[argp++] = strdup(this->uri.c_str());
+	}
+	argv[argp++] = strdup(this->toDir.c_str());
+	if(run(P->getName().c_str(), argv[0], argv , bd->getPath(), NULL) != 0)
+	{
+		// An error occured, try remove the file, then relink/copy
+		char **rmargv = (char **)calloc(4, sizeof(char *));
+		rmargv[0] = strdup("rm");
+		rmargv[1] = strdup("-fr");
+		rmargv[2] = strdup(this->toDir.c_str());
+		log(P->getName().c_str(), (char *)"%s %s %s\n", rmargv[0], rmargv[1], rmargv[2]);
+		if(run(P->getName().c_str(), (char *)"/bin/rm", rmargv , bd->getPath(), NULL) != 0)
+			throw CustomException("Failed to link  or copy, could not remove target first");
+		if(run(P->getName().c_str(), argv[0], argv, bd->getPath(), NULL) != 0)
+			throw CustomException("Failed to link or copy, even after removing target first");
+		free(rmargv[0]);
+		free(rmargv[1]);
+		free(rmargv[2]);
+		free(rmargv);
+	}
 	return true;
 }
 

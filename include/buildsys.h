@@ -440,8 +440,10 @@ namespace buildsys {
 	//! A git directory as part of the extraction step
 	class GitDirExtractionUnit : public ExtractionUnit {
 		private:
+			bool linked;
+			std::string toDir;
 		public:
-			GitDirExtractionUnit(const char *git_dir);
+			GitDirExtractionUnit(const char *git_dir, const char *toDir, bool link);
 			virtual bool same(ExtractionUnit *eu)
 			{
 				if(eu->type().compare("GitDir") != 0) return false;
@@ -451,7 +453,7 @@ namespace buildsys {
 			}
 			virtual bool print(std::ostream& out)
 			{
-				out << this->type() << " " << this->uri << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << 
+				out << this->type() << " " << (this->linked ? "link" : "copy") << " " << this->uri << " " << this->toDir << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << 
 std::endl;
 				return true;
 			}
