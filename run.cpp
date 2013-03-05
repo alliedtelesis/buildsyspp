@@ -10,7 +10,7 @@ static bool pipe_data(int fd, const char *pname)
 	// get the data until there is a breakchar ...
 	char *cdata = NULL;
 	size_t recvd = 0;
-	// size_t length = 0;
+
 	while(1)
 	{
 		cdata = (char *)realloc(cdata, recvd + 2);
@@ -29,7 +29,6 @@ static bool pipe_data(int fd, const char *pname)
 			recvd++;
 			if(cdata[recvd-1] == '\n')
 			{
-				// length = recvd;
 				cdata[recvd-1] = '\0';
 				break;
 			}
