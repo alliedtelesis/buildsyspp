@@ -8,6 +8,9 @@ CXXFLAGS	:= -Wall -Werror -ggdb2 `pkg-config --cflags lua` $(USER_DEFINES)
 CFLAGS		:= -std=c99 $(CXXFLAGS)
 LDFLAGS		:= `pkg-config --libs lua` -lrt
 
+UNDERSCORE_PATH	?=../underscore
+
+
 ifeq ($(UNDERSCORE),y)
 #	CXXFILES += $(addprefix lm/, linux.c)
 	CFILES += $(addprefix $(UNDERSCORE_PATH)/lib/, \
