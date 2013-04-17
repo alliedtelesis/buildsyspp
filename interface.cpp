@@ -173,7 +173,7 @@ int li_bd_fetch(lua_State *L)
 		P->setCodeUpdated();
 	} else if(strcmp(method, "copyfile") == 0) {
 		char *file_path = NULL;
-		if(location[0] == '/' || location[0] == '.')
+		if(!strncmp(location, "dl/", 3) || location[0] == '/' || location[0] == '.')
 		{
 			file_path = strdup(location);
 		} else {
