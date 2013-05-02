@@ -194,7 +194,7 @@ bool GitDirExtractionUnit::isDirty()
 {
 	char *pwd = getcwd(NULL,0);
 	char *cmd = NULL;
-	asprintf(&cmd, "git diff-index --quiet HEAD");
+	asprintf(&cmd, "git diff --quiet HEAD");
 	chdir(this->uri.c_str());
 	int res = system(cmd);
 	free(cmd);
