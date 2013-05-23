@@ -12,7 +12,6 @@ UNDERSCORE_PATH	?=../underscore
 
 
 ifeq ($(UNDERSCORE),y)
-#	CXXFILES += $(addprefix lm/, linux.c)
 	CFILES += $(addprefix $(UNDERSCORE_PATH)/lib/, \
 				$(addprefix datacoding/, datacoding.c) \
 				$(addprefix lock/, lock.c cond.c) \

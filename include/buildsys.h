@@ -1,3 +1,16 @@
+/****************************************************************************************************************************
+ Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
+ 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the
+distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+***************************************************************************************************************************/
+
 #include <iostream>
 #include <map>
 #include <list>
@@ -767,9 +780,6 @@ std::endl;
 			bool cleaning;
 			bool skipConfigure;
 			bool extractOnly;
-#ifdef UNDERSCORE_MONITOR
-			us_event_set *es;
-#endif
 #ifdef UNDERSCORE
 			us_condition *cond;
 			bool outputPrefix;
@@ -883,10 +893,6 @@ std::endl;
 			//! output the dependency graph
 			bool output_graph() { if(this->graph != NULL) { graph->output(); } ; return true; };
 
-#ifdef UNDERSCORE_MONITOR
-			bool setES(us_event_set *es) { this->es = es; return true; };
-			us_event_set *getES(void) { return this->es; };
-#endif
 	};
 	
 	bool interfaceSetup(Lua *lua);
@@ -898,26 +904,9 @@ std::endl;
 
 	int run(const char *, char *program, char *argv[], const char *path, char *newenvp[]);
 
-#ifdef UNDERSCORE_MONITOR
-	void sendTarget(const char *name);
-#endif
-
 };
 
 using namespace buildsys;
-
-#ifdef UNDERSCORE
-// lm/linux.c
-extern unsigned long kb_main_buffers;
-extern unsigned long kb_main_cached;
-extern unsigned long kb_main_free;
-extern unsigned long kb_main_total;
-extern unsigned long kb_swap_free;
-extern unsigned long kb_swap_total;
-void meminfo(void);
-void loadavg(double *av1, double *av5, double *av15);
-
-#endif
 
 static inline char * hash_file(const char *fname)
 {
