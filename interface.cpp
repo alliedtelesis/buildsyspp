@@ -820,6 +820,39 @@ static int li_feature(lua_State *L)
 	return 0;
 }
 
+static int li_invokebuild(lua_State *L)
+{
+	int args = lua_gettop(L);
+	if(args != 4)
+	{
+		throw CustomException("invokeself() 4 or more parameters");
+	}
+
+	const char *target = lua_tostring(L, 1);
+	std::string path = lua_tostring(L, 2);
+	std::string buildsysexe = lua_tostring(L,3);
+
+	PackageCmd *pc = new PackageCmd(path, target);
+	pc->addArg(buildsysexe);
+	pc->addArg(target);
+
+	lua_pushnil(L);  /* first key */
+	while (lua_next(L, 4) != 0) {
+		/* uses 'key' (at index -2) and 'value' (at index -1) */
+		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("cmd() requires a table of strings as the forth argument\n");
+		pc->addArg(lua_tostring(L, -1));
+		/* removes 'value'; keeps 'key' for next iteration */
+		lua_pop(L, 1);
+	}
+
+	if(pc->Run(target) == false)
+	{
+		exit(-1);
+	}
+	return 0;
+
+}
+
 int li_builddir(lua_State *L)
 {
 	int args = lua_gettop(L);
@@ -930,6 +963,7 @@ bool buildsys::interfaceSetup(Lua *lua)
 	lua->registerFunc("intercept",    li_intercept);
 	lua->registerFunc("name",         li_name);
 	lua->registerFunc("buildlocally", li_buildlocally);
+	lua->registerFunc ("invokebuild", li_invokebuild);
 
 	return true;
 }
