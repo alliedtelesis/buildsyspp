@@ -179,6 +179,18 @@ bool World::isForced(std::string name)
 	return false;
 }
 
+bool World::populateForcedList(PackageCmd *pc)
+{
+	string_list::iterator fIt = this->forcedDeps->begin();
+	string_list::iterator fEnd = this->forcedDeps->end();
+
+	for(; fIt != fEnd; fIt++)
+	{
+		pc->addArg (*fIt);
+	}
+	return false;
+}
+
 bool World::packageFinished(Package *p)
 {
 #ifdef UNDERSCORE

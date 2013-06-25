@@ -761,6 +761,86 @@ int li_bd_installfile(lua_State *L)
 	return 0;
 }
 
+int li_bd_invokebuild(lua_State *L)
+{
+	int args = lua_gettop(L);
+	if(args != 4)
+	{
+		throw CustomException("invokebuild() takes 3 parameters");
+	}
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	const char *target = lua_tostring(L, 2);
+	std::string path = std::string(getcwd(NULL, 0));
+	std::string buildsysexe = WORLD->getAppName();
+
+	PackageCmd *pc = new PackageCmd(path, target);
+	pc->addArg(buildsysexe);
+	pc->addArg(target);
+
+	// Deal with options to buildsys
+	lua_pushnil(L);  /* first key */
+	while (lua_next(L, 3) != 0) {
+		/* uses 'key' (at index -2) and 'value' (at index -1) */
+		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("invokebuild() requires a table of strings as the second argument\n");
+		pc->addArg(lua_tostring(L, -1));
+		/* removes 'value'; keeps 'key' for next iteration */
+		lua_pop(L, 1);
+	}
+
+	// Add our known arguments to this list
+	// --clean
+	if(WORLD->areCleaning())
+	{
+		pc->addArg("--clean");
+	}
+	// --skip-configure
+	if(WORLD->areSkipConfigure())
+	{
+		pc->addArg("--skip-configure");
+	}
+	// --nop
+	if(!WORLD->areOutputPrefix())
+	{
+		pc->addArg("--nop");
+	}
+	// fetch from
+	if(WORLD->canFetchFrom())
+	{
+		pc->addArg("--ff");
+		pc->addArg(WORLD->fetchFrom());
+	}
+	// -- extract-only
+	if(WORLD->areExtractOnly())
+	{
+		pc->addArg("--extract-only");
+	}
+	// our filter list
+	if(WORLD->forcedMode())
+	{
+		WORLD->populateForcedList(pc);
+	}
+
+	// --, the seperator
+	pc->addArg("--");
+
+	lua_pushnil(L);  /* first key */
+	while (lua_next(L, 4) != 0) {
+		/* uses 'key' (at index -2) and 'value' (at index -1) */
+		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("invokebuild() requires a table of strings as the third argument\n");
+		pc->addArg(lua_tostring(L, -1));
+		/* removes 'value'; keeps 'key' for next iteration */
+		lua_pop(L, 1);
+	}
+
+	P->addCommand(pc);
+	return 0;
+
+}
+
+
 static int li_name(lua_State *L)
 {
 	if(lua_gettop(L) < 0 || lua_gettop(L) > 1)
@@ -820,38 +900,6 @@ static int li_feature(lua_State *L)
 	return 0;
 }
 
-static int li_invokebuild(lua_State *L)
-{
-	int args = lua_gettop(L);
-	if(args != 4)
-	{
-		throw CustomException("invokebuild() takes 4 parameters");
-	}
-
-	const char *target = lua_tostring(L, 1);
-	std::string path = lua_tostring(L, 2);
-	std::string buildsysexe = lua_tostring(L,3);
-
-	PackageCmd *pc = new PackageCmd(path, target);
-	pc->addArg(buildsysexe);
-	pc->addArg(target);
-
-	lua_pushnil(L);  /* first key */
-	while (lua_next(L, 4) != 0) {
-		/* uses 'key' (at index -2) and 'value' (at index -1) */
-		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("invokebuild() requires a table of strings as the forth argument\n");
-		pc->addArg(lua_tostring(L, -1));
-		/* removes 'value'; keeps 'key' for next iteration */
-		lua_pop(L, 1);
-	}
-
-	if(pc->Run(target) == false)
-	{
-		exit(-1);
-	}
-	return 0;
-
-}
 
 int li_builddir(lua_State *L)
 {
@@ -963,7 +1011,6 @@ bool buildsys::interfaceSetup(Lua *lua)
 	lua->registerFunc("intercept",    li_intercept);
 	lua->registerFunc("name",         li_name);
 	lua->registerFunc("buildlocally", li_buildlocally);
-	lua->registerFunc ("invokebuild", li_invokebuild);
 
 	return true;
 }

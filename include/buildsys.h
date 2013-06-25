@@ -103,6 +103,7 @@ extern "C" {
 	int li_bd_patch(lua_State *L);
 	int li_bd_restore(lua_State *L);
 	int li_bd_shell(lua_State *L);
+	int li_bd_invokebuild(lua_State *L);
 };
 
 namespace buildsys {
@@ -283,6 +284,7 @@ namespace buildsys {
 						LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
 						LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
 						LUA_ADD_TABLE_FUNC(L, "shell", li_bd_shell);
+						LUA_ADD_TABLE_FUNC(L, "invokebuild", li_bd_invokebuild);
 						super::lua_table_r(L); }
 			virtual void lua_table(lua_State *L) { lua_table_r(L); 
 					LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
@@ -767,6 +769,7 @@ std::endl;
 	//! The world, everything that everything needs to access
 	class World {
 		private:
+			std::string bsapp;
 			key_value *features;
 			string_list *forcedDeps;
 			Lua *lua;
@@ -785,14 +788,16 @@ std::endl;
 			bool outputPrefix;
 #endif
 		public:
-			World() : features(new key_value()), forcedDeps(new string_list()),
-					lua(new Lua()), graph(NULL), failed(false),
-					cleaning(false), skipConfigure(false), extractOnly(false)
+			World(char *bsapp) : bsapp(std::string(bsapp)), features(new key_value()),
+					forcedDeps(new string_list()), lua(new Lua()), graph(NULL),
+					failed(false), cleaning(false), skipConfigure(false), extractOnly(false)
 #ifdef UNDERSCORE
 					,cond(us_cond_create()),outputPrefix(true) 
 #endif
 					{};
 
+			//! Return the name we were invoked as
+			std::string getAppName() { return this->bsapp; };
 			//! Return the lua instance being used
 			Lua *getLua() { return this->lua; };
 
@@ -892,7 +897,8 @@ std::endl;
 #endif
 			//! output the dependency graph
 			bool output_graph() { if(this->graph != NULL) { graph->output(); } ; return true; };
-
+			//! populate the arguments list with out forced build list
+			bool populateForcedList(PackageCmd*pc);
 	};
 	
 	bool interfaceSetup(Lua *lua);
