@@ -825,7 +825,7 @@ static int li_invokebuild(lua_State *L)
 	int args = lua_gettop(L);
 	if(args != 4)
 	{
-		throw CustomException("invokeself() 4 or more parameters");
+		throw CustomException("invokebuild() takes 4 parameters");
 	}
 
 	const char *target = lua_tostring(L, 1);
@@ -839,7 +839,7 @@ static int li_invokebuild(lua_State *L)
 	lua_pushnil(L);  /* first key */
 	while (lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
-		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("cmd() requires a table of strings as the forth argument\n");
+		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("invokebuild() requires a table of strings as the forth argument\n");
 		pc->addArg(lua_tostring(L, -1));
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);
