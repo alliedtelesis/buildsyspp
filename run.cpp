@@ -133,11 +133,11 @@ int buildsys::run(const char *package, char *program, char *argv[], const char *
 		int status = 0;
 		waitpid(pid, &status, 0);
 		// check return status ...
-		if(status < 0)
+		if(WEXITSTATUS(status) < 0)
 		{
 			log(package, (char *)"Error Running %s (path = %s, return code = %i)", program, path, status); 
 		}
-		return status;
+		return WEXITSTATUS(status);
 	}
 	return -1;
 }

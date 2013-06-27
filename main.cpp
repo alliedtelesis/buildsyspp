@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 	
-	WORLD = new World();
+	WORLD = new World(argv[0]);
 	
 	if(!interfaceSetup(WORLD->getLua()))
 	{
