@@ -798,6 +798,45 @@ int li_bd_invokebuild(lua_State *L)
 
 }
 
+int li_bd_mkdir(lua_State *L)
+{
+	int argc = lua_gettop(L);
+	if(argc != 3) throw CustomException("mkdir() requires 2 arguments");
+	if(!lua_istable(L, 1)) throw CustomException("mkdir() must be called using : not .");
+	if(!lua_isstring(L, 2)) throw CustomException("mkdir() expects a string as the first argument");
+	if(!lua_istable(L, 3)) throw CustomException("mkdir() expects a table of strings as the second argument");
+
+	CHECK_ARGUMENT_TYPE("mkdir",1,BuildDir,d);
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	char *path = absolute_path(d, lua_tostring(L, 2));
+
+	PackageCmd *pc = new PackageCmd(path, "mkdir");
+	pc->addArg("mkdir");
+	pc->addArg("-p");
+
+	lua_pushnil(L);  /* first key */
+	while (lua_next(L, 3) != 0) {
+		/* uses 'key' (at index -2) and 'value' (at index -1) */
+		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("mkdir() requires a table of strings as the second argument\n");
+		pc->addArg(lua_tostring(L, -1));
+		/* removes 'value'; keeps 'key' for next iteration */
+		lua_pop(L, 1);
+	}
+
+	char *pn_env = NULL;
+	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
+	pc->addEnv(pn_env);
+	free(pn_env);
+
+	P->addCommand(pc);
+
+	free(path);
+
+	return 0;
+}
 
 static int li_name(lua_State *L)
 {
