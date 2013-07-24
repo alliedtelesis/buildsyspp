@@ -26,6 +26,52 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 	T * V = (T *)lua_topointer(L, -1); \
 	lua_pop(L, 1);
 
+static char *absolute_path(BuildDir *d, const char *dir, bool allowDL=false)
+{
+	char *path = NULL;
+	if (dir[0] == '/' || (allowDL && !strncmp(dir, "dl/", 3)))
+		asprintf(&path, "%s", dir);
+	else
+		asprintf(&path, "%s/%s", d->getPath(), dir);
+	return path;
+}
+
+static char *relative_path(BuildDir *d, const char *dir, bool allowDL=false)
+{
+	char *path = NULL;
+	if (dir[0] == '/' || (allowDL && !strncmp(dir, "dl/", 3)))
+		asprintf(&path, "%s", dir);
+	else
+		asprintf(&path, "%s/%s", d->getShortPath(), dir);
+	return path;
+}
+
+static char *absolute_fetch_path(Package *P, const char *location)
+{
+	char *src_path = NULL;
+	char *cwd = getcwd(NULL, 0);
+	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.')
+	{
+		asprintf(&src_path, "%s/%s", cwd, location);
+	} else {
+		asprintf(&src_path, "%s/package/%s/%s", cwd, P->getName().c_str(), location);
+	}
+	free(cwd);
+	return src_path;
+}
+
+static char *relative_fetch_path(Package *P, const char *location)
+{
+	char *src_path = NULL;
+	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.')
+	{
+		src_path = strdup(location);
+	} else {
+		asprintf(&src_path, "package/%s/%s", P->getName().c_str(), location);
+	}
+	return src_path;
+}
+
 int li_bd_fetch(lua_State *L)
 {
 	/* the first argument is the table, and is implicit */
@@ -132,7 +178,7 @@ int li_bd_fetch(lua_State *L)
 		fprintf(stderr, "Git clone, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "linkgit") == 0) {
-		char *l = strdup(location);
+		char *l = relative_fetch_path(P, location);
 		char *l2 = strrchr(l,'/');
 		if(l2[1] == '\0')
 		{
@@ -147,14 +193,7 @@ int li_bd_fetch(lua_State *L)
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("ln");
 		argv[1] = strdup("-sf");
-		if(location[0] == '.')
-		{
-			char *pwd = getcwd(NULL, 0);
-			asprintf(&argv[2], "%s/%s", pwd, location);
-			free(pwd);
-		} else {
-			argv[2] = strdup(location);
-		}
+		argv[2] = relative_fetch_path(P, location);
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"ln", argv , d->getPath(), NULL) != 0)
 		{
@@ -185,28 +224,12 @@ int li_bd_fetch(lua_State *L)
 		fprintf(stderr, "Linked data in, considering updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "copyfile") == 0) {
-		char *file_path = NULL;
-		if(!strncmp(location, "dl/", 3) || location[0] == '/' || location[0] == '.')
-		{
-			file_path = strdup(location);
-		} else {
-			asprintf(&file_path, "package/%s/%s", P->getName().c_str(), location);
-		}
+		char *file_path = relative_fetch_path(P, location);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
 		free(file_path);
 	} else if(strcmp(method, "copygit") == 0) {
 		char *src_path = NULL;
-		if(location[0] == '/')
-		{
-			src_path = strdup(location);
-		} else {
-			if(location[0] == '.')
-			{
-				asprintf(&src_path, "%s", location);
-			} else {
-				asprintf(&src_path, "package/%s/%s", P->getName().c_str(), location);
-			}
-		}
+		src_path = relative_fetch_path(P, location);
 		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path,".",false);
 		P->extraction()->add(gdeu);
 	} else if(strcmp(method, "sm") == 0) {
@@ -243,29 +266,14 @@ int li_bd_fetch(lua_State *L)
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");
 		argv[1] = strdup("-dpRuf");
-		if(location[0] == '/')
-		{
-			argv[2] = strdup(location);
-		}
-		else
-		{
-			char *pwd = getcwd(NULL, 0);
-			if(location[0] == '.')
-			{
-				asprintf(&argv[2], "%s/%s", pwd, location);
-			} else {
-				asprintf(&argv[2], "%s/package/%s/%s", pwd, P->getName().c_str(), location);
-			}
-			free(pwd);
-		}
+		argv[2] = absolute_fetch_path(P, location);
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to copy (recursively)");
 		fprintf(stderr, "Copied data in, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "deps") == 0) {
-		char *path = NULL;
-		asprintf(&path, "%s/%s", d->getPath(), location);
+		char *path = absolute_path(d, location);
 		// record this directory (need to complete this operation later)
 		lua_getglobal(L, "P");
 		Package *P = (Package *)lua_topointer(L, -1);
@@ -312,8 +320,6 @@ int li_bd_restore(lua_State *L)
 	char *location = strdup(lua_tostring(L, 2));
 	const char *method = lua_tostring(L, 3);
 
-	char **argv = NULL;
-	
 	if(WORLD->forcedMode() && !WORLD->isForced(P->getName()))
 	{
 		return 0;
@@ -328,24 +334,9 @@ int li_bd_restore(lua_State *L)
 		char const* fn = strrchr(location, '/');
 		pc->addArg(fn != NULL ? fn + 1 : location);
 
-		if(location[0] == '/')
-		{
-			pc->addArg(location);
-		}
-		else
-		{
-			char *pwd = getcwd(NULL, 0);
-			char *fn;
-			if(location[0] == '.')
-			{
-				asprintf(&fn, "%s/%s", pwd, location);
-			} else {
-				asprintf(&fn, "%s/package/%s/%s", pwd, P->getName().c_str(), location);
-			}
-			pc->addArg(fn);
-			free(pwd);
-			free(fn);
-		}
+		char *tmp = absolute_fetch_path(P, location);
+		pc->addArg(tmp);
+		free(tmp);
 
 		P->addCommand(pc);
 	} else {
@@ -353,18 +344,7 @@ int li_bd_restore(lua_State *L)
 	}
 	
 	free(location);
-	
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
-	
+
 	return 0;
 }
 
@@ -387,16 +367,10 @@ int li_bd_extract(lua_State *L)
 	{
 		return 0;
 	}
-	
+
 	const char *fName = lua_tostring(L, 2);
-	char *realFName = NULL;
-	if(!strncmp(fName, "dl/", 3))
-	{
-		asprintf(&realFName, "%s", fName);
-	} else {
-		asprintf(&realFName, "%s/%s", d->getShortPath(), fName);
-	}
-	
+	char *realFName = relative_path(d, fName, true);
+
 	TarExtractionUnit *teu = new TarExtractionUnit(realFName);
 	P->extraction()->add(teu);
 
@@ -420,16 +394,11 @@ int li_bd_cmd(lua_State *L)
 	lua_getglobal(L, "P");
 	Package *P = (Package *)lua_topointer(L, -1);
 
-	char *path = NULL;
-	const char *dir = lua_tostring(L, 2);
-	if (dir[0] == '/')
-		asprintf(&path, "%s", dir);
-	else
-		asprintf(&path, "%s/%s", d->getPath(), dir);
+	char *dir = relative_path(d, lua_tostring(L, 2));
 	const char *app = lua_tostring(L, 3);
-	
-	PackageCmd *pc = new PackageCmd(path, app);
-	
+
+	PackageCmd *pc = new PackageCmd(dir, app);
+
 	pc->addArg(app);
 
 	lua_pushnil(L);  /* first key */
@@ -460,7 +429,7 @@ int li_bd_cmd(lua_State *L)
  
 	P->addCommand(pc);
 
-	free(path);
+	free(dir);
 
 	return 0;
 }
@@ -482,15 +451,9 @@ int li_bd_shell(lua_State *L)
 	lua_getglobal(L, "P");
 	Package *P = (Package *)lua_topointer(L, -1);
 
-	std::string path = lua_tostring(L, 2);
-	if (path[0] != '/')
-	{
-		std::string dir = d->getPath();
-		path = dir + "/" + path;
-	}
-
+	char *path = absolute_path(d, lua_tostring(L, 2));
 	std::string cmd = lua_tostring(L, 3);
-	
+
 	PackageCmd *pc = new PackageCmd(path, "bash");
 
 	pc->addArg("bash");
@@ -516,6 +479,8 @@ int li_bd_shell(lua_State *L)
 
 	P->addCommand(pc);
 
+	free(path);
+
 	return 0;
 }
 
@@ -535,7 +500,7 @@ int li_bd_autoreconf(lua_State *L)
 
 	if (WORLD->areSkipConfigure())
 		pc->skipCommand();
-	
+
 	std::string incdir = d->getStaging();
 	incdir += "/usr/local/aclocal";
 
@@ -585,7 +550,7 @@ int li_bd_configure(lua_State *L)
 	app += "/configure";
 
 	PackageCmd *pc = new PackageCmd(path, app);
-	
+
 	if (WORLD->areSkipConfigure())
 		pc->skipCommand();
 	
@@ -616,7 +581,7 @@ int li_bd_configure(lua_State *L)
 	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
 	pc->addEnv(pn_env);
 	free(pn_env);
- 
+
 	P->addCommand(pc);
 
 	return 0;
@@ -715,8 +680,7 @@ int li_bd_patch(lua_State *L)
 
 	CHECK_ARGUMENT_TYPE("patch",1,BuildDir,d);
 
-	char *patch_path = NULL;
-	asprintf(&patch_path, "%s/%s", d->getShortPath(), lua_tostring(L, 2));
+	char *patch_path = relative_path (d, lua_tostring(L, 2), true);
 
 	int patch_depth = lua_tonumber(L, 3);
 
@@ -727,21 +691,15 @@ int li_bd_patch(lua_State *L)
 		{
 			char *uri = NULL;
 			if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("patch() requires a table of strings as the third argument\n");
-			if(!strncmp(lua_tostring(L, -1), "dl/", 3))
-			{
-				asprintf(&uri, "%s", lua_tostring(L, -1));
-			} else {
-				asprintf(&uri, "package/%s/%s", P->getName().c_str(), lua_tostring(L, -1));
-			}
+			uri = relative_fetch_path(P, lua_tostring(L, -1));
 			PatchExtractionUnit *peu = new PatchExtractionUnit(patch_depth, patch_path, uri);
 			P->extraction()->add(peu);
-
 			free(uri);
 		}
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);
 	}
-	
+
 	free(patch_path);
 
 	return 0;
