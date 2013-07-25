@@ -105,6 +105,7 @@ extern "C" {
 	int li_bd_shell(lua_State *L);
 	int li_bd_invokebuild(lua_State *L);
 	int li_bd_mkdir(lua_State *L);
+	int li_bd_sed(lua_State *L);
 };
 
 namespace buildsys {
@@ -287,6 +288,7 @@ namespace buildsys {
 						LUA_ADD_TABLE_FUNC(L, "shell", li_bd_shell);
 						LUA_ADD_TABLE_FUNC(L, "invokebuild", li_bd_invokebuild);
 						LUA_ADD_TABLE_FUNC(L, "mkdir", li_bd_mkdir);
+						LUA_ADD_TABLE_FUNC(L, "sed", li_bd_sed);
 						super::lua_table_r(L); }
 			virtual void lua_table(lua_State *L) { lua_table_r(L); 
 					LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());

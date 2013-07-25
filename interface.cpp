@@ -845,6 +845,50 @@ int li_bd_mkdir(lua_State *L)
 	return 0;
 }
 
+int li_bd_sed(lua_State *L)
+{
+	int argc = lua_gettop(L);
+	if(argc != 4) throw CustomException("sed() requires 3 arguments");
+	if(!lua_istable(L, 1)) throw CustomException("sed() must be called using : not .");
+	if(!lua_isstring(L, 2)) throw CustomException("sed() expects a string as the first argument");
+	if(!lua_isstring(L, 3)) throw CustomException("sed() expects a string as the second argument");
+	if(!lua_istable(L, 4)) throw CustomException("sed() expects a table of strings as the third argument");
+
+	CHECK_ARGUMENT_TYPE("sed",1,BuildDir,d);
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	char *path = absolute_path(d, lua_tostring(L, 2));
+
+	PackageCmd *pc = new PackageCmd(path, "sed");
+	pc->addArg("sed");
+	pc->addArg("-i");
+	pc->addArg("-e");
+	pc->addArg(lua_tostring(L, 3));
+
+	lua_pushnil(L);  /* first key */
+	while (lua_next(L, 4) != 0) {
+		/* uses 'key' (at index -2) and 'value' (at index -1) */
+		if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("sed() requires a table of strings as the third argument\n");
+		pc->addArg(lua_tostring(L, -1));
+		/* removes 'value'; keeps 'key' for next iteration */
+		lua_pop(L, 1);
+	}
+
+	char *pn_env = NULL;
+	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
+	pc->addEnv(pn_env);
+	free(pn_env);
+
+	P->addCommand(pc);
+
+	free(path);
+
+	return 0;
+}
+
+
 static int li_name(lua_State *L)
 {
 	if(lua_gettop(L) < 0 || lua_gettop(L) > 1)
