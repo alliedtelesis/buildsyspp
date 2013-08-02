@@ -371,8 +371,15 @@ int li_bd_extract(lua_State *L)
 	const char *fName = lua_tostring(L, 2);
 	char *realFName = relative_path(d, fName, true);
 
-	TarExtractionUnit *teu = new TarExtractionUnit(realFName);
-	P->extraction()->add(teu);
+	ExtractionUnit *eu = NULL;
+	if(strstr(fName, ".zip") != NULL)
+	{
+		eu = new ZipExtractionUnit(realFName);
+	} else {
+		// The catch all for tar compressed files
+		eu = new TarExtractionUnit(realFName);
+	}
+	P->extraction()->add(eu);
 
 	free(realFName);
 	return 0;

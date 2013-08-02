@@ -101,6 +101,49 @@ bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
 	return true;
 }
 
+ZipExtractionUnit::ZipExtractionUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
+bool ZipExtractionUnit::extract(Package *P, BuildDir *bd)
+{
+	char **argv = NULL;
+	char *pwd = getcwd(NULL, 0);
+
+	int res = mkdir("dl", 0700);
+	if((res < 0) && (errno != EEXIST))
+	{
+		throw CustomException("Error: Creating download directory");
+	}
+	char *t_full_path = NULL;
+	asprintf(&t_full_path, "%s/%s", pwd, this->uri.c_str());
+	free(pwd);
+	pwd = NULL;
+	argv = (char **)calloc(4, sizeof(char *));
+	argv[0] = strdup("unzip");
+	argv[1] = strdup("-o");
+	argv[2] = t_full_path;
+	if(run(P->getName().c_str(), (char *)"unzip", argv , bd->getPath(), NULL) != 0)
+		throw CustomException("Failed to extract file");
+
+	if(argv != NULL)
+	{
+		int i = 0;
+		while(argv[i] != NULL)
+		{
+			free(argv[i]);
+			i++;
+		}
+		free(argv);
+	}
+	return true;
+}
+
+
 PatchExtractionUnit::PatchExtractionUnit(int level, char *pp, char *uri)
 {
 	this->uri = std::string(uri);

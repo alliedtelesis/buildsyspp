@@ -403,6 +403,29 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 	};
+
+	class ZipExtractionUnit : public ExtractionUnit {
+		public:
+			//! Create an extraction unit for a tar file
+			ZipExtractionUnit(const char *fName);
+			virtual bool same(ExtractionUnit *eu)
+			{
+				if(eu->type().compare("ZipFile") != 0) return false;
+				if(eu->URI().compare(this->uri) != 0) return false;
+				if(eu->HASH().compare(this->hash) != 0) return false;
+				return true;
+			}
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("ZipFile");
+			}
+			virtual bool extract(Package *P, BuildDir *b);
+	};
 	
 	//! A patch file as part of the extraction step
 	class PatchExtractionUnit : public ExtractionUnit {
