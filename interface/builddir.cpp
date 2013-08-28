@@ -72,6 +72,14 @@ static char *relative_fetch_path(Package *P, const char *location)
 	return src_path;
 }
 
+static void add_env(Package *P, PackageCmd *pc)
+{
+	char *pn_env = NULL;
+	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
+	pc->addEnv(pn_env);
+	free(pn_env);
+}
+
 int li_bd_fetch(lua_State *L)
 {
 	/* the first argument is the table, and is implicit */
@@ -429,11 +437,7 @@ int li_bd_cmd(lua_State *L)
 		}
 	}
 
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
-
+	add_env(P, pc);
 	P->addCommand(pc);
 
 	free(dir);
@@ -479,11 +483,7 @@ int li_bd_shell(lua_State *L)
 		}
 	}
 
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
-
+	add_env(P, pc);
 	P->addCommand(pc);
 
 	free(path);
@@ -516,11 +516,7 @@ int li_bd_autoreconf(lua_State *L)
 	pc->addArg("-B");
 	pc->addArg(incdir);
 
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
-
+	add_env(P, pc);
 	P->addCommand(pc);
 
 	return 0;
@@ -584,12 +580,9 @@ int li_bd_configure(lua_State *L)
 		}
 	}
 
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
-
+	add_env(P, pc);
 	P->addCommand(pc);
+
 
 	return 0;
 }
@@ -658,11 +651,7 @@ int li_bd_make(lua_State *L)
 		}
 	}
 
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
-
+	add_env(P, pc);
 	P->addCommand(pc);
 
 	return 0;
@@ -833,11 +822,7 @@ int li_bd_mkdir(lua_State *L)
 		lua_pop(L, 1);
 	}
 
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
-
+	add_env(P, pc);
 	P->addCommand(pc);
 
 	free(path);
@@ -876,11 +861,7 @@ int li_bd_sed(lua_State *L)
 		lua_pop(L, 1);
 	}
 
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
-
+	add_env(P, pc);
 	P->addCommand(pc);
 
 	free(path);
