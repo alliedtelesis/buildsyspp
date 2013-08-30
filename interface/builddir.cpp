@@ -549,8 +549,7 @@ int li_bd_configure(lua_State *L)
 			path += "/" + dir;
 	}
 
-	std::string app = d->getWorkSrc();
-	app += "/configure";
+	std::string app = "../" + P->getName() + "/configure";
 
 	PackageCmd *pc = new PackageCmd(path, app);
 
