@@ -12,6 +12,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 ***************************************************************************************************************************/
 
 #include <buildsys.h>
+#include <color.h>
 
 World *buildsys::WORLD;
 
@@ -27,10 +28,24 @@ void buildsys::log(const char *package, const char *fmt, ...)
 	free(message);
 }
 
+static inline const char* get_color(const char *mesg)
+{
+	if (strstr(mesg, "error:"))
+		return COLOR_RED;
+	else if (strstr(mesg, "warning:"))
+		return COLOR_BLUE;
+
+	return COLOR_NORMAL;
+}
+
 #ifdef UNDERSCORE
 void buildsys::program_output(const char *package, const char *mesg)
 {
-	fprintf(stdout, "%s: %s\n", package, mesg);
+	if (isatty(fileno(stdout)))
+		fprintf(stdout, "%s: %s%s%s\n",
+			package, get_color(mesg), mesg, COLOR_RESET);
+	else
+		fprintf(stdout, "%s: %s\n", package, mesg);
 }
 #endif
 
