@@ -56,9 +56,9 @@ void buildsys::log(Package * P, const char *fmt, ...)
 static inline const char *get_color(const char *mesg)
 {
 	if(strstr(mesg, "error:"))
-		return COLOR_RED;
+		return COLOR_BOLD_RED;
 	else if(strstr(mesg, "warning:"))
-		return COLOR_BLUE;
+		return COLOR_BOLD_BLUE;
 
 	return NULL;
 }
