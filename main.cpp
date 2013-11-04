@@ -35,15 +35,18 @@ static inline const char* get_color(const char *mesg)
 	else if (strstr(mesg, "warning:"))
 		return COLOR_BLUE;
 
-	return COLOR_NORMAL;
+	return NULL;
 }
 
 #ifdef UNDERSCORE
 void buildsys::program_output(const char *package, const char *mesg)
 {
-	if (isatty(fileno(stdout)))
+	static int isATTY = isatty(fileno(stdout));
+	const char* color;
+
+	if (isATTY && ((color = get_color(mesg)) != NULL))
 		fprintf(stdout, "%s: %s%s%s\n",
-			package, get_color(mesg), mesg, COLOR_RESET);
+			package, color, mesg, COLOR_RESET);
 	else
 		fprintf(stdout, "%s: %s\n", package, mesg);
 }
