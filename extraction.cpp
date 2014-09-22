@@ -171,7 +171,7 @@ bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	char *pwd = getcwd(NULL, 0);
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
-	pc->addArg("-a");
+	pc->addArg("-pRuf");
 
 	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 	free(pwd);
