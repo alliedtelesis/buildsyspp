@@ -439,7 +439,6 @@ bool Package::shouldBuild()
 				ret = true;
 			}
 			free(cmd);
-			free(url);
 			free(hash);
 			if(ret)
 			{
@@ -447,12 +446,15 @@ bool Package::shouldBuild()
 			}
 			else
 			{
+				log(this->name.c_str(), "Build cache used %s", url);
+
 				char *cmd = NULL;
 				// mv the build info file into the regular place (faking that we have built this package)
 				asprintf(&cmd, "mv %s/.build.info.new %s/.build.info", this->bd->getPath(), this->bd->getPath());
 				system(cmd);
 				free(cmd);
 			}
+			free(url);
 		} else {
 			// otherwise, make sure we get (re)built
 			ret = true;
