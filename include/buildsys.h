@@ -111,7 +111,7 @@ extern "C" {
 namespace buildsys {
 	typedef std::map<std::string, std::string> key_value;
 	typedef std::list<std::string> string_list;
-
+	
 	class Package;
 
 	/*! The catchable exception */
@@ -144,7 +144,7 @@ namespace buildsys {
 				return "Lua Error";
 			}
 	};
-
+	
 	/*! A Memory fault */
 	class MemoryException : public Exception {
 		public:
@@ -162,7 +162,7 @@ namespace buildsys {
 				return "Key does not exist";
 			}
 	};
-
+	
 	/*! Error using/creating directory */
 	class DirException : public Exception {
 		private:
@@ -184,7 +184,7 @@ namespace buildsys {
 				return errmsg;
 			}
 	};
-
+	
 	/*! A C++ wrapper for a lua state (instance) */
 	class Lua {
 		private:
@@ -228,7 +228,7 @@ namespace buildsys {
 				lua_setglobal(state, name.c_str());
 			}
 	};
-
+	
 	//! A directory to perform actions on
 	class Dir {
 		private:
@@ -240,7 +240,7 @@ namespace buildsys {
 			//! Register as a lua table for return from a function
 			virtual void lua_table(lua_State *L) { lua_table_r(L); };
 	};
-
+	
 	//! A directory for building a package in
 	/** Each package has one build directory which is used to run all the commands in
 	  */
@@ -299,7 +299,7 @@ namespace buildsys {
 					LUA_ADD_TABLE_STRING(L, "work_src", work_src.c_str());
 				};
 	};
-
+	
 	//! A command to run as part of a packages build step
 	/** Stores the enviroment and arguements for a given command
 	  * Used to hold commands betwen the config loading step and package build steps.
@@ -354,7 +354,7 @@ namespace buildsys {
 			 */
 			bool Run(const char *package);
 	};
-
+	
 	//! An extraction unit
 	/** Describes a single step required to re-extract a package
 	  */
@@ -381,7 +381,7 @@ namespace buildsys {
 			virtual bool print(std::ostream& out) = 0;
 			virtual std::string type() = 0;
 	};
-
+	
 	//! A tar extraction unit
 	class TarExtractionUnit : public ExtractionUnit {
 		public:
@@ -428,7 +428,7 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 	};
-
+	
 	//! A patch file as part of the extraction step
 	class PatchExtractionUnit : public ExtractionUnit {
 		private:
@@ -478,7 +478,7 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 	};
-
+	
 	//! A git directory as part of the extraction step
 	class GitDirExtractionUnit : public ExtractionUnit {
 		private:
@@ -507,7 +507,7 @@ std::endl;
 			virtual bool isDirty();
 			virtual std::string dirtyHash();
 	};
-
+	
 	//! A feature/value as part of the build step
 	class FeatureValueUnit : public BuildUnit {
 		private:
@@ -545,7 +545,7 @@ std::endl;
 				return std::string("FeatureNil");
 			}
 	};
-
+	
 	//! A lua package file as part of the build step
 	class PackageFileUnit : public BuildUnit {
 		private:
@@ -581,7 +581,7 @@ std::endl;
 				return std::string("ExtractionInfoFile");
 			}
 	};
-
+	
 	//! A lua build info file as part of the build step
 	class BuildInfoFileUnit : public BuildUnit {
 		private:
@@ -648,7 +648,7 @@ std::endl;
 				return true;
 			}
 	};
-
+	
 	//! A package to build
 	class Package {
 		private:
@@ -685,7 +685,7 @@ std::endl;
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(new BuildDir(name)), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false), no_fetch_from(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false), no_fetch_from(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
@@ -768,7 +768,7 @@ std::endl;
 			  */
 			void printLabel(std::ostream& out);
 	};
-
+	
 	//! A graph of dependencies between packages
 	class Internal_Graph {
 		private:
@@ -790,6 +790,7 @@ std::endl;
 			Package *topoNext();
 			//! Remove a package from this graph
 			void deleteNode(Package *p);
+
 	};
 
 	//! The world, everything that everything needs to access
@@ -926,12 +927,16 @@ std::endl;
 			//! populate the arguments list with out forced build list
 			bool populateForcedList(PackageCmd*pc);
 	};
+	
+	bool interfaceSetup(Lua *lua);
+	
 	extern World *WORLD;
 
-	bool interfaceSetup(Lua *lua);
 	void log(const char *package, const char *fmt, ...);
 	void program_output(const char *pacakge, const char *mesg);
+
 	int run(const char *, char *program, char *argv[], const char *path, char *newenvp[]);
+
 };
 
 using namespace buildsys;
