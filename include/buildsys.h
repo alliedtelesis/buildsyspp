@@ -691,6 +691,8 @@ namespace buildsys {
 			 run_secs(0) {};
 			//! Returns the build directory being used by this package
 			BuildDir *builddir();
+			//! Recreate the build directory
+			void resetBD();
 			//! Returns the extraction
 			Extraction *extraction() { return this->Extract; };
 			//! Returns the builddescription

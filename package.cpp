@@ -32,6 +32,15 @@ BuildDir *Package::builddir()
 	return this->bd;
 }
 
+void Package::resetBD()
+{
+	if(this->bd != NULL)
+	{
+		delete this->bd;
+		this->bd = new BuildDir(this->name);
+	}
+}
+
 void Package::printLabel(std::ostream& out)
 {
 	out << "[label=\"";
