@@ -684,7 +684,7 @@ namespace buildsys {
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(NULL), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false), no_fetch_from(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(new BuildDir(name)), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false), no_fetch_from(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
