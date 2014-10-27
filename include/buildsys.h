@@ -1,6 +1,6 @@
 /****************************************************************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
     1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -23,7 +23,7 @@ extern "C" {
 
 #ifdef UNDERSCORE
 extern "C" {
-	#include <us_datacoding.h>	
+	#include <us_datacoding.h>
 	#include <us_client.h>
 	#include <us_fifo.h>
 };
@@ -63,7 +63,7 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 #define LUA_SET_TABLE_TYPE(L,T) \
 	lua_pushstring(L, #T); \
 	lua_pushstring(L, "yes"); \
-	lua_settable(L, -3); 
+	lua_settable(L, -3);
 
 #define LUA_ADD_TABLE_FUNC(L,N,F) \
 	lua_pushstring(L, N); \
@@ -79,14 +79,14 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 #define SET_TABLE_TYPE(L,T) \
 	lua_pushstring(L, #T); \
 	lua_pushstring(L, "yes"); \
-	lua_settable(L, -3); 
+	lua_settable(L, -3);
 
 #define LUA_ADD_TABLE_TABLE(L,N,D) \
 	lua_pushstring(L, N); \
 	CREATE_TABLE(D) \
 	D->lua_table(L); \
 	lua_settable(L, -3);
-	
+
 #define LUA_ADD_TABLE_STRING(L,N,S) \
 	lua_pushstring(L, N); \
 	lua_pushstring(L, S); \
@@ -111,16 +111,16 @@ extern "C" {
 namespace buildsys {
 	typedef std::map<std::string, std::string> key_value;
 	typedef std::list<std::string> string_list;
-	
+
 	class Package;
 
 	/*! The catchable exception */
 	class Exception {
 		public:
-			//! Return the error message for this exception 
+			//! Return the error message for this exception
 			virtual std::string error_msg() = 0;
 	};
-	
+
 	/*! An exception with a custom error message */
 	class CustomException : public Exception {
 		private:
@@ -144,7 +144,7 @@ namespace buildsys {
 				return "Lua Error";
 			}
 	};
-	
+
 	/*! A Memory fault */
 	class MemoryException : public Exception {
 		public:
@@ -153,7 +153,7 @@ namespace buildsys {
 				return "Memory Error";
 			}
 	};
-	
+
 	/*! No Such Key fault */
 	class NoKeyException : public Exception {
 		public:
@@ -162,7 +162,7 @@ namespace buildsys {
 				return "Key does not exist";
 			}
 	};
-	
+
 	/*! Error using/creating directory */
 	class DirException : public Exception {
 		private:
@@ -184,7 +184,7 @@ namespace buildsys {
 				return errmsg;
 			}
 	};
-	
+
 	/*! A C++ wrapper for a lua state (instance) */
 	class Lua {
 		private:
@@ -204,7 +204,7 @@ namespace buildsys {
 			void processFile(const char *filename) {
 
 				int res = luaL_dofile(state, filename);
-	
+
 				if(res != 0)
 				{
 					throw CustomException(lua_tostring(state, -1));
@@ -228,7 +228,7 @@ namespace buildsys {
 				lua_setglobal(state, name.c_str());
 			}
 	};
-	
+
 	//! A directory to perform actions on
 	class Dir {
 		private:
@@ -240,7 +240,7 @@ namespace buildsys {
 			//! Register as a lua table for return from a function
 			virtual void lua_table(lua_State *L) { lua_table_r(L); };
 	};
-	
+
 	//! A directory for building a package in
 	/** Each package has one build directory which is used to run all the commands in
 	  */
@@ -290,7 +290,7 @@ namespace buildsys {
 						LUA_ADD_TABLE_FUNC(L, "mkdir", li_bd_mkdir);
 						LUA_ADD_TABLE_FUNC(L, "sed", li_bd_sed);
 						super::lua_table_r(L); }
-			virtual void lua_table(lua_State *L) { lua_table_r(L); 
+			virtual void lua_table(lua_State *L) { lua_table_r(L);
 					LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
 					LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
 					LUA_ADD_TABLE_STRING(L, "path", path.c_str());
@@ -299,7 +299,7 @@ namespace buildsys {
 					LUA_ADD_TABLE_STRING(L, "work_src", work_src.c_str());
 				};
 	};
-	
+
 	//! A command to run as part of a packages build step
 	/** Stores the enviroment and arguements for a given command
 	  * Used to hold commands betwen the config loading step and package build steps.
@@ -354,7 +354,7 @@ namespace buildsys {
 			 */
 			bool Run(const char *package);
 	};
-	
+
 	//! An extraction unit
 	/** Describes a single step required to re-extract a package
 	  */
@@ -381,7 +381,7 @@ namespace buildsys {
 			virtual bool print(std::ostream& out) = 0;
 			virtual std::string type() = 0;
 	};
-	
+
 	//! A tar extraction unit
 	class TarExtractionUnit : public ExtractionUnit {
 		public:
@@ -428,7 +428,7 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 	};
-	
+
 	//! A patch file as part of the extraction step
 	class PatchExtractionUnit : public ExtractionUnit {
 		private:
@@ -478,7 +478,7 @@ namespace buildsys {
 			}
 			virtual bool extract(Package *P, BuildDir *b);
 	};
-	
+
 	//! A git directory as part of the extraction step
 	class GitDirExtractionUnit : public ExtractionUnit {
 		private:
@@ -495,8 +495,7 @@ namespace buildsys {
 			}
 			virtual bool print(std::ostream& out)
 			{
-				out << this->type() << " " << (this->linked ? "link" : "copy") << " " << this->uri << " " << this->toDir << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << 
-std::endl;
+				out << this->type() << " " << (this->linked ? "link" : "copy") << " " << this->uri << " " << this->toDir << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << std::endl;
 				return true;
 			}
 			virtual std::string type()
@@ -507,7 +506,7 @@ std::endl;
 			virtual bool isDirty();
 			virtual std::string dirtyHash();
 	};
-	
+
 	//! A feature/value as part of the build step
 	class FeatureValueUnit : public BuildUnit {
 		private:
@@ -545,7 +544,7 @@ std::endl;
 				return std::string("FeatureNil");
 			}
 	};
-	
+
 	//! A lua package file as part of the build step
 	class PackageFileUnit : public BuildUnit {
 		private:
@@ -581,7 +580,7 @@ std::endl;
 				return std::string("ExtractionInfoFile");
 			}
 	};
-	
+
 	//! A lua build info file as part of the build step
 	class BuildInfoFileUnit : public BuildUnit {
 		private:
@@ -648,7 +647,7 @@ std::endl;
 				return true;
 			}
 	};
-	
+
 	//! A package to build
 	class Package {
 		private:
@@ -718,7 +717,7 @@ std::endl;
 			void addCommand(PackageCmd *pc) { this->commands.push_back(pc); };
 			//! Set the file to install
 			/** Setting this overrides to standard zipping up of the entire new install directory
-			  * and just installs this specific file 
+			  * and just installs this specific file
 			  * \param i the file to install
 			  */
 			void setInstallFile(char *i) { this->installFile = i; };
@@ -762,13 +761,13 @@ std::endl;
 			std::list<Package *>::iterator dependsStart();
 			//! Get the end iterator for the dependencies list
 			std::list<Package *>::iterator dependsEnd();
-			
+
 			//! Print the label for use on the graph
 			/** Prints the package name, number of commands to run, and time spent building
 			  */
 			void printLabel(std::ostream& out);
 	};
-	
+
 	//! A graph of dependencies between packages
 	class Internal_Graph {
 		private:
@@ -790,7 +789,6 @@ std::endl;
 			Package *topoNext();
 			//! Remove a package from this graph
 			void deleteNode(Package *p);
-
 	};
 
 	//! The world, everything that everything needs to access
@@ -819,7 +817,7 @@ std::endl;
 					forcedDeps(new string_list()), lua(new Lua()), graph(NULL),
 					failed(false), cleaning(false), skipConfigure(false), extractOnly(false)
 #ifdef UNDERSCORE
-					,cond(us_cond_create()),outputPrefix(true) 
+					,cond(us_cond_create()),outputPrefix(true)
 #endif
 					{};
 
@@ -876,7 +874,7 @@ std::endl;
 			  * This will make it so that menuconfig doesn't look horrible.
 			  * At the expense of making it much harder to debug when the build breaks.
 			  */
-			bool areOutputPrefix() { return this->outputPrefix; }			
+			bool areOutputPrefix() { return this->outputPrefix; }
 			//! clear output prefix mode
 			void clearOutputPrefix() { this->outputPrefix = false; }
 #endif
@@ -894,7 +892,7 @@ std::endl;
 			/** lua: feature('magic-support')
 			  */
 			std::string getFeature(std::string key);
-			
+
 			//! Start the processing and building steps with the given meta package
 			bool basePackage(char *filename);
 			//! Find or create a package with the given name, using the filename if needed
@@ -904,14 +902,13 @@ std::endl;
 			std::list<Package *>::iterator packagesStart();
 			//! Get the end iterator for the package list
 			std::list<Package *>::iterator packagesEnd();
-			
+
 			//! Tell everything that we have failed
 			void setFailed() { this->failed = true; };
 			//! Test if we have failed
 			bool isFailed() { return this->failed; }
 			//! Declare a package built
 			bool packageFinished(Package *p);
-
 
 			//! Allow the fetch from location to be set
 			void setFetchFrom(std::string from) { this->fetch_from = from; }
@@ -927,16 +924,12 @@ std::endl;
 			//! populate the arguments list with out forced build list
 			bool populateForcedList(PackageCmd*pc);
 	};
-	
-	bool interfaceSetup(Lua *lua);
-	
 	extern World *WORLD;
 
+	bool interfaceSetup(Lua *lua);
 	void log(const char *package, const char *fmt, ...);
 	void program_output(const char *pacakge, const char *mesg);
-
 	int run(const char *, char *program, char *argv[], const char *path, char *newenvp[]);
-
 };
 
 using namespace buildsys;
@@ -950,5 +943,5 @@ static inline char * hash_file(const char *fname)
 	char *Hash = (char *)calloc(65, sizeof(char));
 	fread(Hash, sizeof(char), 64, f);
 	pclose(f);
-	return Hash;	
+	return Hash;
 }
