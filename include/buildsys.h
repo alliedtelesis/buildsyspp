@@ -235,6 +235,7 @@ namespace buildsys {
 		public:
 			//! Create a directory
 			Dir() {};
+			virtual ~Dir() {};
 			//! Set this as a Dir for lua
 			static void lua_table_r(lua_State *L) { LUA_SET_TABLE_TYPE(L,Dir) }
 			//! Register as a lua table for return from a function
@@ -259,6 +260,7 @@ namespace buildsys {
 			/** \param pname The package name
 			  */
 			BuildDir(std::string pname);
+			~BuildDir() {};
 			//! Return the full path to this directory
 			const char *getPath() { return this->path.c_str(); };
 			//! Get the short version (relative only) of the working directory
