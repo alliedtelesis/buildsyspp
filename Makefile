@@ -4,9 +4,9 @@ CFILES		:=
 HEADERS		:= $(wildcard include/*.h) include/buildsys.h.gch
 
 CPPFLAGS	:= -Iinclude -D_GNU_SOURCE
-CXXFLAGS	:= -Wall -Werror -ggdb2 `pkg-config --cflags lua` $(USER_DEFINES)
+CXXFLAGS	:= -Wall -Werror -ggdb2 -pthread `pkg-config --cflags lua` $(USER_DEFINES)
 CFLAGS		:= -std=c99 $(CXXFLAGS)
-LDFLAGS		:= `pkg-config --libs lua` -lrt
+LDFLAGS		:= `pkg-config --libs lua` -lrt -pthread
 
 UNDERSCORE_PATH	?=../underscore
 
