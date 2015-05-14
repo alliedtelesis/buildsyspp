@@ -82,6 +82,7 @@ static void add_env(Package *P, PackageCmd *pc)
 
 int li_bd_fetch(lua_State *L)
 {
+	int localCacheHit = -1;
 	/* the first argument is the table, and is implicit */
 	int argc = lua_gettop(L);
 	if(argc < 1)
@@ -151,9 +152,19 @@ int li_bd_fetch(lua_State *L)
 		{
 			argv = (char **)calloc(4, sizeof(char *));
 			argv[0] = strdup("wget");
-			argv[1] = strdup(location);
-			if(run(P->getName().c_str(), (char *)"wget", argv , "dl", NULL) != 0)
-				throw CustomException("Failed to fetch file");
+			//Attempt to get file from local tarball cache if one is configured.
+			if (WORLD->haveTarballCache()) {
+				asprintf(&argv[1], "%s/%s", WORLD->tarballCache().c_str(), fname);
+				localCacheHit = run(P->getName().c_str(), (char *)"wget", argv , "dl", NULL);
+				if (localCacheHit != 0)
+					free(argv[1]);
+			}
+			//If we didn't get the file from the local cache, look upstream.
+			if (localCacheHit != 0) {
+				argv[1] = strdup(location);
+				if(run(P->getName().c_str(), (char *)"wget", argv , "dl", NULL) != 0)
+					throw CustomException("Failed to fetch file");
+			}
 			if(decompress)
 			{
 				// We want to run a command on this file

@@ -808,6 +808,7 @@ namespace buildsys {
 			Internal_Graph *graph;
 			Internal_Graph *topo_graph;
 			std::string fetch_from;
+			std::string tarball_cache;
 			bool failed;
 			bool cleaning;
 			bool skipConfigure;
@@ -920,6 +921,14 @@ namespace buildsys {
 			bool canFetchFrom() { return (this->fetch_from != ""); }
 			//! Test if the fetch from location is set
 			std::string fetchFrom() { return this->fetch_from; }
+
+			//! Set the location of the local tarball cache
+			void setTarballCache(std::string cache) { this->tarball_cache = cache; }
+			//! Test if the tarball cache location is set
+			bool haveTarballCache() { return (this->tarball_cache != ""); }
+			//! Get the the tarball Cache location
+			std::string tarballCache() { return this->tarball_cache; }
+
 #ifdef UNDERSCORE
 			void condTrigger() { us_cond_lock(this->cond); us_cond_signal(this->cond, true); us_cond_unlock(this->cond); };
 #endif
