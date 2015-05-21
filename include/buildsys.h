@@ -251,6 +251,7 @@ namespace buildsys {
 			std::string path;
 			std::string rpath;
 			std::string staging;
+			std::string new_path;
 			std::string new_staging;
 			std::string new_install;
 			std::string work_build;
@@ -267,6 +268,8 @@ namespace buildsys {
 			const char *getShortPath() { return this->rpath.c_str(); };
 			//! Return the full path to the staging directory
 			const char *getStaging() { return this->staging.c_str(); };
+			//! Return the full path to the new directory
+			const char *getNewPath() { return this->new_path.c_str(); };
 			//! Return the full path to the new staging directory
 			const char *getNewStaging() { return this->new_staging.c_str(); };
 			//! Return the full path to the new install directory
@@ -565,7 +568,7 @@ namespace buildsys {
 			}
 	};
 
-	//! A lua extraction info file as part of the build step
+	//! An extraction info file as part of the build step
 	class ExtractionInfoFileUnit : public BuildUnit {
 		private:
 			std::string uri; //!< URI of this extraction info file
@@ -583,7 +586,7 @@ namespace buildsys {
 			}
 	};
 
-	//! A lua build info file as part of the build step
+	//! A build info file as part of the build step
 	class BuildInfoFileUnit : public BuildUnit {
 		private:
 			std::string uri; //!< URI of this build info file
@@ -598,6 +601,24 @@ namespace buildsys {
 			virtual std::string type()
 			{
 				return std::string("BuildInfoFile");
+			}
+	};
+
+	//! An output (hash) info file as part of the build step
+	class OutputInfoFileUnit : public BuildUnit {
+		private:
+			std::string uri; //!< URI of this output info file
+			std::string hash; //!< Hash of this output info file
+		public:
+			OutputInfoFileUnit(const char *file);
+			virtual bool print(std::ostream& out)
+			{
+				out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+				return true;
+			}
+			virtual std::string type()
+			{
+				return std::string("OutputInfoFile");
 			}
 	};
 
@@ -671,6 +692,7 @@ namespace buildsys {
 			bool codeUpdated;
 			bool was_built;
 			bool no_fetch_from;
+			bool hash_output;
 #ifdef UNDERSCORE
 			us_mutex *lock;
 #endif
@@ -686,7 +708,11 @@ namespace buildsys {
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(new BuildDir(name)), Extract(new Extraction()), build_description(new BuildDescription()), intercept(false), depsExtraction(NULL), installFile(NULL), visiting(false), processed(false), built(false), building(false), extracted(false), codeUpdated(false), was_built(false), no_fetch_from(false),
+			Package(std::string name, std::string file) : name(name), file(file) , bd(new BuildDir(name)),
+			        Extract(new Extraction()), build_description(new BuildDescription()), intercept(false),
+			        depsExtraction(NULL), installFile(NULL), visiting(false), processed(false),
+			        built(false), building(false), extracted(false), codeUpdated(false), was_built(false),
+			        no_fetch_from(false), hash_output(false),
 #ifdef UNDERSCORE
 			lock(us_mutex_create(true)),
 #endif
@@ -747,6 +773,10 @@ namespace buildsys {
 			void disableFetchFrom() { this->no_fetch_from = true; };
 			//! Can we fetch-from ?
 			bool canFetchFrom() { return !this->no_fetch_from; };
+			//! Hash the output for this package
+			void setHashOutput() { this->hash_output = true; };
+			//! Is this package hashing its' output ?
+			bool isHashingOutput() { return this->hash_output; };
 			//! Should this package be rebuilt ?
 			/** This returns true when any of the following occur:
 			  * - The output staging or install tarballs are removed

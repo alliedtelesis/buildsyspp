@@ -180,6 +180,27 @@ int li_buildlocally(lua_State *L)
 	return 0;
 }
 
+
+int li_hashoutput(lua_State *L)
+{
+	if(lua_gettop(L) != 0)
+	{
+		throw CustomException("buildlocally() takes no arguments");
+	}
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	// Instead of depender using build.info hash
+	// create an output.info and get them to hash that
+	// useful for kernel-headers and other packages
+	// that produce data that changes less often
+	// than the sources
+	P->setHashOutput();
+
+	return 0;
+}
+
 bool buildsys::interfaceSetup(Lua *lua)
 {
 	lua->registerFunc("builddir",     li_builddir);
@@ -188,6 +209,7 @@ bool buildsys::interfaceSetup(Lua *lua)
 	lua->registerFunc("intercept",    li_intercept);
 	lua->registerFunc("name",         li_name);
 	lua->registerFunc("buildlocally", li_buildlocally);
+	lua->registerFunc("hashoutput",   li_hashoutput);
 
 	return true;
 }

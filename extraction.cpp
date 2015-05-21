@@ -346,4 +346,10 @@ BuildInfoFileUnit::BuildInfoFileUnit(const char *fname)
 	free(Hash);
 }
 
-
+OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}

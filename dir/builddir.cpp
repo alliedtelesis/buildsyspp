@@ -121,6 +121,7 @@ BuildDir::BuildDir(std::string name)
 	{
 		throw DirException(path, strerror(errno));
 	}
+	this->new_path = std::string(path);
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/staging", pwd, gname, pname) == -1) {

@@ -345,25 +345,31 @@ bool Package::shouldBuild()
 	asprintf(&extractionInfoFname, "%s/.extraction.info", this->bd->getShortPath());
 	this->build_description->add(new ExtractionInfoFileUnit(extractionInfoFname));
 	free(extractionInfoFname);
-	
+
 	// Add each of our dependencies build info files
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
-	
+
 	if(dIt != dEnds)
 	{
 		for(; dIt != dEnds; dIt++)
 		{
 			if((*dIt)->bd != NULL)
 			{
-				char *buildInfo_file = NULL;
-				asprintf(&buildInfo_file, "%s/.build.info", (*dIt)->bd->getShortPath());
-				this->build_description->add(new BuildInfoFileUnit(buildInfo_file));
-				free(buildInfo_file);
+				char *Info_file = NULL;
+				if ((*dIt)->isHashingOutput())
+				{
+					asprintf(&Info_file, "%s/.output.info", (*dIt)->bd->getShortPath());
+					this->build_description->add(new OutputInfoFileUnit(Info_file));
+				} else {
+					asprintf(&Info_file, "%s/.build.info", (*dIt)->bd->getShortPath());
+					this->build_description->add(new BuildInfoFileUnit(Info_file));
+				}
+				free(Info_file);
 			}
 		}
 	}
-	
+
 	// Create the new build info file
 	char *buildInfoFname = NULL;
 	asprintf(&buildInfoFname, "%s/.build.info.new", this->bd->getPath());
@@ -448,6 +454,18 @@ bool Package::shouldBuild()
 				ret = true;
 			}
 			free(cmd);
+			if (this->isHashingOutput())
+			{
+				asprintf(&url, "%s/%s/%s/%s/output.info", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+				// try wget the output hash file
+				asprintf(&cmd, "wget -q %s -O %s/.output.info\n", url, this->bd->getPath());
+				res = system(cmd);
+				if(res != 0)
+				{
+					ret = true;
+				}
+				free(cmd);
+			}
 			free(hash);
 			if(ret)
 			{
@@ -698,16 +716,25 @@ bool Package::build()
 		asprintf(&cmd, "mv %s/.build.info.new %s/.build.info", this->bd->getPath(), this->bd->getPath());
 		system(cmd);
 		free(cmd);
+		cmd = NULL;
+
+		if (this->isHashingOutput())
+		{
+			// Hash the entire new path
+			asprintf(&cmd, "cd %s; find -type f -exec sha256sum {} \\; > %s/.output.info", this->bd->getNewPath(), this->bd->getPath());
+			system(cmd);
+			free(cmd);
+		}
 	}
-	
+
 	free(pwd);
 
 	clock_gettime(CLOCK_REALTIME, &end);
-	
+
 	this->run_secs = (end.tv_sec - start.tv_sec);
-	
+
 	log(this->name.c_str(), (char *)"Built in %d seconds",  this->run_secs);
-	
+
 #ifdef UNDERSCORE
 	// lock
 	us_mutex_lock(this->lock);
