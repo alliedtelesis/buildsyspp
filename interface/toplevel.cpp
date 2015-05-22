@@ -113,18 +113,13 @@ int li_intercept(lua_State *L)
 	return 0;
 }
 
-int li_depend(lua_State *L)
+static void depend(Package *P, const char *name)
 {
-	if(lua_gettop(L) != 1)
-	{
-		throw CustomException("depend() takes exactly 1 argument");
-	}
-	if(lua_type(L, 1) != LUA_TSTRING) throw CustomException("Argument to depend() must be a string");
-	
 	// check that the dependency exists
 	char *luaFile = NULL;
-	char *dependPath  = strdup(lua_tostring(L, 1));
+	char *dependPath  = strdup(name);
 	char *lastPart = strrchr(dependPath, '/');
+
 	if(lastPart == NULL)
 	{
 		lastPart = strdup(dependPath);
@@ -135,11 +130,11 @@ int li_depend(lua_State *L)
 	{
 		throw CustomException("Error with asprintf");
 	}
-	
+
 	FILE *f = fopen(luaFile, "r");
 	if(f == NULL)
 	{
-		log(lua_tostring(L, 1), "Opening %s: %s", luaFile, strerror(errno));
+		log(name, "Opening %s: %s", luaFile, strerror(errno));
 		throw CustomException("Failed opening Package");
 	}
 	fclose(f);
@@ -152,14 +147,41 @@ int li_depend(lua_State *L)
 		throw CustomException("Failed to create or find Package");
 	}
 
-	// record the dependency
-	lua_getglobal(L, "P");
-	Package *P = (Package *)lua_topointer(L, -1);
 
 	P->depend(p);
-	
+
 	free(dependPath);
 	free(lastPart);
+}
+
+int li_depend(lua_State *L)
+{
+	if(lua_gettop(L) != 1)
+	{
+		throw CustomException("depend() takes exactly 1 argument");
+	}
+
+	// get the current package
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+	if(lua_type(L, 1) == LUA_TSTRING)
+	{
+		depend(P, lua_tostring(L, 1));
+	} else
+	if(lua_istable(L, 1))
+	{
+		lua_pushnil(L);  /* first key */
+		while (lua_next(L, 1) != 0) {
+			/* uses 'key' (at index -2) and 'value' (at index -1) */
+			if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("depend() requires a table of strings as the only argument\n");
+			depend(P, lua_tostring(L, -1));
+			/* removes 'value'; keeps 'key' for next iteration */
+			lua_pop(L, 1);
+		}
+	} else {
+		throw CustomException("depend() takes a string or a table of strings");
+	}
+
 	return 0;
 }
 
