@@ -473,7 +473,12 @@ int li_bd_autoreconf(lua_State *L)
 	lua_getglobal(L, "P");
 	Package *P = (Package *)lua_topointer(L, -1);
 
-	PackageCmd *pc = new PackageCmd(d->getWorkSrc(), "autoreconf");
+	/* Make sure "autoreconf" or "configure" to be executed by only one process at a time.
+	 * Use the source directory as the lock file for "flock". */
+	PackageCmd *pc = new PackageCmd(d->getWorkSrc(), "flock");
+	pc->addArg(d->getWorkSrc());
+
+	pc->addArg("autoreconf");
 
 	if (WORLD->areSkipConfigure())
 		pc->skipCommand();
@@ -518,9 +523,14 @@ int li_bd_configure(lua_State *L)
 			path += "/" + dir;
 	}
 
+	/* Make sure "autoreconf" or "configure" to be executed by only one process at a time.
+	 * Use the source directory as the lock file for "flock". */
+	PackageCmd *pc = new PackageCmd(path, "flock");
+	pc->addArg(d->getWorkSrc());
+
 	std::string app = "../" + P->getName() + "/configure";
 
-	PackageCmd *pc = new PackageCmd(path, app);
+	pc->addArg(app);
 
 	if (WORLD->areSkipConfigure())
 		pc->skipCommand();
