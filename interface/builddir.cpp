@@ -46,32 +46,6 @@ static char *relative_path(BuildDir *d, const char *dir, bool allowDL=false)
 	return path;
 }
 
-static char *absolute_fetch_path(Package *P, const char *location)
-{
-	char *src_path = NULL;
-	char *cwd = getcwd(NULL, 0);
-	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.')
-	{
-		asprintf(&src_path, "%s/%s", cwd, location);
-	} else {
-		asprintf(&src_path, "%s/package/%s/%s", cwd, P->getName().c_str(), location);
-	}
-	free(cwd);
-	return src_path;
-}
-
-static char *relative_fetch_path(Package *P, const char *location)
-{
-	char *src_path = NULL;
-	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.')
-	{
-		src_path = strdup(location);
-	} else {
-		asprintf(&src_path, "package/%s/%s", P->getName().c_str(), location);
-	}
-	return src_path;
-}
-
 static void add_env(Package *P, PackageCmd *pc)
 {
 	char *pn_env = NULL;
@@ -197,7 +171,7 @@ int li_bd_fetch(lua_State *L)
 		fprintf(stderr, "Git clone, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "linkgit") == 0) {
-		char *l = relative_fetch_path(P, location);
+		char *l = P->relative_fetch_path(location);
 		char *l2 = strrchr(l,'/');
 		if(l2[1] == '\0')
 		{
@@ -212,7 +186,7 @@ int li_bd_fetch(lua_State *L)
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("ln");
 		argv[1] = strdup("-sf");
-		argv[2] = relative_fetch_path(P, location);
+		argv[2] = P->relative_fetch_path(location);
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"ln", argv , d->getPath(), NULL) != 0)
 		{
@@ -243,12 +217,12 @@ int li_bd_fetch(lua_State *L)
 		fprintf(stderr, "Linked data in, considering updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "copyfile") == 0) {
-		char *file_path = relative_fetch_path(P, location);
+		char *file_path = P->relative_fetch_path(location);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
 		free(file_path);
 	} else if(strcmp(method, "copygit") == 0) {
 		char *src_path = NULL;
-		src_path = relative_fetch_path(P, location);
+		src_path = P->relative_fetch_path(location);
 		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path,".",false);
 		P->extraction()->add(gdeu);
 	} else if(strcmp(method, "sm") == 0) {
@@ -285,7 +259,7 @@ int li_bd_fetch(lua_State *L)
 		argv = (char **)calloc(5, sizeof(char *));
 		argv[0] = strdup("cp");
 		argv[1] = strdup("-dpRuf");
-		argv[2] = absolute_fetch_path(P, location);
+		argv[2] = P->absolute_fetch_path(location);
 		argv[3] = strdup(".");
 		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
 			throw CustomException("Failed to copy (recursively)");
@@ -353,7 +327,7 @@ int li_bd_restore(lua_State *L)
 		char const* fn = strrchr(location, '/');
 		pc->addArg(fn != NULL ? fn + 1 : location);
 
-		char *tmp = absolute_fetch_path(P, location);
+		char *tmp = P->absolute_fetch_path(location);
 		pc->addArg(tmp);
 		free(tmp);
 
@@ -697,7 +671,7 @@ int li_bd_patch(lua_State *L)
 		{
 			char *uri = NULL;
 			if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("patch() requires a table of strings as the third argument\n");
-			uri = relative_fetch_path(P, lua_tostring(L, -1));
+			uri = P->relative_fetch_path(lua_tostring(L, -1));
 			PatchExtractionUnit *peu = new PatchExtractionUnit(patch_depth, patch_path, uri);
 			P->extraction()->add(peu);
 			free(uri);

@@ -115,43 +115,14 @@ int li_intercept(lua_State *L)
 
 static void depend(Package *P, const char *name)
 {
-	// check that the dependency exists
-	char *luaFile = NULL;
-	char *dependPath  = strdup(name);
-	char *lastPart = strrchr(dependPath, '/');
-
-	if(lastPart == NULL)
-	{
-		lastPart = strdup(dependPath);
-	} else {
-		lastPart = strdup(lastPart+1);
-	}
-	if(asprintf(&luaFile, "package/%s/%s.lua", dependPath, lastPart) <= 0)
-	{
-		throw CustomException("Error with asprintf");
-	}
-
-	FILE *f = fopen(luaFile, "r");
-	if(f == NULL)
-	{
-		log(name, "Opening %s: %s", luaFile, strerror(errno));
-		throw CustomException("Failed opening Package");
-	}
-	fclose(f);
-
 	// create the Package
-	Package *p = WORLD->findPackage(std::string(dependPath),std::string(luaFile));
+	Package *p = WORLD->findPackage(std::string(name));
 	if(p == NULL)
 	{
-		free(luaFile);
 		throw CustomException("Failed to create or find Package");
 	}
 
-
 	P->depend(p);
-
-	free(dependPath);
-	free(lastPart);
 }
 
 int li_depend(lua_State *L)

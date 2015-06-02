@@ -32,6 +32,33 @@ BuildDir *Package::builddir()
 	return this->bd;
 }
 
+char *Package::absolute_fetch_path(const char *location)
+{
+	char *src_path = NULL;
+	char *cwd = getcwd(NULL, 0);
+	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.')
+	{
+		asprintf(&src_path, "%s/%s", cwd, location);
+	} else {
+		asprintf(&src_path, "%s/%s/%s/%s", cwd, this->getOverlay().c_str(), this->getName().c_str(), location);
+	}
+	free(cwd);
+	return src_path;
+}
+
+char *Package::relative_fetch_path(const char *location)
+{
+	char *src_path = NULL;
+	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.')
+	{
+		src_path = strdup(location);
+	} else {
+		asprintf(&src_path, "%s/%s/%s", this->getOverlay().c_str(), this->getName().c_str(), location);
+	}
+	return src_path;
+}
+
+
 void Package::resetBD()
 {
 	if(this->bd != NULL)
@@ -81,7 +108,7 @@ bool Package::process()
 	{
 		if(!(*iter)->process())
 		{
-			log(this->name.c_str(),(char *)"dependency failed");
+			throw CustomException("dependency failure");
 			return false;
 		}
 	}

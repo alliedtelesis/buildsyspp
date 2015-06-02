@@ -22,6 +22,15 @@ std::list<Package *>::iterator World::packagesEnd()
 	return this->packages.end();
 }
 
+string_list::iterator World::overlaysStart()
+{
+	return this->overlays->begin();
+}
+string_list::iterator World::overlaysEnd()
+{
+	return this->overlays->end();
+}
+
 void World::setName(std::string n)
 {
 	this->name = n;
@@ -106,7 +115,8 @@ static void *build_thread(us_thread *t)
 
 bool World::basePackage(char *filename)
 {
-	this->p = findPackage(filename, filename);
+	this->p = new Package(filename, filename, "");
+	this->packages.push_back(p);
 
 	try {
 		// Load all the lua files
@@ -153,8 +163,10 @@ bool World::basePackage(char *filename)
 	return !this->failed;
 }
 
-Package *World::findPackage(std::string name, std::string file)
+Package *World::findPackage(std::string name)
 {
+	std::string file;
+	std::string overlay;
 	std::list<Package *>::iterator iter = this->packagesStart();
 	std::list<Package *>::iterator iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++)
@@ -162,7 +174,60 @@ Package *World::findPackage(std::string name, std::string file)
 		if((*iter)->getName().compare(name) == 0)
 			return (*iter);
 	}
-	Package *p = new Package(name, file);
+
+	// Package not found, create it
+	{
+		// check that the dependency exists
+		char *luaFile = NULL;
+		char *dependPath  = strdup(name.c_str());
+		char *lastPart = strrchr(dependPath, '/');
+		bool found = false;
+
+		if(lastPart == NULL)
+		{
+			lastPart = strdup(dependPath);
+		} else {
+			lastPart = strdup(lastPart+1);
+		}
+
+		string_list::iterator iter = this->overlaysStart();
+		string_list::iterator iterEnd = this->overlaysEnd();
+		for(; iter != iterEnd; iter++)
+		{
+			if(asprintf(&luaFile, "%s/%s/%s.lua", iter->c_str(), dependPath, lastPart) <= 0)
+			{
+				throw CustomException("Error with asprintf");
+			}
+			FILE *f = fopen(luaFile, "r");
+			if(f == NULL)
+			{
+				log(name.c_str(), "Opening %s: %s", luaFile, strerror(errno));
+			} else {
+				found = true;
+				overlay = *iter;
+				fclose(f);
+			}
+			if(found)
+			{
+				break;
+			}
+			free(luaFile);
+			luaFile = NULL;
+		}
+
+		if (!found)
+		{
+			throw CustomException("Failed opening Package");
+		}
+
+
+		free(dependPath);
+		free(lastPart);
+
+		file = std::string(luaFile);
+	}
+
+	Package *p = new Package(name, file, overlay);
 	this->packages.push_back(p);
 	return p;
 }

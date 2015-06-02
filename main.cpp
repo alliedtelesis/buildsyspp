@@ -113,6 +113,11 @@ int main(int argc, char *argv[])
 			WORLD->setTarballCache(argv[a+1]);
 			a++;
 		} else
+		if(!strcmp(argv[a],"--overlay"))
+		{
+			WORLD->addOverlayPath(std::string(argv[a+1]));
+			a++;
+		} else
 		if(!strcmp(argv[a],"--extract-only"))
 		{
 			WORLD->setExtractOnly();

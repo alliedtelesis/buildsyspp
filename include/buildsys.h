@@ -678,6 +678,7 @@ namespace buildsys {
 			std::list<PackageCmd *> commands;
 			std::string name;
 			std::string file;
+			std::string overlay;
 			BuildDir *bd;
 			Extraction *Extract;
 			BuildDescription *build_description;
@@ -708,17 +709,23 @@ namespace buildsys {
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file) : name(name), file(file) , bd(new BuildDir(name)),
-			        Extract(new Extraction()), build_description(new BuildDescription()), intercept(false),
-			        depsExtraction(NULL), installFile(NULL), visiting(false), processed(false),
-			        built(false), building(false), extracted(false), codeUpdated(false), was_built(false),
+			Package(std::string name, std::string file, std::string overlay) :
+			        name(name), file(file), overlay(overlay), bd(new BuildDir(name)),
+			        Extract(new Extraction()), build_description(new BuildDescription()),
+			        intercept(false), depsExtraction(NULL), installFile(NULL),
+			        visiting(false), processed(false), built(false), building(false),
+			        extracted(false), codeUpdated(false), was_built(false),
 			        no_fetch_from(false), hash_output(false),
 #ifdef UNDERSCORE
-			lock(us_mutex_create(true)),
+			        lock(us_mutex_create(true)),
 #endif
 			 run_secs(0) {};
 			//! Returns the build directory being used by this package
 			BuildDir *builddir();
+			//! Get the absolute fetch path for this package
+			char *absolute_fetch_path(const char *location);
+			//! Get the relative fetch path for this package
+			char *relative_fetch_path(const char *location);
 			//! Recreate the build directory
 			void resetBD();
 			//! Returns the extraction
@@ -731,6 +738,8 @@ namespace buildsys {
 			void setIntercept() { this->intercept = true; };
 			//! Return the name of this package
 			std::string getName() { return this->name; };
+			//! Return the overlay this package is from
+			std::string getOverlay() { return this->overlay; };
 			//! Depend on another package
 			/** \param p The package to depend on
 			  */
@@ -835,6 +844,7 @@ namespace buildsys {
 			std::string name;
 			Package *p;
 			std::list<Package *> packages;
+			string_list *overlays;
 			Internal_Graph *graph;
 			Internal_Graph *topo_graph;
 			std::string fetch_from;
@@ -849,12 +859,13 @@ namespace buildsys {
 #endif
 		public:
 			World(char *bsapp) : bsapp(std::string(bsapp)), features(new key_value()),
-					forcedDeps(new string_list()), lua(new Lua()), graph(NULL),
-					failed(false), cleaning(false), skipConfigure(false), extractOnly(false)
+					forcedDeps(new string_list()), lua(new Lua()), overlays(new string_list()),
+					graph(NULL), failed(false), cleaning(false), skipConfigure(false),
+					extractOnly(false)
 #ifdef UNDERSCORE
 					,cond(us_cond_create()),outputPrefix(true)
 #endif
-					{};
+					{ overlays->push_back(std::string("package")); };
 
 			//! Return the name we were invoked as
 			std::string getAppName() { return this->bsapp; };
@@ -930,8 +941,8 @@ namespace buildsys {
 
 			//! Start the processing and building steps with the given meta package
 			bool basePackage(char *filename);
-			//! Find or create a package with the given name, using the filename if needed
-			Package *findPackage(std::string name, std::string file);
+			//! Find or create a package with the given name
+			Package *findPackage(std::string name);
 
 			//! Get the start iterator for the package list
 			std::list<Package *>::iterator packagesStart();
@@ -959,6 +970,12 @@ namespace buildsys {
 			//! Get the the tarball Cache location
 			std::string tarballCache() { return this->tarball_cache; }
 
+			//! Add an overlay to search for packages
+			void addOverlayPath(std::string path) { this->overlays->push_back(path); };
+			//! Get the start iterator for the overlay list
+			string_list::iterator overlaysStart();
+			//! Get the end iterator for the over list
+			string_list::iterator overlaysEnd();
 #ifdef UNDERSCORE
 			void condTrigger() { us_cond_lock(this->cond); us_cond_signal(this->cond, true); us_cond_unlock(this->cond); };
 #endif
