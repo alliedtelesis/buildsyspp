@@ -162,14 +162,22 @@ int li_bd_fetch(lua_State *L)
 			}
 		}
 	} else if(strcmp(method, "git") == 0) {
-		argv = (char **)calloc(4, sizeof(char *));
-		argv[0] = strdup("git");
-		argv[1] = strdup("clone");
-		argv[2] = strdup(location);
-		if(run(P->getName().c_str(), (char *)"git", argv , d->getPath(), NULL) != 0)
-			throw CustomException("Failed to git clone");
-		fprintf(stderr, "Git clone, considering code updated\n");
-		P->setCodeUpdated();
+		const char *branch = lua_tostring(L, 4);
+		char *l2 = strrchr(location,'/');
+		if(l2[1] == '\0')
+		{
+			l2[0] = '\0';
+			l2 = strrchr(location,'/');
+		}
+		l2++;
+		if (branch == NULL)
+		{
+			// Default to master
+			branch = "origin/master";
+		}
+		GitExtractionUnit *geu = new GitExtractionUnit(location, l2, branch);
+		geu->fetch(P);
+		P->extraction()->add(geu);
 	} else if(strcmp(method, "linkgit") == 0) {
 		char *l = P->relative_fetch_path(location);
 		char *l2 = strrchr(l,'/');
@@ -179,8 +187,8 @@ int li_bd_fetch(lua_State *L)
 			l2 = strrchr(l,'/');
 		}
 		l2++;
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location,l2,true);
-		P->extraction()->add(gdeu);
+		LinkGitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(location,l2);
+		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "link") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));
@@ -223,8 +231,8 @@ int li_bd_fetch(lua_State *L)
 	} else if(strcmp(method, "copygit") == 0) {
 		char *src_path = NULL;
 		src_path = P->relative_fetch_path(location);
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(src_path,".",false);
-		P->extraction()->add(gdeu);
+		CopyGitDirExtractionUnit *cgdeu = new CopyGitDirExtractionUnit(src_path,".");
+		P->extraction()->add(cgdeu);
 	} else if(strcmp(method, "sm") == 0) {
 		if (mkdir(d->getWorkBuild(), 0777) && errno != EEXIST)
 		{
@@ -252,8 +260,8 @@ int li_bd_fetch(lua_State *L)
 			l2 = strrchr(l,'/');
 		}
 		l2++;
-		GitDirExtractionUnit *gdeu = new GitDirExtractionUnit(location,l2,true);
-		P->extraction()->add(gdeu);
+		GitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(location,l2);
+		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "copy") == 0) {
 		argv = (char **)calloc(5, sizeof(char *));

@@ -486,11 +486,10 @@ namespace buildsys {
 
 	//! A git directory as part of the extraction step
 	class GitDirExtractionUnit : public ExtractionUnit {
-		private:
-			bool linked;
+		protected:
 			std::string toDir;
 		public:
-			GitDirExtractionUnit(const char *git_dir, const char *toDir, bool link);
+			GitDirExtractionUnit(const char *git_dir, const char *toDir);
 			virtual bool same(ExtractionUnit *eu)
 			{
 				if(eu->type().compare("GitDir") != 0) return false;
@@ -500,16 +499,51 @@ namespace buildsys {
 			}
 			virtual bool print(std::ostream& out)
 			{
-				out << this->type() << " " << (this->linked ? "link" : "copy") << " " << this->uri << " " << this->toDir << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << std::endl;
+				out << this->type() << " " << this->modeName() << " " << this->uri << " " << this->toDir << " " << this->hash << " " << (this->isDirty() ? this->dirtyHash() : "")  << std::endl;
 				return true;
 			}
 			virtual std::string type()
 			{
 				return std::string("GitDir");
 			}
-			virtual bool extract(Package *P, BuildDir *b);
+			virtual bool extract(Package *P, BuildDir *b) = 0;
 			virtual bool isDirty();
 			virtual std::string dirtyHash();
+			virtual std::string localPath()
+			{
+				return this->uri;
+			}
+			virtual std::string modeName() = 0;
+	};
+
+	//! A local linked-in git dir as part of an extraction step
+	class LinkGitDirExtractionUnit : public GitDirExtractionUnit {
+		public:
+			LinkGitDirExtractionUnit(const char *git_dir, const char *toDir) : GitDirExtractionUnit (git_dir, toDir) {};
+			virtual bool extract (Package *P, BuildDir *bd);
+			virtual std::string modeName() { return "link"; };
+	};
+
+	//! A local copied-in git dir as part of an extraction step
+	class CopyGitDirExtractionUnit : public GitDirExtractionUnit {
+		public:
+			CopyGitDirExtractionUnit(const char *git_dir, const char *toDir) : GitDirExtractionUnit (git_dir, toDir) {};
+			virtual bool extract (Package *P, BuildDir *bd);
+			virtual std::string modeName() { return "copy"; };
+	};
+
+	//! A remote git dir as part of an extraction step
+	class GitExtractionUnit : public GitDirExtractionUnit {
+		private:
+			std::string refspec;
+			std::string local;
+		public:
+			GitExtractionUnit(const char *remote, const char *local, std::string refspec) :
+			             GitDirExtractionUnit(remote, local), refspec(refspec) {};
+			virtual bool fetch (Package *P);
+			virtual bool extract (Package *P, BuildDir *bd);
+			virtual std::string modeName() { return "fetch"; };
+			virtual std::string localPath() { return this->local; }
 	};
 
 	//! A feature/value as part of the build step
