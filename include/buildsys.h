@@ -712,6 +712,20 @@ namespace buildsys {
 			}
 	};
 
+	//! A namespace
+	class NameSpace {
+		private:
+			std::string name;
+			std::list<Package *> packages;
+		public:
+			NameSpace(std::string name) : name(name) {};
+			std::string getName() { return name; };
+			std::list<Package *>::iterator packagesStart();
+			std::list<Package *>::iterator packagesEnd();
+			Package *findPackage (std::string name);
+			void addPackage (Package *p);
+	};
+
 	//! A package to build
 	class Package {
 		private:
@@ -720,6 +734,7 @@ namespace buildsys {
 			std::string name;
 			std::string file;
 			std::string overlay;
+			NameSpace *ns;
 			BuildDir *bd;
 			Extraction *Extract;
 			BuildDescription *build_description;
@@ -751,7 +766,7 @@ namespace buildsys {
 			  * \param file The lua file describing this package
 			  */
 			Package(std::string name, std::string file, std::string overlay) :
-			        name(name), file(file), overlay(overlay), bd(new BuildDir(name)),
+			        name(name), file(file), overlay(overlay), ns(NULL), bd(new BuildDir(name)),
 			        Extract(new Extraction()), build_description(new BuildDescription()),
 			        intercept(false), depsExtraction(NULL), installFile(NULL),
 			        visiting(false), processed(false), built(false), building(false),
@@ -761,6 +776,10 @@ namespace buildsys {
 			        lock(us_mutex_create(true)),
 #endif
 			 run_secs(0) {};
+			//! Set the namespace this package is in
+			void setNS(NameSpace *ns) { this->ns = ns; };
+			//! Returns the namespace this package is in
+			NameSpace *getNS() { return this->ns; };
 			//! Returns the build directory being used by this package
 			BuildDir *builddir();
 			//! Get the absolute fetch path for this package
@@ -882,9 +901,8 @@ namespace buildsys {
 			key_value *features;
 			string_list *forcedDeps;
 			Lua *lua;
-			std::string name;
+			NameSpace *ns;
 			Package *p;
-			std::list<Package *> packages;
 			string_list *overlays;
 			Internal_Graph *graph;
 			Internal_Graph *topo_graph;
@@ -914,7 +932,7 @@ namespace buildsys {
 			Lua *getLua() { return this->lua; };
 
 			//! Return the global name, in lua this is name()
-			std::string getName() { return this->name; };
+			std::string getName() { return this->ns ? this->ns->getName() : ""; };
 			//! Set the global name, in lua this is name('somevalue')
 			void setName(std::string n);
 
@@ -983,12 +1001,12 @@ namespace buildsys {
 			//! Start the processing and building steps with the given meta package
 			bool basePackage(char *filename);
 			//! Find or create a package with the given name
-			Package *findPackage(std::string name);
+			Package *findPackage(std::string name) { return this->ns->findPackage(name); };
 
 			//! Get the start iterator for the package list
-			std::list<Package *>::iterator packagesStart();
+			std::list<Package *>::iterator packagesStart() { return this->ns->packagesStart(); };
 			//! Get the end iterator for the package list
-			std::list<Package *>::iterator packagesEnd();
+			std::list<Package *>::iterator packagesEnd() { return this->ns->packagesEnd(); };
 
 			//! Tell everything that we have failed
 			void setFailed() { this->failed = true; };
