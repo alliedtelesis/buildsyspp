@@ -14,6 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <iostream>
 #include <map>
 #include <list>
+#include <memory>
 
 extern "C" {
 	#include <lua.h>
@@ -323,9 +324,11 @@ namespace buildsys {
 			/** \param path The path to run this command in
 			  * \param app The program to invoke
 			  */
-			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) {};
-			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) {};
-			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) {};
+			PackageCmd(const char *path, const char *app) : path(strdup(path)) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) { this->addArg(app); };
+			PackageCmd(std::string const &path, const char *app) : path(strdup(path.c_str())) , app(strdup(app)) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) { this->addArg(app); };
+			PackageCmd(std::string const &path, std::string const &app) : path(strdup(path.c_str())) , app(strdup(app.c_str())) , args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) { this->addArg(app); };
+
+			~PackageCmd();
 
 			//! Mark a command to allow skiping its execution
 			void skipCommand(void) { this->skip = true; }
@@ -341,6 +344,7 @@ namespace buildsys {
 				this->args[this->arg_count] = NULL;
 			}
 			void addArg(std::string const &arg) { addArg(arg.c_str()); }
+			void addArgFmt(const char *fmt, ...);
 
 			//! Add an enviroment variable to this command
 			/** \param env The enviroment variable to append to this command
@@ -358,6 +362,9 @@ namespace buildsys {
 			/** \param package The package name to use in the command logging
 			 */
 			bool Run(const char *package);
+
+			//! Print the command line
+			void printCmd(const char *package);
 	};
 
 	//! An extraction unit

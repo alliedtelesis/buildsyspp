@@ -68,7 +68,7 @@ TarExtractionUnit::TarExtractionUnit(const char *fname)
 
 bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
 {
-	char **argv = NULL;
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "tar"));
 	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("dl", 0700);
@@ -76,28 +76,14 @@ bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
 	{
 		throw CustomException("Error: Creating download directory");
 	}
-	char *t_full_path = NULL;
-	asprintf(&t_full_path, "%s/%s", pwd, this->uri.c_str());
+	pc->addArg("xf");
+	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 	free(pwd);
 	pwd = NULL;
-	argv = (char **)calloc(4, sizeof(char *));
-	argv[0] = strdup("tar");
-	argv[1] = strdup("xf");
-	argv[2] = t_full_path;
-	
-	if(run(P->getName().c_str(), (char *)"tar", argv , bd->getPath(), NULL) != 0)
+
+	if(!pc->Run(P->getName().c_str()))
 		throw CustomException("Failed to extract file");
-	
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
+
 	return true;
 }
 
@@ -111,7 +97,7 @@ ZipExtractionUnit::ZipExtractionUnit(const char *fname)
 
 bool ZipExtractionUnit::extract(Package *P, BuildDir *bd)
 {
-	char **argv = NULL;
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "unzip"));
 	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("dl", 0700);
@@ -119,27 +105,15 @@ bool ZipExtractionUnit::extract(Package *P, BuildDir *bd)
 	{
 		throw CustomException("Error: Creating download directory");
 	}
-	char *t_full_path = NULL;
-	asprintf(&t_full_path, "%s/%s", pwd, this->uri.c_str());
+
+	pc->addArg("-o");
+	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 	free(pwd);
 	pwd = NULL;
-	argv = (char **)calloc(4, sizeof(char *));
-	argv[0] = strdup("unzip");
-	argv[1] = strdup("-o");
-	argv[2] = t_full_path;
-	if(run(P->getName().c_str(), (char *)"unzip", argv , bd->getPath(), NULL) != 0)
+
+	if(!pc->Run(P->getName().c_str()))
 		throw CustomException("Failed to extract file");
 
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
 	return true;
 }
 
@@ -156,41 +130,34 @@ PatchExtractionUnit::PatchExtractionUnit(int level, char *pp, char *uri)
 
 bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 {
+	std::unique_ptr<PackageCmd> pc_dry(new PackageCmd(this->patch_path, "patch"));
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(this->patch_path, "patch"));
+
+	pc_dry->addArgFmt("-p%i", this->level);
+	pc->addArgFmt("-p%i", this->level);
+
+	pc_dry->addArg("-stN");
+	pc->addArg("-stN");
+
+	pc_dry->addArg("-i");
+	pc->addArg("-i");
+
 	char *pwd = getcwd(NULL, 0);
-	char **argv = (char **)calloc(7, sizeof(char *));
-	argv[0] = strdup("patch");
-	asprintf(&argv[1], "-p%i", this->level);
-	argv[2] = strdup("-stN");
-	argv[3] = strdup("-i");
-	
-	char *p_full_path = NULL;
-	asprintf(&p_full_path, "%s/%s", pwd, this->uri.c_str());
+	pc_dry->addArgFmt("%s/%s", pwd, this->uri.c_str());
+	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 	free(pwd);
 	pwd = NULL;
-	
-	argv[4] = p_full_path;
-	p_full_path = NULL;
-	argv[5] = strdup("--dry-run");
-	if(run(P->getName().c_str(), (char *)"patch", argv , patch_path, NULL) != 0)
+
+	pc_dry->addArg("--dry-run");
+
+	if(!pc_dry->Run(P->getName().c_str()))
 	{
-		log(P->getName().c_str(), "Patch file: %s", argv[4]);
+		log(P->getName().c_str(), "Patch file: %s", this->uri.c_str());
 		throw CustomException("Will fail to patch");
 	}
-	free(argv[5]);
-	argv[5] = NULL;
-	if(run(P->getName().c_str(), (char *)"patch", argv , patch_path, NULL) != 0)
-		throw CustomException("Truely failed to patch");
 
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
+	if(!pc->Run(P->getName().c_str()))
+		throw CustomException("Truely failed to patch");
 
 	return true;
 }
@@ -206,33 +173,20 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
 bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	char *pwd = getcwd(NULL, 0);
-	char **argv = NULL;
-	
-	char *f_full_path = NULL;
-	asprintf(&f_full_path, "%s/%s", pwd, this->uri.c_str());
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "cp"));
+	pc->addArg("-a");
+
+	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 	free(pwd);
 	pwd = NULL;
-	
-	argv = (char **)calloc(5, sizeof(char *));
-	argv[0] = strdup("cp");
-	argv[1] = strdup("-a");
-	argv[2] = f_full_path;
-	f_full_path = NULL;
-	argv[3] = strdup(".");
-	
-	if(run(P->getName().c_str(), (char *)"cp", argv , bd->getPath(), NULL) != 0)
-		throw CustomException("Failed to copy file");
-	
-	if(argv != NULL)
+
+	pc->addArg(".");
+
+	if(!pc->Run(P->getName().c_str()))
 	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
+		throw CustomException("Failed to copy file");
 	}
+
 	return true;
 }
 
@@ -267,45 +221,48 @@ std::string GitDirExtractionUnit::dirtyHash()
 
 bool LinkGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 {
-	char **argv = (char **)calloc(5, sizeof(char *));
-	int argp = 0;
-	argv[argp++] = strdup("ln");
-	argv[argp++] = strdup("-sfT");
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "ln"));
+
+	pc->addArg("-sfT");
+
 	if(this->uri[0] == '.')
 	{
 		char *pwd = getcwd(NULL, 0);
-		asprintf(&argv[argp++], "%s/%s", pwd, this->uri.c_str());
+		pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 		free(pwd);
 	} else {
-		argv[argp++] = strdup(this->uri.c_str());
+		pc->addArg(this->uri.c_str());
 	}
-	argv[argp++] = strdup(this->toDir.c_str());
-	if(run(P->getName().c_str(), argv[0], argv , bd->getPath(), NULL) != 0)
+	pc->addArg(this->toDir);
+
+	if(!pc->Run(P->getName().c_str()))
 	{
 		throw CustomException("Operation failed");
 	}
+
 	return true;
 }
 
 bool CopyGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 {
-	char **argv = (char **)calloc(5, sizeof(char *));
-	int argp = 0;
-	argv[argp++] = strdup("cp");
-	argv[argp++] = strdup("-dpRuf");
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "cp"));
+	pc->addArg("-dpRuf");
+
 	if(this->uri[0] == '.')
 	{
 		char *pwd = getcwd(NULL, 0);
-		asprintf(&argv[argp++], "%s/%s", pwd, this->uri.c_str());
+		pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 		free(pwd);
 	} else {
-		argv[argp++] = strdup(this->uri.c_str());
+		pc->addArg(this->uri);
 	}
-	argv[argp++] = strdup(this->toDir.c_str());
-	if(run(P->getName().c_str(), argv[0], argv , bd->getPath(), NULL) != 0)
+	pc->addArg(this->toDir);
+
+	if(!pc->Run(P->getName().c_str()))
 	{
 		throw CustomException("Operation failed");
 	}
+
 	return true;
 }
 
@@ -344,57 +301,35 @@ bool GitExtractionUnit::fetch(Package *P)
 			exists = true;
 		}
 	}
-	char **argv = (char **)calloc(6, sizeof(char *));
-	argv[0] = strdup("git");
+
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(exists ? source_dir : cwd, "git"));
+
 	if (exists)
 	{
-		argv[1] = strdup("fetch");
-		argv[2] = strdup("origin");
-		argv[3] = strdup("--tags");
-		if(run(P->getName().c_str(), (char*)"git", argv, source_dir, NULL) != 0)
+		pc->addArg("fetch");
+		pc->addArg("origin");
+		pc->addArg("--tags");
+		if(!pc->Run(P->getName().c_str()))
 		{
 			throw CustomException("Failed: git fetch origin --tags");
 		}
 	} else {
-		argv[1] = strdup("clone");
-		argv[2] = strdup("-n");
-		argv[3] = strdup(location);
-		argv[4] = strdup(source_dir);
-		if(run(P->getName().c_str(), (char *)"git", argv , cwd, NULL) != 0)
+		pc->addArg("clone");
+		pc->addArg("-n");
+		pc->addArg(location);
+		pc->addArg(source_dir);
+		if(!pc->Run(P->getName().c_str()) != 0)
 			throw CustomException("Failed to git clone");
 	}
 
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
-
+	pc.reset(new PackageCmd(source_dir, "git"));
 	// switch to refspec
-	argv = (char **)calloc(6, sizeof(char *));
-	argv[0] = strdup("git");
-	argv[1] = strdup("checkout");
-	argv[2] = strdup("-q");
-	argv[3] = strdup("--detach");
-	argv[4] = strdup(this->refspec.c_str());
-	if(run(P->getName().c_str(), (char *)"git", argv, source_dir, NULL) != 0)
+	pc->addArg("checkout");
+	pc->addArg("-q");
+	pc->addArg("--detach");
+	pc->addArg(this->refspec.c_str());
+	if(!pc->Run(P->getName().c_str()))
 		throw CustomException("Failed to checkout");
-
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
 
 	free(repo_name);
 	free(location);
@@ -406,24 +341,12 @@ bool GitExtractionUnit::fetch(Package *P)
 bool GitExtractionUnit::extract (Package *P, BuildDir *bd)
 {
 	// copy to work dir
-	char **argv = (char **)calloc(5, sizeof(char *));
-	argv[0] = strdup("cp");
-	argv[1] = strdup("-dpRuf");
-	argv[2] = strdup(this->localPath().c_str());
-	argv[3] = strdup(".");
-	if(run(P->getName().c_str(), (char *)"cp", argv, bd->getPath(), NULL) != 0)
+	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "cp"));
+	pc->addArg("-dpRuf");
+	pc->addArg(this->localPath());
+	pc->addArg(".");
+	if(!pc->Run(P->getName().c_str()) != 0)
 		throw CustomException("Failed to checkout");
-
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
 
 	return true;
 }

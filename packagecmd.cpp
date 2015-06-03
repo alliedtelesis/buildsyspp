@@ -12,6 +12,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <buildsys.h>
 
+void PackageCmd::addArgFmt(const char *fmt, ...)
+{
+	char *message = NULL;
+	va_list args;
+	va_start(args, fmt);
+	vasprintf(&message, fmt, args);
+	va_end(args);
+
+	this->addArg(message);
+
+	free(message);
+}
+
 bool PackageCmd::Run(const char *package)
 {
 	if (this->skip)
@@ -53,4 +66,37 @@ bool PackageCmd::Run(const char *package)
 		free(ne);
 	}
 	return res;
+}
+
+void PackageCmd::printCmd(const char *name)
+{
+	printf("Path: %s\n", this->path);
+	for (size_t i = 0; i < this->arg_count; i++)
+	{
+		printf("Arg[%zi] = '%s'\n", i, this->args[i]);
+	}
+}
+
+PackageCmd::~PackageCmd()
+{
+	if(this->path)
+		free(this->path);
+	if(this->app)
+		free(this->app);
+	if(this->args)
+	{
+		for(size_t i = 0; i < this->arg_count; i++)
+		{
+			free(this->args[i]);
+		}
+		free(this->args);
+	}
+	if(this->envp)
+	{
+		for(size_t i = 0; i < this->envp_count; i++)
+		{
+			free(this->envp[i]);
+		}
+		free(this->envp);
+	}
 }

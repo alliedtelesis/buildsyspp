@@ -56,7 +56,6 @@ static void add_env(Package *P, PackageCmd *pc)
 
 int li_bd_fetch(lua_State *L)
 {
-	int localCacheHit = -1;
 	/* the first argument is the table, and is implicit */
 	int argc = lua_gettop(L);
 	if(argc < 1)
@@ -74,8 +73,6 @@ int li_bd_fetch(lua_State *L)
 
 	char *location = strdup(lua_tostring(L, 2));
 	const char *method = lua_tostring(L, 3);
-
-	char **argv = NULL;
 
 	if(WORLD->forcedMode() && !WORLD->isForced(P->getName()))
 	{
@@ -124,20 +121,24 @@ int li_bd_fetch(lua_State *L)
 		}
 		if(get)
 		{
-			argv = (char **)calloc(4, sizeof(char *));
-			argv[0] = strdup("wget");
+			bool localCacheHit;
 			//Attempt to get file from local tarball cache if one is configured.
 			if (WORLD->haveTarballCache()) {
-				asprintf(&argv[1], "%s/%s", WORLD->tarballCache().c_str(), fname);
-				localCacheHit = run(P->getName().c_str(), (char *)"wget", argv , "dl", NULL);
-				if (localCacheHit != 0)
-					free(argv[1]);
+				PackageCmd *pc = new PackageCmd("dl","wget");
+				char *url = NULL;
+				asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(), fname);
+				pc->addArg(url);
+				free(url);
+				localCacheHit = pc->Run(P->getName().c_str());
+				delete pc;
 			}
 			//If we didn't get the file from the local cache, look upstream.
-			if (localCacheHit != 0) {
-				argv[1] = strdup(location);
-				if(run(P->getName().c_str(), (char *)"wget", argv , "dl", NULL) != 0)
+			if (!localCacheHit) {
+				PackageCmd *pc = new PackageCmd("dl","wget");
+				pc->addArg(location);
+				if(!pc->Run(P->getName().c_str()))
 					throw CustomException("Failed to fetch file");
+				delete pc;
 			}
 			if(decompress)
 			{
@@ -191,18 +192,16 @@ int li_bd_fetch(lua_State *L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "link") == 0) {
-		argv = (char **)calloc(5, sizeof(char *));
-		argv[0] = strdup("ln");
-		argv[1] = strdup("-sf");
-		argv[2] = P->relative_fetch_path(location);
-		argv[3] = strdup(".");
-		if(run(P->getName().c_str(), (char *)"ln", argv , d->getPath(), NULL) != 0)
+		PackageCmd *pc = new PackageCmd(d->getPath(), "ln");
+		pc->addArg("-sf");
+		char *l = P->relative_fetch_path(location);
+		pc->addArg(l);
+		pc->addArg(".");
+		if(!pc->Run(P->getName().c_str()))
 		{
 			// An error occured, try remove the file, then relink
-			char **rmargv = (char **)calloc(4, sizeof(char *));
-			rmargv[0] = strdup("rm");
-			rmargv[1] = strdup("-fr");
-			char *l = strdup(argv[2]);
+			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
+			rmpc->addArg("-fr");
 			char *l2 = strrchr(l,'/');
 			if(l2[1] == '\0')
 			{
@@ -210,18 +209,15 @@ int li_bd_fetch(lua_State *L)
 				l2 = strrchr(l,'/');
 			}
 			l2++;
-			rmargv[2] = strdup(l2);
-			log(P->getName().c_str(), (char *)"%s %s %s\n", rmargv[0], rmargv[1], rmargv[2]);
-			if(run(P->getName().c_str(), (char *)"/bin/rm", rmargv , d->getPath(), NULL) != 0)
+			rmpc->addArg(l2);
+			if(!rmpc->Run(P->getName().c_str()))
 				throw CustomException("Failed to ln (symbolically), could not remove target first");
-			if(run(P->getName().c_str(), (char *)"ln", argv, d->getPath(), NULL) != 0)
+			if(!pc->Run(P->getName().c_str()))
 				throw CustomException("Failed to ln (symbolically), even after removing target first");
-			free(rmargv[0]);
-			free(rmargv[1]);
-			free(rmargv[2]);
-			free(rmargv);
-			free(l);
+			delete rmpc;
 		}
+		free(l);
+		delete pc;
 		fprintf(stderr, "Linked data in, considering updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "copyfile") == 0) {
@@ -236,21 +232,15 @@ int li_bd_fetch(lua_State *L)
 	} else if(strcmp(method, "sm") == 0) {
 		if (mkdir(d->getWorkBuild(), 0777) && errno != EEXIST)
 		{
-			// An error occured, try remove the direcotry, then recreate
-			char **rmargv = (char **)calloc(4, sizeof(char *));
-			rmargv[0] = strdup("rm");
-			rmargv[1] = strdup("-fr");
-			rmargv[2] = strdup(d->getWorkBuild());
-			rmargv[3] = NULL;
-			log(P->getName().c_str(), (char *)"%s %s %s\n", rmargv[0], rmargv[1], rmargv[2]);
-			if(run(P->getName().c_str(), (char *)"/bin/rm", rmargv , d->getPath(), NULL) != 0)
-				throw CustomException("Failed to mkdir, could not remove target first");
+			// An error occured, try remove the file, then relink
+			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
+			rmpc->addArg("-fr");
+			rmpc->addArg(d->getWorkBuild());
+			if(!rmpc->Run(P->getName().c_str()))
+				throw CustomException("Failed to ln (symbolically), could not remove target first");
 			if (mkdir(d->getWorkBuild(), 0777))
 				throw CustomException("Failed to mkdir, even after removing target first");
-			free(rmargv[0]);
-			free(rmargv[1]);
-			free(rmargv[2]);
-			free(rmargv);
+			delete rmpc;
 		}
 		char *l = strdup(d->getWorkSrc());
 		char *l2 = strrchr(l,'/');
@@ -264,13 +254,15 @@ int li_bd_fetch(lua_State *L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "copy") == 0) {
-		argv = (char **)calloc(5, sizeof(char *));
-		argv[0] = strdup("cp");
-		argv[1] = strdup("-dpRuf");
-		argv[2] = P->absolute_fetch_path(location);
-		argv[3] = strdup(".");
-		if(run(P->getName().c_str(), (char *)"cp", argv , d->getPath(), NULL) != 0)
+		PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
+		pc->addArg("-dpRuf");
+		char *l = P->absolute_fetch_path(location);
+		pc->addArg(l);
+		pc->addArg(".");
+		free(l);
+		if(!pc->Run(P->getName().c_str()))
 			throw CustomException("Failed to copy (recursively)");
+		delete pc;
 		fprintf(stderr, "Copied data in, considering code updated\n");
 		P->setCodeUpdated();
 	} else if(strcmp(method, "deps") == 0) {
@@ -286,17 +278,6 @@ int li_bd_fetch(lua_State *L)
 	}
 
 	free(location);
-
-	if(argv != NULL)
-	{
-		int i = 0;
-		while(argv[i] != NULL)
-		{
-			free(argv[i]);
-			i++;
-		}
-		free(argv);
-	}
 
 	return 0;
 }
@@ -329,7 +310,6 @@ int li_bd_restore(lua_State *L)
 	if(strcmp(method, "copyfile") == 0) {
 		PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
 
-		pc->addArg("cp");
 		pc->addArg("-dpRuf");
 
 		char const* fn = strrchr(location, '/');
@@ -407,8 +387,6 @@ int li_bd_cmd(lua_State *L)
 
 	PackageCmd *pc = new PackageCmd(dir, app);
 
-	pc->addArg(app);
-
 	lua_pushnil(L);  /* first key */
 	while (lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
@@ -460,7 +438,6 @@ int li_bd_shell(lua_State *L)
 
 	PackageCmd *pc = new PackageCmd(path, "bash");
 
-	pc->addArg("bash");
 	pc->addArg("-c");
 	pc->addArg(cmd);
 
@@ -504,7 +481,6 @@ int li_bd_autoreconf(lua_State *L)
 	std::string incdir = d->getStaging();
 	incdir += "/usr/local/aclocal";
 
-	pc->addArg("autoreconf");
 	pc->addArg("-i");
 	pc->addArg("-B");
 	pc->addArg(incdir);
@@ -548,8 +524,6 @@ int li_bd_configure(lua_State *L)
 
 	if (WORLD->areSkipConfigure())
 		pc->skipCommand();
-
-	pc->addArg(app);
 
 	lua_pushnil(L);  /* first key */
 	while (lua_next(L, 2) != 0) {
@@ -608,7 +582,6 @@ int li_bd_make(lua_State *L)
 
 	PackageCmd *pc = new PackageCmd(path, "make");
 
-	pc->addArg("make");
 	try {
 		std::string value = "-j" + WORLD->getFeature("job-limit");
 		pc->addArg(value);
@@ -722,8 +695,7 @@ int li_bd_invokebuild(lua_State *L)
 	std::string path = std::string(getcwd(NULL, 0));
 	std::string buildsysexe = WORLD->getAppName();
 
-	PackageCmd *pc = new PackageCmd(path, target);
-	pc->addArg(buildsysexe);
+	PackageCmd *pc = new PackageCmd(path, buildsysexe);
 	pc->addArg(target);
 
 	// Deal with options to buildsys
@@ -802,7 +774,6 @@ int li_bd_mkdir(lua_State *L)
 	char *path = absolute_path(d, lua_tostring(L, 2));
 
 	PackageCmd *pc = new PackageCmd(path, "mkdir");
-	pc->addArg("mkdir");
 	pc->addArg("-p");
 
 	lua_pushnil(L);  /* first key */
@@ -839,7 +810,6 @@ int li_bd_sed(lua_State *L)
 	char *path = absolute_path(d, lua_tostring(L, 2));
 
 	PackageCmd *pc = new PackageCmd(path, "sed");
-	pc->addArg("sed");
 	pc->addArg("-i");
 	pc->addArg("-e");
 	pc->addArg(lua_tostring(L, 3));
