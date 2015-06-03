@@ -69,7 +69,16 @@ Internal_Graph::Internal_Graph()
 			boost::tie(e, inserted) = add_edge((*Nodes)[(*I)],(*Nodes)[(*J)],g);
 		}
 	}
+}
 
+Internal_Graph::~Internal_Graph()
+{
+	if(c != NULL)
+	{
+		delete c;
+	}
+	delete this->Nodes;
+	delete this->NodeMap;
 }
 
 void Internal_Graph::output()

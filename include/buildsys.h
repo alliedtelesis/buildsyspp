@@ -199,6 +199,11 @@ namespace buildsys {
 				if(state == NULL) throw LuaException();
 				luaL_openlibs(state);
 			};
+
+			~Lua() {
+				lua_close(state);
+				this->state = NULL;
+			}
 			//! Load and exexcute a lua file in this instance
 			/** \param filename The name of the lua file to load and run
 			  */
@@ -884,6 +889,7 @@ namespace buildsys {
 		public:
 			//! Create an Internal_Graph
 			Internal_Graph();
+			~Internal_Graph();
 			//! Output the graph to dependencies.dot
 			void output();
 			//! Perform a topological sort
@@ -918,13 +924,16 @@ namespace buildsys {
 #endif
 		public:
 			World(char *bsapp) : bsapp(std::string(bsapp)), features(new key_value()),
-					forcedDeps(new string_list()), lua(new Lua()), overlays(new string_list()),
-					graph(NULL), failed(false), cleaning(false), skipConfigure(false),
+					forcedDeps(new string_list()), lua(new Lua()), ns(NULL),
+					overlays(new string_list()), graph(NULL), failed(false),
+					cleaning(false), skipConfigure(false),
 					extractOnly(false)
 #ifdef UNDERSCORE
 					,cond(us_cond_create()),outputPrefix(true)
 #endif
 					{ overlays->push_back(std::string("package")); };
+
+			~World();
 
 			//! Return the name we were invoked as
 			std::string getAppName() { return this->bsapp; };

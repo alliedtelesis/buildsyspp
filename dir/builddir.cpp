@@ -92,6 +92,7 @@ BuildDir::BuildDir(std::string name)
 		throw DirException(path, strerror(errno));
 	}
 	this->path = std::string(path);
+	free(path);
 	path = NULL;
 	if(asprintf(&path, "output/%s/%s/work", gname, pname) == -1) {
 		fprintf(stderr, "Failed creating output/global-name/package-name/work path: %s\n", strerror(errno));
@@ -112,6 +113,7 @@ BuildDir::BuildDir(std::string name)
 	}
 	this->work_src = work_path;
 	this->work_build = work_path + "-build";
+	free (path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/new", pwd, gname, pname) == -1) {
 		fprintf(stderr, "Failed creating output/global-name/package-name/new path: %s\n", strerror(errno));

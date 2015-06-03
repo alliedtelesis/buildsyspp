@@ -191,3 +191,17 @@ bool World::packageFinished(Package *p)
 #endif
 	return true;
 }
+
+World::~World()
+{
+	delete this->features;
+	delete this->forcedDeps;
+	delete this->lua;
+	delete this->ns;
+	delete this->overlays;
+	delete this->graph;
+	delete this->topo_graph;
+#ifdef UNDERSCORE
+	us_cond_destroy(this->cond);
+#endif
+}

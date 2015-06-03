@@ -174,6 +174,8 @@ int main(int argc, char *argv[])
 	    log(argv[1], (char *)"Total time: %ds and %dms",
 		(end.tv_sec - start.tv_sec - 1),
 		(1000 + end.tv_nsec /1000000) - start.tv_nsec / 1000000);
-	
+
+	delete WORLD;
+
 	return 0;
 }
