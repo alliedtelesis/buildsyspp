@@ -25,7 +25,7 @@ void PackageCmd::addArgFmt(const char *fmt, ...)
 	free(message);
 }
 
-bool PackageCmd::Run(const char *package)
+bool PackageCmd::Run(Package *P)
 {
 	if (this->skip)
 		return true;
@@ -55,7 +55,7 @@ bool PackageCmd::Run(const char *package)
 		}
 	}
 	bool res = true;
-	if(run(package, this->args[0], this->args, this->path, ne) != 0) res = false;
+	if(run(P, this->args[0], this->args, this->path, ne) != 0) res = false;
 	
 	if(ne != NULL)
 	{

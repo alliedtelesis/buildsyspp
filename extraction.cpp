@@ -81,7 +81,7 @@ bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
 	free(pwd);
 	pwd = NULL;
 
-	if(!pc->Run(P->getName().c_str()))
+	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
 
 	return true;
@@ -111,7 +111,7 @@ bool ZipExtractionUnit::extract(Package *P, BuildDir *bd)
 	free(pwd);
 	pwd = NULL;
 
-	if(!pc->Run(P->getName().c_str()))
+	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
 
 	return true;
@@ -150,13 +150,13 @@ bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 
 	pc_dry->addArg("--dry-run");
 
-	if(!pc_dry->Run(P->getName().c_str()))
+	if(!pc_dry->Run(P))
 	{
 		log(P->getName().c_str(), "Patch file: %s", this->uri.c_str());
 		throw CustomException("Will fail to patch");
 	}
 
-	if(!pc->Run(P->getName().c_str()))
+	if(!pc->Run(P))
 		throw CustomException("Truely failed to patch");
 
 	return true;
@@ -182,7 +182,7 @@ bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 
 	pc->addArg(".");
 
-	if(!pc->Run(P->getName().c_str()))
+	if(!pc->Run(P))
 	{
 		throw CustomException("Failed to copy file");
 	}
@@ -235,7 +235,7 @@ bool LinkGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 	}
 	pc->addArg(this->toDir);
 
-	if(!pc->Run(P->getName().c_str()))
+	if(!pc->Run(P))
 	{
 		throw CustomException("Operation failed");
 	}
@@ -258,7 +258,7 @@ bool CopyGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 	}
 	pc->addArg(this->toDir);
 
-	if(!pc->Run(P->getName().c_str()))
+	if(!pc->Run(P))
 	{
 		throw CustomException("Operation failed");
 	}
@@ -309,7 +309,7 @@ bool GitExtractionUnit::fetch(Package *P)
 		pc->addArg("fetch");
 		pc->addArg("origin");
 		pc->addArg("--tags");
-		if(!pc->Run(P->getName().c_str()))
+		if(!pc->Run(P))
 		{
 			throw CustomException("Failed: git fetch origin --tags");
 		}
@@ -318,7 +318,7 @@ bool GitExtractionUnit::fetch(Package *P)
 		pc->addArg("-n");
 		pc->addArg(location);
 		pc->addArg(source_dir);
-		if(!pc->Run(P->getName().c_str()) != 0)
+		if(!pc->Run(P))
 			throw CustomException("Failed to git clone");
 	}
 
@@ -328,7 +328,7 @@ bool GitExtractionUnit::fetch(Package *P)
 	pc->addArg("-q");
 	pc->addArg("--detach");
 	pc->addArg(this->refspec.c_str());
-	if(!pc->Run(P->getName().c_str()))
+	if(!pc->Run(P))
 		throw CustomException("Failed to checkout");
 
 	free(repo_name);
@@ -345,7 +345,7 @@ bool GitExtractionUnit::extract (Package *P, BuildDir *bd)
 	pc->addArg("-dpRuf");
 	pc->addArg(this->localPath());
 	pc->addArg(".");
-	if(!pc->Run(P->getName().c_str()) != 0)
+	if(!pc->Run(P))
 		throw CustomException("Failed to checkout");
 
 	return true;

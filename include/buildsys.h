@@ -364,9 +364,9 @@ namespace buildsys {
 			void addEnv(std::string const &env) { addEnv(env.c_str()); }
 
 			//! Run this command
-			/** \param package The package name to use in the command logging
+			/** \param P The package to use in the command logging
 			 */
-			bool Run(const char *package);
+			bool Run(Package *P);
 
 			//! Print the command line
 			void printCmd(const char *package);
@@ -1056,8 +1056,9 @@ namespace buildsys {
 
 	bool interfaceSetup(Lua *lua);
 	void log(const char *package, const char *fmt, ...);
-	void program_output(const char *pacakge, const char *mesg);
-	int run(const char *, char *program, char *argv[], const char *path, char *newenvp[]);
+	void log(Package *P, const char *fmt, ...);
+	void program_output(Package *P, const char *mesg);
+	int run(Package *P, char *program, char *argv[], const char *path, char *newenvp[]);
 };
 
 using namespace buildsys;

@@ -84,14 +84,14 @@ bool Package::process()
 {
 	if(this->visiting == true)
 	{
-		log(this->name.c_str(), (char *)"dependency loop!!!");
+		log(this, (char *)"dependency loop!!!");
 		return false;
 	}
 	if(this->processed == true) return true;
 	
 	this->visiting = true;
 
-	log(this->name.c_str(), (char *)"Processing (%s)", this->file.c_str());
+	log(this, (char *)"Processing (%s)", this->file.c_str());
 
 	this->build_description->add(new PackageFileUnit(this->file.c_str()));
 
@@ -145,7 +145,7 @@ bool Package::extract()
 			// if there are changes,
 			if(res != 0 || this->codeUpdated)
 			{	// Extract our source code
-				log(this->name.c_str(), (char *)"Extracting sources and patching");
+				log(this, (char *)"Extracting sources and patching");
 				this->Extract->extract(this, this->bd);
 				//this->setCodeUpdated();
 			}
@@ -163,7 +163,7 @@ bool Package::extract()
 	{
 		if(!(*iter)->extract())
 		{
-			log(this->name.c_str(),(char *)"dependency extract failed");
+			log(this,(char *)"dependency extract failed");
 			return false;
 		}
 	}
@@ -204,9 +204,9 @@ bool Package::extract_staging(const char *dir, std::list<std::string> *done)
 		args[3] = strdup("-p");
 		args[4] = strdup("p");
 
-		if(run(this->name.c_str(), (char *)"pax", args, dir, NULL) != 0)
+		if(run(this, (char *)"pax", args, dir, NULL) != 0)
 		{
-			log(this->name.c_str(), (char *)"Failed to extract staging_dir");
+			log(this, (char *)"Failed to extract staging_dir");
 			return false;
 		}
 	
@@ -263,9 +263,9 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 			asprintf(&args[1], "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
 			args[2] = strdup(this->installFile);
 
-			if(run(this->name.c_str(), (char *)"cp", args, dir, NULL) != 0)
+			if(run(this, (char *)"cp", args, dir, NULL) != 0)
 			{
-				log(this->name.c_str(), "Failed to copy %s (for install)\n", this->installFile);
+				log(this, "Failed to copy %s (for install)\n", this->installFile);
 				return false;
 			}
 		} else {
@@ -274,9 +274,9 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 			asprintf(&args[2], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 			args[3] = strdup("-p");
 			args[4] = strdup("p");
-			if(run(this->name.c_str(), (char *)"pax", args, dir, NULL) != 0)
+			if(run(this, (char *)"pax", args, dir, NULL) != 0)
 			{
-				log(this->name.c_str(), "Failed to extract install_dir\n");
+				log(this, "Failed to extract install_dir\n");
 				return false;
 			}
 		}
@@ -494,11 +494,11 @@ bool Package::shouldBuild()
 			free(hash);
 			if(ret)
 			{
-				log(this->name.c_str(), "Could not optimize away building");
+				log(this, "Could not optimize away building");
 			}
 			else
 			{
-				log(this->name.c_str(), "Build cache used %s", url);
+				log(this, "Build cache used %s", url);
 
 				char *cmd = NULL;
 				// mv the build info file into the regular place (faking that we have built this package)
@@ -552,7 +552,7 @@ bool Package::build()
 		// lock
 		us_mutex_lock(this->lock);
 #endif
-		log(this->name.c_str(), "Not required");
+		log(this, "Not required");
 		// Just pretend we are built
 		this->built = true;
 #ifdef UNDERSCORE
@@ -569,11 +569,11 @@ bool Package::build()
 	
 	if(this->bd != NULL)
 	{
-		log(this->name.c_str(), (char *)"Building ...");
+		log(this, (char *)"Building ...");
 		// Extract the dependency staging directories
 		char *staging_dir = NULL;
 		asprintf(&staging_dir, "output/%s/%s/staging", WORLD->getName().c_str(), this->name.c_str());
-		log(this->name.c_str(), (char *)"Generating staging directory ...");
+		log(this, (char *)"Generating staging directory ...");
 		
 		{ // Clean out the (new) staging/install directories
 			char *cmd = NULL;
@@ -596,7 +596,7 @@ bool Package::build()
 			if(!(*dIt)->extract_staging(staging_dir, done))
 				return false;
 		}
-		log(this->name.c_str(), (char *)"Done (%d)", done->size());
+		log(this, (char *)"Done (%d)", done->size());
 		delete done;
 		free(staging_dir);
 		staging_dir = NULL;
@@ -605,16 +605,16 @@ bool Package::build()
 		if(this->depsExtraction != NULL)
 		{
 			// Extract installed files to a given location
-			log(this->name.c_str(), (char *)"Removing old install files ...");
+			log(this, (char *)"Removing old install files ...");
 			{
 				char **args = (char **)calloc(4, sizeof(char *));
 				args[0] = strdup("rm");
 				args[1] = strdup("-fr");
 				args[2] = strdup(this->depsExtraction);
 
-				if(run(this->name.c_str(), (char *)"rm", args, pwd, NULL) != 0)
+				if(run(this, (char *)"rm", args, pwd, NULL) != 0)
 				{
-					log(this->name.c_str(), (char *)"Failed to remove %s (pre-install)", this->depsExtraction);
+					log(this, (char *)"Failed to remove %s (pre-install)", this->depsExtraction);
 					return false;
 				}
 		
@@ -640,7 +640,7 @@ bool Package::build()
 				}
 			}
 			
-			log(this->name.c_str(), (char *)"Extracting installed files from dependencies ...");
+			log(this, (char *)"Extracting installed files from dependencies ...");
 			done = new std::list<std::string>();
 			for(dIt = this->depends.begin(); dIt != dEnds; dIt++)
 			{
@@ -648,22 +648,22 @@ bool Package::build()
 					return false;
 			}
 			delete done;
-			log(this->name.c_str(), (char *)"Dependency install files extracted");
+			log(this, (char *)"Dependency install files extracted");
 		}
 		
 		std::list<PackageCmd *>::iterator cIt = this->commands.begin();
 		std::list<PackageCmd *>::iterator cEnd = this->commands.end();
 		
-		log(this->name.c_str(), (char *)"Running Commands");
+		log(this, (char *)"Running Commands");
 		for(; cIt != cEnd; cIt++)
 		{
-			if(!(*cIt)->Run(this->name.c_str()))
+			if(!(*cIt)->Run(this))
 				return false;
 		}
-		log(this->name.c_str(), (char *)"Done Commands");
+		log(this, (char *)"Done Commands");
 	}
 	
-	log(this->name.c_str(), (char *)"BUILT");
+	log(this, (char *)"BUILT");
 	
 	if(this->bd != NULL)
 	{
@@ -675,9 +675,9 @@ bool Package::build()
 		asprintf(&args[4], "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 		args[5] = strdup(".");
 
-		if(run(this->name.c_str(), (char *)"pax", args, this->bd->getNewStaging(), NULL) != 0)
+		if(run(this, (char *)"pax", args, this->bd->getNewStaging(), NULL) != 0)
 		{
-			log(this->name.c_str(), (char *)"Failed to compress staging directory");
+			log(this, (char *)"Failed to compress staging directory");
 			return false;
 		}
 
@@ -703,9 +703,9 @@ bool Package::build()
 			args[1] = strdup(this->installFile);
 			asprintf(&args[2], "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
 		
-			if(run(this->name.c_str(), (char *)"cp", args, this->bd->getNewInstall(), NULL) != 0)
+			if(run(this, (char *)"cp", args, this->bd->getNewInstall(), NULL) != 0)
 			{
-				log(this->name.c_str(), (char *)"Failed to copy install file (%s) ", this->installFile);
+				log(this, (char *)"Failed to copy install file (%s) ", this->installFile);
 				return false;
 			}
 		} else {
@@ -716,9 +716,9 @@ bool Package::build()
 			asprintf(&args[4], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 			args[5] = strdup(".");
 
-			if(run(this->name.c_str(), (char *)"pax", args, this->bd->getNewInstall(), NULL) != 0)
+			if(run(this, (char *)"pax", args, this->bd->getNewInstall(), NULL) != 0)
 			{
-				log(this->name.c_str(), (char *)"Failed to compress install directory");
+				log(this, (char *)"Failed to compress install directory");
 				return false;
 			}
 		}
@@ -758,7 +758,7 @@ bool Package::build()
 
 	this->run_secs = (end.tv_sec - start.tv_sec);
 
-	log(this->name.c_str(), (char *)"Built in %d seconds",  this->run_secs);
+	log(this, (char *)"Built in %d seconds",  this->run_secs);
 
 #ifdef UNDERSCORE
 	// lock

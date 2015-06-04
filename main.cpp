@@ -28,6 +28,18 @@ void buildsys::log(const char *package, const char *fmt, ...)
 	free(message);
 }
 
+void buildsys::log(Package *P, const char *fmt, ...)
+{
+	char *message = NULL;
+	va_list args;
+	va_start(args, fmt);
+	vasprintf(&message, fmt, args);
+	va_end(args);
+
+	fprintf(stderr, "%s: %s\n", P->getName().c_str(), message);
+	free(message);
+}
+
 static inline const char* get_color(const char *mesg)
 {
 	if (strstr(mesg, "error:"))
@@ -39,16 +51,16 @@ static inline const char* get_color(const char *mesg)
 }
 
 #ifdef UNDERSCORE
-void buildsys::program_output(const char *package, const char *mesg)
+void buildsys::program_output(Package *P, const char *mesg)
 {
 	static int isATTY = isatty(fileno(stdout));
 	const char* color;
 
 	if (isATTY && ((color = get_color(mesg)) != NULL))
 		fprintf(stdout, "%s: %s%s%s\n",
-			package, color, mesg, COLOR_RESET);
+			P->getName().c_str(), color, mesg, COLOR_RESET);
 	else
-		fprintf(stdout, "%s: %s\n", package, mesg);
+		fprintf(stdout, "%s: %s\n", P->getName().c_str(), mesg);
 }
 #endif
 

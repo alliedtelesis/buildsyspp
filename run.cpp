@@ -15,11 +15,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #ifdef UNDERSCORE
 
-static bool pipe_data(int fd, const char *pname)
+static bool pipe_data(int fd, Package *P)
 {
-	if(!pname) return false;
-	
-	
+	if(!P) return false;
+
 	// get the data until there is a breakchar ...
 	char *cdata = NULL;
 	size_t recvd = 0;
@@ -51,7 +50,7 @@ static bool pipe_data(int fd, const char *pname)
 	{
 		if(recvd != 0)
 		{
-			program_output(pname, cdata);
+			program_output(P, cdata);
 		}
 		free(cdata);
 	}
@@ -61,21 +60,19 @@ static bool pipe_data(int fd, const char *pname)
 
 static void* pipe_data_thread(us_thread *t)
 {
-	while(pipe_data(t->info, (char *)t->priv))
+	while(pipe_data(t->info, (Package *)t->priv))
 	{
 		// do nothing
 	}
 	close(t->info);
-	free(t->priv);
 	return NULL;
 }
 #endif
 
-int buildsys::run(const char *package, char *program, char *argv[], const char *path, char *newenvp[])
+int buildsys::run(Package *P, char *program, char *argv[], const char *path, char *newenvp[])
 {
 #ifdef LOG_COMMANDS
-	log(package, (char *)"Running %s", program);
-	
+	log(P, (char *)"Running %s", program);
 #endif
 
 #ifdef UNDERSCORE
@@ -83,20 +80,20 @@ int buildsys::run(const char *package, char *program, char *argv[], const char *
 	if(WORLD->areOutputPrefix())
 	{
 		int res = pipe(fds);
-	
+
 		if(res != 0)
 		{
-			log(package, (char *)"pipe() failed: %s", strerror(errno));
+			log(P, (char *)"pipe() failed: %s", strerror(errno));
 		}
-	
-		us_thread_create(pipe_data_thread, fds[0], strdup(package));
+
+		us_thread_create(pipe_data_thread, fds[0], P);
 	}
 #endif
 	// call the program ...
 	int pid = fork();
 	if(pid < 0)
 	{ // something bad happened ...
-		log(package, (char *)"fork() failed: %s", strerror(errno));
+		log(P, (char *)"fork() failed: %s", strerror(errno));
 		exit(-1);
 	}
 	else if(pid == 0)
@@ -112,14 +109,14 @@ int buildsys::run(const char *package, char *program, char *argv[], const char *
 #endif
 		if(chdir(path) != 0)
 		{
-			log(package, (char *)"chdir '%s' failed", path);
+			log(P, (char *)"chdir '%s' failed", path);
 			exit(-1);
 		}
 		if(newenvp != NULL)
 			execvpe(program, argv, newenvp);
 		else
 			execvp(program, argv);
-		log(package, (char *)"Failed Running %s", program); 
+		log(P, (char *)"Failed Running %s", program);
 		exit(-1);
 	}
 	else
@@ -135,7 +132,7 @@ int buildsys::run(const char *package, char *program, char *argv[], const char *
 		// check return status ...
 		if(WEXITSTATUS(status) < 0)
 		{
-			log(package, (char *)"Error Running %s (path = %s, return code = %i)", program, path, status); 
+			log(P, (char *)"Error Running %s (path = %s, return code = %i)", program, path, status);
 		}
 		return WEXITSTATUS(status);
 	}

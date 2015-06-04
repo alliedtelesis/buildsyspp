@@ -129,14 +129,14 @@ int li_bd_fetch(lua_State *L)
 				asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(), fname);
 				pc->addArg(url);
 				free(url);
-				localCacheHit = pc->Run(P->getName().c_str());
+				localCacheHit = pc->Run(P);
 				delete pc;
 			}
 			//If we didn't get the file from the local cache, look upstream.
 			if (!localCacheHit) {
 				PackageCmd *pc = new PackageCmd("dl","wget");
 				pc->addArg(location);
-				if(!pc->Run(P->getName().c_str()))
+				if(!pc->Run(P))
 					throw CustomException("Failed to fetch file");
 				delete pc;
 			}
@@ -197,7 +197,7 @@ int li_bd_fetch(lua_State *L)
 		char *l = P->relative_fetch_path(location);
 		pc->addArg(l);
 		pc->addArg(".");
-		if(!pc->Run(P->getName().c_str()))
+		if(!pc->Run(P))
 		{
 			// An error occured, try remove the file, then relink
 			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
@@ -210,9 +210,9 @@ int li_bd_fetch(lua_State *L)
 			}
 			l2++;
 			rmpc->addArg(l2);
-			if(!rmpc->Run(P->getName().c_str()))
+			if(!rmpc->Run(P))
 				throw CustomException("Failed to ln (symbolically), could not remove target first");
-			if(!pc->Run(P->getName().c_str()))
+			if(!pc->Run(P))
 				throw CustomException("Failed to ln (symbolically), even after removing target first");
 			delete rmpc;
 		}
@@ -236,7 +236,7 @@ int li_bd_fetch(lua_State *L)
 			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
 			rmpc->addArg("-fr");
 			rmpc->addArg(d->getWorkBuild());
-			if(!rmpc->Run(P->getName().c_str()))
+			if(!rmpc->Run(P))
 				throw CustomException("Failed to ln (symbolically), could not remove target first");
 			if (mkdir(d->getWorkBuild(), 0777))
 				throw CustomException("Failed to mkdir, even after removing target first");
@@ -260,7 +260,7 @@ int li_bd_fetch(lua_State *L)
 		pc->addArg(l);
 		pc->addArg(".");
 		free(l);
-		if(!pc->Run(P->getName().c_str()))
+		if(!pc->Run(P))
 			throw CustomException("Failed to copy (recursively)");
 		delete pc;
 		fprintf(stderr, "Copied data in, considering code updated\n");
