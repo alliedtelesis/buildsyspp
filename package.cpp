@@ -406,16 +406,14 @@ bool Package::shouldBuild()
 
 	// we need to rebuild if the code is updated
 	if(this->codeUpdated) return true;
+	// we need to rebuild if installFile is set
+	if(this->installFile) return true;
+
 	char *pwd = getcwd(NULL, 0);
 	// lets make sure the install file (still) exists
 	bool ret = false;
 	char *fname = NULL;
-	if(this->installFile)
-	{
-		asprintf(&fname, "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
-	} else {
-		asprintf(&fname, "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
-	}
+	asprintf(&fname, "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
 	FILE *f = fopen(fname, "r");
 	if(f == NULL)
 	{
