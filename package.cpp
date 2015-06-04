@@ -28,7 +28,7 @@ BuildDir *Package::builddir()
 	{
 		this->bd = new BuildDir(this->name);
 	}
-	
+
 	return this->bd;
 }
 
@@ -71,13 +71,12 @@ void Package::resetBD()
 void Package::printLabel(std::ostream& out)
 {
 	out << "[label=\"";
-	
+
 	out << this->getName() << "\\n";
 	out << "Cmds:" << this->commands.size() << "\\n";
 	out << "Time: " << this->run_secs << "s";
-	
+
 	out << "\"]";
-	
 }
 
 bool Package::process()
@@ -88,7 +87,7 @@ bool Package::process()
 		return false;
 	}
 	if(this->processed == true) return true;
-	
+
 	this->visiting = true;
 
 	log(this, (char *)"Processing (%s)", this->file.c_str());
@@ -135,13 +134,13 @@ bool Package::extract()
 			std::ofstream exInfo(exinfoFname);
 			this->Extract->print(exInfo);
 			free(exinfoFname);
-		
+
 			char *cmd = NULL;
 			asprintf(&cmd, "cmp -s %s/.extraction.info.new %s/.extraction.info", this->bd->getPath(), this->bd->getPath());
 			int res = system(cmd);
 			free(cmd);
 			cmd = NULL;
-		
+
 			// if there are changes,
 			if(res != 0 || this->codeUpdated)
 			{	// Extract our source code
@@ -167,7 +166,7 @@ bool Package::extract()
 			return false;
 		}
 	}
-	
+
 	this->extracted = true;
 	return true;
 }
@@ -186,39 +185,27 @@ bool Package::extract_staging(const char *dir, std::list<std::string> *done)
 
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
-	
+
 	for(; dIt != dEnds; dIt++)
 	{
 		if(!(*dIt)->extract_staging(dir, done))
 			return false;
 	}
-	
+
 	char *pwd = getcwd(NULL, 0);
 
 	if(this->bd != NULL)
 	{
-		char **args = (char **)calloc(6, sizeof(char *));
-		args[0] = strdup("pax");
-		args[1] = strdup("-rf");
-		asprintf(&args[2], "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
-		args[3] = strdup("-p");
-		args[4] = strdup("p");
+		std::unique_ptr<PackageCmd> pc(new PackageCmd(dir, "pax"));
+		pc->addArg("-rf");
+		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+		pc->addArg("-p");
+		pc->addArg("p");
 
-		if(run(this, (char *)"pax", args, dir, NULL) != 0)
+		if(!pc->Run(this))
 		{
 			log(this, (char *)"Failed to extract staging_dir");
 			return false;
-		}
-	
-		if(args != NULL)
-		{
-			int i = 0;
-			while(args[i] != NULL)
-			{
-				free(args[i]);
-				i++;
-			}
-			free(args);
 		}
 	}
 	free(pwd);
@@ -242,7 +229,7 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
-	
+
 	if(!this->intercept)
 	{
 		for(; dIt != dEnds; dIt++)
@@ -251,45 +238,33 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 				return false;
 		}
 	}
-	
+
 	char *pwd = getcwd(NULL, 0);
 
 	if(this->bd != NULL)
 	{
-		char **args = (char **)calloc(6, sizeof(char *));
 		if(this->installFile)
 		{
-			args[0] = strdup("cp");
-			asprintf(&args[1], "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
-			args[2] = strdup(this->installFile);
+			std::unique_ptr<PackageCmd> pc(new PackageCmd(dir, "cp"));
+			pc->addArgFmt("%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
+			pc->addArg(this->installFile);
 
-			if(run(this, (char *)"cp", args, dir, NULL) != 0)
+			if(!pc->Run(this))
 			{
 				log(this, "Failed to copy %s (for install)\n", this->installFile);
 				return false;
 			}
 		} else {
-			args[0] = strdup("pax");
-			args[1] = strdup("-rf");
-			asprintf(&args[2], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
-			args[3] = strdup("-p");
-			args[4] = strdup("p");
-			if(run(this, (char *)"pax", args, dir, NULL) != 0)
+			std::unique_ptr<PackageCmd> pc(new PackageCmd(dir, "pax"));
+			pc->addArg("-rf");
+			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+			pc->addArg("-p");
+			pc->addArg("p");
+			if(!pc->Run(this))
 			{
 				log(this, "Failed to extract install_dir\n");
 				return false;
 			}
-		}
-	
-		if(args != NULL)
-		{
-			int i = 0;
-			while(args[i] != NULL)
-			{
-				free(args[i]);
-				i++;
-			}
-			free(args);
 		}
 	}
 	free(pwd);
@@ -305,10 +280,10 @@ bool Package::canBuild()
 	{
 		return true;
 	}
-	
+
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
-	
+
 	if(dIt != dEnds)
 	{
 		for(; dIt != dEnds; dIt++)
@@ -434,7 +409,7 @@ bool Package::shouldBuild()
 	}
 	free(fname);
 	fname = NULL;
-	
+
 	char *cmd = NULL;
 	asprintf(&cmd, "cmp -s %s/.build.info.new %s/.build.info", this->bd->getPath(), this->bd->getPath());
 	int res = system(cmd);
@@ -443,7 +418,7 @@ bool Package::shouldBuild()
 
 	// if there are changes,
 	if(res != 0 || (ret && !this->codeUpdated))
-	{	
+	{
 		// see if we can grab new staging/install files
 		if(this->canFetchFrom() && WORLD->canFetchFrom())
 		{
@@ -512,24 +487,24 @@ bool Package::shouldBuild()
 			ret = true;
 		}
 	}
-	
+
 	free(pwd);
-	
+
 	return ret;
 }
 
 bool Package::build()
 {
 	struct timespec start, end;
-	
+
 	if(this->isBuilt())
 	{
 		return true;
 	}
-	
+
 	std::list<Package *>::iterator dIt = this->depends.begin();
 	std::list<Package *>::iterator dEnds = this->depends.end();
-	
+
 	if(dIt != dEnds)
 	{
 		for(; dIt != dEnds; dIt++)
@@ -564,9 +539,9 @@ bool Package::build()
 	}
 
 	clock_gettime(CLOCK_REALTIME, &start);
-	
+
 	char *pwd = getcwd(NULL, 0);
-	
+
 	if(this->bd != NULL)
 	{
 		log(this, (char *)"Building ...");
@@ -574,7 +549,7 @@ bool Package::build()
 		char *staging_dir = NULL;
 		asprintf(&staging_dir, "output/%s/%s/staging", WORLD->getName().c_str(), this->name.c_str());
 		log(this, (char *)"Generating staging directory ...");
-		
+
 		{ // Clean out the (new) staging/install directories
 			char *cmd = NULL;
 			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd, WORLD->getName().c_str(), this->name.c_str());
@@ -600,37 +575,25 @@ bool Package::build()
 		delete done;
 		free(staging_dir);
 		staging_dir = NULL;
-	
-		
+
+
 		if(this->depsExtraction != NULL)
 		{
 			// Extract installed files to a given location
 			log(this, (char *)"Removing old install files ...");
 			{
-				char **args = (char **)calloc(4, sizeof(char *));
-				args[0] = strdup("rm");
-				args[1] = strdup("-fr");
-				args[2] = strdup(this->depsExtraction);
+				std::unique_ptr<PackageCmd> pc(new PackageCmd(pwd, "rm"));
+				pc->addArg("-fr");
+				pc->addArg(this->depsExtraction);
 
-				if(run(this, (char *)"rm", args, pwd, NULL) != 0)
+				if(!pc->Run(this))
 				{
 					log(this, (char *)"Failed to remove %s (pre-install)", this->depsExtraction);
 					return false;
 				}
-		
-				if(args != NULL)
-				{
-					int i = 0;
-					while(args[i] != NULL)
-					{
-						free(args[i]);
-						i++;
-					}
-					free(args);
-				}
 			}
-			
-			// Create the directory			
+
+			// Create the directory
 			{
 				int res = mkdir(this->depsExtraction, 0700);
 				if((res < 0) && (errno != EEXIST))
@@ -639,7 +602,7 @@ bool Package::build()
 					return false;
 				}
 			}
-			
+
 			log(this, (char *)"Extracting installed files from dependencies ...");
 			done = new std::list<std::string>();
 			for(dIt = this->depends.begin(); dIt != dEnds; dIt++)
@@ -650,10 +613,10 @@ bool Package::build()
 			delete done;
 			log(this, (char *)"Dependency install files extracted");
 		}
-		
+
 		std::list<PackageCmd *>::iterator cIt = this->commands.begin();
 		std::list<PackageCmd *>::iterator cEnd = this->commands.end();
-		
+
 		log(this, (char *)"Running Commands");
 		for(; cIt != cEnd; cIt++)
 		{
@@ -662,75 +625,52 @@ bool Package::build()
 		}
 		log(this, (char *)"Done Commands");
 	}
-	
+
 	log(this, (char *)"BUILT");
-	
+
 	if(this->bd != NULL)
 	{
-		char **args = (char **)calloc(7, sizeof(char *));
-		args[0] = strdup("pax");
-		args[1] = strdup("-x");
-		args[2] = strdup("cpio");
-		args[3] = strdup("-wf");
-		asprintf(&args[4], "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
-		args[5] = strdup(".");
+		std::unique_ptr<PackageCmd> pc(new PackageCmd(this->bd->getNewStaging(), "pax"));
+		pc->addArg("-x");
+		pc->addArg("cpio");
+		pc->addArg("-wf");
+		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+		pc->addArg(".");
 
-		if(run(this, (char *)"pax", args, this->bd->getNewStaging(), NULL) != 0)
+		if(!pc->Run(this))
 		{
 			log(this, (char *)"Failed to compress staging directory");
 			return false;
-		}
-
-		if(args != NULL)
-		{
-			int i = 0;
-			while(args[i] != NULL)
-			{
-				free(args[i]);
-				i++;
-			}
-			free(args);
 		}
 	}
 
 	if(this->bd != NULL)
 	{
-		char **args = (char **)calloc(7, sizeof(char *));
 		if(this->installFile != NULL)
 		{
 			std::cout << "Copying " << std::string(this->installFile) << " to install folder\n";
-			args[0] = strdup("cp");
-			args[1] = strdup(this->installFile);
-			asprintf(&args[2], "%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
-		
-			if(run(this, (char *)"cp", args, this->bd->getNewInstall(), NULL) != 0)
+			std::unique_ptr<PackageCmd> pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
+			pc->addArg(this->installFile);
+			pc->addArgFmt("%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
+
+			if(!pc->Run(this))
 			{
 				log(this, (char *)"Failed to copy install file (%s) ", this->installFile);
 				return false;
 			}
 		} else {
-			args[0] = strdup("pax");
-			args[1] = strdup("-x");
-			args[2] = strdup("cpio");
-			args[3] = strdup("-wf");
-			asprintf(&args[4], "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
-			args[5] = strdup(".");
+			std::unique_ptr<PackageCmd> pc(new PackageCmd(this->bd->getNewInstall(), "pax"));
+			pc->addArg("-x");
+			pc->addArg("cpio");
+			pc->addArg("-wf");
+			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+			pc->addArg(".");
 
-			if(run(this, (char *)"pax", args, this->bd->getNewInstall(), NULL) != 0)
+			if(!pc->Run(this))
 			{
 				log(this, (char *)"Failed to compress install directory");
 				return false;
 			}
-		}
-		if(args != NULL)
-		{
-			int i = 0;
-			while(args[i] != NULL)
-			{
-				free(args[i]);
-				i++;
-			}
-			free(args);
 		}
 	}
 
