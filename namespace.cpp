@@ -89,7 +89,7 @@ Package *NameSpace::findPackage(std::string name)
 		free(luaFile);
 	}
 
-	Package *p = new Package(name, file, overlay);
+	Package *p = new Package(this, name, file, overlay);
 	this->addPackage(p);
 
 	return p;
@@ -98,5 +98,10 @@ Package *NameSpace::findPackage(std::string name)
 void NameSpace::addPackage (Package *p)
 {
 	this->packages.push_back(p);
-	p->setNS(this);
+	if (p->getNS() != this) p->setNS(this);
 };
+
+void NameSpace::removePackage (Package *P)
+{
+	this->packages.remove(P);
+}

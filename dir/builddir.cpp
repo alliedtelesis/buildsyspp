@@ -17,10 +17,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <sys/types.h>
 #include <errno.h>
 
-BuildDir::BuildDir(std::string name)
+BuildDir::BuildDir(Package *P)
 {
-	const char *gname = WORLD->getName().c_str();
-	const char *pname = name.c_str();
+	const char *gname = P->getNS()->getName().c_str();
+	const char *pname = P->getName().c_str();
 	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("output", 0700);
@@ -99,17 +99,16 @@ BuildDir::BuildDir(std::string name)
 	}
 	this->rpath = std::string(path);
 	std::string work_path = "";
-	if(strrchr(name.c_str(),'/') != NULL)
+	if(strrchr(pname,'/') != NULL)
 	{
-		const char *cname = name.c_str();
-		const char *tmp = strrchr(cname,'/');
+		const char *tmp = strrchr(pname,'/');
 		if(*(tmp+1) != '\0') {
 			work_path = this->path + "/" + std::string((tmp+1));
 		}
 	}
 	if(work_path == "")
 	{
-		work_path = this->path + "/" + name;
+		work_path = this->path + "/" + P->getName();
 	}
 	this->work_src = work_path;
 	this->work_build = work_path + "-build";

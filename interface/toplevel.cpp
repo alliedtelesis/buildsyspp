@@ -19,9 +19,14 @@ static int li_name(lua_State *L)
 	{
 		throw CustomException("name() takes 1 or no argument(s)");
 	}
-	if(lua_gettop(L) == 0)
+	int args = lua_gettop(L);
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *)lua_topointer(L, -1);
+
+	if(args == 0)
 	{
-		std::string value = WORLD->getName();
+		std::string value = P->getNS()->getName();
 		lua_pushstring(L, value.c_str());
 		return 1;
 	}
@@ -29,10 +34,6 @@ static int li_name(lua_State *L)
 	const char *value = lua_tostring(L, 1);
 
 	WORLD->setName(std::string(value));
-
-	lua_getglobal(L, "P");
-	Package *P = (Package *)lua_topointer(L, -1);
-	P->resetBD();
 
 	return 0;
 }

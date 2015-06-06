@@ -25,7 +25,7 @@ string_list::iterator World::overlaysEnd()
 void World::setName(std::string n)
 {
 	this->ns = new NameSpace(n);
-	this->ns->addPackage(this->p);
+	this->p->setNS(this->ns);
 }
 
 bool World::setFeature(std::string key, std::string value, bool override)
@@ -107,7 +107,8 @@ static void *build_thread(us_thread *t)
 
 bool World::basePackage(char *filename)
 {
-	this->p = new Package(filename, filename, "");
+	this->ns = new NameSpace(filename);
+	this->p = new Package(this->ns, filename, filename, "");
 
 	try {
 		// Load all the lua files

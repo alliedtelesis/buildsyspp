@@ -264,9 +264,9 @@ namespace buildsys {
 			std::string work_src;
 		public:
 			//! Create a build directory
-			/** \param pname The package name
+			/** \param P The package this directory is for
 			  */
-			BuildDir(std::string pname);
+			BuildDir(Package *P);
 			~BuildDir() {};
 			//! Return the full path to this directory
 			const char *getPath() { return this->path.c_str(); };
@@ -729,6 +729,7 @@ namespace buildsys {
 			std::list<Package *>::iterator packagesEnd();
 			Package *findPackage (std::string name);
 			void addPackage (Package *p);
+			void removePackage (Package *p);
 	};
 
 	//! A package to build
@@ -770,8 +771,8 @@ namespace buildsys {
 			  * \param name The name of this package
 			  * \param file The lua file describing this package
 			  */
-			Package(std::string name, std::string file, std::string overlay) :
-			        name(name), file(file), overlay(overlay), ns(NULL), bd(new BuildDir(name)),
+			Package(NameSpace *ns, std::string name, std::string file, std::string overlay) :
+			        name(name), file(file), overlay(overlay), ns(ns), bd(new BuildDir(this)),
 			        Extract(new Extraction()), build_description(new BuildDescription()),
 			        intercept(false), depsExtraction(NULL), installFile(NULL),
 			        visiting(false), processed(false), built(false), building(false),
@@ -782,7 +783,13 @@ namespace buildsys {
 #endif
 			 run_secs(0) {};
 			//! Set the namespace this package is in
-			void setNS(NameSpace *ns) { this->ns = ns; };
+			void setNS(NameSpace *ns)
+			{
+				if(this->ns) this->ns->removePackage(this);
+				this->ns = ns;
+				if(this->ns) this->ns->addPackage(this);
+				this->resetBD();
+			};
 			//! Returns the namespace this package is in
 			NameSpace *getNS() { return this->ns; };
 			//! Returns the build directory being used by this package
@@ -940,8 +947,6 @@ namespace buildsys {
 			//! Return the lua instance being used
 			Lua *getLua() { return this->lua; };
 
-			//! Return the global name, in lua this is name()
-			std::string getName() { return this->ns ? this->ns->getName() : ""; };
 			//! Set the global name, in lua this is name('somevalue')
 			void setName(std::string n);
 

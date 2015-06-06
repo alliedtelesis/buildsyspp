@@ -26,7 +26,7 @@ BuildDir *Package::builddir()
 {
 	if(this->bd == NULL)
 	{
-		this->bd = new BuildDir(this->name);
+		this->bd = new BuildDir(this);
 	}
 
 	return this->bd;
@@ -64,7 +64,7 @@ void Package::resetBD()
 	if(this->bd != NULL)
 	{
 		delete this->bd;
-		this->bd = new BuildDir(this->name);
+		this->bd = new BuildDir(this);
 	}
 }
 
@@ -198,7 +198,7 @@ bool Package::extract_staging(const char *dir, std::list<std::string> *done)
 	{
 		std::unique_ptr<PackageCmd> pc(new PackageCmd(dir, "pax"));
 		pc->addArg("-rf");
-		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 		pc->addArg("-p");
 		pc->addArg("p");
 
@@ -246,7 +246,7 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 		if(this->installFile)
 		{
 			std::unique_ptr<PackageCmd> pc(new PackageCmd(dir, "cp"));
-			pc->addArgFmt("%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
+			pc->addArgFmt("%s/output/%s/install/%s", pwd, this->getNS()->getName().c_str(), this->installFile);
 			pc->addArg(this->installFile);
 
 			if(!pc->Run(this))
@@ -257,7 +257,7 @@ bool Package::extract_install(const char *dir, std::list<std::string> *done)
 		} else {
 			std::unique_ptr<PackageCmd> pc(new PackageCmd(dir, "pax"));
 			pc->addArg("-rf");
-			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 			pc->addArg("-p");
 			pc->addArg("p");
 			if(!pc->Run(this))
@@ -388,7 +388,7 @@ bool Package::shouldBuild()
 	// lets make sure the install file (still) exists
 	bool ret = false;
 	char *fname = NULL;
-	asprintf(&fname, "%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+	asprintf(&fname, "%s/output/%s/install/%s.tar.bz2", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 	FILE *f = fopen(fname, "r");
 	if(f == NULL)
 	{
@@ -399,7 +399,7 @@ bool Package::shouldBuild()
 	free(fname);
 	fname = NULL;
 	// Now lets check that the staging file (still) exists
-	asprintf(&fname, "%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+	asprintf(&fname, "%s/output/%s/staging/%s.tar.bz2", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 	f = fopen(fname, "r");
 	if(f == NULL)
 	{
@@ -428,26 +428,26 @@ bool Package::shouldBuild()
 			asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
 			char *hash = hash_file(build_info_file);
 			char *url = NULL;
-			asprintf(&url, "%s/%s/%s/%s/usable", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+			asprintf(&url, "%s/%s/%s/%s/usable", ffrom, this->getNS()->getName().c_str(), this->name.c_str(), hash);
 			// try wget the file
 			char *cmd = NULL;
-			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2.ff\n", url, WORLD->getName().c_str(), this->name.c_str());
+			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2.ff\n", url, this->getNS()->getName().c_str(), this->name.c_str());
 			res = system(cmd);
 			if(res != 0)
 			{
 				ret = true;
 			}
-			asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+			asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom, this->getNS()->getName().c_str(), this->name.c_str(), hash);
 			// try wget the file
-			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2\n", url, WORLD->getName().c_str(), this->name.c_str());
+			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2\n", url, this->getNS()->getName().c_str(), this->name.c_str());
 			res = system(cmd);
 			if(res != 0)
 			{
 				ret = true;
 			}
-			asprintf(&url, "%s/%s/%s/%s/install.tar.bz2", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+			asprintf(&url, "%s/%s/%s/%s/install.tar.bz2", ffrom, this->getNS()->getName().c_str(), this->name.c_str(), hash);
 			// try wget the file
-			asprintf(&cmd, "wget -q %s -O output/%s/install/%s.tar.bz2\n", url, WORLD->getName().c_str(), this->name.c_str());
+			asprintf(&cmd, "wget -q %s -O output/%s/install/%s.tar.bz2\n", url, this->getNS()->getName().c_str(), this->name.c_str());
 			res = system(cmd);
 			if(res != 0)
 			{
@@ -456,7 +456,7 @@ bool Package::shouldBuild()
 			free(cmd);
 			if (this->isHashingOutput())
 			{
-				asprintf(&url, "%s/%s/%s/%s/output.info", ffrom, WORLD->getName().c_str(), this->name.c_str(), hash);
+				asprintf(&url, "%s/%s/%s/%s/output.info", ffrom, this->getNS()->getName().c_str(), this->name.c_str(), hash);
 				// try wget the output hash file
 				asprintf(&cmd, "wget -q %s -O %s/.output.info\n", url, this->bd->getPath());
 				res = system(cmd);
@@ -547,20 +547,20 @@ bool Package::build()
 		log(this, (char *)"Building ...");
 		// Extract the dependency staging directories
 		char *staging_dir = NULL;
-		asprintf(&staging_dir, "output/%s/%s/staging", WORLD->getName().c_str(), this->name.c_str());
+		asprintf(&staging_dir, "output/%s/%s/staging", this->getNS()->getName().c_str(), this->name.c_str());
 		log(this, (char *)"Generating staging directory ...");
 
 		{ // Clean out the (new) staging/install directories
 			char *cmd = NULL;
-			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd, WORLD->getName().c_str(), this->name.c_str());
+			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 			system(cmd);
 			free(cmd);
 			cmd = NULL;
-			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/staging/*", pwd, WORLD->getName().c_str(), this->name.c_str());
+			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/staging/*", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 			system(cmd);
 			free(cmd);
 			cmd = NULL;
-			asprintf(&cmd, "rm -fr %s/output/%s/%s/staging/*", pwd, WORLD->getName().c_str(), this->name.c_str());
+			asprintf(&cmd, "rm -fr %s/output/%s/%s/staging/*", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 			system(cmd);
 			free(cmd);
 		}
@@ -634,7 +634,7 @@ bool Package::build()
 		pc->addArg("-x");
 		pc->addArg("cpio");
 		pc->addArg("-wf");
-		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 		pc->addArg(".");
 
 		if(!pc->Run(this))
@@ -651,7 +651,7 @@ bool Package::build()
 			std::cout << "Copying " << std::string(this->installFile) << " to install folder\n";
 			std::unique_ptr<PackageCmd> pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
 			pc->addArg(this->installFile);
-			pc->addArgFmt("%s/output/%s/install/%s", pwd, WORLD->getName().c_str(), this->installFile);
+			pc->addArgFmt("%s/output/%s/install/%s", pwd, this->getNS()->getName().c_str(), this->installFile);
 
 			if(!pc->Run(this))
 			{
@@ -663,7 +663,7 @@ bool Package::build()
 			pc->addArg("-x");
 			pc->addArg("cpio");
 			pc->addArg("-wf");
-			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd, WORLD->getName().c_str(), this->name.c_str());
+			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd, this->getNS()->getName().c_str(), this->name.c_str());
 			pc->addArg(".");
 
 			if(!pc->Run(this))
