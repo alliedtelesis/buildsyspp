@@ -117,7 +117,7 @@ int li_intercept(lua_State *L)
 static void depend(Package *P, const char *name)
 {
 	// create the Package
-	Package *p = WORLD->findPackage(std::string(name));
+	Package *p = P->getNS()->findPackage(std::string(name));
 	if(p == NULL)
 	{
 		throw CustomException("Failed to create or find Package");

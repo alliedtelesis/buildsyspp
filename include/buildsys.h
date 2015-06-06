@@ -727,6 +727,7 @@ namespace buildsys {
 			std::string getName() { return name; };
 			std::list<Package *>::iterator packagesStart();
 			std::list<Package *>::iterator packagesEnd();
+			//! Find or create a package with the given name
 			Package *findPackage (std::string name);
 			void addPackage (Package *p);
 			void removePackage (Package *p);
@@ -1014,8 +1015,6 @@ namespace buildsys {
 
 			//! Start the processing and building steps with the given meta package
 			bool basePackage(char *filename);
-			//! Find or create a package with the given name
-			Package *findPackage(std::string name) { return this->ns->findPackage(name); };
 
 			//! Get the start iterator for the package list
 			std::list<Package *>::iterator packagesStart() { return this->ns->packagesStart(); };
