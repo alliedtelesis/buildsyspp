@@ -22,10 +22,19 @@ string_list::iterator World::overlaysEnd()
 	return this->overlays->end();
 }
 
-void World::setName(std::string n)
+NameSpace *World::findNameSpace(std::string name)
 {
-	this->ns = new NameSpace(n);
-	this->p->setNS(this->ns);
+	std::list<NameSpace *>::iterator iter = this->nameSpacesStart();
+	std::list<NameSpace *>::iterator iterEnd = this->nameSpacesEnd();
+	for(; iter != iterEnd; iter++)
+	{
+		if((*iter)->getName().compare(name) == 0)
+			return (*iter);
+	}
+
+	NameSpace *ns = new NameSpace(name);
+	this->namespaces->push_back(ns);
+	return ns;
 }
 
 bool World::setFeature(std::string key, std::string value, bool override)
@@ -107,8 +116,7 @@ static void *build_thread(us_thread *t)
 
 bool World::basePackage(char *filename)
 {
-	this->ns = new NameSpace(filename);
-	this->p = new Package(this->ns, filename, filename, "");
+	this->p = new Package(this->findNameSpace(filename), filename, filename, "");
 
 	try {
 		// Load all the lua files
@@ -198,7 +206,7 @@ World::~World()
 	delete this->features;
 	delete this->forcedDeps;
 	delete this->lua;
-	delete this->ns;
+	delete this->namespaces;
 	delete this->overlays;
 	delete this->graph;
 	delete this->topo_graph;

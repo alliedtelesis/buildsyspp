@@ -42,31 +42,39 @@ Internal_Graph::Internal_Graph()
 	this->c = NULL;
 	// Setup for graphing
 	this->Nodes = new NodeVertexMap();
-	this->NodeMap = new VertexNodeMap(); 
+	this->NodeMap = new VertexNodeMap();
 
-	for(std::list<Package *>::iterator I = WORLD->packagesStart();
-		I != WORLD->packagesEnd(); I++)
+	for(std::list<NameSpace *>::iterator N = WORLD->nameSpacesStart();
+		N != WORLD->nameSpacesEnd(); N++)
 	{
-		NodeVertexMap::iterator pos;
-		bool inserted;
-		boost::tie(pos, inserted) = Nodes->insert(std::make_pair(*I, Vertex()));
-		if(inserted)
+		for(std::list<Package *>::iterator I = (*N)->packagesStart();
+			I != (*N)->packagesEnd(); I++)
 		{
-			Vertex u = add_vertex(g);
-			pos->second = u;
-			NodeMap->insert(std::make_pair(u, *I));
+			NodeVertexMap::iterator pos;
+			bool inserted;
+			boost::tie(pos, inserted) = Nodes->insert(std::make_pair(*I, Vertex()));
+			if(inserted)
+			{
+				Vertex u = add_vertex(g);
+				pos->second = u;
+				NodeMap->insert(std::make_pair(u, *I));
+			}
 		}
 	}
 
-	for(std::list<Package *>::iterator I = WORLD->packagesStart();
-		I != WORLD->packagesEnd(); I++)
+	for(std::list<NameSpace *>::iterator N = WORLD->nameSpacesStart();
+		N != WORLD->nameSpacesEnd(); N++)
 	{
-		for(std::list<Package *>::iterator J = (*I)->dependsStart();
-			J != (*I)->dependsEnd(); J++)
+		for(std::list<Package *>::iterator I = (*N)->packagesStart();
+			I != (*N)->packagesEnd(); I++)
 		{
-			Edge e;
-			bool inserted;
-			boost::tie(e, inserted) = add_edge((*Nodes)[(*I)],(*Nodes)[(*J)],g);
+			for(std::list<Package *>::iterator J = (*I)->dependsStart();
+				J != (*I)->dependsEnd(); J++)
+			{
+				Edge e;
+				bool inserted;
+				boost::tie(e, inserted) = add_edge((*Nodes)[(*I)],(*Nodes)[(*J)],g);
+			}
 		}
 	}
 }

@@ -33,7 +33,7 @@ static int li_name(lua_State *L)
 	if(lua_type(L, 1) != LUA_TSTRING) throw CustomException("Argument to name() must be a string");
 	const char *value = lua_tostring(L, 1);
 
-	WORLD->setName(std::string(value));
+	P->setNS(WORLD->findNameSpace(value));
 
 	return 0;
 }

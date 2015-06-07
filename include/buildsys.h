@@ -915,7 +915,7 @@ namespace buildsys {
 			key_value *features;
 			string_list *forcedDeps;
 			Lua *lua;
-			NameSpace *ns;
+			std::list<NameSpace *> *namespaces;
 			Package *p;
 			string_list *overlays;
 			Internal_Graph *graph;
@@ -932,7 +932,8 @@ namespace buildsys {
 #endif
 		public:
 			World(char *bsapp) : bsapp(std::string(bsapp)), features(new key_value()),
-					forcedDeps(new string_list()), lua(new Lua()), ns(NULL),
+					forcedDeps(new string_list()), lua(new Lua()),
+					namespaces(new std::list<NameSpace *>()),
 					overlays(new string_list()), graph(NULL), failed(false),
 					cleaning(false), skipConfigure(false),
 					extractOnly(false)
@@ -947,9 +948,6 @@ namespace buildsys {
 			std::string getAppName() { return this->bsapp; };
 			//! Return the lua instance being used
 			Lua *getLua() { return this->lua; };
-
-			//! Set the global name, in lua this is name('somevalue')
-			void setName(std::string n);
 
 			//! Are we operating in 'forced' mode
 			/** If more than 1 parameter was passed on the command line,
@@ -1016,10 +1014,12 @@ namespace buildsys {
 			//! Start the processing and building steps with the given meta package
 			bool basePackage(char *filename);
 
-			//! Get the start iterator for the package list
-			std::list<Package *>::iterator packagesStart() { return this->ns->packagesStart(); };
-			//! Get the end iterator for the package list
-			std::list<Package *>::iterator packagesEnd() { return this->ns->packagesEnd(); };
+			//! Get the start iterator for the namespace list
+			std::list<NameSpace *>::iterator nameSpacesStart() { return this->namespaces->begin(); };
+			//! Get the end iterator for the namespace list
+			std::list<NameSpace *>::iterator nameSpacesEnd() { return this->namespaces->end(); };
+			//! Find (or create) a namespace
+			NameSpace * findNameSpace(std::string name);
 
 			//! Tell everything that we have failed
 			void setFailed() { this->failed = true; };
