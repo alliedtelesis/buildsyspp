@@ -114,10 +114,18 @@ int li_intercept(lua_State *L)
 	return 0;
 }
 
-static void depend(Package *P, const char *name)
+static void depend(Package *P, NameSpace *ns, const char *name)
 {
+	Package *p = NULL;
 	// create the Package
-	Package *p = P->getNS()->findPackage(std::string(name));
+	if (ns)
+	{
+		p = ns->findPackage(std::string(name));
+	}
+	else
+	{
+		p = P->getNS()->findPackage(std::string(name));
+	}
 	if(p == NULL)
 	{
 		throw CustomException("Failed to create or find Package");
@@ -128,9 +136,19 @@ static void depend(Package *P, const char *name)
 
 int li_depend(lua_State *L)
 {
-	if(lua_gettop(L) != 1)
+	if(!(lua_gettop(L) == 1 || lua_gettop(L) == 2))
 	{
-		throw CustomException("depend() takes exactly 1 argument");
+		throw CustomException("depend() takes 1 argument or 2 arguments");
+	}
+
+	NameSpace *ns = NULL;
+	if (lua_gettop(L) == 2)
+	{
+		if(lua_type(L, 2) != LUA_TSTRING)
+		{
+			throw CustomException("depend() takes a string as the second argument");
+		}
+		ns = WORLD->findNameSpace(std::string(lua_tostring(L, 2)));
 	}
 
 	// get the current package
@@ -138,7 +156,7 @@ int li_depend(lua_State *L)
 	Package *P = (Package *)lua_topointer(L, -1);
 	if(lua_type(L, 1) == LUA_TSTRING)
 	{
-		depend(P, lua_tostring(L, 1));
+		depend(P, ns, lua_tostring(L, 1));
 	} else
 	if(lua_istable(L, 1))
 	{
@@ -146,7 +164,7 @@ int li_depend(lua_State *L)
 		while (lua_next(L, 1) != 0) {
 			/* uses 'key' (at index -2) and 'value' (at index -1) */
 			if(lua_type(L, -1) != LUA_TSTRING) throw CustomException("depend() requires a table of strings as the only argument\n");
-			depend(P, lua_tostring(L, -1));
+			depend(P, ns, lua_tostring(L, -1));
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
 		}

@@ -1,4 +1,4 @@
-depend('copyfile')
+depend('copyfile','file1')
 
 intercept()
 
