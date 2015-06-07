@@ -13,12 +13,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <buildsys.h>
 
-std::list<Package *>::iterator NameSpace::packagesStart()
+std::list < Package * >::iterator NameSpace::packagesStart()
 {
 	return this->packages.begin();
 }
 
-std::list<Package *>::iterator NameSpace::packagesEnd()
+std::list < Package * >::iterator NameSpace::packagesEnd()
 {
 	return this->packages.end();
 }
@@ -28,10 +28,9 @@ Package *NameSpace::findPackage(std::string name)
 {
 	std::string file;
 	std::string overlay;
-	std::list<Package *>::iterator iter = this->packagesStart();
-	std::list<Package *>::iterator iterEnd = this->packagesEnd();
-	for(; iter != iterEnd; iter++)
-	{
+	std::list < Package * >::iterator iter = this->packagesStart();
+	std::list < Package * >::iterator iterEnd = this->packagesEnd();
+	for(; iter != iterEnd; iter++) {
 		if((*iter)->getName().compare(name) == 0)
 			return (*iter);
 	}
@@ -40,44 +39,41 @@ Package *NameSpace::findPackage(std::string name)
 	{
 		// check that the dependency exists
 		char *luaFile = NULL;
-		char *dependPath  = strdup(name.c_str());
+		char *dependPath = strdup(name.c_str());
 		char *lastPart = strrchr(dependPath, '/');
 		bool found = false;
 
-		if(lastPart == NULL)
-		{
+		if(lastPart == NULL) {
 			lastPart = strdup(dependPath);
 		} else {
-			lastPart = strdup(lastPart+1);
+			lastPart = strdup(lastPart + 1);
 		}
 
 		string_list::iterator iter = WORLD->overlaysStart();
 		string_list::iterator iterEnd = WORLD->overlaysEnd();
-		for(; iter != iterEnd; iter++)
-		{
-			if(asprintf(&luaFile, "%s/%s/%s.lua", iter->c_str(), dependPath, lastPart) <= 0)
-			{
+		for(; iter != iterEnd; iter++) {
+			if(asprintf
+			   (&luaFile, "%s/%s/%s.lua", iter->c_str(), dependPath,
+			    lastPart) <= 0) {
 				throw CustomException("Error with asprintf");
 			}
 			FILE *f = fopen(luaFile, "r");
-			if(f == NULL)
-			{
-				log(name.c_str(), "Opening %s: %s", luaFile, strerror(errno));
+			if(f == NULL) {
+				log(name.c_str(), "Opening %s: %s", luaFile,
+				    strerror(errno));
 			} else {
 				found = true;
 				overlay = *iter;
 				fclose(f);
 			}
-			if(found)
-			{
+			if(found) {
 				break;
 			}
 			free(luaFile);
 			luaFile = NULL;
 		}
 
-		if (!found)
-		{
+		if(!found) {
 			throw CustomException("Failed opening Package");
 		}
 
@@ -95,13 +91,14 @@ Package *NameSpace::findPackage(std::string name)
 	return p;
 }
 
-void NameSpace::addPackage (Package *p)
+void NameSpace::addPackage(Package * p)
 {
 	this->packages.push_back(p);
-	if (p->getNS() != this) p->setNS(this);
+	if(p->getNS() != this)
+		p->setNS(this);
 };
 
-void NameSpace::removePackage (Package *P)
+void NameSpace::removePackage(Package * P)
 {
 	this->packages.remove(P);
 }

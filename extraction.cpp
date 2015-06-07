@@ -13,48 +13,48 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #include <buildsys.h>
 
-static char * git_hash(const char *gdir)
+static char *git_hash(const char *gdir)
 {
-	char *pwd = getcwd(NULL,0);
+	char *pwd = getcwd(NULL, 0);
 	char *cmd = NULL;
 	asprintf(&cmd, "git rev-parse HEAD");
 	chdir(gdir);
 	FILE *f = popen(cmd, "r");
 	free(cmd);
-	char *Commit = (char *)calloc(41, sizeof(char));
+	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	chdir(pwd);
 	pclose(f);
 	return Commit;
 }
 
-static char * git_diff_hash(const char *gdir)
+static char *git_diff_hash(const char *gdir)
 {
-	char *pwd = getcwd(NULL,0);
+	char *pwd = getcwd(NULL, 0);
 	char *cmd = NULL;
 	asprintf(&cmd, "git diff HEAD | sha1sum");
 	chdir(gdir);
 	FILE *f = popen(cmd, "r");
 	free(cmd);
-	char *Commit = (char *)calloc(41, sizeof(char));
+	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	chdir(pwd);
 	pclose(f);
 	return Commit;
 }
 
-bool Extraction::add(ExtractionUnit *eu)
+bool Extraction::add(ExtractionUnit * eu)
 {
 	ExtractionUnit **t = this->EUs;
 	this->EU_count++;
-	this->EUs = (ExtractionUnit **)realloc(t, sizeof(ExtractionUnit *) * this->EU_count);
-	if(this->EUs == NULL)
-	{
+	this->EUs =
+	    (ExtractionUnit **) realloc(t, sizeof(ExtractionUnit *) * this->EU_count);
+	if(this->EUs == NULL) {
 		this->EUs = t;
 		this->EU_count--;
 		return false;
 	}
-	this->EUs[this->EU_count-1] = eu;
+	this->EUs[this->EU_count - 1] = eu;
 	return true;
 }
 
@@ -66,14 +66,13 @@ TarExtractionUnit::TarExtractionUnit(const char *fname)
 	free(Hash);
 }
 
-bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
+bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "tar"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "tar"));
 	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("dl", 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
+	if((res < 0) && (errno != EEXIST)) {
 		throw CustomException("Error: Creating download directory");
 	}
 	pc->addArg("xf");
@@ -95,14 +94,13 @@ ZipExtractionUnit::ZipExtractionUnit(const char *fname)
 	free(Hash);
 }
 
-bool ZipExtractionUnit::extract(Package *P, BuildDir *bd)
+bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "unzip"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "unzip"));
 	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("dl", 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
+	if((res < 0) && (errno != EEXIST)) {
 		throw CustomException("Error: Creating download directory");
 	}
 
@@ -128,10 +126,10 @@ PatchExtractionUnit::PatchExtractionUnit(int level, char *pp, char *uri)
 	this->patch_path = strdup(pp);
 }
 
-bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
+bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr<PackageCmd> pc_dry(new PackageCmd(this->patch_path, "patch"));
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(this->patch_path, "patch"));
+	std::unique_ptr < PackageCmd > pc_dry(new PackageCmd(this->patch_path, "patch"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(this->patch_path, "patch"));
 
 	pc_dry->addArgFmt("-p%i", this->level);
 	pc->addArgFmt("-p%i", this->level);
@@ -150,8 +148,7 @@ bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 
 	pc_dry->addArg("--dry-run");
 
-	if(!pc_dry->Run(P))
-	{
+	if(!pc_dry->Run(P)) {
 		log(P->getName().c_str(), "Patch file: %s", this->uri.c_str());
 		throw CustomException("Will fail to patch");
 	}
@@ -170,10 +167,10 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
 	free(Hash);
 }
 
-bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
+bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	char *pwd = getcwd(NULL, 0);
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "cp"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-a");
 
 	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
@@ -182,8 +179,7 @@ bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 
 	pc->addArg(".");
 
-	if(!pc->Run(P))
-	{
+	if(!pc->Run(P)) {
 		throw CustomException("Failed to copy file");
 	}
 
@@ -201,7 +197,7 @@ GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_d
 
 bool GitDirExtractionUnit::isDirty()
 {
-	char *pwd = getcwd(NULL,0);
+	char *pwd = getcwd(NULL, 0);
 	char *cmd = NULL;
 	asprintf(&cmd, "git diff --quiet HEAD");
 	chdir(this->localPath().c_str());
@@ -219,14 +215,13 @@ std::string GitDirExtractionUnit::dirtyHash()
 	return ret;
 }
 
-bool LinkGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
+bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "ln"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "ln"));
 
 	pc->addArg("-sfT");
 
-	if(this->uri[0] == '.')
-	{
+	if(this->uri[0] == '.') {
 		char *pwd = getcwd(NULL, 0);
 		pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 		free(pwd);
@@ -235,21 +230,19 @@ bool LinkGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 	}
 	pc->addArg(this->toDir);
 
-	if(!pc->Run(P))
-	{
+	if(!pc->Run(P)) {
 		throw CustomException("Operation failed");
 	}
 
 	return true;
 }
 
-bool CopyGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
+bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "cp"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-dpRuf");
 
-	if(this->uri[0] == '.')
-	{
+	if(this->uri[0] == '.') {
 		char *pwd = getcwd(NULL, 0);
 		pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 		free(pwd);
@@ -258,28 +251,24 @@ bool CopyGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 	}
 	pc->addArg(this->toDir);
 
-	if(!pc->Run(P))
-	{
+	if(!pc->Run(P)) {
 		throw CustomException("Operation failed");
 	}
 
 	return true;
 }
 
-bool GitExtractionUnit::fetch(Package *P)
+bool GitExtractionUnit::fetch(Package * P)
 {
 	char *location = strdup(this->uri.c_str());
 	char *repo_name = strrchr(location, '/');
-	if(repo_name != NULL)
-	{
-		repo_name = strdup(repo_name+1);
-		char *dotgit = strstr(repo_name,".git");
-		if (dotgit)
-		{
+	if(repo_name != NULL) {
+		repo_name = strdup(repo_name + 1);
+		char *dotgit = strstr(repo_name, ".git");
+		if(dotgit) {
 			dotgit[0] = '\0';
 		}
-		if (strlen(repo_name) == 0)
-		{
+		if(strlen(repo_name) == 0) {
 			free(repo_name);
 			repo_name = strrchr(strrchr(location, '/'), '/');
 			repo_name = strdup(repo_name);
@@ -296,21 +285,18 @@ bool GitExtractionUnit::fetch(Package *P)
 	{
 		struct stat s;
 		int err = stat(source_dir, &s);
-		if (err == 0 && S_ISDIR(s.st_mode))
-		{
+		if(err == 0 && S_ISDIR(s.st_mode)) {
 			exists = true;
 		}
 	}
 
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(exists ? source_dir : cwd, "git"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(exists ? source_dir : cwd, "git"));
 
-	if (exists)
-	{
+	if(exists) {
 		pc->addArg("fetch");
 		pc->addArg("origin");
 		pc->addArg("--tags");
-		if(!pc->Run(P))
-		{
+		if(!pc->Run(P)) {
 			throw CustomException("Failed: git fetch origin --tags");
 		}
 	} else {
@@ -338,10 +324,10 @@ bool GitExtractionUnit::fetch(Package *P)
 	return true;
 }
 
-bool GitExtractionUnit::extract (Package *P, BuildDir *bd)
+bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	// copy to work dir
-	std::unique_ptr<PackageCmd> pc(new PackageCmd(bd->getPath(), "cp"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-dpRuf");
 	pc->addArg(this->localPath());
 	pc->addArg(".");
@@ -351,18 +337,17 @@ bool GitExtractionUnit::extract (Package *P, BuildDir *bd)
 	return true;
 }
 
-bool BuildDescription::add(BuildUnit *bu)
+bool BuildDescription::add(BuildUnit * bu)
 {
 	BuildUnit **t = this->BUs;
 	this->BU_count++;
-	this->BUs = (BuildUnit **)realloc(t, sizeof(BuildUnit *) * this->BU_count);
-	if(this->BUs == NULL)
-	{
+	this->BUs = (BuildUnit **) realloc(t, sizeof(BuildUnit *) * this->BU_count);
+	if(this->BUs == NULL) {
 		this->BUs = t;
 		this->BU_count--;
 		return false;
 	}
-	this->BUs[this->BU_count-1] = bu;
+	this->BUs[this->BU_count - 1] = bu;
 	return true;
 }
 

@@ -17,52 +17,49 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <sys/types.h>
 #include <errno.h>
 
-BuildDir::BuildDir(Package *P)
+BuildDir::BuildDir(Package * P)
 {
 	const char *gname = P->getNS()->getName().c_str();
 	const char *pname = P->getName().c_str();
 	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("output", 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
-		throw DirException((char *)"output", strerror(errno));
+	if((res < 0) && (errno != EEXIST)) {
+		throw DirException((char *) "output", strerror(errno));
 	}
-	
+
 	char *path = NULL;
 	if(asprintf(&path, "output/%s", gname) == -1) {
 		fprintf(stderr, "output/global-name path: %s\n", strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
+	if((res < 0) && (errno != EEXIST)) {
 		throw DirException(path, strerror(errno));
 	}
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "output/%s/staging", gname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/staging path: %s\n", strerror(errno));
+		fprintf(stderr, "Failed creating output/global-name/staging path: %s\n",
+			strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
+	if((res < 0) && (errno != EEXIST)) {
 		throw DirException(path, strerror(errno));
 	}
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "output/%s/install", gname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/install path: %s\n", strerror(errno));
+		fprintf(stderr, "Failed creating output/global-name/install path: %s\n",
+			strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
+	if((res < 0) && (errno != EEXIST)) {
 		throw DirException(path, strerror(errno));
 	}
 	free(path);
 	{
 		const char *tmp = strrchr(pname, '/');
-		if(tmp != NULL)
-		{
+		if(tmp != NULL) {
 			char *subpart = strdup(pname);
 			subpart[tmp - pname] = '\0';
 			asprintf(&path, "mkdir -p output/%s/staging/%s", gname, subpart);
@@ -78,96 +75,100 @@ BuildDir::BuildDir(Package *P)
 	}
 	path = NULL;
 	if(asprintf(&path, "mkdir -p output/%s/%s", gname, pname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/package-name path: %s\n", strerror(errno));
+		fprintf(stderr,
+			"Failed creating output/global-name/package-name path: %s\n",
+			strerror(errno));
 	}
 	res = system(path);
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/work", pwd, gname, pname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/package-name/work path: %s\n", strerror(errno));
+		fprintf(stderr,
+			"Failed creating output/global-name/package-name/work path: %s\n",
+			strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
+	if((res < 0) && (errno != EEXIST)) {
 		throw DirException(path, strerror(errno));
 	}
 	this->path = std::string(path);
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "output/%s/%s/work", gname, pname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/package-name/work path: %s\n", strerror(errno));
+		fprintf(stderr,
+			"Failed creating output/global-name/package-name/work path: %s\n",
+			strerror(errno));
 	}
 	this->rpath = std::string(path);
 	std::string work_path = "";
-	if(strrchr(pname,'/') != NULL)
-	{
-		const char *tmp = strrchr(pname,'/');
-		if(*(tmp+1) != '\0') {
-			work_path = this->path + "/" + std::string((tmp+1));
+	if(strrchr(pname, '/') != NULL) {
+		const char *tmp = strrchr(pname, '/');
+		if(*(tmp + 1) != '\0') {
+			work_path = this->path + "/" + std::string((tmp + 1));
 		}
 	}
-	if(work_path == "")
-	{
+	if(work_path == "") {
 		work_path = this->path + "/" + P->getName();
 	}
 	this->work_src = work_path;
 	this->work_build = work_path + "-build";
-	free (path);
+	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/new", pwd, gname, pname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/package-name/new path: %s\n", strerror(errno));
+		fprintf(stderr,
+			"Failed creating output/global-name/package-name/new path: %s\n",
+			strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if((res < 0) && (errno != EEXIST))
-	{
+	if((res < 0) && (errno != EEXIST)) {
 		throw DirException(path, strerror(errno));
 	}
 	this->new_path = std::string(path);
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/staging", pwd, gname, pname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/package-name/staging path: %s\n", strerror(errno));
+		fprintf(stderr,
+			"Failed creating output/global-name/package-name/staging path: %s\n",
+			strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if(res < 0)
-	{
-		if(errno != EEXIST)
-		{
+	if(res < 0) {
+		if(errno != EEXIST) {
 			throw DirException(path, strerror(errno));
-			
+
 		}
 	}
 	this->staging = std::string(path);
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/new/staging", pwd, gname, pname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/package-name/new/staging path: %s\n", strerror(errno));
+		fprintf(stderr,
+			"Failed creating output/global-name/package-name/new/staging path: %s\n",
+			strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if(res < 0)
-	{
-		if(errno != EEXIST)
-		{
+	if(res < 0) {
+		if(errno != EEXIST) {
 			throw DirException(path, strerror(errno));
-			
+
 		}
 	}
 	this->new_staging = std::string(path);
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/new/install", pwd, gname, pname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/package-name/new/install path: %s\n", strerror(errno));
+		fprintf(stderr,
+			"Failed creating output/global-name/package-name/new/install path: %s\n",
+			strerror(errno));
 	}
 	res = mkdir(path, 0700);
-	if(res < 0)
-	{
-		if(errno != EEXIST)
-		{
+	if(res < 0) {
+		if(errno != EEXIST) {
 			throw DirException(path, strerror(errno));
-			
+
 		}
 	}
-	this->new_install = std::string(path);	
+	this->new_install = std::string(path);
 	free(path);
 	free(pwd);
 
@@ -178,10 +179,9 @@ void BuildDir::clean()
 	char *cmd = NULL;
 	asprintf(&cmd, "rm -fr %s", this->path.c_str());
 	system(cmd);
-	free(cmd);	
-	int res = mkdir(this->path.c_str(),0700);
-	if(res < 0)
-	{
+	free(cmd);
+	int res = mkdir(this->path.c_str(), 0700);
+	if(res < 0) {
 		// We should complain here
 	}
 }

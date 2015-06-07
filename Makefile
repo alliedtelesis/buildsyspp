@@ -59,4 +59,9 @@ clean:
 test:
 	$(MAKE) -C test
 
+INDENT_ARGS=-kr -i8 -ts8 -l92 -nsai -nsaf -nsaw -il8
+indent:
+	find -name \*.cpp -exec indent $(INDENT_ARGS) {} \;
+	indent $(INDENT_ARGS) include/buildsys.h
+
 .PHONY: test

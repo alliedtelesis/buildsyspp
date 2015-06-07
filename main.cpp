@@ -28,7 +28,7 @@ void buildsys::log(const char *package, const char *fmt, ...)
 	free(message);
 }
 
-void buildsys::log(Package *P, const char *fmt, ...)
+void buildsys::log(Package * P, const char *fmt, ...)
 {
 	char *message = NULL;
 	va_list args;
@@ -40,23 +40,23 @@ void buildsys::log(Package *P, const char *fmt, ...)
 	free(message);
 }
 
-static inline const char* get_color(const char *mesg)
+static inline const char *get_color(const char *mesg)
 {
-	if (strstr(mesg, "error:"))
+	if(strstr(mesg, "error:"))
 		return COLOR_RED;
-	else if (strstr(mesg, "warning:"))
+	else if(strstr(mesg, "warning:"))
 		return COLOR_BLUE;
 
 	return NULL;
 }
 
 #ifdef UNDERSCORE
-void buildsys::program_output(Package *P, const char *mesg)
+void buildsys::program_output(Package * P, const char *mesg)
 {
 	static int isATTY = isatty(fileno(stdout));
-	const char* color;
+	const char *color;
 
-	if (isATTY && ((color = get_color(mesg)) != NULL))
+	if(isATTY && ((color = get_color(mesg)) != NULL))
 		fprintf(stdout, "%s: %s%s%s\n",
 			P->getName().c_str(), color, mesg, COLOR_RESET);
 	else
@@ -67,90 +67,71 @@ void buildsys::program_output(Package *P, const char *mesg)
 int main(int argc, char *argv[])
 {
 	struct timespec start, end;
-	
+
 	clock_gettime(CLOCK_REALTIME, &start);
 
-	log((char *)"BuildSys",(char *)"Buildsys (C++ version)");
-	log((char *)"BuildSys", "Built: %s %s", __TIME__, __DATE__);
+	log((char *) "BuildSys", (char *) "Buildsys (C++ version)");
+	log((char *) "BuildSys", "Built: %s %s", __TIME__, __DATE__);
 
-	if(argc <= 1)
-	{
-		error((char *)"At least 1 parameter is required");
+	if(argc <= 1) {
+		error((char *) "At least 1 parameter is required");
 		exit(-1);
 	}
-	
+
 	WORLD = new World(argv[0]);
-	
-	if(!interfaceSetup(WORLD->getLua()))
-	{
-		error((char *)"interfaceSetup: Failed");
+
+	if(!interfaceSetup(WORLD->getLua())) {
+		error((char *) "interfaceSetup: Failed");
 		exit(-1);
 	}
-	
 	// process arguments ...
 	// first we take a list of package names to exclusevily build
 	// this will over-ride any dependency checks and force them to be built
 	// without first building their dependencies
 	int a = 2;
 	bool foundDashDash = false;
-	while(a < argc && !foundDashDash)
-	{
-		if(!strcmp(argv[a],"--clean"))
-		{
+	while(a < argc && !foundDashDash) {
+		if(!strcmp(argv[a], "--clean")) {
 			WORLD->setCleaning();
-		} else
-		if(!strcmp(argv[a],"--skip-configure"))
-		{
+		} else if(!strcmp(argv[a], "--skip-configure")) {
 			WORLD->setSkipConfigure();
 		} else
 #ifdef UNDERSCORE
-		if(!strcmp(argv[a],"--no-output-prefix") || !strcmp(argv[a],"--nop"))
+		if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
 		{
 			WORLD->clearOutputPrefix();
 		} else
 #else
-		if(!strcmp(argv[a],"--no-output-prefix") || !strcmp(argv[a],"--nop"))
+		if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
 		{
-			std::cerr << argv[0] << ": " << argv[a] << " is only supported with UNDERSCORE=y, ignoring" << std::endl;
+			std::cerr << argv[0] << ": " << argv[a] <<
+			    " is only supported with UNDERSCORE=y, ignoring" << std::endl;
 		} else
 #endif
-		if(!strcmp(argv[a],"--cache-server") || !strcmp(argv[a],"--ff"))
-		{
-			WORLD->setFetchFrom(argv[a+1]);
+		if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
+			WORLD->setFetchFrom(argv[a + 1]);
 			a++;
-		} else
-		if(!strcmp(argv[a],"--tarball-cache"))
-		{
-			log("BuildSys", "Setting tarball cache to %s", argv[a+1]);
-			WORLD->setTarballCache(argv[a+1]);
+		} else if(!strcmp(argv[a], "--tarball-cache")) {
+			log("BuildSys", "Setting tarball cache to %s", argv[a + 1]);
+			WORLD->setTarballCache(argv[a + 1]);
 			a++;
-		} else
-		if(!strcmp(argv[a],"--overlay"))
-		{
-			WORLD->addOverlayPath(std::string(argv[a+1]));
+		} else if(!strcmp(argv[a], "--overlay")) {
+			WORLD->addOverlayPath(std::string(argv[a + 1]));
 			a++;
-		} else
-		if(!strcmp(argv[a],"--extract-only"))
-		{
+		} else if(!strcmp(argv[a], "--extract-only")) {
 			WORLD->setExtractOnly();
-		} else
-		if(!strcmp(argv[a],"--"))
-		{
+		} else if(!strcmp(argv[a], "--")) {
 			foundDashDash = true;
-		} else
-		{
+		} else {
 			WORLD->forceBuild(argv[a]);
 		}
 		a++;
 	}
 	// then we find a --
-	if(foundDashDash)
-	{
+	if(foundDashDash) {
 		// then we can preload the feature set
-		while(a < argc)
-		{
-			if(!WORLD->setFeature(argv[a]))
-			{
+		while(a < argc) {
+			if(!WORLD->setFeature(argv[a])) {
 				error("setFeature: Failed");
 				exit(-1);
 			}
@@ -159,14 +140,12 @@ int main(int argc, char *argv[])
 	}
 	char *target = NULL;
 	int tn_len = strlen(argv[1]);
-	if(argv[1][tn_len-4] != '.')
-	{
+	if(argv[1][tn_len - 4] != '.') {
 		asprintf(&target, "%s.lua", argv[1]);
 	} else {
 		target = strdup(argv[1]);
 	}
-	if(!WORLD->basePackage(target))
-	{
+	if(!WORLD->basePackage(target)) {
 		error("Building: Failed");
 		free(target);
 		exit(-1);
@@ -177,15 +156,14 @@ int main(int argc, char *argv[])
 	WORLD->output_graph();
 
 	clock_gettime(CLOCK_REALTIME, &end);
-	
-	if (end.tv_nsec >= start.tv_nsec)
-	    log(argv[1], (char *)"Total time: %ds and %dms",
-		(end.tv_sec - start.tv_sec),
-		(end.tv_nsec - start.tv_nsec) / 1000000);
+
+	if(end.tv_nsec >= start.tv_nsec)
+		log(argv[1], (char *) "Total time: %ds and %dms",
+		    (end.tv_sec - start.tv_sec), (end.tv_nsec - start.tv_nsec) / 1000000);
 	else
-	    log(argv[1], (char *)"Total time: %ds and %dms",
-		(end.tv_sec - start.tv_sec - 1),
-		(1000 + end.tv_nsec /1000000) - start.tv_nsec / 1000000);
+		log(argv[1], (char *) "Total time: %ds and %dms",
+		    (end.tv_sec - start.tv_sec - 1),
+		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
 
 	delete WORLD;
 

@@ -17,6 +17,7 @@ string_list::iterator World::overlaysStart()
 {
 	return this->overlays->begin();
 }
+
 string_list::iterator World::overlaysEnd()
 {
 	return this->overlays->end();
@@ -24,10 +25,9 @@ string_list::iterator World::overlaysEnd()
 
 NameSpace *World::findNameSpace(std::string name)
 {
-	std::list<NameSpace *>::iterator iter = this->nameSpacesStart();
-	std::list<NameSpace *>::iterator iterEnd = this->nameSpacesEnd();
-	for(; iter != iterEnd; iter++)
-	{
+	std::list < NameSpace * >::iterator iter = this->nameSpacesStart();
+	std::list < NameSpace * >::iterator iterEnd = this->nameSpacesEnd();
+	for(; iter != iterEnd; iter++) {
 		if((*iter)->getName().compare(name) == 0)
 			return (*iter);
 	}
@@ -40,35 +40,34 @@ NameSpace *World::findNameSpace(std::string name)
 bool World::setFeature(std::string key, std::string value, bool override)
 {
 	// look for this key
-	if(features->find(key) != features->end())
-	{
-		if(override)
-		{
+	if(features->find(key) != features->end()) {
+		if(override) {
 			// only over-write the value if we are explicitly told to
 			(*features)[key] = value;
 		}
 		return true;
 	}
-	features->insert(std::pair<std::string, std::string>(key, value));
+	features->insert(std::pair < std::string, std::string > (key, value));
 	return true;
 }
 
 bool World::setFeature(char *kv)
 {
 	char *eq = strchr(kv, '=');
-	if(eq == NULL)
-	{
+	if(eq == NULL) {
 		error("Features must be described as feature=value\n");
 		return false;
 	}
-	char *temp = (char *)calloc(1, (eq - kv) + 1);
-	if(temp == NULL) return false;
-	strncpy(temp, kv, (eq-kv));
+	char *temp = (char *) calloc(1, (eq - kv) + 1);
+	if(temp == NULL)
+		return false;
+	strncpy(temp, kv, (eq - kv));
 	std::string key(temp);
 	free(temp);
 	eq++;
 	temp = strdup(eq);
-	if(temp == NULL) return false;
+	if(temp == NULL)
+		return false;
 	std::string value(temp);
 	free(temp);
 	this->setFeature(key, value, true);
@@ -78,8 +77,7 @@ bool World::setFeature(char *kv)
 
 std::string World::getFeature(std::string key)
 {
-	if(features->find(key) != features->end())
-	{
+	if(features->find(key) != features->end()) {
 		return (*features)[key];
 	}
 	throw NoKeyException();
@@ -88,16 +86,15 @@ std::string World::getFeature(std::string key)
 #ifdef UNDERSCORE
 static us_condition *t_cond = NULL;
 
-static void *build_thread(us_thread *t)
+static void *build_thread(us_thread * t)
 {
-	Package *p = (Package *)t->priv;
-	
+	Package *p = (Package *) t->priv;
+
 	log(p->getName().c_str(), "Build Thread");
 
 	bool skip = false;
 
-	if(p->isBuilding())
-	{
+	if(p->isBuilding()) {
 		skip = true;
 	}
 	if(!skip)
@@ -105,9 +102,9 @@ static void *build_thread(us_thread *t)
 	us_cond_lock(t_cond);
 	us_cond_signal(t_cond, true);
 	us_cond_unlock(t_cond);
-	if(!skip)
-	{
-		if(!p->build()) WORLD->setFailed();
+	if(!skip) {
+		if(!p->build())
+			WORLD->setFailed();
 	}
 	WORLD->condTrigger();
 	return NULL;
@@ -123,13 +120,11 @@ bool World::basePackage(char *filename)
 		this->p->process();
 		// Extract all the source code
 		this->p->extract();
-	} catch (Exception &E)
-	{
+	} catch(Exception & E) {
 		error(E.error_msg().c_str());
 		return false;
 	}
-	if(this->areExtractOnly())
-	{
+	if(this->areExtractOnly()) {
 		// We are done, no building required
 		return true;
 	}
@@ -139,12 +134,10 @@ bool World::basePackage(char *filename)
 	this->topo_graph->topological();
 #ifdef UNDERSCORE
 	t_cond = us_cond_create();
-	while(!this->isFailed() && !this->p->isBuilt())
-	{
+	while(!this->isFailed() && !this->p->isBuilt()) {
 		us_cond_lock(this->cond);
 		Package *toBuild = this->topo_graph->topoNext();
-		if(toBuild != NULL)
-		{
+		if(toBuild != NULL) {
 			us_cond_unlock(this->cond);
 			us_cond_lock(t_cond);
 			us_thread_create(build_thread, 0, toBuild);
@@ -167,27 +160,26 @@ bool World::isForced(std::string name)
 {
 	string_list::iterator fIt = this->forcedDeps->begin();
 	string_list::iterator fEnd = this->forcedDeps->end();
-	
-	for(; fIt != fEnd; fIt++)
-	{
-		if((*fIt).compare(name)==0) return true;
+
+	for(; fIt != fEnd; fIt++) {
+		if((*fIt).compare(name) == 0)
+			return true;
 	}
 	return false;
 }
 
-bool World::populateForcedList(PackageCmd *pc)
+bool World::populateForcedList(PackageCmd * pc)
 {
 	string_list::iterator fIt = this->forcedDeps->begin();
 	string_list::iterator fEnd = this->forcedDeps->end();
 
-	for(; fIt != fEnd; fIt++)
-	{
-		pc->addArg (*fIt);
+	for(; fIt != fEnd; fIt++) {
+		pc->addArg(*fIt);
 	}
 	return false;
 }
 
-bool World::packageFinished(Package *p)
+bool World::packageFinished(Package * p)
 {
 #ifdef UNDERSCORE
 	us_cond_lock(this->cond);
