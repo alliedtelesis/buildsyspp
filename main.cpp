@@ -36,7 +36,8 @@ void buildsys::log(Package * P, const char *fmt, ...)
 	vasprintf(&message, fmt, args);
 	va_end(args);
 
-	fprintf(stderr, "%s: %s\n", P->getName().c_str(), message);
+	fprintf(stderr, "%s,%s: %s\n", P->getNS()->getName().c_str(), P->getName().c_str(),
+		message);
 	free(message);
 }
 
@@ -57,10 +58,12 @@ void buildsys::program_output(Package * P, const char *mesg)
 	const char *color;
 
 	if(isATTY && ((color = get_color(mesg)) != NULL))
-		fprintf(stdout, "%s: %s%s%s\n",
-			P->getName().c_str(), color, mesg, COLOR_RESET);
+		fprintf(stdout, "%s,%s: %s%s%s\n",
+			P->getNS()->getName().c_str(), P->getName().c_str(), color, mesg,
+			COLOR_RESET);
 	else
-		fprintf(stdout, "%s: %s\n", P->getName().c_str(), mesg);
+		fprintf(stdout, "%s,%s: %s\n", P->getNS()->getName().c_str(),
+			P->getName().c_str(), mesg);
 }
 #endif
 

@@ -90,7 +90,7 @@ static void *build_thread(us_thread * t)
 {
 	Package *p = (Package *) t->priv;
 
-	log(p->getName().c_str(), "Build Thread");
+	log(p, "Build Thread");
 
 	bool skip = false;
 
