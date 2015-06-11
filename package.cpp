@@ -325,6 +325,25 @@ void Package::setBuilding()
 #endif
 }
 
+static bool ff_file(Package * P, const char *hash, const char *rfile, const char *path,
+		    const char *fname, const char *fext)
+{
+	bool ret = false;
+	char *url = NULL;
+	asprintf(&url, "%s/%s/%s/%s/%s", WORLD->fetchFrom().c_str(),
+		 P->getNS()->getName().c_str(), P->getName().c_str(), hash, rfile);
+	char *cmd = NULL;
+	asprintf(&cmd, "wget -q %s -O %s/%s%s", url, path, fname, fext);
+	int res = system(cmd);
+	if(res != 0) {
+		log(P, "Failed to get %s", rfile);
+		ret = true;
+	}
+	free(cmd);
+	free(url);
+	return ret;
+}
+
 bool Package::shouldBuild()
 {
 	// we dont need to build if we don't have a build directory
@@ -412,81 +431,41 @@ bool Package::shouldBuild()
 	if(res != 0 || (ret && !this->codeUpdated)) {
 		// see if we can grab new staging/install files
 		if(this->canFetchFrom() && WORLD->canFetchFrom()) {
+			char *staging_dir = strdup(this->getNS()->getStagingDir().c_str());
+			char *install_dir = strdup(this->getNS()->getInstallDir().c_str());
+			const char *files[4][4] = {
+				{"usable", staging_dir, this->name.c_str(), ".tar.bz2.ff"},
+				{"staging.tar.bz2", staging_dir, this->name.c_str(),
+				 ".tar.bz2"},
+				{"install.tar.bz2", install_dir, this->name.c_str(),
+				 ".tar.bz2"},
+				{"output.info", this->bd->getPath(), ".output", ".info"}
+			};
 			ret = false;
 			const char *ffrom = WORLD->fetchFrom().c_str();
 			char *build_info_file = NULL;
 			asprintf(&build_info_file, "%s/.build.info.new",
 				 this->bd->getPath());
 			char *hash = hash_file(build_info_file);
-			char *url = NULL;
 			log(this, "FF URL: %s/%s/%s/%s", ffrom,
 			    this->getNS()->getName().c_str(), this->name.c_str(), hash);
-			if(!ret) {
-				asprintf(&url, "%s/%s/%s/%s/usable", ffrom,
-					 this->getNS()->getName().c_str(),
-					 this->name.c_str(), hash);
-				// try wget the file
-				char *cmd = NULL;
-				asprintf(&cmd,
-					 "wget -q %s -O output/%s/staging/%s.tar.bz2.ff\n",
-					 url, this->getNS()->getName().c_str(),
-					 this->name.c_str());
-				res = system(cmd);
-				if(res != 0) {
-					log(this, "Failed to get usable");
-					ret = true;
-				}
+
+			int count = 3;
+			if(this->isHashingOutput()) {
+				count = 4;
 			}
-			if(!ret) {
-				asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom,
-					 this->getNS()->getName().c_str(),
-					 this->name.c_str(), hash);
-				// try wget the file
-				asprintf(&cmd,
-					 "wget -q %s -O output/%s/staging/%s.tar.bz2\n",
-					 url, this->getNS()->getName().c_str(),
-					 this->name.c_str());
-				res = system(cmd);
-				if(res != 0) {
-					log(this, "Failed to get staging.tar.bz2");
-					ret = true;
-				}
+
+			for(int i = 0; !ret && i < count; i++) {
+				ret =
+				    ff_file(this, hash, files[i][0], files[i][1],
+					    files[i][2], files[i][3]);
 			}
-			if(!ret) {
-				asprintf(&url, "%s/%s/%s/%s/install.tar.bz2", ffrom,
-					 this->getNS()->getName().c_str(),
-					 this->name.c_str(), hash);
-				// try wget the file
-				asprintf(&cmd,
-					 "wget -q %s -O output/%s/install/%s.tar.bz2\n",
-					 url, this->getNS()->getName().c_str(),
-					 this->name.c_str());
-				res = system(cmd);
-				if(res != 0) {
-					log(this, "Failed to get install.tar.bz2");
-					ret = true;
-				}
-			}
-			free(cmd);
-			if(!ret && this->isHashingOutput()) {
-				asprintf(&url, "%s/%s/%s/%s/output.info", ffrom,
-					 this->getNS()->getName().c_str(),
-					 this->name.c_str(), hash);
-				// try wget the output hash file
-				asprintf(&cmd, "wget -q %s -O %s/.output.info\n", url,
-					 this->bd->getPath());
-				res = system(cmd);
-				if(res != 0) {
-					log(this, "Failed to get output.info");
-					ret = true;
-				}
-				free(cmd);
-			}
+
 			free(hash);
 			if(ret) {
 				log(this, "Could not optimize away building");
 			} else {
-				log(this, "Build cache used %s", url);
+				log(this, "Build cache used");
 
 				char *cmd = NULL;
 				// mv the build info file into the regular place (faking that we have built this package)
@@ -495,7 +474,8 @@ bool Package::shouldBuild()
 				system(cmd);
 				free(cmd);
 			}
-			free(url);
+			free(staging_dir);
+			free(install_dir);
 		} else {
 			// otherwise, make sure we get (re)built
 			ret = true;

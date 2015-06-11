@@ -23,6 +23,20 @@ std::list < Package * >::iterator NameSpace::packagesEnd()
 	return this->packages.end();
 }
 
+std::string NameSpace::getStagingDir()
+{
+	std::stringstream res;
+	res << "output/" << this->getName() << "/staging";
+	return res.str();
+}
+
+std::string NameSpace::getInstallDir()
+{
+	std::stringstream res;
+	res << "output/" << this->getName() << "/install";
+	return res.str();
+}
+
 
 Package *NameSpace::findPackage(std::string name)
 {

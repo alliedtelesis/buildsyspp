@@ -797,6 +797,8 @@ namespace buildsys {
 		Package *findPackage(std::string name);
 		void addPackage(Package * p);
 		void removePackage(Package * p);
+		std::string getStagingDir();
+		std::string getInstallDir();
 	};
 
 	//! A package to build
