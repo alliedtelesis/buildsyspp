@@ -418,39 +418,56 @@ bool Package::shouldBuild()
 				 this->bd->getPath());
 			char *hash = hash_file(build_info_file);
 			char *url = NULL;
-			asprintf(&url, "%s/%s/%s/%s/usable", ffrom,
-				 this->getNS()->getName().c_str(), this->name.c_str(),
-				 hash);
-			// try wget the file
-			char *cmd = NULL;
-			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2.ff\n",
-				 url, this->getNS()->getName().c_str(), this->name.c_str());
-			res = system(cmd);
-			if(res != 0) {
-				ret = true;
+			log(this, "FF URL: %s/%s/%s/%s", ffrom,
+			    this->getNS()->getName().c_str(), this->name.c_str(), hash);
+			if(!ret) {
+				asprintf(&url, "%s/%s/%s/%s/usable", ffrom,
+					 this->getNS()->getName().c_str(),
+					 this->name.c_str(), hash);
+				// try wget the file
+				char *cmd = NULL;
+				asprintf(&cmd,
+					 "wget -q %s -O output/%s/staging/%s.tar.bz2.ff\n",
+					 url, this->getNS()->getName().c_str(),
+					 this->name.c_str());
+				res = system(cmd);
+				if(res != 0) {
+					log(this, "Failed to get usable");
+					ret = true;
+				}
 			}
-			asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom,
-				 this->getNS()->getName().c_str(), this->name.c_str(),
-				 hash);
-			// try wget the file
-			asprintf(&cmd, "wget -q %s -O output/%s/staging/%s.tar.bz2\n", url,
-				 this->getNS()->getName().c_str(), this->name.c_str());
-			res = system(cmd);
-			if(res != 0) {
-				ret = true;
+			if(!ret) {
+				asprintf(&url, "%s/%s/%s/%s/staging.tar.bz2", ffrom,
+					 this->getNS()->getName().c_str(),
+					 this->name.c_str(), hash);
+				// try wget the file
+				asprintf(&cmd,
+					 "wget -q %s -O output/%s/staging/%s.tar.bz2\n",
+					 url, this->getNS()->getName().c_str(),
+					 this->name.c_str());
+				res = system(cmd);
+				if(res != 0) {
+					log(this, "Failed to get staging.tar.bz2");
+					ret = true;
+				}
 			}
-			asprintf(&url, "%s/%s/%s/%s/install.tar.bz2", ffrom,
-				 this->getNS()->getName().c_str(), this->name.c_str(),
-				 hash);
-			// try wget the file
-			asprintf(&cmd, "wget -q %s -O output/%s/install/%s.tar.bz2\n", url,
-				 this->getNS()->getName().c_str(), this->name.c_str());
-			res = system(cmd);
-			if(res != 0) {
-				ret = true;
+			if(!ret) {
+				asprintf(&url, "%s/%s/%s/%s/install.tar.bz2", ffrom,
+					 this->getNS()->getName().c_str(),
+					 this->name.c_str(), hash);
+				// try wget the file
+				asprintf(&cmd,
+					 "wget -q %s -O output/%s/install/%s.tar.bz2\n",
+					 url, this->getNS()->getName().c_str(),
+					 this->name.c_str());
+				res = system(cmd);
+				if(res != 0) {
+					log(this, "Failed to get install.tar.bz2");
+					ret = true;
+				}
 			}
 			free(cmd);
-			if(this->isHashingOutput()) {
+			if(!ret && this->isHashingOutput()) {
 				asprintf(&url, "%s/%s/%s/%s/output.info", ffrom,
 					 this->getNS()->getName().c_str(),
 					 this->name.c_str(), hash);
@@ -459,6 +476,7 @@ bool Package::shouldBuild()
 					 this->bd->getPath());
 				res = system(cmd);
 				if(res != 0) {
+					log(this, "Failed to get output.info");
 					ret = true;
 				}
 				free(cmd);
