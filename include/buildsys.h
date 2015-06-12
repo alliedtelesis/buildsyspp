@@ -846,6 +846,22 @@ namespace buildsys {
 		bool extract_staging(const char *dir, std::list < std::string > *done);
 		//! Extract the new install directory this package created in the given path
 		bool extract_install(const char *dir, std::list < std::string > *done);
+		//! prepare the (new) build.info file
+		void prepareBuildInfo();
+		//! update the build.info file
+		void updateBuildInfo(bool hashOutput = true);
+		//! Attempt to fetchFrom
+		bool fetchFrom();
+		//! Return a new build unit (the build info) for this package
+		BuildUnit *buildInfo();
+		//! Prepare the (new) staging/install directories for the building of this package
+		bool prepareBuildDirs();
+		//! Extract all dependencies install dirs for this package (if bd:fetch(,'deps') was used)
+		bool extractInstallDepends();
+		//! Package up the new/staging directory
+		bool packageNewStaging();
+		//! Package up the new/install directory (or installFile, if set)
+		bool packageNewInstall();
 	public:
 		/** Create a package
 		 *  Constucts a package with a given name, based on a specific file

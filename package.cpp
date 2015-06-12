@@ -112,8 +112,8 @@ bool Package::process()
 
 	this->processed = true;
 
-	std::list < Package * >::iterator iter = this->depends.begin();
-	std::list < Package * >::iterator end = this->depends.end();
+	std::list < Package * >::iterator iter = this->dependsStart();
+	std::list < Package * >::iterator end = this->dependsEnd();
 
 	for(; iter != end; iter++) {
 		if(!(*iter)->process()) {
@@ -157,15 +157,18 @@ bool Package::extract()
 				//this->setCodeUpdated();
 			}
 			// mv the file into the regular place
-			asprintf(&cmd, "mv %s/.extraction.info.new %s/.extraction.info",
-				 this->bd->getPath(), this->bd->getPath());
-			system(cmd);
-			free(cmd);
+			char *oldfname = NULL;
+			char *newfname = NULL;
+			asprintf(&oldfname, "%s/.extraction.info.new", this->bd->getPath());
+			asprintf(&newfname, "%s/.extraction.info", this->bd->getPath());
+			rename(oldfname, newfname);
+			free(oldfname);
+			free(newfname);
 		}
 	}
 
-	std::list < Package * >::iterator iter = this->depends.begin();
-	std::list < Package * >::iterator end = this->depends.end();
+	std::list < Package * >::iterator iter = this->dependsStart();
+	std::list < Package * >::iterator end = this->dependsEnd();
 
 	for(; iter != end; iter++) {
 		if(!(*iter)->extract()) {
@@ -190,8 +193,8 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	std::list < Package * >::iterator dIt = this->depends.begin();
-	std::list < Package * >::iterator dEnds = this->depends.end();
+	std::list < Package * >::iterator dIt = this->dependsStart();
+	std::list < Package * >::iterator dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
 		if(!(*dIt)->extract_staging(dir, done))
@@ -232,8 +235,8 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	std::list < Package * >::iterator dIt = this->depends.begin();
-	std::list < Package * >::iterator dEnds = this->depends.end();
+	std::list < Package * >::iterator dIt = this->dependsStart();
+	std::list < Package * >::iterator dEnds = this->dependsEnd();
 
 	if(!this->intercept) {
 		for(; dIt != dEnds; dIt++) {
@@ -282,8 +285,8 @@ bool Package::canBuild()
 		return true;
 	}
 
-	std::list < Package * >::iterator dIt = this->depends.begin();
-	std::list < Package * >::iterator dEnds = this->depends.end();
+	std::list < Package * >::iterator dIt = this->dependsStart();
+	std::list < Package * >::iterator dEnds = this->dependsEnd();
 
 	if(dIt != dEnds) {
 		for(; dIt != dEnds; dIt++) {
@@ -356,11 +359,23 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 	return ret;
 }
 
-bool Package::shouldBuild()
+BuildUnit *Package::buildInfo()
 {
-	// we dont need to build if we don't have a build directory
-	if(this->bd == NULL)
-		return false;
+	char *Info_file = NULL;
+	BuildUnit *res;
+	if(this->isHashingOutput()) {
+		asprintf(&Info_file, "%s/.output.info", this->bd->getShortPath());
+		res = new OutputInfoFileUnit(Info_file);
+	} else {
+		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
+		res = new BuildInfoFileUnit(Info_file);
+	}
+	free(Info_file);
+	return res;
+}
+
+void Package::prepareBuildInfo()
+{
 	// Add the extraction info file
 	char *extractionInfoFname = NULL;
 	asprintf(&extractionInfoFname, "%s/.extraction.info", this->bd->getShortPath());
@@ -368,37 +383,88 @@ bool Package::shouldBuild()
 	free(extractionInfoFname);
 
 	// Add each of our dependencies build info files
-	std::list < Package * >::iterator dIt = this->depends.begin();
-	std::list < Package * >::iterator dEnds = this->depends.end();
+	std::list < Package * >::iterator dIt = this->dependsStart();
+	std::list < Package * >::iterator dEnds = this->dependsEnd();
 
-	if(dIt != dEnds) {
-		for(; dIt != dEnds; dIt++) {
-			if((*dIt)->bd != NULL) {
-				char *Info_file = NULL;
-				if((*dIt)->isHashingOutput()) {
-					asprintf(&Info_file, "%s/.output.info",
-						 (*dIt)->bd->getShortPath());
-					this->build_description->add(new
-								     OutputInfoFileUnit
-								     (Info_file));
-				} else {
-					asprintf(&Info_file, "%s/.build.info",
-						 (*dIt)->bd->getShortPath());
-					this->build_description->add(new
-								     BuildInfoFileUnit
-								     (Info_file));
-				}
-				free(Info_file);
-			}
-		}
+	for(; dIt != dEnds; dIt++) {
+		this->build_description->add((*dIt)->buildInfo());
 	}
+
 	// Create the new build info file
 	char *buildInfoFname = NULL;
 	asprintf(&buildInfoFname, "%s/.build.info.new", this->bd->getPath());
 	std::ofstream buildInfo(buildInfoFname);
 	this->build_description->print(buildInfo);
 	free(buildInfoFname);
+}
 
+void Package::updateBuildInfo(bool updateOutputHash)
+{
+	// mv the build info file into the regular place
+	char *oldfname = NULL;
+	char *newfname = NULL;
+	asprintf(&oldfname, "%s/.build.info.new", this->bd->getPath());
+	asprintf(&newfname, "%s/.build.info", this->bd->getPath());
+	rename(oldfname, newfname);
+	free(oldfname);
+	free(newfname);
+
+	if(updateOutputHash && this->isHashingOutput()) {
+		// Hash the entire new path
+		char *cmd = NULL;
+		asprintf(&cmd,
+			 "cd %s; find -type f -exec sha256sum {} \\; > %s/.output.info",
+			 this->bd->getNewPath(), this->bd->getPath());
+		system(cmd);
+		free(cmd);
+	}
+}
+
+bool Package::fetchFrom()
+{
+	bool ret = false;
+	char *staging_dir = strdup(this->getNS()->getStagingDir().c_str());
+	char *install_dir = strdup(this->getNS()->getInstallDir().c_str());
+	const char *files[4][4] = {
+		{"usable", staging_dir, this->name.c_str(), ".tar.bz2.ff"},
+		{"staging.tar.bz2", staging_dir, this->name.c_str(),
+		 ".tar.bz2"},
+		{"install.tar.bz2", install_dir, this->name.c_str(),
+		 ".tar.bz2"},
+		{"output.info", this->bd->getPath(), ".output", ".info"}
+	};
+	const char *ffrom = WORLD->fetchFrom().c_str();
+	char *build_info_file = NULL;
+	asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
+	char *hash = hash_file(build_info_file);
+	log(this, "FF URL: %s/%s/%s/%s", ffrom,
+	    this->getNS()->getName().c_str(), this->name.c_str(), hash);
+
+	int count = 3;
+	if(this->isHashingOutput()) {
+		count = 4;
+	}
+
+	for(int i = 0; !ret && i < count; i++) {
+		ret =
+		    ff_file(this, hash, files[i][0], files[i][1], files[i][2], files[i][3]);
+	}
+
+	free(hash);
+	if(ret) {
+		log(this, "Could not optimize away building");
+	} else {
+		log(this, "Build cache used");
+
+		this->updateBuildInfo(false);
+	}
+	free(staging_dir);
+	free(install_dir);
+	return ret;
+}
+
+bool Package::shouldBuild()
+{
 	// we need to rebuild if the code is updated
 	if(this->codeUpdated)
 		return true;
@@ -443,51 +509,7 @@ bool Package::shouldBuild()
 	if(res != 0 || (ret && !this->codeUpdated)) {
 		// see if we can grab new staging/install files
 		if(this->canFetchFrom() && WORLD->canFetchFrom()) {
-			char *staging_dir = strdup(this->getNS()->getStagingDir().c_str());
-			char *install_dir = strdup(this->getNS()->getInstallDir().c_str());
-			const char *files[4][4] = {
-				{"usable", staging_dir, this->name.c_str(), ".tar.bz2.ff"},
-				{"staging.tar.bz2", staging_dir, this->name.c_str(),
-				 ".tar.bz2"},
-				{"install.tar.bz2", install_dir, this->name.c_str(),
-				 ".tar.bz2"},
-				{"output.info", this->bd->getPath(), ".output", ".info"}
-			};
-			ret = false;
-			const char *ffrom = WORLD->fetchFrom().c_str();
-			char *build_info_file = NULL;
-			asprintf(&build_info_file, "%s/.build.info.new",
-				 this->bd->getPath());
-			char *hash = hash_file(build_info_file);
-			log(this, "FF URL: %s/%s/%s/%s", ffrom,
-			    this->getNS()->getName().c_str(), this->name.c_str(), hash);
-
-			int count = 3;
-			if(this->isHashingOutput()) {
-				count = 4;
-			}
-
-			for(int i = 0; !ret && i < count; i++) {
-				ret =
-				    ff_file(this, hash, files[i][0], files[i][1],
-					    files[i][2], files[i][3]);
-			}
-
-			free(hash);
-			if(ret) {
-				log(this, "Could not optimize away building");
-			} else {
-				log(this, "Build cache used");
-
-				char *cmd = NULL;
-				// mv the build info file into the regular place (faking that we have built this package)
-				asprintf(&cmd, "mv %s/.build.info.new %s/.build.info",
-					 this->bd->getPath(), this->bd->getPath());
-				system(cmd);
-				free(cmd);
-			}
-			free(staging_dir);
-			free(install_dir);
+			ret = this->fetchFrom();
 		} else {
 			// otherwise, make sure we get (re)built
 			ret = true;
@@ -499,28 +521,167 @@ bool Package::shouldBuild()
 	return ret;
 }
 
+bool Package::prepareBuildDirs()
+{
+	char *staging_dir = NULL;
+	asprintf(&staging_dir, "output/%s/%s/staging",
+		 this->getNS()->getName().c_str(), this->name.c_str());
+	log(this, (char *) "Generating staging directory ...");
+
+	{			// Clean out the (new) staging/install directories
+		char *cmd = NULL;
+		char *pwd = getcwd(NULL, 0);
+		asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd,
+			 this->getNS()->getName().c_str(), this->name.c_str());
+		system(cmd);
+		free(cmd);
+		cmd = NULL;
+		asprintf(&cmd, "rm -fr %s/output/%s/%s/new/staging/*", pwd,
+			 this->getNS()->getName().c_str(), this->name.c_str());
+		system(cmd);
+		free(cmd);
+		cmd = NULL;
+		asprintf(&cmd, "rm -fr %s/output/%s/%s/staging/*", pwd,
+			 this->getNS()->getName().c_str(), this->name.c_str());
+		system(cmd);
+		free(cmd);
+		free(pwd);
+	}
+
+	std::list < std::string > *done = new std::list < std::string > ();
+	std::list < Package * >::iterator dIt = this->dependsStart();
+	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	for(; dIt != dEnds; dIt++) {
+		if(!(*dIt)->extract_staging(staging_dir, done))
+			return false;
+	}
+	log(this, (char *) "Done (%d)", done->size());
+	delete done;
+	free(staging_dir);
+	staging_dir = NULL;
+	return true;
+}
+
+bool Package::extractInstallDepends()
+{
+	if(this->depsExtraction == NULL) {
+		return true;
+	}
+	// Extract installed files to a given location
+	log(this, (char *) "Removing old install files ...");
+	{
+		char *pwd = getcwd(NULL, 0);
+		std::unique_ptr < PackageCmd > pc(new PackageCmd(pwd, "rm"));
+		pc->addArg("-fr");
+		pc->addArg(this->depsExtraction);
+		free(pwd);
+		if(!pc->Run(this)) {
+			log(this,
+			    (char *) "Failed to remove %s (pre-install)",
+			    this->depsExtraction);
+			return false;
+		}
+	}
+
+	// Create the directory
+	{
+		int res = mkdir(this->depsExtraction, 0700);
+		if((res < 0) && (errno != EEXIST)) {
+			error(this->depsExtraction);
+			return false;
+		}
+	}
+
+	log(this, (char *) "Extracting installed files from dependencies ...");
+	std::list < std::string > *done = new std::list < std::string > ();
+	std::list < Package * >::iterator dIt = this->dependsStart();
+	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	for(; dIt != dEnds; dIt++) {
+		if(!(*dIt)->extract_install(this->depsExtraction, done))
+			return false;
+	}
+	delete done;
+	log(this, (char *) "Dependency install files extracted");
+	return true;
+}
+
+bool Package::packageNewStaging()
+{
+	char *pwd = getcwd(NULL, 0);
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(this->bd->getNewStaging(), "pax"));
+	pc->addArg("-x");
+	pc->addArg("cpio");
+	pc->addArg("-wf");
+	pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd,
+		      this->getNS()->getName().c_str(), this->name.c_str());
+	pc->addArg(".");
+
+	if(!pc->Run(this)) {
+		log(this, (char *) "Failed to compress staging directory");
+		return false;
+	}
+	free(pwd);
+	return true;
+}
+
+bool Package::packageNewInstall()
+{
+	char *pwd = getcwd(NULL, 0);
+	if(this->installFile != NULL) {
+		std::cout << "Copying " << std::string(this->installFile) <<
+		    " to install folder\n";
+		std::unique_ptr < PackageCmd >
+		    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
+		pc->addArg(this->installFile);
+		pc->addArgFmt("%s/output/%s/install/%s", pwd,
+			      this->getNS()->getName().c_str(), this->installFile);
+
+		if(!pc->Run(this)) {
+			log(this, (char *) "Failed to copy install file (%s) ",
+			    this->installFile);
+			return false;
+		}
+	} else {
+		std::unique_ptr < PackageCmd >
+		    pc(new PackageCmd(this->bd->getNewInstall(), "pax"));
+		pc->addArg("-x");
+		pc->addArg("cpio");
+		pc->addArg("-wf");
+		pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd,
+			      this->getNS()->getName().c_str(), this->name.c_str());
+		pc->addArg(".");
+
+		if(!pc->Run(this)) {
+			log(this, (char *) "Failed to compress install directory");
+			return false;
+		}
+	}
+	free(pwd);
+	return true;
+}
+
 bool Package::build()
 {
 	struct timespec start, end;
 
+	// Already build, pretend to successfully build
 	if(this->isBuilt()) {
 		return true;
 	}
 
-	std::list < Package * >::iterator dIt = this->depends.begin();
-	std::list < Package * >::iterator dEnds = this->depends.end();
+	std::list < Package * >::iterator dIt = this->dependsStart();
+	std::list < Package * >::iterator dEnds = this->dependsEnd();
 
-	if(dIt != dEnds) {
-		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->build())
-				return false;
-			if((*dIt)->wasBuilt()) {
-				std::cout << "Dependency: " << (*dIt)->getName() <<
-				    " was built" << std::endl;
-			}
-		}
+	/* Check our dependencies are already built, or build them */
+	for(; dIt != dEnds; dIt++) {
+		if(!(*dIt)->build())
+			return false;
 	}
 
+	// Create the new build.info file
+	this->prepareBuildInfo();
+
+	// Check if building is required
 	bool sb = this->shouldBuild();
 
 	if((WORLD->forcedMode() && !WORLD->isForced(this->name)) || (!sb)) {
@@ -541,163 +702,37 @@ bool Package::build()
 
 	clock_gettime(CLOCK_REALTIME, &start);
 
-	char *pwd = getcwd(NULL, 0);
-
-	if(this->bd != NULL) {
-		log(this, (char *) "Building ...");
-		// Extract the dependency staging directories
-		char *staging_dir = NULL;
-		asprintf(&staging_dir, "output/%s/%s/staging",
-			 this->getNS()->getName().c_str(), this->name.c_str());
-		log(this, (char *) "Generating staging directory ...");
-
-		{		// Clean out the (new) staging/install directories
-			char *cmd = NULL;
-			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd,
-				 this->getNS()->getName().c_str(), this->name.c_str());
-			system(cmd);
-			free(cmd);
-			cmd = NULL;
-			asprintf(&cmd, "rm -fr %s/output/%s/%s/new/staging/*", pwd,
-				 this->getNS()->getName().c_str(), this->name.c_str());
-			system(cmd);
-			free(cmd);
-			cmd = NULL;
-			asprintf(&cmd, "rm -fr %s/output/%s/%s/staging/*", pwd,
-				 this->getNS()->getName().c_str(), this->name.c_str());
-			system(cmd);
-			free(cmd);
-		}
-
-		std::list < std::string > *done = new std::list < std::string > ();
-		for(dIt = this->depends.begin(); dIt != dEnds; dIt++) {
-			if(!(*dIt)->extract_staging(staging_dir, done))
-				return false;
-		}
-		log(this, (char *) "Done (%d)", done->size());
-		delete done;
-		free(staging_dir);
-		staging_dir = NULL;
-
-
-		if(this->depsExtraction != NULL) {
-			// Extract installed files to a given location
-			log(this, (char *) "Removing old install files ...");
-			{
-				std::unique_ptr < PackageCmd >
-				    pc(new PackageCmd(pwd, "rm"));
-				pc->addArg("-fr");
-				pc->addArg(this->depsExtraction);
-
-				if(!pc->Run(this)) {
-					log(this,
-					    (char *) "Failed to remove %s (pre-install)",
-					    this->depsExtraction);
-					return false;
-				}
-			}
-
-			// Create the directory
-			{
-				int res = mkdir(this->depsExtraction, 0700);
-				if((res < 0) && (errno != EEXIST)) {
-					error(this->depsExtraction);
-					return false;
-				}
-			}
-
-			log(this,
-			    (char *) "Extracting installed files from dependencies ...");
-			done = new std::list < std::string > ();
-			for(dIt = this->depends.begin(); dIt != dEnds; dIt++) {
-				if(!(*dIt)->extract_install(this->depsExtraction, done))
-					return false;
-			}
-			delete done;
-			log(this, (char *) "Dependency install files extracted");
-		}
-
-		std::list < PackageCmd * >::iterator cIt = this->commands.begin();
-		std::list < PackageCmd * >::iterator cEnd = this->commands.end();
-
-		log(this, (char *) "Running Commands");
-		for(; cIt != cEnd; cIt++) {
-			if(!(*cIt)->Run(this))
-				return false;
-		}
-		log(this, (char *) "Done Commands");
+	log(this, (char *) "Building ...");
+	// Clean new/{staging,install}, Extract the dependency staging directories
+	if(!this->prepareBuildDirs()) {
+		return false;
 	}
+
+	if(!this->extractInstallDepends()) {
+		return false;
+	}
+
+	std::list < PackageCmd * >::iterator cIt = this->commands.begin();
+	std::list < PackageCmd * >::iterator cEnd = this->commands.end();
+
+	log(this, (char *) "Running Commands");
+	for(; cIt != cEnd; cIt++) {
+		if(!(*cIt)->Run(this))
+			return false;
+	}
+	log(this, (char *) "Done Commands");
 
 	log(this, (char *) "BUILT");
 
-	if(this->bd != NULL) {
-		std::unique_ptr < PackageCmd >
-		    pc(new PackageCmd(this->bd->getNewStaging(), "pax"));
-		pc->addArg("-x");
-		pc->addArg("cpio");
-		pc->addArg("-wf");
-		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd,
-			      this->getNS()->getName().c_str(), this->name.c_str());
-		pc->addArg(".");
-
-		if(!pc->Run(this)) {
-			log(this, (char *) "Failed to compress staging directory");
-			return false;
-		}
+	if(!this->packageNewStaging()) {
+		return false;
 	}
 
-	if(this->bd != NULL) {
-		if(this->installFile != NULL) {
-			std::cout << "Copying " << std::string(this->installFile) <<
-			    " to install folder\n";
-			std::unique_ptr < PackageCmd >
-			    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
-			pc->addArg(this->installFile);
-			pc->addArgFmt("%s/output/%s/install/%s", pwd,
-				      this->getNS()->getName().c_str(), this->installFile);
-
-			if(!pc->Run(this)) {
-				log(this, (char *) "Failed to copy install file (%s) ",
-				    this->installFile);
-				return false;
-			}
-		} else {
-			std::unique_ptr < PackageCmd >
-			    pc(new PackageCmd(this->bd->getNewInstall(), "pax"));
-			pc->addArg("-x");
-			pc->addArg("cpio");
-			pc->addArg("-wf");
-			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd,
-				      this->getNS()->getName().c_str(), this->name.c_str());
-			pc->addArg(".");
-
-			if(!pc->Run(this)) {
-				log(this, (char *) "Failed to compress install directory");
-				return false;
-			}
-		}
+	if(!this->packageNewInstall()) {
+		return false;
 	}
 
-	if(this->bd != NULL) {
-		char *cmd = NULL;
-		// mv the build info file into the regular place
-		asprintf(&cmd, "mv %s/.build.info.new %s/.build.info", this->bd->getPath(),
-			 this->bd->getPath());
-		system(cmd);
-		free(cmd);
-		cmd = NULL;
-
-		if(this->isHashingOutput()) {
-			// Hash the entire new path
-			asprintf(&cmd,
-				 "cd %s; find -type f -exec sha256sum {} \\; > %s/.output.info",
-				 this->bd->getNewPath(), this->bd->getPath());
-			system(cmd);
-			free(cmd);
-		}
-	}
-
-	free(pwd);
+	this->updateBuildInfo();
 
 	clock_gettime(CLOCK_REALTIME, &end);
 

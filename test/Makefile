@@ -6,3 +6,5 @@
 all:
 	$(TEST_HARNESS) ../buildsys test.lua --clean
 	sha256sum -c result.txt
+	$(TEST_HARNESS) ../buildsys test.lua
+	sha256sum -c result.txt
