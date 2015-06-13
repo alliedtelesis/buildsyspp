@@ -214,6 +214,7 @@ World::~World()
 	delete this->overlays;
 	delete this->graph;
 	delete this->topo_graph;
+	delete this->pwd;
 #ifdef UNDERSCORE
 	us_cond_destroy(this->cond);
 #endif

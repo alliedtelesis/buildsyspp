@@ -27,30 +27,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static char *git_hash(const char *gdir)
 {
-	char *pwd = getcwd(NULL, 0);
-	char *cmd = NULL;
-	asprintf(&cmd, "git rev-parse HEAD");
 	chdir(gdir);
-	FILE *f = popen(cmd, "r");
-	free(cmd);
+	FILE *f = popen("git rev-parse HEAD", "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
-	chdir(pwd);
+	chdir(WORLD->getWorkingDir()->c_str());
 	pclose(f);
 	return Commit;
 }
 
 static char *git_diff_hash(const char *gdir)
 {
-	char *pwd = getcwd(NULL, 0);
-	char *cmd = NULL;
-	asprintf(&cmd, "git diff HEAD | sha1sum");
 	chdir(gdir);
-	FILE *f = popen(cmd, "r");
-	free(cmd);
+	FILE *f = popen("git diff HEAD | sha1sum", "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
-	chdir(pwd);
+	chdir(WORLD->getWorkingDir()->c_str());
 	pclose(f);
 	return Commit;
 }
@@ -81,16 +73,13 @@ TarExtractionUnit::TarExtractionUnit(const char *fname)
 bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "tar"));
-	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("dl", 0700);
 	if((res < 0) && (errno != EEXIST)) {
 		throw CustomException("Error: Creating download directory");
 	}
 	pc->addArg("xf");
-	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
-	free(pwd);
-	pwd = NULL;
+	pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
 
 	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
@@ -109,7 +98,6 @@ ZipExtractionUnit::ZipExtractionUnit(const char *fname)
 bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "unzip"));
-	char *pwd = getcwd(NULL, 0);
 
 	int res = mkdir("dl", 0700);
 	if((res < 0) && (errno != EEXIST)) {
@@ -117,9 +105,7 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 	}
 
 	pc->addArg("-o");
-	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
-	free(pwd);
-	pwd = NULL;
+	pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
 
 	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
@@ -152,11 +138,9 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc_dry->addArg("-i");
 	pc->addArg("-i");
 
-	char *pwd = getcwd(NULL, 0);
+	const char *pwd = WORLD->getWorkingDir()->c_str();
 	pc_dry->addArgFmt("%s/%s", pwd, this->uri.c_str());
 	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
-	free(pwd);
-	pwd = NULL;
 
 	pc_dry->addArg("--dry-run");
 
@@ -181,13 +165,10 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
 
 bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	char *pwd = getcwd(NULL, 0);
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-pRuf");
 
-	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
-	free(pwd);
-	pwd = NULL;
+	pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
 
 	pc->addArg(".");
 
@@ -209,13 +190,9 @@ GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_d
 
 bool GitDirExtractionUnit::isDirty()
 {
-	char *pwd = getcwd(NULL, 0);
-	char *cmd = NULL;
-	asprintf(&cmd, "git diff --quiet HEAD");
 	chdir(this->localPath().c_str());
-	int res = system(cmd);
-	free(cmd);
-	chdir(pwd);
+	int res = system("git diff --quiet HEAD");
+	chdir(WORLD->getWorkingDir()->c_str());
 	return (res != 0);
 }
 
@@ -234,9 +211,7 @@ bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc->addArg("-sfT");
 
 	if(this->uri[0] == '.') {
-		char *pwd = getcwd(NULL, 0);
-		pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
-		free(pwd);
+		pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
 	} else {
 		pc->addArg(this->uri.c_str());
 	}
@@ -255,9 +230,7 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc->addArg("-dpRuf");
 
 	if(this->uri[0] == '.') {
-		char *pwd = getcwd(NULL, 0);
-		pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
-		free(pwd);
+		pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
 	} else {
 		pc->addArg(this->uri);
 	}
@@ -288,7 +261,7 @@ bool GitExtractionUnit::fetch(Package * P)
 	}
 
 	char *source_dir = NULL;
-	char *cwd = getcwd(NULL, 0);
+	const char *cwd = WORLD->getWorkingDir()->c_str();
 	asprintf(&source_dir, "%s/source/%s", cwd, repo_name);
 
 	this->local = std::string(source_dir);

@@ -33,7 +33,7 @@ BuildDir::BuildDir(Package * P)
 {
 	const char *gname = P->getNS()->getName().c_str();
 	const char *pname = P->getName().c_str();
-	char *pwd = getcwd(NULL, 0);
+	const char *pwd = WORLD->getWorkingDir()->c_str();
 
 	int res = mkdir("output", 0700);
 	if((res < 0) && (errno != EEXIST)) {
@@ -182,8 +182,6 @@ BuildDir::BuildDir(Package * P)
 	}
 	this->new_install = std::string(path);
 	free(path);
-	free(pwd);
-
 }
 
 void BuildDir::clean()

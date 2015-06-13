@@ -47,14 +47,13 @@ BuildDir *Package::builddir()
 char *Package::absolute_fetch_path(const char *location)
 {
 	char *src_path = NULL;
-	char *cwd = getcwd(NULL, 0);
+	const char *cwd = WORLD->getWorkingDir()->c_str();
 	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.') {
 		asprintf(&src_path, "%s/%s", cwd, location);
 	} else {
 		asprintf(&src_path, "%s/%s/%s/%s", cwd, this->getOverlay().c_str(),
 			 this->getName().c_str(), location);
 	}
-	free(cwd);
 	return src_path;
 }
 
@@ -201,7 +200,7 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 			return false;
 	}
 
-	char *pwd = getcwd(NULL, 0);
+	const char *pwd = WORLD->getWorkingDir()->c_str();
 
 	if(this->bd != NULL) {
 		std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
@@ -216,7 +215,6 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 			return false;
 		}
 	}
-	free(pwd);
 
 	done->push_back(this->name);
 
@@ -245,7 +243,7 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	char *pwd = getcwd(NULL, 0);
+	const char *pwd = WORLD->getWorkingDir()->c_str();
 
 	if(this->bd != NULL) {
 		if(this->installFile) {
@@ -272,7 +270,6 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 			}
 		}
 	}
-	free(pwd);
 
 	done->push_back(this->name);
 
@@ -472,7 +469,7 @@ bool Package::shouldBuild()
 	if(this->installFile)
 		return true;
 
-	char *pwd = getcwd(NULL, 0);
+	const char *pwd = WORLD->getWorkingDir()->c_str();
 	// lets make sure the install file (still) exists
 	bool ret = false;
 	char *fname = NULL;
@@ -516,8 +513,6 @@ bool Package::shouldBuild()
 		}
 	}
 
-	free(pwd);
-
 	return ret;
 }
 
@@ -530,7 +525,7 @@ bool Package::prepareBuildDirs()
 
 	{			// Clean out the (new) staging/install directories
 		char *cmd = NULL;
-		char *pwd = getcwd(NULL, 0);
+		const char *pwd = WORLD->getWorkingDir()->c_str();
 		asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd,
 			 this->getNS()->getName().c_str(), this->name.c_str());
 		system(cmd);
@@ -545,7 +540,6 @@ bool Package::prepareBuildDirs()
 			 this->getNS()->getName().c_str(), this->name.c_str());
 		system(cmd);
 		free(cmd);
-		free(pwd);
 	}
 
 	std::list < std::string > *done = new std::list < std::string > ();
@@ -570,11 +564,10 @@ bool Package::extractInstallDepends()
 	// Extract installed files to a given location
 	log(this, (char *) "Removing old install files ...");
 	{
-		char *pwd = getcwd(NULL, 0);
-		std::unique_ptr < PackageCmd > pc(new PackageCmd(pwd, "rm"));
+		std::unique_ptr < PackageCmd >
+		    pc(new PackageCmd(WORLD->getWorkingDir()->c_str(), "rm"));
 		pc->addArg("-fr");
 		pc->addArg(this->depsExtraction);
-		free(pwd);
 		if(!pc->Run(this)) {
 			log(this,
 			    (char *) "Failed to remove %s (pre-install)",
@@ -607,12 +600,11 @@ bool Package::extractInstallDepends()
 
 bool Package::packageNewStaging()
 {
-	char *pwd = getcwd(NULL, 0);
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(this->bd->getNewStaging(), "pax"));
 	pc->addArg("-x");
 	pc->addArg("cpio");
 	pc->addArg("-wf");
-	pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd,
+	pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", WORLD->getWorkingDir()->c_str(),
 		      this->getNS()->getName().c_str(), this->name.c_str());
 	pc->addArg(".");
 
@@ -620,13 +612,12 @@ bool Package::packageNewStaging()
 		log(this, (char *) "Failed to compress staging directory");
 		return false;
 	}
-	free(pwd);
 	return true;
 }
 
 bool Package::packageNewInstall()
 {
-	char *pwd = getcwd(NULL, 0);
+	const char *pwd = WORLD->getWorkingDir()->c_str();
 	if(this->installFile != NULL) {
 		std::cout << "Copying " << std::string(this->installFile) <<
 		    " to install folder\n";
@@ -656,7 +647,6 @@ bool Package::packageNewInstall()
 			return false;
 		}
 	}
-	free(pwd);
 	return true;
 }
 

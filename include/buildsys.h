@@ -1053,6 +1053,7 @@ namespace buildsys {
 		Internal_Graph *topo_graph;
 		std::string fetch_from;
 		std::string tarball_cache;
+		std::string * pwd;
 		bool failed;
 		bool cleaning;
 		bool skipConfigure;
@@ -1072,6 +1073,9 @@ namespace buildsys {
 #endif
 		{
 			overlays->push_back(std::string("package"));
+			char *pwd = getcwd(NULL, 0);
+			this->pwd = new std::string(pwd);
+			free(pwd);
 		};
 
 		~World();
@@ -1216,6 +1220,11 @@ namespace buildsys {
 		//! Get the the tarball Cache location
 		std::string tarballCache() {
 			return this->tarball_cache;
+		}
+
+		//! Get 'pwd'
+		std::string * getWorkingDir() {
+			return this->pwd;
 		}
 
 		//! Add an overlay to search for packages

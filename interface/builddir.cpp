@@ -113,10 +113,9 @@ int li_bd_fetch(lua_State * L)
 				if(ext != NULL)
 					ext[0] = '\0';
 			}
-			char *pwd = getcwd(NULL, 0);
 			char *fpath = NULL;
-			asprintf(&fpath, "%s/dl/%s", pwd, fname);
-			free(pwd);
+			asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+				 fname);
 			FILE *f = fopen(fpath, "r");
 			if(f == NULL) {
 				get = true;
@@ -786,7 +785,7 @@ int li_bd_invokebuild(lua_State * L)
 	Package *P = (Package *) lua_topointer(L, -1);
 
 	const char *target = lua_tostring(L, 2);
-	std::string path = std::string(getcwd(NULL, 0));
+	std::string path = *(WORLD->getWorkingDir());
 	std::string buildsysexe = WORLD->getAppName();
 
 	PackageCmd *pc = new PackageCmd(path, buildsysexe);
