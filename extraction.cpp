@@ -367,3 +367,12 @@ OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
 	this->hash = std::string(Hash);
 	free(Hash);
 }
+
+bool FeatureValueUnit::print(std::ostream & out)
+{
+	if(!WORLD->isIgnoredFeature(this->feature)) {
+		out << this->type() << " " << this->
+		    feature << " " << this->value << std::endl;
+	}
+	return true;
+}

@@ -205,6 +205,17 @@ bool World::packageFinished(Package * p)
 	return true;
 }
 
+bool World::isIgnoredFeature(std::string feature)
+{
+	string_list::iterator iter = this->ignoredFeatures->begin();
+	string_list::iterator iterEnd = this->ignoredFeatures->end();
+	for(; iter != iterEnd; iter++) {
+		if((*iter).compare(feature) == 0)
+			return true;
+	}
+	return false;
+}
+
 World::~World()
 {
 	delete this->features;

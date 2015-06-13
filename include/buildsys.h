@@ -648,13 +648,7 @@ namespace buildsys {
 				 const char *value):feature(std::string(feature)),
 		    value(std::string(value)) {
 		};
-		virtual bool print(std::ostream & out) {
-			if(this->feature != "load-limit" && this->feature != "job-limit") {
-				out << this->type() << " " << this->
-				    feature << " " << this->value << std::endl;
-			}
-			return true;
-		}
+		virtual bool print(std::ostream & out);
 		virtual std::string type() {
 			return std::string("FeatureValue");
 		}
@@ -1054,6 +1048,7 @@ namespace buildsys {
 		std::string fetch_from;
 		std::string tarball_cache;
 		std::string * pwd;
+		string_list *ignoredFeatures;
 		bool failed;
 		bool cleaning;
 		bool skipConfigure;
@@ -1066,8 +1061,9 @@ namespace buildsys {
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
 		    forcedDeps(new string_list()), lua(new Lua()),
 		    namespaces(new std::list < NameSpace * >()),
-		    overlays(new string_list()), graph(NULL), failed(false),
-		    cleaning(false), skipConfigure(false), extractOnly(false)
+		    overlays(new string_list()), graph(NULL),
+		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
+		    skipConfigure(false), extractOnly(false)
 #ifdef UNDERSCORE
 		, cond(us_cond_create()), outputPrefix(true)
 #endif
@@ -1170,6 +1166,17 @@ namespace buildsys {
 		 *  lua: feature('magic-support')
 		 */
 		std::string getFeature(std::string key);
+
+		//! Ignore a feature for build.info
+		void ignoreFeature(std::string feature) {
+			this->ignoredFeatures->push_back(feature);
+		}
+		//! Is a feature ignored
+		bool isIgnoredFeature(std::string feature);
+		//! Is the ignore list empty ?
+		bool noIgnoredFeatures() {
+			return this->ignoredFeatures->empty();
+		}
 
 		//! Start the processing and building steps with the given meta package
 		bool basePackage(char *filename);

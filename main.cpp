@@ -135,6 +135,9 @@ int main(int argc, char *argv[])
 			a++;
 		} else if(!strcmp(argv[a], "--extract-only")) {
 			WORLD->setExtractOnly();
+		} else if(!strcmp(argv[a], "--build-info-ignore-fv")) {
+			WORLD->ignoreFeature(std::string(argv[a + 1]));
+			a++;
 		} else if(!strcmp(argv[a], "--")) {
 			foundDashDash = true;
 		} else {
@@ -160,6 +163,13 @@ int main(int argc, char *argv[])
 	} else {
 		target = strdup(argv[1]);
 	}
+
+	if(WORLD->noIgnoredFeatures()) {
+		// Implement old behaviour
+		WORLD->ignoreFeature("job-limit");
+		WORLD->ignoreFeature("load-limit");
+	}
+
 	if(!WORLD->basePackage(target)) {
 		error("Building: Failed");
 		free(target);
