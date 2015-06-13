@@ -815,9 +815,11 @@ int li_bd_invokebuild(lua_State * L)
 		pc->addArg("--skip-configure");
 	}
 	// --nop
+#ifdef UNDERSCORE
 	if(!WORLD->areOutputPrefix()) {
 		pc->addArg("--nop");
 	}
+#endif
 	// fetch from
 	if(WORLD->canFetchFrom()) {
 		pc->addArg("--ff");
