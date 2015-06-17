@@ -410,7 +410,7 @@ void Package::updateBuildInfo(bool updateOutputHash)
 		// Hash the entire new path
 		char *cmd = NULL;
 		asprintf(&cmd,
-			 "cd %s; find -type f -exec sha256sum {} \\; > %s/.output.info",
+			 "cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
 			 this->bd->getNewPath(), this->bd->getPath());
 		system(cmd);
 		free(cmd);
