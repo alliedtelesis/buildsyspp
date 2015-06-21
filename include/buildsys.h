@@ -821,7 +821,7 @@ namespace buildsys {
 		BuildDescription *build_description;
 		bool intercept;
 		char *depsExtraction;
-		char *installFile;
+		string_list installFiles;
 		bool visiting;
 		bool processed;
 		bool built;
@@ -866,7 +866,7 @@ namespace buildsys {
 			std::string overlay):name(name), file(file), overlay(overlay),
 		    ns(ns), bd(new BuildDir(this)), Extract(new Extraction()),
 		    build_description(new BuildDescription()), intercept(false),
-		    depsExtraction(NULL), installFile(NULL), visiting(false),
+		    depsExtraction(NULL), visiting(false),
 		    processed(false), built(false), building(false), extracted(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false),
@@ -944,7 +944,7 @@ namespace buildsys {
 		 *  \param i the file to install
 		 */
 		void setInstallFile(char *i) {
-			this->installFile = i;
+			this->installFiles.push_back(std::string(i));
 		};
 		//! Parse and load the lua file for this package
 		bool process();

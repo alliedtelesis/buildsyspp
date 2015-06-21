@@ -246,16 +246,22 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 	const char *pwd = WORLD->getWorkingDir()->c_str();
 
 	if(this->bd != NULL) {
-		if(this->installFile) {
-			std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "cp"));
-			pc->addArgFmt("%s/output/%s/install/%s", pwd,
-				      this->getNS()->getName().c_str(), this->installFile);
-			pc->addArg(this->installFile);
+		if(!this->installFiles.empty()) {
+			std::list < std::string >::iterator it = this->installFiles.begin();
+			std::list < std::string >::iterator end = this->installFiles.end();
+			for(; it != end; it++) {
+				std::unique_ptr < PackageCmd >
+				    pc(new PackageCmd(dir, "cp"));
+				pc->addArgFmt("%s/output/%s/install/%s", pwd,
+					      this->getNS()->getName().c_str(),
+					      (*it).c_str());
+				pc->addArg(*it);
 
-			if(!pc->Run(this)) {
-				log(this, "Failed to copy %s (for install)\n",
-				    this->installFile);
-				return false;
+				if(!pc->Run(this)) {
+					log(this, "Failed to copy %s (for install)\n",
+					    (*it).c_str());
+					return false;
+				}
 			}
 		} else {
 			std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
@@ -465,8 +471,8 @@ bool Package::shouldBuild()
 	// we need to rebuild if the code is updated
 	if(this->codeUpdated)
 		return true;
-	// we need to rebuild if installFile is set
-	if(this->installFile)
+	// we need to rebuild if installFiles is not empty
+	if(!this->installFiles.empty())
 		return true;
 
 	const char *pwd = WORLD->getWorkingDir()->c_str();
@@ -618,19 +624,22 @@ bool Package::packageNewStaging()
 bool Package::packageNewInstall()
 {
 	const char *pwd = WORLD->getWorkingDir()->c_str();
-	if(this->installFile != NULL) {
-		std::cout << "Copying " << std::string(this->installFile) <<
-		    " to install folder\n";
-		std::unique_ptr < PackageCmd >
-		    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
-		pc->addArg(this->installFile);
-		pc->addArgFmt("%s/output/%s/install/%s", pwd,
-			      this->getNS()->getName().c_str(), this->installFile);
+	if(!this->installFiles.empty()) {
+		std::list < std::string >::iterator it = this->installFiles.begin();
+		std::list < std::string >::iterator end = this->installFiles.end();
+		for(; it != end; it++) {
+			std::cout << "Copying " << *it << " to install folder\n";
+			std::unique_ptr < PackageCmd >
+			    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
+			pc->addArg(*it);
+			pc->addArgFmt("%s/output/%s/install/%s", pwd,
+				      this->getNS()->getName().c_str(), (*it).c_str());
 
-		if(!pc->Run(this)) {
-			log(this, (char *) "Failed to copy install file (%s) ",
-			    this->installFile);
-			return false;
+			if(!pc->Run(this)) {
+				log(this, (char *) "Failed to copy install file (%s) ",
+				    (*it).c_str());
+				return false;
+			}
 		}
 	} else {
 		std::unique_ptr < PackageCmd >
