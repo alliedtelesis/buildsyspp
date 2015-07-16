@@ -304,6 +304,11 @@ bool GitExtractionUnit::fetch(Package * P)
 
 	free(repo_name);
 	free(location);
+
+	char *Hash = git_hash(source_dir);
+	this->hash = std::string(Hash);
+	free(Hash);
+
 	free(source_dir);
 
 	return true;
