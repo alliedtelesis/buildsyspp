@@ -93,10 +93,6 @@ int main(int argc, char *argv[])
 
 	WORLD = new World(argv[0]);
 
-	if(!interfaceSetup(WORLD->getLua())) {
-		error((char *) "interfaceSetup: Failed");
-		exit(-1);
-	}
 	// process arguments ...
 	// first we take a list of package names to exclusevily build
 	// this will over-ride any dependency checks and force them to be built

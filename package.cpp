@@ -105,9 +105,14 @@ bool Package::process()
 
 	this->build_description->add(new PackageFileUnit(this->file.c_str()));
 
-	WORLD->getLua()->setGlobal(std::string("P"), this);
+	if(!interfaceSetup(this->lua)) {
+		error((char *) "interfaceSetup: Failed");
+		exit(-1);
+	}
 
-	WORLD->getLua()->processFile(file.c_str());
+	this->lua->setGlobal(std::string("P"), this);
+
+	this->lua->processFile(file.c_str());
 
 	this->processed = true;
 

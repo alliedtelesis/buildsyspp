@@ -209,7 +209,6 @@ World::~World()
 {
 	delete this->features;
 	delete this->forcedDeps;
-	delete this->lua;
 	delete this->namespaces;
 	delete this->overlays;
 	delete this->graph;

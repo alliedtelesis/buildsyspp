@@ -811,6 +811,7 @@ namespace buildsys {
 		BuildDir *bd;
 		Extraction *Extract;
 		BuildDescription *build_description;
+		Lua *lua;
 		bool intercept;
 		char *depsExtraction;
 		string_list installFiles;
@@ -855,8 +856,8 @@ namespace buildsys {
 		Package(NameSpace * ns, std::string name, std::string file,
 			std::string overlay):name(name), file(file), overlay(overlay),
 		    ns(ns), bd(new BuildDir(this)), Extract(new Extraction()),
-		    build_description(new BuildDescription()), intercept(false),
-		    depsExtraction(NULL), visiting(false),
+		    build_description(new BuildDescription()), lua(new Lua()),
+		    intercept(false), depsExtraction(NULL), visiting(false),
 		    processed(false), built(false), building(false), extracted(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false), run_secs(0) {
@@ -994,6 +995,11 @@ namespace buildsys {
 		 * Prints the package name, number of commands to run, and time spent building
 		 */
 		void printLabel(std::ostream & out);
+
+		//! Return the lua instance being used
+		Lua *getLua() {
+			return this->lua;
+		};
 	};
 
 	//! A graph of dependencies between packages
@@ -1026,7 +1032,6 @@ namespace buildsys {
 		std::string bsapp;
 		key_value *features;
 		string_list *forcedDeps;
-		Lua *lua;
 		std::list < NameSpace * >*namespaces;
 		Package *p;
 		string_list *overlays;
@@ -1045,8 +1050,7 @@ namespace buildsys {
 		bool outputPrefix;
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
-		    forcedDeps(new string_list()), lua(new Lua()),
-		    namespaces(new std::list < NameSpace * >()),
+		    forcedDeps(new string_list()), namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
 		    skipConfigure(false), extractOnly(false),
@@ -1064,10 +1068,6 @@ namespace buildsys {
 		//! Return the name we were invoked as
 		std::string getAppName() {
 			return this->bsapp;
-		};
-		//! Return the lua instance being used
-		Lua *getLua() {
-			return this->lua;
 		};
 
 		/** Are we operating in 'forced' mode
