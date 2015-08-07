@@ -166,7 +166,7 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
 bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
-	pc->addArg("-pRuf");
+	pc->addArg("-pRLuf");
 
 	pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
 

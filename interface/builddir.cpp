@@ -319,7 +319,7 @@ int li_bd_restore(lua_State * L)
 	if(strcmp(method, "copyfile") == 0) {
 		PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
 
-		pc->addArg("-pRuf");
+		pc->addArg("-pRLuf");
 
 		char const *fn = strrchr(location, '/');
 		pc->addArg(fn != NULL ? fn + 1 : location);
