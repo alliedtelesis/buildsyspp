@@ -25,8 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-#ifdef UNDERSCORE
-
 static bool pipe_data(int fd, Package * P)
 {
 	if(!P)
@@ -62,16 +60,21 @@ static bool pipe_data(int fd, Package * P)
 	return true;
 }
 
+struct params {
+	Package *P;
+	int fd;
+};
 
-static void *pipe_data_thread(us_thread * t)
+static void *pipe_data_thread(void *t)
 {
-	while(pipe_data(t->info, (Package *) t->priv)) {
+	struct params *p = (struct params *) t;
+	while(pipe_data(p->fd, p->P)) {
 		// do nothing
 	}
-	close(t->info);
+	close(p->fd);
+	free(p);
 	return NULL;
 }
-#endif
 
 int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		  char *newenvp[])
@@ -80,32 +83,31 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 	log(P, (char *) "Running %s", program);
 #endif
 
-#ifdef UNDERSCORE
 	int fds[2];
 	if(WORLD->areOutputPrefix()) {
 		int res = pipe(fds);
+		struct params *p = (struct params *) malloc(sizeof(struct params));
+		pthread_t tid;
 
 		if(res != 0) {
 			log(P, (char *) "pipe() failed: %s", strerror(errno));
 		}
-
-		us_thread_create(pipe_data_thread, fds[0], P);
+		p->fd = fds[0];
+		p->P = P;
+		pthread_create(&tid, NULL, pipe_data_thread, p);
 	}
-#endif
 	// call the program ...
 	int pid = fork();
 	if(pid < 0) {		// something bad happened ...
 		log(P, (char *) "fork() failed: %s", strerror(errno));
 		exit(-1);
 	} else if(pid == 0) {	// child process
-#ifdef UNDERSCORE
 		if(WORLD->areOutputPrefix()) {
 			close(fds[0]);
 			dup2(fds[1], STDOUT_FILENO);
 			dup2(fds[1], STDERR_FILENO);
 			close(fds[1]);
 		}
-#endif
 		if(chdir(path) != 0) {
 			log(P, (char *) "chdir '%s' failed", path);
 			exit(-1);
@@ -117,11 +119,9 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		log(P, (char *) "Failed Running %s", program);
 		exit(-1);
 	} else {
-#ifdef UNDERSCORE
 		if(WORLD->areOutputPrefix()) {
 			close(fds[1]);
 		}
-#endif
 		int status = 0;
 		waitpid(pid, &status, 0);
 		// check return status ...

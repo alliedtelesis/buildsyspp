@@ -63,7 +63,6 @@ static inline const char *get_color(const char *mesg)
 	return NULL;
 }
 
-#ifdef UNDERSCORE
 void buildsys::program_output(Package * P, const char *mesg)
 {
 	static int isATTY = isatty(fileno(stdout));
@@ -77,7 +76,6 @@ void buildsys::program_output(Package * P, const char *mesg)
 		fprintf(stdout, "%s,%s: %s\n", P->getNS()->getName().c_str(),
 			P->getName().c_str(), mesg);
 }
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -110,20 +108,10 @@ int main(int argc, char *argv[])
 			WORLD->setCleaning();
 		} else if(!strcmp(argv[a], "--skip-configure")) {
 			WORLD->setSkipConfigure();
-		} else
-#ifdef UNDERSCORE
-		if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
+		} else if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
 		{
 			WORLD->clearOutputPrefix();
-		} else
-#else
-		if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
-		{
-			std::cerr << argv[0] << ": " << argv[a] <<
-			    " is only supported with UNDERSCORE=y, ignoring" << std::endl;
-		} else
-#endif
-		if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
+		} else if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
 			WORLD->setFetchFrom(argv[a + 1]);
 			a++;
 		} else if(!strcmp(argv[a], "--tarball-cache")) {

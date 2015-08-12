@@ -34,14 +34,6 @@ extern "C" {
 #include <lauxlib.h>
 };
 
-#ifdef UNDERSCORE
-extern "C" {
-#include <us_datacoding.h>
-#include <us_client.h>
-#include <us_fifo.h>
-};
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -831,9 +823,7 @@ namespace buildsys {
 		bool was_built;
 		bool no_fetch_from;
 		bool hash_output;
-#ifdef UNDERSCORE
-		us_mutex *lock;
-#endif
+		pthread_mutex_t lock;
 		time_t run_secs;
 	protected:
 		//! Extract the new staging directory this package created in the given path
@@ -869,11 +859,8 @@ namespace buildsys {
 		    depsExtraction(NULL), visiting(false),
 		    processed(false), built(false), building(false), extracted(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
-		    hash_output(false),
-#ifdef UNDERSCORE
-		lock(us_mutex_create(true)),
-#endif
-		run_secs(0) {
+		    hash_output(false), run_secs(0) {
+		    pthread_mutex_init (&this->lock, NULL);
 		};
 		//! Set the namespace this package is in
 		void setNS(NameSpace * ns) {
@@ -1053,25 +1040,23 @@ namespace buildsys {
 		bool cleaning;
 		bool skipConfigure;
 		bool extractOnly;
-#ifdef UNDERSCORE
-		us_condition *cond;
+		pthread_mutex_t cond_lock;
+		pthread_cond_t cond;
 		bool outputPrefix;
-#endif
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
 		    forcedDeps(new string_list()), lua(new Lua()),
 		    namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
-		    skipConfigure(false), extractOnly(false)
-#ifdef UNDERSCORE
-		, cond(us_cond_create()), outputPrefix(true)
-#endif
-		{
+		    skipConfigure(false), extractOnly(false),
+		    outputPrefix(true) {
 			overlays->push_back(std::string("package"));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
 			free(pwd);
+			pthread_mutex_init (&this->cond_lock, NULL);
+			pthread_cond_init (&this->cond, NULL);
 		};
 
 		~World();
@@ -1138,7 +1123,6 @@ namespace buildsys {
 		void setExtractOnly() {
 			this->extractOnly = true;
 		}
-#ifdef UNDERSCORE
 		/** Are we expected to output the package name as a prefix
 		 *  If --no-output-prefix is parsed as a parameter, we don't prefix package output.
 		 *  This will make it so that menuconfig doesn't look horrible.
@@ -1151,7 +1135,6 @@ namespace buildsys {
 		void clearOutputPrefix() {
 			this->outputPrefix = false;
 		}
-#endif
 		/** Set a feature to a specific value
 		 *  Note that the default is to not set already-set features to new values
 		 *  pass override=true to ignore this safety
@@ -1242,13 +1225,11 @@ namespace buildsys {
 		string_list::iterator overlaysStart();
 		//! Get the end iterator for the over list
 		string_list::iterator overlaysEnd();
-#ifdef UNDERSCORE
 		void condTrigger() {
-			us_cond_lock(this->cond);
-			us_cond_signal(this->cond, true);
-			us_cond_unlock(this->cond);
+			pthread_mutex_lock(&this->cond_lock);
+			pthread_cond_broadcast(&this->cond);
+			pthread_mutex_unlock(&this->cond_lock);
 		};
-#endif
 		//! output the dependency graph
 		bool output_graph() {
 			if(this->graph != NULL) {

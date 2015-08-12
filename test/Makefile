@@ -1,6 +1,6 @@
 # Example:
 # (from the parent directory, with valgrind)
-# make clean all UNDERSCORE=y && make test TEST_HARNESS="valgrind --leak-check=full -v"
+# make clean all && make test TEST_HARNESS="valgrind --leak-check=full -v"
 # (from this directory, with gdb)
 # make TEST_HARNESS="gdb --args"
 all:

@@ -95,12 +95,12 @@ std::string World::getFeature(std::string key)
 	throw NoKeyException();
 }
 
-#ifdef UNDERSCORE
-static us_condition *t_cond = NULL;
+static pthread_mutex_t t_cond_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t t_cond = PTHREAD_COND_INITIALIZER;
 
-static void *build_thread(us_thread * t)
+static void *build_thread(void *t)
 {
-	Package *p = (Package *) t->priv;
+	Package *p = (Package *) t;
 
 	log(p, "Build Thread");
 
@@ -111,9 +111,9 @@ static void *build_thread(us_thread * t)
 	}
 	if(!skip)
 		p->setBuilding();
-	us_cond_lock(t_cond);
-	us_cond_signal(t_cond, true);
-	us_cond_unlock(t_cond);
+	pthread_mutex_lock(&t_cond_lock);
+	pthread_cond_broadcast(&t_cond);
+	pthread_mutex_unlock(&t_cond_lock);
 	if(!skip) {
 		if(!p->build())
 			WORLD->setFailed();
@@ -121,7 +121,6 @@ static void *build_thread(us_thread * t)
 	WORLD->condTrigger();
 	return NULL;
 }
-#endif
 
 bool World::basePackage(char *filename)
 {
@@ -144,27 +143,21 @@ bool World::basePackage(char *filename)
 	this->topo_graph = new Internal_Graph();
 
 	this->topo_graph->topological();
-#ifdef UNDERSCORE
-	t_cond = us_cond_create();
 	while(!this->isFailed() && !this->p->isBuilt()) {
-		us_cond_lock(this->cond);
+		pthread_mutex_lock(&this->cond_lock);
 		Package *toBuild = this->topo_graph->topoNext();
 		if(toBuild != NULL) {
-			us_cond_unlock(this->cond);
-			us_cond_lock(t_cond);
-			us_thread_create(build_thread, 0, toBuild);
-			us_cond_wait(t_cond);
-			us_cond_unlock(t_cond);
+			pthread_t tid;
+			pthread_mutex_unlock(&this->cond_lock);
+			pthread_mutex_lock(&t_cond_lock);
+			pthread_create(&tid, NULL, build_thread, toBuild);
+			pthread_cond_wait(&t_cond, &t_cond_lock);
+			pthread_mutex_unlock(&t_cond_lock);
 		} else {
-			us_cond_wait(this->cond);
-			us_cond_unlock(this->cond);
+			pthread_cond_wait(&this->cond, &this->cond_lock);
+			pthread_mutex_unlock(&this->cond_lock);
 		}
 	}
-#else
-	if(!this->p->build())
-		return false;
-#endif
-
 	return !this->failed;
 }
 
@@ -193,15 +186,11 @@ bool World::populateForcedList(PackageCmd * pc)
 
 bool World::packageFinished(Package * p)
 {
-#ifdef UNDERSCORE
-	us_cond_lock(this->cond);
-#endif
+	pthread_mutex_lock(&this->cond_lock);
 	this->topo_graph->deleteNode(p);
 	this->topo_graph->topological();
-#ifdef UNDERSCORE
-	us_cond_signal(this->cond, true);
-	us_cond_unlock(this->cond);
-#endif
+	pthread_cond_broadcast(&this->cond);
+	pthread_mutex_unlock(&this->cond_lock);
 	return true;
 }
 
@@ -226,7 +215,6 @@ World::~World()
 	delete this->graph;
 	delete this->topo_graph;
 	delete this->pwd;
-#ifdef UNDERSCORE
-	us_cond_destroy(this->cond);
-#endif
+	pthread_mutex_destroy (&this->cond_lock);
+	pthread_cond_destroy (&this->cond);
 }

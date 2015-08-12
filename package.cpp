@@ -303,44 +303,26 @@ bool Package::canBuild()
 bool Package::isBuilt()
 {
 	bool ret = false;
-#ifdef UNDERSCORE
-	// lock
-	us_mutex_lock(this->lock);
-#endif
+	pthread_mutex_lock(&this->lock);
 	ret = this->built;
-#ifdef UNDERSCORE
-	// unlock
-	us_mutex_unlock(this->lock);
-#endif
+	pthread_mutex_unlock(&this->lock);
 	return ret;
 }
 
 bool Package::isBuilding()
 {
 	bool ret = false;
-#ifdef UNDERSCORE
-	// lock
-	us_mutex_lock(this->lock);
-#endif
+	pthread_mutex_lock(&this->lock);
 	ret = this->building;
-#ifdef UNDERSCORE
-	// unlock
-	us_mutex_unlock(this->lock);
-#endif
+	pthread_mutex_unlock(&this->lock);
 	return ret;
 }
 
 void Package::setBuilding()
 {
-#ifdef UNDERSCORE
-	// lock
-	us_mutex_lock(this->lock);
-#endif
+	pthread_mutex_lock(&this->lock);
 	this->building = true;
-#ifdef UNDERSCORE
-	// unlock
-	us_mutex_unlock(this->lock);
-#endif
+	pthread_mutex_unlock(&this->lock);
 }
 
 static bool ff_file(Package * P, const char *hash, const char *rfile, const char *path,
@@ -430,18 +412,16 @@ bool Package::fetchFrom()
 	char *install_dir = strdup(this->getNS()->getInstallDir().c_str());
 	const char *files[4][4] = {
 		{"usable", staging_dir, this->name.c_str(), ".tar.bz2.ff"},
-		{"staging.tar.bz2", staging_dir, this->name.c_str(),
-		 ".tar.bz2"},
-		{"install.tar.bz2", install_dir, this->name.c_str(),
-		 ".tar.bz2"},
+		{"staging.tar.bz2", staging_dir, this->name.c_str(), ".tar.bz2"},
+		{"install.tar.bz2", install_dir, this->name.c_str(), ".tar.bz2"},
 		{"output.info", this->bd->getPath(), ".output", ".info"}
 	};
 	const char *ffrom = WORLD->fetchFrom().c_str();
 	char *build_info_file = NULL;
 	asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
 	char *hash = hash_file(build_info_file);
-	log(this, "FF URL: %s/%s/%s/%s", ffrom,
-	    this->getNS()->getName().c_str(), this->name.c_str(), hash);
+	log(this, "FF URL: %s/%s/%s/%s", ffrom, this->getNS()->getName().c_str(),
+	    this->name.c_str(), hash);
 
 	int count = 3;
 	if(this->isHashingOutput()) {
@@ -525,8 +505,8 @@ bool Package::shouldBuild()
 bool Package::prepareBuildDirs()
 {
 	char *staging_dir = NULL;
-	asprintf(&staging_dir, "output/%s/%s/staging",
-		 this->getNS()->getName().c_str(), this->name.c_str());
+	asprintf(&staging_dir, "output/%s/%s/staging", this->getNS()->getName().c_str(),
+		 this->name.c_str());
 	log(this, (char *) "Generating staging directory ...");
 
 	{			// Clean out the (new) staging/install directories
@@ -684,17 +664,11 @@ bool Package::build()
 	bool sb = this->shouldBuild();
 
 	if((WORLD->forcedMode() && !WORLD->isForced(this->name)) || (!sb)) {
-#ifdef UNDERSCORE
-		// lock
-		us_mutex_lock(this->lock);
-#endif
+		pthread_mutex_lock(&this->lock);
 		log(this, "Not required");
 		// Just pretend we are built
 		this->built = true;
-#ifdef UNDERSCORE
-		// unlock
-		us_mutex_unlock(this->lock);
-#endif
+		pthread_mutex_unlock(&this->lock);
 		WORLD->packageFinished(this);
 		return true;
 	}
@@ -738,19 +712,11 @@ bool Package::build()
 	this->run_secs = (end.tv_sec - start.tv_sec);
 
 	log(this, (char *) "Built in %d seconds", this->run_secs);
-
-#ifdef UNDERSCORE
-	// lock
-	us_mutex_lock(this->lock);
-#endif
+	pthread_mutex_lock(&this->lock);
 	this->building = false;
 	this->built = true;
 	this->was_built = true;
-#ifdef UNDERSCORE
-	// unlock
-	us_mutex_unlock(this->lock);
-#endif
-
+	pthread_mutex_unlock(&this->lock);
 	WORLD->packageFinished(this);
 
 	return true;
