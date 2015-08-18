@@ -218,6 +218,28 @@ int li_hashoutput(lua_State * L)
 	return 0;
 }
 
+int li_require(lua_State * L)
+{
+	if(lua_gettop(L) != 1) {
+		throw CustomException("require() takes 1 argument");
+	}
+
+	if(!lua_isstring(L, 1)) {
+		throw CustomException("Argument to require() must be a string");
+	}
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *) lua_topointer(L, -1);
+
+	char *fname = NULL;
+	asprintf(&fname, "%s.lua", lua_tostring(L, 1));
+	P->getLua()->processFile(fname);
+	P->buildDescription()->add(new RequireFileUnit(fname));
+
+	free(fname);
+	return 0;
+}
+
 bool buildsys::interfaceSetup(Lua * lua)
 {
 	lua->registerFunc("builddir", li_builddir);
@@ -227,6 +249,7 @@ bool buildsys::interfaceSetup(Lua * lua)
 	lua->registerFunc("name", li_name);
 	lua->registerFunc("buildlocally", li_buildlocally);
 	lua->registerFunc("hashoutput", li_hashoutput);
+	lua->registerFunc("require", li_require);
 
 	return true;
 }

@@ -349,6 +349,14 @@ PackageFileUnit::PackageFileUnit(const char *fname)
 	free(Hash);
 }
 
+RequireFileUnit::RequireFileUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
 ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);

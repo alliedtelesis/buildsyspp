@@ -673,6 +673,23 @@ namespace buildsys {
 		}
 	};
 
+	//! A lua require file as part of the build step
+	class RequireFileUnit:public BuildUnit {
+	private:
+		std::string uri;	//!< URI of this package file
+		std::string hash;	//!< Hash of this package file
+	public:
+		RequireFileUnit(const char *file);
+		virtual bool print(std::ostream & out) {
+			out << this->type() << " " << this->
+			    uri << " " << this->hash << std::endl;
+			return true;
+		}
+		virtual std::string type() {
+			return std::string("RequireFile");
+		}
+	};
+
 	//! An extraction info file as part of the build step
 	class ExtractionInfoFileUnit:public BuildUnit {
 	private:
