@@ -98,13 +98,10 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 	lua_settable(L, -3);
 
 extern "C" {
-	int li_bd_autoreconf(lua_State * L);
 	int li_bd_cmd(lua_State * L);
-	int li_bd_configure(lua_State * L);
 	int li_bd_extract(lua_State * L);
 	int li_bd_fetch(lua_State * L);
 	int li_bd_installfile(lua_State * L);
-	int li_bd_make(lua_State * L);
 	int li_bd_patch(lua_State * L);
 	int li_bd_restore(lua_State * L);
 	int li_bd_invokebuild(lua_State * L);
@@ -303,13 +300,10 @@ namespace buildsys {
 
 		static void lua_table_r(lua_State * L) {
 			LUA_SET_TABLE_TYPE(L, BuildDir)
-			    LUA_ADD_TABLE_FUNC(L, "autoreconf", li_bd_autoreconf);
 			LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
-			LUA_ADD_TABLE_FUNC(L, "configure", li_bd_configure);
 			LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
 			LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
 			LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
-			LUA_ADD_TABLE_FUNC(L, "make", li_bd_make);
 			LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
 			LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
 			LUA_ADD_TABLE_FUNC(L, "invokebuild", li_bd_invokebuild);
