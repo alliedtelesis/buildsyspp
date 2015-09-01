@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <buildsys.h>
+#include <sys/stat.h>
 
 static int li_name(lua_State * L)
 {
@@ -231,12 +232,23 @@ int li_require(lua_State * L)
 	lua_getglobal(L, "P");
 	Package *P = (Package *) lua_topointer(L, -1);
 
-	char *fname = NULL;
-	asprintf(&fname, "%s.lua", lua_tostring(L, 1));
-	P->getLua()->processFile(fname);
-	P->buildDescription()->add(new RequireFileUnit(fname));
+	char *fName = NULL;
+	asprintf(&fName, "%s.lua", lua_tostring(L, 1));
+	char *relativeFName = P->relative_fetch_path(fName);
 
-	free(fname);
+	// Check whether the relative file path exists. If it does
+	// not exist then we use the original file path
+	struct stat buf;
+	if(stat(relativeFName, &buf) == 0) {
+		P->getLua()->processFile(relativeFName);
+		P->buildDescription()->add(new RequireFileUnit(relativeFName));
+	} else {
+		P->getLua()->processFile(fName);
+		P->buildDescription()->add(new RequireFileUnit(fName));
+	}
+
+	free(fName);
+	free(relativeFName);
 	return 0;
 }
 
