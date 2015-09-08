@@ -1048,7 +1048,6 @@ namespace buildsys {
 		string_list *ignoredFeatures;
 		bool failed;
 		bool cleaning;
-		bool skipConfigure;
 		bool extractOnly;
 		pthread_mutex_t cond_lock;
 		pthread_cond_t cond;
@@ -1058,8 +1057,7 @@ namespace buildsys {
 		    forcedDeps(new string_list()), namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
-		    skipConfigure(false), extractOnly(false),
-		    outputPrefix(true) {
+		    extractOnly(false), outputPrefix(true) {
 			overlays->push_back(std::string("package"));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
@@ -1104,18 +1102,6 @@ namespace buildsys {
 		//! Set cleaning mode
 		void setCleaning() {
 			this->cleaning = true;
-		}
-		/** Are we operating in 'skip configure' mode
-		 *  If --skip-configure is parsed as a parameter, we run in 'skip-configure' mode
-		 *  This will make any package that performs a ':autoreconf()'
-		 *  or ':configure()' call, to siliently ignore this request.
-		 */
-		bool areSkipConfigure() {
-			return this->skipConfigure;
-		}
-		//! Set skip configure mode
-		void setSkipConfigure() {
-			this->skipConfigure = true;
 		}
 		/** Are we operating in 'extract only' mode
 		 *  If --extract-only is parsed as a parameter, we run in 'extract-only' mode

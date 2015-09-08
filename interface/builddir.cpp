@@ -549,10 +549,6 @@ int li_bd_invokebuild(lua_State * L)
 	if(WORLD->areCleaning()) {
 		pc->addArg("--clean");
 	}
-	// --skip-configure
-	if(WORLD->areSkipConfigure()) {
-		pc->addArg("--skip-configure");
-	}
 	// --nop
 	if(!WORLD->areOutputPrefix()) {
 		pc->addArg("--nop");
