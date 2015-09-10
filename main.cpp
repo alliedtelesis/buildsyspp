@@ -102,8 +102,8 @@ int main(int argc, char *argv[])
 	while(a < argc && !foundDashDash) {
 		if(!strcmp(argv[a], "--clean")) {
 			WORLD->setCleaning();
-		} else if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
-		{
+		} else if(!strcmp(argv[a], "--no-output-prefix")
+			  || !strcmp(argv[a], "--nop")) {
 			WORLD->clearOutputPrefix();
 		} else if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
 			WORLD->setFetchFrom(argv[a + 1]);

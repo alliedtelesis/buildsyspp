@@ -298,7 +298,7 @@ namespace buildsys {
 		void clean();
 
 		static void lua_table_r(lua_State * L) {
-			LUA_SET_TABLE_TYPE(L, BuildDir)
+			LUA_SET_TABLE_TYPE(L, BuildDir);
 			LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
 			LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
 			LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
@@ -864,7 +864,7 @@ namespace buildsys {
 		    processed(false), built(false), building(false), extracted(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false), run_secs(0) {
-		    pthread_mutex_init (&this->lock, NULL);
+			pthread_mutex_init(&this->lock, NULL);
 		};
 		//! Set the namespace this package is in
 		void setNS(NameSpace * ns) {
@@ -1052,7 +1052,8 @@ namespace buildsys {
 		bool outputPrefix;
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
-		    forcedDeps(new string_list()), namespaces(new std::list < NameSpace * >()),
+		    forcedDeps(new string_list()),
+		    namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
 		    extractOnly(false), outputPrefix(true) {
@@ -1060,8 +1061,8 @@ namespace buildsys {
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
 			free(pwd);
-			pthread_mutex_init (&this->cond_lock, NULL);
-			pthread_cond_init (&this->cond, NULL);
+			pthread_mutex_init(&this->cond_lock, NULL);
+			pthread_cond_init(&this->cond, NULL);
 		};
 
 		~World();

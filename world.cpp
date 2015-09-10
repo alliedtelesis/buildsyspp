@@ -214,6 +214,6 @@ World::~World()
 	delete this->graph;
 	delete this->topo_graph;
 	delete this->pwd;
-	pthread_mutex_destroy (&this->cond_lock);
-	pthread_cond_destroy (&this->cond);
+	pthread_mutex_destroy(&this->cond_lock);
+	pthread_cond_destroy(&this->cond);
 }
