@@ -102,8 +102,6 @@ int main(int argc, char *argv[])
 	while(a < argc && !foundDashDash) {
 		if(!strcmp(argv[a], "--clean")) {
 			WORLD->setCleaning();
-		} else if(!strcmp(argv[a], "--skip-configure")) {
-			WORLD->setSkipConfigure();
 		} else if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
 		{
 			WORLD->clearOutputPrefix();

@@ -169,7 +169,7 @@ bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-pRLuf");
 
-	if (path[0] == '/') {
+	if(path[0] == '/') {
 		pc->addArg(path);
 	} else {
 		pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), path);
@@ -347,6 +347,14 @@ bool BuildDescription::add(BuildUnit * bu)
 }
 
 PackageFileUnit::PackageFileUnit(const char *fname)
+{
+	this->uri = std::string(fname);
+	char *Hash = hash_file(fname);
+	this->hash = std::string(Hash);
+	free(Hash);
+}
+
+RequireFileUnit::RequireFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
 	char *Hash = hash_file(fname);

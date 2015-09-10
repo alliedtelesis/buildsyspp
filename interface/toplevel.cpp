@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <buildsys.h>
+#include <sys/stat.h>
 
 static int li_name(lua_State * L)
 {
@@ -218,6 +219,39 @@ int li_hashoutput(lua_State * L)
 	return 0;
 }
 
+int li_require(lua_State * L)
+{
+	if(lua_gettop(L) != 1) {
+		throw CustomException("require() takes 1 argument");
+	}
+
+	if(!lua_isstring(L, 1)) {
+		throw CustomException("Argument to require() must be a string");
+	}
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *) lua_topointer(L, -1);
+
+	char *fName = NULL;
+	asprintf(&fName, "%s.lua", lua_tostring(L, 1));
+	char *relativeFName = P->relative_fetch_path(fName);
+
+	// Check whether the relative file path exists. If it does
+	// not exist then we use the original file path
+	struct stat buf;
+	if(stat(relativeFName, &buf) == 0) {
+		P->getLua()->processFile(relativeFName);
+		P->buildDescription()->add(new RequireFileUnit(relativeFName));
+	} else {
+		P->getLua()->processFile(fName);
+		P->buildDescription()->add(new RequireFileUnit(fName));
+	}
+
+	free(fName);
+	free(relativeFName);
+	return 0;
+}
+
 bool buildsys::interfaceSetup(Lua * lua)
 {
 	lua->registerFunc("builddir", li_builddir);
@@ -227,6 +261,7 @@ bool buildsys::interfaceSetup(Lua * lua)
 	lua->registerFunc("name", li_name);
 	lua->registerFunc("buildlocally", li_buildlocally);
 	lua->registerFunc("hashoutput", li_hashoutput);
+	lua->registerFunc("require", li_require);
 
 	return true;
 }

@@ -98,16 +98,12 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 	lua_settable(L, -3);
 
 extern "C" {
-	int li_bd_autoreconf(lua_State * L);
 	int li_bd_cmd(lua_State * L);
-	int li_bd_configure(lua_State * L);
 	int li_bd_extract(lua_State * L);
 	int li_bd_fetch(lua_State * L);
 	int li_bd_installfile(lua_State * L);
-	int li_bd_make(lua_State * L);
 	int li_bd_patch(lua_State * L);
 	int li_bd_restore(lua_State * L);
-	int li_bd_invokebuild(lua_State * L);
 };
 
 namespace buildsys {
@@ -303,16 +299,12 @@ namespace buildsys {
 
 		static void lua_table_r(lua_State * L) {
 			LUA_SET_TABLE_TYPE(L, BuildDir)
-			    LUA_ADD_TABLE_FUNC(L, "autoreconf", li_bd_autoreconf);
 			LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
-			LUA_ADD_TABLE_FUNC(L, "configure", li_bd_configure);
 			LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
 			LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
 			LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
-			LUA_ADD_TABLE_FUNC(L, "make", li_bd_make);
 			LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
 			LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
-			LUA_ADD_TABLE_FUNC(L, "invokebuild", li_bd_invokebuild);
 			super::lua_table_r(L);
 		}
 		virtual void lua_table(lua_State * L) {
@@ -670,6 +662,23 @@ namespace buildsys {
 		}
 		virtual std::string type() {
 			return std::string("PackageFile");
+		}
+	};
+
+	//! A lua require file as part of the build step
+	class RequireFileUnit:public BuildUnit {
+	private:
+		std::string uri;	//!< URI of this package file
+		std::string hash;	//!< Hash of this package file
+	public:
+		RequireFileUnit(const char *file);
+		virtual bool print(std::ostream & out) {
+			out << this->type() << " " << this->
+			    uri << " " << this->hash << std::endl;
+			return true;
+		}
+		virtual std::string type() {
+			return std::string("RequireFile");
 		}
 	};
 
@@ -1037,7 +1046,6 @@ namespace buildsys {
 		string_list *ignoredFeatures;
 		bool failed;
 		bool cleaning;
-		bool skipConfigure;
 		bool extractOnly;
 		pthread_mutex_t cond_lock;
 		pthread_cond_t cond;
@@ -1047,8 +1055,7 @@ namespace buildsys {
 		    forcedDeps(new string_list()), namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
-		    skipConfigure(false), extractOnly(false),
-		    outputPrefix(true) {
+		    extractOnly(false), outputPrefix(true) {
 			overlays->push_back(std::string("package"));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
@@ -1093,18 +1100,6 @@ namespace buildsys {
 		//! Set cleaning mode
 		void setCleaning() {
 			this->cleaning = true;
-		}
-		/** Are we operating in 'skip configure' mode
-		 *  If --skip-configure is parsed as a parameter, we run in 'skip-configure' mode
-		 *  This will make any package that performs a ':autoreconf()'
-		 *  or ':configure()' call, to siliently ignore this request.
-		 */
-		bool areSkipConfigure() {
-			return this->skipConfigure;
-		}
-		//! Set skip configure mode
-		void setSkipConfigure() {
-			this->skipConfigure = true;
 		}
 		/** Are we operating in 'extract only' mode
 		 *  If --extract-only is parsed as a parameter, we run in 'extract-only' mode
