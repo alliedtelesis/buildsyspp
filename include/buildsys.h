@@ -177,6 +177,25 @@ namespace buildsys {
 		}
 	};
 
+	/*! File not found */
+	class FileNotFoundException:public Exception {
+	private:
+		std::string errmsg;
+	public:
+		/** Create a file not found exception
+		 *  \param file the file that was not found
+		 *  \param where The location where the error occurred
+		 */
+		FileNotFoundException(const char *file, const char *where) {
+			char *em = NULL;
+			asprintf(&em, "%s: File not found '%s'", where, file);
+			errmsg = std::string(em);
+			free(em);
+		} virtual std::string error_msg() {
+			return errmsg;
+		}
+	};
+
 	/*! A C++ wrapper for a lua state (instance) */
 	class Lua {
 	private:
@@ -1057,7 +1076,7 @@ namespace buildsys {
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
 		    extractOnly(false), outputPrefix(true) {
-			overlays->push_back(std::string("package"));
+			overlays->push_back(std::string("."));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
 			free(pwd);

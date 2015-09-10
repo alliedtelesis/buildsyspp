@@ -79,15 +79,12 @@ Package *NameSpace::findPackage(std::string name)
 		string_list::iterator iterEnd = WORLD->overlaysEnd();
 		for(; iter != iterEnd; iter++) {
 			if(asprintf
-			   (&luaFile, "%s/%s/%s.lua", iter->c_str(), dependPath,
+			   (&luaFile, "%s/package/%s/%s.lua", iter->c_str(), dependPath,
 			    lastPart) <= 0) {
 				throw CustomException("Error with asprintf");
 			}
 			FILE *f = fopen(luaFile, "r");
-			if(f == NULL) {
-				log(name.c_str(), "Opening %s: %s", luaFile,
-				    strerror(errno));
-			} else {
+			if(f != NULL) {
 				found = true;
 				overlay = *iter;
 				fclose(f);
