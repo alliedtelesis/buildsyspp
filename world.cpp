@@ -95,6 +95,16 @@ std::string World::getFeature(std::string key)
 	throw NoKeyException();
 }
 
+void World::printFeatureValues()
+{
+	std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
+	for(key_value::iterator it = this->features->begin(); it != this->features->end();
+	    ++it) {
+		std::cout << it->first << "\t" << it->second << std::endl;
+	}
+	std::cout << "----END FEATURE VALUES----" << std::endl;
+}
+
 static pthread_mutex_t t_cond_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t t_cond = PTHREAD_COND_INITIALIZER;
 
@@ -129,13 +139,16 @@ bool World::basePackage(char *filename)
 	try {
 		// Load all the lua files
 		this->p->process();
-		// Extract all the source code
-		this->p->extract();
-	} catch(Exception & E) {
+		if(!this->areParseOnly()) {
+			// Extract all the source code
+			this->p->extract();
+		}
+	}
+	catch(Exception & E) {
 		error(E.error_msg().c_str());
 		return false;
 	}
-	if(this->areExtractOnly()) {
+	if(this->areParseOnly() || this->areExtractOnly()) {
 		// We are done, no building required
 		return true;
 	}

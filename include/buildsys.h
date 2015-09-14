@@ -1066,6 +1066,7 @@ namespace buildsys {
 		bool failed;
 		bool cleaning;
 		bool extractOnly;
+		bool parseOnly;
 		pthread_mutex_t cond_lock;
 		pthread_cond_t cond;
 		bool outputPrefix;
@@ -1075,7 +1076,7 @@ namespace buildsys {
 		    namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
-		    extractOnly(false), outputPrefix(true) {
+		    extractOnly(false), parseOnly(false), outputPrefix(true) {
 			overlays->push_back(std::string("."));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
@@ -1132,6 +1133,19 @@ namespace buildsys {
 		void setExtractOnly() {
 			this->extractOnly = true;
 		}
+
+		/** Are we operating in 'parse only' mode
+		 *  If --parse-only is parsed as a parameter, we run in 'parse-only' mode
+		 *  This will make buildsys stop after parsing all packages (package filtering rules have no impact)
+		 */
+		bool areParseOnly() {
+			return this->parseOnly;
+		}
+		//! Set parase only mode
+		void setParseOnly() {
+			this->parseOnly = true;
+		}
+
 		/** Are we expected to output the package name as a prefix
 		 *  If --no-output-prefix is parsed as a parameter, we don't prefix package output.
 		 *  This will make it so that menuconfig doesn't look horrible.
@@ -1158,6 +1172,9 @@ namespace buildsys {
 		 *  lua: feature('magic-support')
 		 */
 		std::string getFeature(std::string key);
+		/** Print all feature/values to the console
+		 */
+		void printFeatureValues();
 
 		//! Ignore a feature for build.info
 		void ignoreFeature(std::string feature) {

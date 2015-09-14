@@ -80,6 +80,11 @@ int li_bd_fetch(lua_State * L)
 	if(!lua_isstring(L, 3))
 		throw CustomException("fetch() expects a string as the second argument");
 
+	/* Don't fetch anything when in parse-only mode */
+	if(WORLD->areParseOnly()) {
+		return 0;
+	}
+
 	lua_getglobal(L, "P");
 	Package *P = (Package *) lua_topointer(L, -1);
 
