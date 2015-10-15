@@ -177,6 +177,25 @@ namespace buildsys {
 		}
 	};
 
+	/*! File not found */
+	class FileNotFoundException:public Exception {
+	private:
+		std::string errmsg;
+	public:
+		/** Create a file not found exception
+		 *  \param file the file that was not found
+		 *  \param where The location where the error occurred
+		 */
+		FileNotFoundException(const char *file, const char *where) {
+			char *em = NULL;
+			asprintf(&em, "%s: File not found '%s'", where, file);
+			errmsg = std::string(em);
+			free(em);
+		} virtual std::string error_msg() {
+			return errmsg;
+		}
+	};
+
 	/*! A C++ wrapper for a lua state (instance) */
 	class Lua {
 	private:
@@ -298,7 +317,7 @@ namespace buildsys {
 		void clean();
 
 		static void lua_table_r(lua_State * L) {
-			LUA_SET_TABLE_TYPE(L, BuildDir)
+			LUA_SET_TABLE_TYPE(L, BuildDir);
 			LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
 			LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
 			LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
@@ -864,7 +883,7 @@ namespace buildsys {
 		    processed(false), built(false), building(false), extracted(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false), run_secs(0) {
-		    pthread_mutex_init (&this->lock, NULL);
+			pthread_mutex_init(&this->lock, NULL);
 		};
 		//! Set the namespace this package is in
 		void setNS(NameSpace * ns) {
@@ -1047,21 +1066,23 @@ namespace buildsys {
 		bool failed;
 		bool cleaning;
 		bool extractOnly;
+		bool parseOnly;
 		pthread_mutex_t cond_lock;
 		pthread_cond_t cond;
 		bool outputPrefix;
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
-		    forcedDeps(new string_list()), namespaces(new std::list < NameSpace * >()),
+		    forcedDeps(new string_list()),
+		    namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
-		    extractOnly(false), outputPrefix(true) {
-			overlays->push_back(std::string("package"));
+		    extractOnly(false), parseOnly(false), outputPrefix(true) {
+			overlays->push_back(std::string("."));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
 			free(pwd);
-			pthread_mutex_init (&this->cond_lock, NULL);
-			pthread_cond_init (&this->cond, NULL);
+			pthread_mutex_init(&this->cond_lock, NULL);
+			pthread_cond_init(&this->cond, NULL);
 		};
 
 		~World();
@@ -1112,6 +1133,19 @@ namespace buildsys {
 		void setExtractOnly() {
 			this->extractOnly = true;
 		}
+
+		/** Are we operating in 'parse only' mode
+		 *  If --parse-only is parsed as a parameter, we run in 'parse-only' mode
+		 *  This will make buildsys stop after parsing all packages (package filtering rules have no impact)
+		 */
+		bool areParseOnly() {
+			return this->parseOnly;
+		}
+		//! Set parase only mode
+		void setParseOnly() {
+			this->parseOnly = true;
+		}
+
 		/** Are we expected to output the package name as a prefix
 		 *  If --no-output-prefix is parsed as a parameter, we don't prefix package output.
 		 *  This will make it so that menuconfig doesn't look horrible.
@@ -1138,6 +1172,9 @@ namespace buildsys {
 		 *  lua: feature('magic-support')
 		 */
 		std::string getFeature(std::string key);
+		/** Print all feature/values to the console
+		 */
+		void printFeatureValues();
 
 		//! Ignore a feature for build.info
 		void ignoreFeature(std::string feature) {

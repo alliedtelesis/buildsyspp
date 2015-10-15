@@ -221,6 +221,8 @@ int li_hashoutput(lua_State * L)
 
 int li_require(lua_State * L)
 {
+	bool success = false;
+
 	if(lua_gettop(L) != 1) {
 		throw CustomException("require() takes 1 argument");
 	}
@@ -242,9 +244,31 @@ int li_require(lua_State * L)
 	if(stat(relativeFName, &buf) == 0) {
 		P->getLua()->processFile(relativeFName);
 		P->buildDescription()->add(new RequireFileUnit(relativeFName));
+		success = true;
 	} else {
-		P->getLua()->processFile(fName);
-		P->buildDescription()->add(new RequireFileUnit(fName));
+		// Look through all the overlays for this file
+		string_list::iterator iter = WORLD->overlaysStart();
+		string_list::iterator iterEnd = WORLD->overlaysEnd();
+		for(; iter != iterEnd; iter++) {
+			char *overlayFName = NULL;
+			if(asprintf(&overlayFName, "%s/%s", iter->c_str(), fName) <= 0) {
+				throw CustomException("Error with asprintf");
+			}
+			if(stat(overlayFName, &buf) == 0) {
+				P->getLua()->processFile(overlayFName);
+				P->buildDescription()->add(new
+							   RequireFileUnit(overlayFName));
+				success = true;
+			}
+			free(overlayFName);
+			if(success) {
+				break;
+			}
+		}
+	}
+
+	if(!success) {
+		throw FileNotFoundException("require", fName);
 	}
 
 	free(fName);

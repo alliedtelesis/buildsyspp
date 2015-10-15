@@ -102,8 +102,8 @@ int main(int argc, char *argv[])
 	while(a < argc && !foundDashDash) {
 		if(!strcmp(argv[a], "--clean")) {
 			WORLD->setCleaning();
-		} else if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop"))
-		{
+		} else if(!strcmp(argv[a], "--no-output-prefix")
+			  || !strcmp(argv[a], "--nop")) {
 			WORLD->clearOutputPrefix();
 		} else if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
 			WORLD->setFetchFrom(argv[a + 1]);
@@ -120,6 +120,8 @@ int main(int argc, char *argv[])
 		} else if(!strcmp(argv[a], "--build-info-ignore-fv")) {
 			WORLD->ignoreFeature(std::string(argv[a + 1]));
 			a++;
+		} else if(!strcmp(argv[a], "--parse-only")) {
+			WORLD->setParseOnly();
 		} else if(!strcmp(argv[a], "--")) {
 			foundDashDash = true;
 		} else {
@@ -159,6 +161,10 @@ int main(int argc, char *argv[])
 	}
 	free(target);
 
+	if(WORLD->areParseOnly()) {
+		// Print all the feature/values
+		WORLD->printFeatureValues();
+	}
 	// Write out the dependency graph
 	WORLD->output_graph();
 
