@@ -174,17 +174,25 @@ int li_bd_fetch(lua_State * L)
 		}
 	} else if(strcmp(method, "git") == 0) {
 		const char *branch = lua_tostring(L, 4);
-		char *l2 = strrchr(location, '/');
-		if(l2[1] == '\0') {
-			l2[0] = '\0';
-			l2 = strrchr(location, '/');
+		const char *local = lua_tostring(L, 5);
+		if (local == NULL) {
+			char *l2 = strrchr(location, '/');
+			if(l2[1] == '\0') {
+				l2[0] = '\0';
+				l2 = strrchr(location, '/');
+			}
+			l2++;
+			char *dotgit = strstr(l2, ".git");
+			if (dotgit) {
+				dotgit[0] = '\0';
+			}
+			local = l2;
 		}
-		l2++;
 		if(branch == NULL) {
 			// Default to master
 			branch = "origin/master";
 		}
-		GitExtractionUnit *geu = new GitExtractionUnit(location, l2, branch);
+		GitExtractionUnit *geu = new GitExtractionUnit(location, local, branch);
 		geu->fetch(P);
 		P->extraction()->add(geu);
 	} else if(strcmp(method, "linkgit") == 0) {
