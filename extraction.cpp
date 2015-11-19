@@ -325,7 +325,7 @@ bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-dpRuf");
 	pc->addArg(this->localPath());
-	pc->addArg(".");
+	pc->addArg(this->toDir);
 	if(!pc->Run(P))
 		throw CustomException("Failed to checkout");
 
