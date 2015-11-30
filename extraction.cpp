@@ -251,23 +251,10 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 bool GitExtractionUnit::fetch(Package * P)
 {
 	char *location = strdup(this->uri.c_str());
-	char *repo_name = strrchr(location, '/');
-	if(repo_name != NULL) {
-		repo_name = strdup(repo_name + 1);
-		char *dotgit = strstr(repo_name, ".git");
-		if(dotgit) {
-			dotgit[0] = '\0';
-		}
-		if(strlen(repo_name) == 0) {
-			free(repo_name);
-			repo_name = strrchr(strrchr(location, '/'), '/');
-			repo_name = strdup(repo_name);
-		}
-	}
 
 	char *source_dir = NULL;
 	const char *cwd = WORLD->getWorkingDir()->c_str();
-	asprintf(&source_dir, "%s/source/%s", cwd, repo_name);
+	asprintf(&source_dir, "%s/source/%s", cwd, this->toDir.c_str());
 
 	this->local = std::string(source_dir);
 
@@ -307,7 +294,6 @@ bool GitExtractionUnit::fetch(Package * P)
 	if(!pc->Run(P))
 		throw CustomException("Failed to checkout");
 
-	free(repo_name);
 	free(location);
 
 	char *Hash = git_hash(source_dir);
@@ -325,7 +311,7 @@ bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-dpRuf");
 	pc->addArg(this->localPath());
-	pc->addArg(this->toDir);
+	pc->addArg(".");
 	if(!pc->Run(P))
 		throw CustomException("Failed to checkout");
 
