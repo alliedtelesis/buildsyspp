@@ -4,10 +4,15 @@ CFILES		:=
 HEADERS		:= $(wildcard include/*.h) include/buildsys.h.gch
 
 CPPFLAGS	:= -Iinclude -D_GNU_SOURCE
-BASEFLAGS	:= -Wall -Werror -ggdb2 -pthread `pkg-config --cflags lua` $(USER_DEFINES)
+LUAVERSION := $(shell pkg-config --exists lua && echo lua || pkg-config --exists lua5.2 && echo lua5.2 || echo none)
+$(print $(LUAVERSION))
+ifeq ($(LUAVERSION),none)
+$(error Can't find lua, please install and/or check that pkg-config knows about it)
+endif
+BASEFLAGS	:= -Wall -Werror -ggdb2 -pthread $(shell pkg-config --cflags $(LUAVERSION)) $(USER_DEFINES)
 CXXFLAGS	:= -std=c++11 $(BASEFLAGS)
 CFLAGS		:= -std=c99 $(BASEFLAGS)
-LDFLAGS		:= `pkg-config --libs lua` -lrt -pthread
+LDFLAGS		:= $(shell pkg-config --libs $(LUAVERSION)) -lrt -pthread
 
 OBJS		:= $(CXXFILES:.cpp=.o) $(CFILES:.c=.o)
 
