@@ -4,8 +4,7 @@ CFILES		:=
 HEADERS		:= $(wildcard include/*.h) include/buildsys.h.gch
 
 CPPFLAGS	:= -Iinclude -D_GNU_SOURCE
-LUAVERSION := $(shell pkg-config --exists lua && echo lua || pkg-config --exists lua5.2 && echo lua5.2 || echo none)
-$(print $(LUAVERSION))
+LUAVERSION := $(shell pkg-config --exists lua && echo lua || (pkg-config --exists lua5.2 && echo lua5.2 || echo none))
 ifeq ($(LUAVERSION),none)
 $(error Can't find lua, please install and/or check that pkg-config knows about it)
 endif
