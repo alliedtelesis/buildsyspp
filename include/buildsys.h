@@ -419,6 +419,60 @@ namespace buildsys {
 		void printCmd(const char *package);
 	};
 
+
+	/* A fetch unit
+	 * Describes a way to retrieve a file/directory
+	 */
+	class FetchUnit {
+	protected:
+		std::string fetch_uri;	//!< URI of this unit
+	public:
+		FetchUnit(std::string uri):fetch_uri(uri) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d) = 0;
+		virtual bool force_updated() {
+			return false;
+		};
+	};
+
+	/* A downloaded file
+	 */
+	class DownloadFetch:public FetchUnit {
+	protected:
+		bool decompress;
+	public:
+		DownloadFetch(std::string uri, bool decompress):FetchUnit(uri),
+		    decompress(decompress) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d);
+	};
+
+	/* A linked file/directory
+	 */
+	class LinkFetch:public FetchUnit {
+	public:
+		LinkFetch(std::string uri):FetchUnit(uri) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool force_updated() {
+			return true;
+		};
+	};
+
+	/* A copied file/directory
+	 */
+	class CopyFetch:public FetchUnit {
+	public:
+		CopyFetch(std::string uri):FetchUnit(uri) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool force_updated() {
+			return true;
+		};
+	};
+
+
+
 	/** An extraction unit
 	 *  Describes a single step required to re-extract a package
 	 */
@@ -452,11 +506,18 @@ namespace buildsys {
 		virtual std::string type() = 0;
 	};
 
+	class CompressedFileExtractionUnit:public ExtractionUnit {
+	public:
+		CompressedFileExtractionUnit(const char *fName);
+		virtual std::string HASH();
+	};
+
 	//! A tar extraction unit
-	class TarExtractionUnit:public ExtractionUnit {
+	class TarExtractionUnit:public CompressedFileExtractionUnit {
 	public:
 		//! Create an extraction unit for a tar file
-		TarExtractionUnit(const char *fName);
+		TarExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		};
 		virtual bool same(ExtractionUnit * eu) {
 			if(eu->type().compare("TarFile") != 0)
 				return false;
@@ -477,10 +538,11 @@ namespace buildsys {
 		virtual bool extract(Package * P, BuildDir * b);
 	};
 
-	class ZipExtractionUnit:public ExtractionUnit {
+	class ZipExtractionUnit:public CompressedFileExtractionUnit {
 	public:
 		//! Create an extraction unit for a tar file
-		ZipExtractionUnit(const char *fName);
+		ZipExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		};
 		virtual bool same(ExtractionUnit * eu) {
 			if(eu->type().compare("ZipFile") != 0)
 				return false;
@@ -616,16 +678,16 @@ namespace buildsys {
 	};
 
 	//! A remote git dir as part of an extraction step
-	class GitExtractionUnit:public GitDirExtractionUnit {
+	class GitExtractionUnit:public GitDirExtractionUnit, public FetchUnit {
 	private:
 		std::string refspec;
 		std::string local;
 	public:
 		GitExtractionUnit(const char *remote, const char *local,
 				  std::string refspec):GitDirExtractionUnit(remote, local),
-		    refspec(refspec) {
+		    FetchUnit(remote), refspec(refspec) {
 		};
-		virtual bool fetch(Package * P);
+		virtual bool fetch(Package * P, BuildDir * d);
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {
 			return "fetch";
@@ -752,6 +814,28 @@ namespace buildsys {
 		}
 	};
 
+
+	/** A fetch description
+	 *  Describes all the fetching required for a package
+	 *  Used for checking if a package needs anything downloaded
+	 */
+	class Fetch {
+	private:
+		FetchUnit ** FUs;
+		size_t FU_count;
+	public:
+		Fetch():FUs(NULL), FU_count(0) {
+		};
+		bool add(FetchUnit * fu);
+		bool fetch(Package * P, BuildDir * d) {
+			for(size_t i = 0; i < this->FU_count; i++) {
+				if(!FUs[i]->fetch(P, d))
+					return false;
+			}
+			return true;
+		};
+	};
+
 	/** An extraction description
 	 *  Describes all the steps and files required to re-extract a package
 	 *  Used for checking a package needs extracting again
@@ -831,6 +915,7 @@ namespace buildsys {
 		std::string overlay;
 		NameSpace *ns;
 		BuildDir *bd;
+		Fetch *f;
 		Extraction *Extract;
 		BuildDescription *build_description;
 		Lua *lua;
@@ -877,9 +962,9 @@ namespace buildsys {
 		 */
 		Package(NameSpace * ns, std::string name, std::string file,
 			std::string overlay):name(name), file(file), overlay(overlay),
-		    ns(ns), bd(new BuildDir(this)), Extract(new Extraction()),
-		    build_description(new BuildDescription()), lua(new Lua()),
-		    intercept(false), depsExtraction(NULL), visiting(false),
+		    ns(ns), bd(new BuildDir(this)), f(new Fetch()),
+		    Extract(new Extraction()), build_description(new BuildDescription()),
+		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
 		    processed(false), built(false), building(false), extracted(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false), run_secs(0) {
@@ -909,6 +994,10 @@ namespace buildsys {
 		//! Returns the extraction
 		Extraction *extraction() {
 			return this->Extract;
+		};
+		//! Returns the fetch
+		Fetch *fetch() {
+			return this->f;
 		};
 		//! Returns the builddescription
 		BuildDescription *buildDescription() {

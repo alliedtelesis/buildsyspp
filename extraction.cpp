@@ -62,13 +62,22 @@ bool Extraction::add(ExtractionUnit * eu)
 	return true;
 }
 
-TarExtractionUnit::TarExtractionUnit(const char *fname)
+CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
-	free(Hash);
+	this->hash = "";
 }
+
+std::string CompressedFileExtractionUnit::HASH()
+{
+	if(this->hash != "") {
+		char *Hash = hash_file(this->uri.c_str());
+		this->hash = std::string(Hash);
+		free(Hash);
+	}
+	return this->hash;
+};
+
 
 bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 {
@@ -85,14 +94,6 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 		throw CustomException("Failed to extract file");
 
 	return true;
-}
-
-ZipExtractionUnit::ZipExtractionUnit(const char *fname)
-{
-	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
-	free(Hash);
 }
 
 bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
@@ -248,7 +249,7 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-bool GitExtractionUnit::fetch(Package * P)
+bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 {
 	char *location = strdup(this->uri.c_str());
 

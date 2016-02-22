@@ -139,6 +139,8 @@ bool Package::extract()
 	if(this->bd) {
 		// Dont bother extracting if we are running in forced mode, and this package isn't forced
 		if(!(WORLD->forcedMode() && !WORLD->isForced(this->getName()))) {
+			// Fetch anything we don't have yet
+			this->fetch()->fetch(this, this->bd);
 			// Create the new extraction info file
 			char *exinfoFname = NULL;
 			asprintf(&exinfoFname, "%s/.extraction.info.new",
