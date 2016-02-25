@@ -793,8 +793,9 @@ namespace buildsys {
 	private:
 		ExtractionUnit ** EUs;
 		size_t EU_count;
+		bool extracted;
 	public:
-		Extraction():EUs(NULL), EU_count(0) {
+		Extraction():EUs(NULL), EU_count(0), extracted(false) {
 		};
 		bool add(ExtractionUnit * eu);
 		bool print(std::ostream & out) {
@@ -804,13 +805,9 @@ namespace buildsys {
 			}
 			return true;
 		}
-		bool extract(Package * P, BuildDir * d) {
-			for(size_t i = 0; i < this->EU_count; i++) {
-				if(!EUs[i]->extract(P, d))
-					return false;
-			}
-			return true;
-		};
+		bool extract(Package * P, BuildDir * bd);
+		void prepareNewExtractInfo(Package *P, BuildDir * bd);
+		bool extractionRequired(Package *P, BuildDir * bd);
 	};
 
 	/** A build description
@@ -875,7 +872,6 @@ namespace buildsys {
 		bool processed;
 		bool built;
 		bool building;
-		bool extracted;
 		bool codeUpdated;
 		bool was_built;
 		bool no_fetch_from;
@@ -914,7 +910,7 @@ namespace buildsys {
 		    ns(ns), bd(new BuildDir(this)), f(new Fetch()),
 		    Extract(new Extraction()), build_description(new BuildDescription()),
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
-		    processed(false), built(false), building(false), extracted(false),
+		    processed(false), built(false), building(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false), run_secs(0) {
 			pthread_mutex_init(&this->lock, NULL);
@@ -1001,6 +997,10 @@ namespace buildsys {
 		//! Sets the code updated flag
 		void setCodeUpdated() {
 			this->codeUpdated = true;
+		};
+		//! Is the code updated flag set
+		bool isCodeUpdated() {
+			return this->codeUpdated;
 		};
 		/** Is this package ready for building yet ?
 		 *  \return true iff all all dependencies are built

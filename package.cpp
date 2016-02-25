@@ -132,58 +132,21 @@ bool Package::process()
 
 bool Package::extract()
 {
-	if(this->extracted) {
+	// Dont bother extracting if we are running in forced mode, and this package isn't forced
+	if((WORLD->forcedMode() && !WORLD->isForced(this->getName()))) {
+		log (this, "In forced Mode, and this package is not required");
 		return true;
 	}
 
-	if(this->bd) {
-		// Dont bother extracting if we are running in forced mode, and this package isn't forced
-		if(!(WORLD->forcedMode() && !WORLD->isForced(this->getName()))) {
-			// Fetch anything we don't have yet
-			this->fetch()->fetch(this, this->bd);
-			// Create the new extraction info file
-			char *exinfoFname = NULL;
-			asprintf(&exinfoFname, "%s/.extraction.info.new",
-				 this->bd->getPath());
-			std::ofstream exInfo(exinfoFname);
-			this->Extract->print(exInfo);
-			free(exinfoFname);
-
-			char *cmd = NULL;
-			asprintf(&cmd, "cmp -s %s/.extraction.info.new %s/.extraction.info",
-				 this->bd->getPath(), this->bd->getPath());
-			int res = system(cmd);
-			free(cmd);
-			cmd = NULL;
-
-			// if there are changes,
-			if(res != 0 || this->codeUpdated) {	// Extract our source code
-				log(this, (char *) "Extracting sources and patching");
-				this->Extract->extract(this, this->bd);
-				//this->setCodeUpdated();
-			}
-			// mv the file into the regular place
-			char *oldfname = NULL;
-			char *newfname = NULL;
-			asprintf(&oldfname, "%s/.extraction.info.new", this->bd->getPath());
-			asprintf(&newfname, "%s/.extraction.info", this->bd->getPath());
-			rename(oldfname, newfname);
-			free(oldfname);
-			free(newfname);
-		}
-	}
-
-	std::list < Package * >::iterator iter = this->dependsStart();
-	std::list < Package * >::iterator end = this->dependsEnd();
-
-	for(; iter != end; iter++) {
-		if(!(*iter)->extract()) {
-			log(this, (char *) "dependency extract failed");
+	this->Extract->prepareNewExtractInfo(this, this->bd);
+	if (this->Extract->extractionRequired(this, this->bd))
+	{
+		if(!this->Extract->extract(this, this->bd))
+		{
 			return false;
 		}
 	}
 
-	this->extracted = true;
 	return true;
 }
 
@@ -663,6 +626,8 @@ bool Package::build()
 		if(!(*dIt)->build())
 			return false;
 	}
+
+	this->extract();
 
 	// Create the new build.info file
 	this->prepareBuildInfo();

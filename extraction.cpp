@@ -64,6 +64,66 @@ bool Extraction::add(ExtractionUnit * eu)
 	return true;
 }
 
+void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
+{
+	if(this->extracted) {
+		log(P, "Already extracted");
+		return;
+	}
+
+	if(bd) {
+		// Fetch anything we don't have yet
+		P->fetch()->fetch(P, bd);
+		// Create the new extraction info file
+		char *exinfoFname = NULL;
+		asprintf(&exinfoFname, "%s/.extraction.info.new", bd->getPath());
+		std::ofstream exInfo(exinfoFname);
+		this->print(exInfo);
+		free(exinfoFname);
+	}
+}
+
+bool Extraction::extractionRequired(Package *P, BuildDir *bd)
+{
+	if(this->extracted) {
+		return false;
+	}
+
+	char *cmd = NULL;
+	asprintf(&cmd, "cmp -s %s/.extraction.info.new %s/.extraction.info",
+		 bd->getPath(), bd->getPath());
+	int res = system(cmd);
+	free(cmd);
+	cmd = NULL;
+
+	// if there are changes,
+	if(res != 0 || P->isCodeUpdated()) {	// Extract our source code
+		return true;
+	}
+
+	return false;
+}
+
+bool Extraction::extract(Package * P, BuildDir *bd)
+{
+	log(P, (char *) "Extracting sources and patching");
+	for(size_t i = 0; i < this->EU_count; i++) {
+		if(!EUs[i]->extract(P, bd))
+			return false;
+	}
+
+	// mv the file into the regular place
+	char *oldfname = NULL;
+	char *newfname = NULL;
+	asprintf(&oldfname, "%s/.extraction.info.new", bd->getPath());
+	asprintf(&newfname, "%s/.extraction.info", bd->getPath());
+	rename(oldfname, newfname);
+	free(oldfname);
+	free(newfname);
+
+	return true;
+};
+
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 {
 	this->uri = std::string(fname);
