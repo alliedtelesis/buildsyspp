@@ -27,23 +27,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static char *git_hash(const char *gdir)
 {
-	chdir(gdir);
-	FILE *f = popen("git rev-parse HEAD", "r");
+	char *cmd = NULL;
+	asprintf (&cmd, "cd %s && git rev-parse HEAD", gdir);
+	FILE *f = popen(cmd, "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
-	chdir(WORLD->getWorkingDir()->c_str());
 	pclose(f);
+	free (cmd);
 	return Commit;
 }
 
 static char *git_diff_hash(const char *gdir)
 {
-	chdir(gdir);
-	FILE *f = popen("git diff HEAD | sha1sum", "r");
+	char *cmd = NULL;
+	asprintf (&cmd, "cd %s && git diff HEAD | sha1sum", gdir);
+	FILE *f = popen(cmd, "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
-	chdir(WORLD->getWorkingDir()->c_str());
 	pclose(f);
+	free(cmd);
 	return Commit;
 }
 
@@ -195,9 +197,9 @@ GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_d
 
 bool GitDirExtractionUnit::isDirty()
 {
-	chdir(this->localPath().c_str());
-	int res = system("git diff --quiet HEAD");
-	chdir(WORLD->getWorkingDir()->c_str());
+	char *cmd = NULL;
+	asprintf(&cmd, "cd %s && git diff --quiet HEAD", this->localPath().c_str());
+	int res = system(cmd);
 	return (res != 0);
 }
 
