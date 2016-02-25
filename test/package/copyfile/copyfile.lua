@@ -1,3 +1,4 @@
+require('buildsys')
 bd = builddir()
 
 bd:fetch('file1','copyfile')

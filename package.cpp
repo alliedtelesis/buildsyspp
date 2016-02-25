@@ -426,7 +426,7 @@ bool Package::fetchFrom()
 	const char *ffrom = WORLD->fetchFrom().c_str();
 	char *build_info_file = NULL;
 	asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
-	char *hash = hash_file(build_info_file);
+	char *hash = hash_file(WORLD->getWorkingDir()->c_str(), build_info_file);
 	log(this, "FF URL: %s/%s/%s/%s", ffrom, this->getNS()->getName().c_str(),
 	    this->name.c_str(), hash);
 

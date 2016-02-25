@@ -65,17 +65,16 @@ bool Extraction::add(ExtractionUnit * eu)
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	this->hash = "";
 }
 
 std::string CompressedFileExtractionUnit::HASH()
 {
-	if(this->hash != "") {
-		char *Hash = hash_file(this->uri.c_str());
-		this->hash = std::string(Hash);
+	if(this->hash == NULL) {
+		char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), this->uri.c_str());
+		this->hash = new std::string(Hash);
 		free(Hash);
 	}
-	return this->hash;
+	return *this->hash;
 };
 
 
@@ -118,8 +117,8 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 PatchExtractionUnit::PatchExtractionUnit(int level, char *pp, char *uri)
 {
 	this->uri = std::string(uri);
-	char *Hash = hash_file(uri);
-	this->hash = std::string(Hash);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), uri);
+	this->hash = new std::string(Hash);
 	free(Hash);
 	this->level = level;
 	this->patch_path = strdup(pp);
@@ -159,8 +158,8 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
+	this->hash = new std::string(Hash);
 	free(Hash);
 }
 
@@ -189,7 +188,7 @@ GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_d
 {
 	this->uri = std::string(git_dir);
 	char *Hash = git_hash(git_dir);
-	this->hash = std::string(Hash);
+	this->hash = new std::string(Hash);
 	free(Hash);
 	this->toDir = std::string(to_dir);
 }
@@ -298,7 +297,7 @@ bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 	free(location);
 
 	char *Hash = git_hash(source_dir);
-	this->hash = std::string(Hash);
+	this->hash = new std::string(Hash);
 	free(Hash);
 
 	free(source_dir);
@@ -336,7 +335,7 @@ bool BuildDescription::add(BuildUnit * bu)
 PackageFileUnit::PackageFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
@@ -344,7 +343,7 @@ PackageFileUnit::PackageFileUnit(const char *fname)
 RequireFileUnit::RequireFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
@@ -352,7 +351,7 @@ RequireFileUnit::RequireFileUnit(const char *fname)
 ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
@@ -360,7 +359,7 @@ ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
 BuildInfoFileUnit::BuildInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
@@ -368,7 +367,7 @@ BuildInfoFileUnit::BuildInfoFileUnit(const char *fname)
 OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
