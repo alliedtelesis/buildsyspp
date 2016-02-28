@@ -124,6 +124,15 @@ bool Extraction::extract(Package * P, BuildDir *bd)
 	return true;
 };
 
+ExtractionInfoFileUnit * Extraction::extractionInfo(Package *P, BuildDir *bd)
+{
+	char *extractionInfoFname = NULL;
+	asprintf(&extractionInfoFname, "%s/.extraction.info", bd->getShortPath());
+	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(extractionInfoFname);
+	free(extractionInfoFname);
+	return ret;
+}
+
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 {
 	this->uri = std::string(fname);
@@ -413,9 +422,12 @@ RequireFileUnit::RequireFileUnit(const char *fname)
 ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
+	char *new_fname = NULL;
+	asprintf(&new_fname, "%s.new", fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), new_fname);
 	this->hash = std::string(Hash);
 	free(Hash);
+	free(new_fname);
 }
 
 BuildInfoFileUnit::BuildInfoFileUnit(const char *fname)

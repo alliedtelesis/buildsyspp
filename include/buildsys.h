@@ -808,6 +808,7 @@ namespace buildsys {
 		bool extract(Package * P, BuildDir * bd);
 		void prepareNewExtractInfo(Package *P, BuildDir * bd);
 		bool extractionRequired(Package *P, BuildDir * bd);
+		ExtractionInfoFileUnit *extractionInfo(Package *P, BuildDir *bd);
 	};
 
 	/** A build description
@@ -992,8 +993,6 @@ namespace buildsys {
 		};
 		//! Parse and load the lua file for this package
 		bool process();
-		//! Extract all the sources required for this package
-		bool extract();
 		//! Sets the code updated flag
 		void setCodeUpdated() {
 			this->codeUpdated = true;

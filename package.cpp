@@ -130,26 +130,6 @@ bool Package::process()
 	return true;
 }
 
-bool Package::extract()
-{
-	// Dont bother extracting if we are running in forced mode, and this package isn't forced
-	if((WORLD->forcedMode() && !WORLD->isForced(this->getName()))) {
-		log (this, "In forced Mode, and this package is not required");
-		return true;
-	}
-
-	this->Extract->prepareNewExtractInfo(this, this->bd);
-	if (this->Extract->extractionRequired(this, this->bd))
-	{
-		if(!this->Extract->extract(this, this->bd))
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
 bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 {
 	{
@@ -332,10 +312,7 @@ BuildUnit *Package::buildInfo()
 void Package::prepareBuildInfo()
 {
 	// Add the extraction info file
-	char *extractionInfoFname = NULL;
-	asprintf(&extractionInfoFname, "%s/.extraction.info", this->bd->getShortPath());
-	this->build_description->add(new ExtractionInfoFileUnit(extractionInfoFname));
-	free(extractionInfoFname);
+	this->build_description->add (this->Extract->extractionInfo(this, this->bd));
 
 	// Add each of our dependencies build info files
 	std::list < Package * >::iterator dIt = this->dependsStart();
@@ -627,7 +604,8 @@ bool Package::build()
 			return false;
 	}
 
-	this->extract();
+	// Create the new extraction.info file
+	this->Extract->prepareNewExtractInfo(this, this->bd);
 
 	// Create the new build.info file
 	this->prepareBuildInfo();
@@ -646,6 +624,15 @@ bool Package::build()
 	}
 
 	clock_gettime(CLOCK_REALTIME, &start);
+
+	if (this->Extract->extractionRequired(this, this->bd))
+	{
+		log(this, "Extracting ...");
+		if(!this->Extract->extract(this, this->bd))
+		{
+			return false;
+		}
+	}
 
 	log(this, (char *) "Building ...");
 	// Clean new/{staging,install}, Extract the dependency staging directories
