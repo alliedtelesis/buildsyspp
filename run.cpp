@@ -80,7 +80,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		  char *newenvp[])
 {
 #ifdef LOG_COMMANDS
-	log(P, (char *) "Running %s", program);
+	log(P, "Running %s", program);
 #endif
 
 	int fds[2];
@@ -90,7 +90,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		pthread_t tid;
 
 		if(res != 0) {
-			log(P, (char *) "pipe() failed: %s", strerror(errno));
+			log(P, "pipe() failed: %s", strerror(errno));
 		}
 		p->fd = fds[0];
 		p->P = P;
@@ -99,7 +99,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 	// call the program ...
 	int pid = fork();
 	if(pid < 0) {		// something bad happened ...
-		log(P, (char *) "fork() failed: %s", strerror(errno));
+		log(P, "fork() failed: %s", strerror(errno));
 		exit(-1);
 	} else if(pid == 0) {	// child process
 		if(WORLD->areOutputPrefix()) {
@@ -109,14 +109,14 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 			close(fds[1]);
 		}
 		if(chdir(path) != 0) {
-			log(P, (char *) "chdir '%s' failed", path);
+			log(P, "chdir '%s' failed", path);
 			exit(-1);
 		}
 		if(newenvp != NULL)
 			execvpe(program, argv, newenvp);
 		else
 			execvp(program, argv);
-		log(P, (char *) "Failed Running %s", program);
+		log(P, "Failed Running %s", program);
 		exit(-1);
 	} else {
 		if(WORLD->areOutputPrefix()) {
@@ -126,7 +126,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		waitpid(pid, &status, 0);
 		// check return status ...
 		if(WEXITSTATUS(status) < 0) {
-			log(P, (char *) "Error Running %s (path = %s, return code = %i)",
+			log(P, "Error Running %s (path = %s, return code = %i)",
 			    program, path, status);
 		}
 		return WEXITSTATUS(status);

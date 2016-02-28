@@ -28,19 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static char *git_hash(const char *gdir)
 {
 	char *cmd = NULL;
-	asprintf (&cmd, "cd %s && git rev-parse HEAD", gdir);
+	asprintf(&cmd, "cd %s && git rev-parse HEAD", gdir);
 	FILE *f = popen(cmd, "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	pclose(f);
-	free (cmd);
+	free(cmd);
 	return Commit;
 }
 
 static char *git_diff_hash(const char *gdir)
 {
 	char *cmd = NULL;
-	asprintf (&cmd, "cd %s && git diff HEAD | sha1sum", gdir);
+	asprintf(&cmd, "cd %s && git diff HEAD | sha1sum", gdir);
 	FILE *f = popen(cmd, "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
@@ -64,7 +64,7 @@ bool Extraction::add(ExtractionUnit * eu)
 	return true;
 }
 
-void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
+void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 {
 	if(this->extracted) {
 		log(P, "Already extracted");
@@ -83,7 +83,7 @@ void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
 	}
 }
 
-bool Extraction::extractionRequired(Package *P, BuildDir *bd)
+bool Extraction::extractionRequired(Package * P, BuildDir * bd)
 {
 	if(this->extracted) {
 		return false;
@@ -104,9 +104,9 @@ bool Extraction::extractionRequired(Package *P, BuildDir *bd)
 	return false;
 }
 
-bool Extraction::extract(Package * P, BuildDir *bd)
+bool Extraction::extract(Package * P, BuildDir * bd)
 {
-	log(P, (char *) "Extracting sources and patching");
+	log(P, "Extracting sources and patching");
 	for(size_t i = 0; i < this->EU_count; i++) {
 		if(!EUs[i]->extract(P, bd))
 			return false;
@@ -124,7 +124,7 @@ bool Extraction::extract(Package * P, BuildDir *bd)
 	return true;
 };
 
-ExtractionInfoFileUnit * Extraction::extractionInfo(Package *P, BuildDir *bd)
+ExtractionInfoFileUnit *Extraction::extractionInfo(Package * P, BuildDir * bd)
 {
 	char *extractionInfoFname = NULL;
 	asprintf(&extractionInfoFname, "%s/.extraction.info", bd->getShortPath());

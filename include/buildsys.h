@@ -62,7 +62,7 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 
 #define error(M) \
 	do {\
-		log((char *)"BuildSys","%s:%s():%i: %s", __FILE__, __FUNCTION__ , __LINE__, M); \
+		log("BuildSys","%s:%s():%i: %s", __FILE__, __FUNCTION__ , __LINE__, M); \
 	} while(0)
 
 #define LUA_SET_TABLE_TYPE(L,T) \
@@ -167,7 +167,7 @@ namespace buildsys {
 		 *  \param location The directory path
 		 *  \param err The error message
 		 */
-		DirException(char *location, char *err) {
+		DirException(const char *location, const char *err) {
 			char *em = NULL;
 			asprintf(&em, "Error with directory '%s': %s", location, err);
 			errmsg = std::string(em);
@@ -479,7 +479,7 @@ namespace buildsys {
 	class ExtractionUnit {
 	protected:
 		std::string uri;	//!< URI of this unit
-		std::string *hash;	//!< Hash of this unit
+		std::string * hash;	//!< Hash of this unit
 	public:
 		ExtractionUnit():uri(std::string()), hash(NULL) {
 		};
@@ -584,8 +584,10 @@ namespace buildsys {
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    modeName() << " " << this->uri << " " << this->
-			    toDir << " " << this->HASH() << " " << (this->isDirty()? this->dirtyHash() : "") <<
-			    std::endl;
+			    toDir << " " << this->HASH() << " " << (this->
+								    isDirty()?
+								    this->dirtyHash() : "")
+			    << std::endl;
 			return true;
 		}
 		virtual std::string type() {
@@ -806,9 +808,9 @@ namespace buildsys {
 			return true;
 		}
 		bool extract(Package * P, BuildDir * bd);
-		void prepareNewExtractInfo(Package *P, BuildDir * bd);
-		bool extractionRequired(Package *P, BuildDir * bd);
-		ExtractionInfoFileUnit *extractionInfo(Package *P, BuildDir *bd);
+		void prepareNewExtractInfo(Package * P, BuildDir * bd);
+		bool extractionRequired(Package * P, BuildDir * bd);
+		ExtractionInfoFileUnit *extractionInfo(Package * P, BuildDir * bd);
 	};
 
 	/** A build description

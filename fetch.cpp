@@ -84,7 +84,7 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 			char *cmd = NULL;
 			char *ext = strrchr(fname, '.');
 			if(ext == NULL) {
-				log(P->getName().c_str(), (char *)
+				log(P->getName().c_str(),
 				    "Could not guess decompression based on extension: %s\n",
 				    fname);
 			}

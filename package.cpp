@@ -93,7 +93,7 @@ void Package::printLabel(std::ostream & out)
 bool Package::process()
 {
 	if(this->visiting == true) {
-		log(this, (char *) "dependency loop!!!");
+		log(this, "dependency loop!!!");
 		return false;
 	}
 	if(this->processed == true)
@@ -101,12 +101,12 @@ bool Package::process()
 
 	this->visiting = true;
 
-	log(this, (char *) "Processing (%s)", this->file.c_str());
+	log(this, "Processing (%s)", this->file.c_str());
 
 	this->build_description->add(new PackageFileUnit(this->file.c_str()));
 
 	if(!interfaceSetup(this->lua)) {
-		error((char *) "interfaceSetup: Failed");
+		error("interfaceSetup: Failed");
 		exit(-1);
 	}
 
@@ -161,7 +161,7 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 		pc->addArg("p");
 
 		if(!pc->Run(this)) {
-			log(this, (char *) "Failed to extract staging_dir");
+			log(this, "Failed to extract staging_dir");
 			return false;
 		}
 	}
@@ -312,7 +312,7 @@ BuildUnit *Package::buildInfo()
 void Package::prepareBuildInfo()
 {
 	// Add the extraction info file
-	this->build_description->add (this->Extract->extractionInfo(this, this->bd));
+	this->build_description->add(this->Extract->extractionInfo(this, this->bd));
 
 	// Add each of our dependencies build info files
 	std::list < Package * >::iterator dIt = this->dependsStart();
@@ -454,7 +454,7 @@ bool Package::prepareBuildDirs()
 	char *staging_dir = NULL;
 	asprintf(&staging_dir, "output/%s/%s/staging", this->getNS()->getName().c_str(),
 		 this->name.c_str());
-	log(this, (char *) "Generating staging directory ...");
+	log(this, "Generating staging directory ...");
 
 	{			// Clean out the (new) staging/install directories
 		char *cmd = NULL;
@@ -482,7 +482,7 @@ bool Package::prepareBuildDirs()
 		if(!(*dIt)->extract_staging(staging_dir, done))
 			return false;
 	}
-	log(this, (char *) "Done (%d)", done->size());
+	log(this, "Done (%d)", done->size());
 	delete done;
 	free(staging_dir);
 	staging_dir = NULL;
@@ -495,7 +495,7 @@ bool Package::extractInstallDepends()
 		return true;
 	}
 	// Extract installed files to a given location
-	log(this, (char *) "Removing old install files ...");
+	log(this, "Removing old install files ...");
 	{
 		std::unique_ptr < PackageCmd >
 		    pc(new PackageCmd(WORLD->getWorkingDir()->c_str(), "rm"));
@@ -503,8 +503,7 @@ bool Package::extractInstallDepends()
 		pc->addArg(this->depsExtraction);
 		if(!pc->Run(this)) {
 			log(this,
-			    (char *) "Failed to remove %s (pre-install)",
-			    this->depsExtraction);
+			    "Failed to remove %s (pre-install)", this->depsExtraction);
 			return false;
 		}
 	}
@@ -518,7 +517,7 @@ bool Package::extractInstallDepends()
 		}
 	}
 
-	log(this, (char *) "Extracting installed files from dependencies ...");
+	log(this, "Extracting installed files from dependencies ...");
 	std::list < std::string > *done = new std::list < std::string > ();
 	std::list < Package * >::iterator dIt = this->dependsStart();
 	std::list < Package * >::iterator dEnds = this->dependsEnd();
@@ -527,7 +526,7 @@ bool Package::extractInstallDepends()
 			return false;
 	}
 	delete done;
-	log(this, (char *) "Dependency install files extracted");
+	log(this, "Dependency install files extracted");
 	return true;
 }
 
@@ -542,7 +541,7 @@ bool Package::packageNewStaging()
 	pc->addArg(".");
 
 	if(!pc->Run(this)) {
-		log(this, (char *) "Failed to compress staging directory");
+		log(this, "Failed to compress staging directory");
 		return false;
 	}
 	return true;
@@ -563,7 +562,7 @@ bool Package::packageNewInstall()
 				      this->getNS()->getName().c_str(), (*it).c_str());
 
 			if(!pc->Run(this)) {
-				log(this, (char *) "Failed to copy install file (%s) ",
+				log(this, "Failed to copy install file (%s) ",
 				    (*it).c_str());
 				return false;
 			}
@@ -579,7 +578,7 @@ bool Package::packageNewInstall()
 		pc->addArg(".");
 
 		if(!pc->Run(this)) {
-			log(this, (char *) "Failed to compress install directory");
+			log(this, "Failed to compress install directory");
 			return false;
 		}
 	}
@@ -625,16 +624,14 @@ bool Package::build()
 
 	clock_gettime(CLOCK_REALTIME, &start);
 
-	if (this->Extract->extractionRequired(this, this->bd))
-	{
+	if(this->Extract->extractionRequired(this, this->bd)) {
 		log(this, "Extracting ...");
-		if(!this->Extract->extract(this, this->bd))
-		{
+		if(!this->Extract->extract(this, this->bd)) {
 			return false;
 		}
 	}
 
-	log(this, (char *) "Building ...");
+	log(this, "Building ...");
 	// Clean new/{staging,install}, Extract the dependency staging directories
 	if(!this->prepareBuildDirs()) {
 		return false;
@@ -647,14 +644,14 @@ bool Package::build()
 	std::list < PackageCmd * >::iterator cIt = this->commands.begin();
 	std::list < PackageCmd * >::iterator cEnd = this->commands.end();
 
-	log(this, (char *) "Running Commands");
+	log(this, "Running Commands");
 	for(; cIt != cEnd; cIt++) {
 		if(!(*cIt)->Run(this))
 			return false;
 	}
-	log(this, (char *) "Done Commands");
+	log(this, "Done Commands");
 
-	log(this, (char *) "BUILT");
+	log(this, "BUILT");
 
 	if(!this->packageNewStaging()) {
 		return false;
@@ -670,7 +667,7 @@ bool Package::build()
 
 	this->run_secs = (end.tv_sec - start.tv_sec);
 
-	log(this, (char *) "Built in %d seconds", this->run_secs);
+	log(this, "Built in %d seconds", this->run_secs);
 	pthread_mutex_lock(&this->lock);
 	this->building = false;
 	this->built = true;
