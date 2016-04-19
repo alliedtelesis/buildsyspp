@@ -97,85 +97,18 @@ int li_bd_fetch(lua_State * L)
 		return 0;
 	}
 
+	FetchUnit *f = NULL;
+
 	if(strcmp(method, "dl") == 0) {
-		int res = mkdir("dl", 0700);
-		if((res < 0) && (errno != EEXIST)) {
-			throw CustomException("Error: Creating download directory");
-		}
 		bool decompress = false;
 		if(argc > 3) {
 			decompress = lua_toboolean(L, 4);
 		}
-		bool get = true;
-		char *fname = strrchr(location, '/');
-		if(fname != NULL) {
-			fname++;
-			get = false;
-			char *t = fname;
-			if(decompress) {
-				fname = strdup(fname);
-				char *ext = strrchr(fname, '.');
-				if(ext != NULL)
-					ext[0] = '\0';
-			}
-			char *fpath = NULL;
-			asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
-				 fname);
-			FILE *f = fopen(fpath, "r");
-			if(f == NULL) {
-				get = true;
-			} else {
-				fclose(f);
-			}
-			free(fpath);
-			if(decompress)
-				free(fname);
-			fname = t;
-		}
-		if(get) {
-			bool localCacheHit;
-			//Attempt to get file from local tarball cache if one is configured.
-			if(WORLD->haveTarballCache()) {
-				PackageCmd *pc = new PackageCmd("dl", "wget");
-				char *url = NULL;
-				asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(),
-					 fname);
-				pc->addArg(url);
-				free(url);
-				localCacheHit = pc->Run(P);
-				delete pc;
-			}
-			//If we didn't get the file from the local cache, look upstream.
-			if(!localCacheHit) {
-				PackageCmd *pc = new PackageCmd("dl", "wget");
-				pc->addArg(location);
-				if(!pc->Run(P))
-					throw CustomException("Failed to fetch file");
-				delete pc;
-			}
-			if(decompress) {
-				// We want to run a command on this file
-				char *cmd = NULL;
-				char *ext = strrchr(fname, '.');
-				if(ext == NULL) {
-					log(P->getName().c_str(), (char *)
-					    "Could not guess decompression based on extension: %s\n",
-					    fname);
-				}
-
-				if(strcmp(ext, ".bz2") == 0) {
-					asprintf(&cmd, "bunzip2 -d dl/%s", fname);
-				} else if(strcmp(ext, ".gz") == 0) {
-					asprintf(&cmd, "gunzip -d dl/%s", fname);
-				}
-				system(cmd);
-				free(cmd);
-			}
-		}
+		f = new DownloadFetch(std::string(location), decompress);
 	} else if(strcmp(method, "git") == 0) {
 		const char *branch = lua_tostring(L, 4);
 		const char *local = lua_tostring(L, 5);
-		if (local == NULL) {
+		if(local == NULL) {
 			char *l2 = strrchr(location, '/');
 			if(l2[1] == '\0') {
 				l2[0] = '\0';
@@ -183,7 +116,7 @@ int li_bd_fetch(lua_State * L)
 			}
 			l2++;
 			char *dotgit = strstr(l2, ".git");
-			if (dotgit) {
+			if(dotgit) {
 				dotgit[0] = '\0';
 			}
 			local = l2;
@@ -193,7 +126,7 @@ int li_bd_fetch(lua_State * L)
 			branch = "origin/master";
 		}
 		GitExtractionUnit *geu = new GitExtractionUnit(location, local, branch);
-		geu->fetch(P);
+		f = geu;
 		P->extraction()->add(geu);
 	} else if(strcmp(method, "linkgit") == 0) {
 		char *l = P->relative_fetch_path(location);
@@ -208,36 +141,7 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "link") == 0) {
-		PackageCmd *pc = new PackageCmd(d->getPath(), "ln");
-		pc->addArg("-sf");
-		char *l = P->relative_fetch_path(location);
-		pc->addArg(l);
-		pc->addArg(".");
-		if(!pc->Run(P)) {
-			// An error occured, try remove the file, then relink
-			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
-			rmpc->addArg("-fr");
-			char *l2 = strrchr(l, '/');
-			if(l2[1] == '\0') {
-				l2[0] = '\0';
-				l2 = strrchr(l, '/');
-			}
-			l2++;
-			rmpc->addArg(l2);
-			if(!rmpc->Run(P))
-				throw
-				    CustomException
-				    ("Failed to ln (symbolically), could not remove target first");
-			if(!pc->Run(P))
-				throw
-				    CustomException
-				    ("Failed to ln (symbolically), even after removing target first");
-			delete rmpc;
-		}
-		free(l);
-		delete pc;
-		fprintf(stderr, "Linked data in, considering updated\n");
-		P->setCodeUpdated();
+		f = new LinkFetch(std::string(location));
 	} else if(strcmp(method, "copyfile") == 0) {
 		char *file_path = P->relative_fetch_path(location);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
@@ -275,17 +179,7 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "copy") == 0) {
-		PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
-		pc->addArg("-dpRuf");
-		char *l = P->absolute_fetch_path(location);
-		pc->addArg(l);
-		pc->addArg(".");
-		free(l);
-		if(!pc->Run(P))
-			throw CustomException("Failed to copy (recursively)");
-		delete pc;
-		fprintf(stderr, "Copied data in, considering code updated\n");
-		P->setCodeUpdated();
+		f = new CopyFetch(std::string(location));
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = absolute_path(d, location);
 		// record this directory (need to complete this operation later)
@@ -296,6 +190,13 @@ int li_bd_fetch(lua_State * L)
 		P->setCodeUpdated();
 	} else {
 		throw CustomException("Unsupported fetch method");
+	}
+
+	if(f) {
+		P->fetch()->add(f);
+		if(f->force_updated()) {
+			P->setCodeUpdated();
+		}
 	}
 
 	free(location);

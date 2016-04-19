@@ -27,23 +27,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static char *git_hash(const char *gdir)
 {
-	chdir(gdir);
-	FILE *f = popen("git rev-parse HEAD", "r");
+	char *cmd = NULL;
+	asprintf(&cmd, "cd %s && git rev-parse HEAD", gdir);
+	FILE *f = popen(cmd, "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
-	chdir(WORLD->getWorkingDir()->c_str());
 	pclose(f);
+	free(cmd);
 	return Commit;
 }
 
 static char *git_diff_hash(const char *gdir)
 {
-	chdir(gdir);
-	FILE *f = popen("git diff HEAD | sha1sum", "r");
+	char *cmd = NULL;
+	asprintf(&cmd, "cd %s && git diff HEAD | sha1sum", gdir);
+	FILE *f = popen(cmd, "r");
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
-	chdir(WORLD->getWorkingDir()->c_str());
 	pclose(f);
+	free(cmd);
 	return Commit;
 }
 
@@ -62,13 +64,90 @@ bool Extraction::add(ExtractionUnit * eu)
 	return true;
 }
 
-TarExtractionUnit::TarExtractionUnit(const char *fname)
+void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
+{
+	if(this->extracted) {
+		log(P, "Already extracted");
+		return;
+	}
+
+	if(bd) {
+		// Fetch anything we don't have yet
+		P->fetch()->fetch(P, bd);
+		// Create the new extraction info file
+		char *exinfoFname = NULL;
+		asprintf(&exinfoFname, "%s/.extraction.info.new", bd->getPath());
+		std::ofstream exInfo(exinfoFname);
+		this->print(exInfo);
+		free(exinfoFname);
+	}
+}
+
+bool Extraction::extractionRequired(Package * P, BuildDir * bd)
+{
+	if(this->extracted) {
+		return false;
+	}
+
+	char *cmd = NULL;
+	asprintf(&cmd, "cmp -s %s/.extraction.info.new %s/.extraction.info",
+		 bd->getPath(), bd->getPath());
+	int res = system(cmd);
+	free(cmd);
+	cmd = NULL;
+
+	// if there are changes,
+	if(res != 0 || P->isCodeUpdated()) {	// Extract our source code
+		return true;
+	}
+
+	return false;
+}
+
+bool Extraction::extract(Package * P, BuildDir * bd)
+{
+	log(P, "Extracting sources and patching");
+	for(size_t i = 0; i < this->EU_count; i++) {
+		if(!EUs[i]->extract(P, bd))
+			return false;
+	}
+
+	// mv the file into the regular place
+	char *oldfname = NULL;
+	char *newfname = NULL;
+	asprintf(&oldfname, "%s/.extraction.info.new", bd->getPath());
+	asprintf(&newfname, "%s/.extraction.info", bd->getPath());
+	rename(oldfname, newfname);
+	free(oldfname);
+	free(newfname);
+
+	return true;
+};
+
+ExtractionInfoFileUnit *Extraction::extractionInfo(Package * P, BuildDir * bd)
+{
+	char *extractionInfoFname = NULL;
+	asprintf(&extractionInfoFname, "%s/.extraction.info", bd->getShortPath());
+	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(extractionInfoFname);
+	free(extractionInfoFname);
+	return ret;
+}
+
+CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
-	free(Hash);
 }
+
+std::string CompressedFileExtractionUnit::HASH()
+{
+	if(this->hash == NULL) {
+		char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), this->uri.c_str());
+		this->hash = new std::string(Hash);
+		free(Hash);
+	}
+	return *this->hash;
+};
+
 
 bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 {
@@ -85,14 +164,6 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 		throw CustomException("Failed to extract file");
 
 	return true;
-}
-
-ZipExtractionUnit::ZipExtractionUnit(const char *fname)
-{
-	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
-	free(Hash);
 }
 
 bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
@@ -117,8 +188,8 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 PatchExtractionUnit::PatchExtractionUnit(int level, char *pp, char *uri)
 {
 	this->uri = std::string(uri);
-	char *Hash = hash_file(uri);
-	this->hash = std::string(Hash);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), uri);
+	this->hash = new std::string(Hash);
 	free(Hash);
 	this->level = level;
 	this->patch_path = strdup(pp);
@@ -158,8 +229,8 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
+	this->hash = new std::string(Hash);
 	free(Hash);
 }
 
@@ -188,16 +259,16 @@ GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_d
 {
 	this->uri = std::string(git_dir);
 	char *Hash = git_hash(git_dir);
-	this->hash = std::string(Hash);
+	this->hash = new std::string(Hash);
 	free(Hash);
 	this->toDir = std::string(to_dir);
 }
 
 bool GitDirExtractionUnit::isDirty()
 {
-	chdir(this->localPath().c_str());
-	int res = system("git diff --quiet HEAD");
-	chdir(WORLD->getWorkingDir()->c_str());
+	char *cmd = NULL;
+	asprintf(&cmd, "cd %s && git diff --quiet HEAD", this->localPath().c_str());
+	int res = system(cmd);
 	return (res != 0);
 }
 
@@ -248,7 +319,7 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-bool GitExtractionUnit::fetch(Package * P)
+bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 {
 	char *location = strdup(this->uri.c_str());
 
@@ -297,7 +368,7 @@ bool GitExtractionUnit::fetch(Package * P)
 	free(location);
 
 	char *Hash = git_hash(source_dir);
-	this->hash = std::string(Hash);
+	this->hash = new std::string(Hash);
 	free(Hash);
 
 	free(source_dir);
@@ -335,7 +406,7 @@ bool BuildDescription::add(BuildUnit * bu)
 PackageFileUnit::PackageFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
@@ -343,7 +414,7 @@ PackageFileUnit::PackageFileUnit(const char *fname)
 RequireFileUnit::RequireFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
@@ -351,15 +422,18 @@ RequireFileUnit::RequireFileUnit(const char *fname)
 ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *new_fname = NULL;
+	asprintf(&new_fname, "%s.new", fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), new_fname);
 	this->hash = std::string(Hash);
 	free(Hash);
+	free(new_fname);
 }
 
 BuildInfoFileUnit::BuildInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }
@@ -367,7 +441,7 @@ BuildInfoFileUnit::BuildInfoFileUnit(const char *fname)
 OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
+	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
 	this->hash = std::string(Hash);
 	free(Hash);
 }

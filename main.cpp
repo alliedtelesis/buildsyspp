@@ -83,11 +83,11 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_REALTIME, &start);
 
-	log((char *) "BuildSys", (char *) "Buildsys (C++ version)");
-	log((char *) "BuildSys", "Built: %s %s", __TIME__, __DATE__);
+	log("BuildSys", "Buildsys (C++ version)");
+	log("BuildSys", "Built: %s %s", __TIME__, __DATE__);
 
 	if(argc <= 1) {
-		error((char *) "At least 1 parameter is required");
+		error("At least 1 parameter is required");
 		exit(-1);
 	}
 
@@ -171,10 +171,10 @@ int main(int argc, char *argv[])
 	clock_gettime(CLOCK_REALTIME, &end);
 
 	if(end.tv_nsec >= start.tv_nsec)
-		log(argv[1], (char *) "Total time: %ds and %dms",
+		log(argv[1], "Total time: %ds and %dms",
 		    (end.tv_sec - start.tv_sec), (end.tv_nsec - start.tv_nsec) / 1000000);
 	else
-		log(argv[1], (char *) "Total time: %ds and %dms",
+		log(argv[1], "Total time: %ds and %dms",
 		    (end.tv_sec - start.tv_sec - 1),
 		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
 

@@ -62,7 +62,7 @@ typedef boost::graph_traits < Graph >::edge_descriptor Edge;
 
 #define error(M) \
 	do {\
-		log((char *)"BuildSys","%s:%s():%i: %s", __FILE__, __FUNCTION__ , __LINE__, M); \
+		log("BuildSys","%s:%s():%i: %s", __FILE__, __FUNCTION__ , __LINE__, M); \
 	} while(0)
 
 #define LUA_SET_TABLE_TYPE(L,T) \
@@ -167,7 +167,7 @@ namespace buildsys {
 		 *  \param location The directory path
 		 *  \param err The error message
 		 */
-		DirException(char *location, char *err) {
+		DirException(const char *location, const char *err) {
 			char *em = NULL;
 			asprintf(&em, "Error with directory '%s': %s", location, err);
 			errmsg = std::string(em);
@@ -419,17 +419,70 @@ namespace buildsys {
 		void printCmd(const char *package);
 	};
 
+
+	/* A fetch unit
+	 * Describes a way to retrieve a file/directory
+	 */
+	class FetchUnit {
+	protected:
+		std::string fetch_uri;	//!< URI of this unit
+	public:
+		FetchUnit(std::string uri):fetch_uri(uri) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d) = 0;
+		virtual bool force_updated() {
+			return false;
+		};
+	};
+
+	/* A downloaded file
+	 */
+	class DownloadFetch:public FetchUnit {
+	protected:
+		bool decompress;
+	public:
+		DownloadFetch(std::string uri, bool decompress):FetchUnit(uri),
+		    decompress(decompress) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d);
+	};
+
+	/* A linked file/directory
+	 */
+	class LinkFetch:public FetchUnit {
+	public:
+		LinkFetch(std::string uri):FetchUnit(uri) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool force_updated() {
+			return true;
+		};
+	};
+
+	/* A copied file/directory
+	 */
+	class CopyFetch:public FetchUnit {
+	public:
+		CopyFetch(std::string uri):FetchUnit(uri) {
+		};
+		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool force_updated() {
+			return true;
+		};
+	};
+
+
+
 	/** An extraction unit
 	 *  Describes a single step required to re-extract a package
 	 */
 	class ExtractionUnit {
 	protected:
 		std::string uri;	//!< URI of this unit
-		std::string hash;	//!< Hash of this unit
+		std::string * hash;	//!< Hash of this unit
 	public:
-		ExtractionUnit():uri(std::string()), hash(std::string()) {
+		ExtractionUnit():uri(std::string()), hash(NULL) {
 		};
-		virtual bool same(ExtractionUnit * eu) = 0;
 		virtual bool print(std::ostream & out) = 0;
 		virtual std::string type() = 0;
 		virtual bool extract(Package * P, BuildDir * b) = 0;
@@ -437,7 +490,7 @@ namespace buildsys {
 			return this->uri;
 		};
 		virtual std::string HASH() {
-			return this->hash;
+			return *this->hash;
 		};
 	};
 
@@ -452,49 +505,35 @@ namespace buildsys {
 		virtual std::string type() = 0;
 	};
 
-	//! A tar extraction unit
-	class TarExtractionUnit:public ExtractionUnit {
+	//! A compressed file extraction unit
+	class CompressedFileExtractionUnit:public ExtractionUnit {
 	public:
-		//! Create an extraction unit for a tar file
-		TarExtractionUnit(const char *fName);
-		virtual bool same(ExtractionUnit * eu) {
-			if(eu->type().compare("TarFile") != 0)
-				return false;
-			if(eu->URI().compare(this->uri) != 0)
-				return false;
-			if(eu->HASH().compare(this->hash) != 0)
-				return false;
-			return true;
-		}
+		CompressedFileExtractionUnit(const char *fName);
+		virtual std::string HASH();
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
-			    uri << " " << this->hash << std::endl;
+			    uri << " " << this->HASH() << std::endl;
 			return true;
 		}
+	};
+
+	//! A tar extraction unit
+	class TarExtractionUnit:public CompressedFileExtractionUnit {
+	public:
+		//! Create an extraction unit for a tar file
+		TarExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		};
 		virtual std::string type() {
 			return std::string("TarFile");
 		}
 		virtual bool extract(Package * P, BuildDir * b);
 	};
 
-	class ZipExtractionUnit:public ExtractionUnit {
+	class ZipExtractionUnit:public CompressedFileExtractionUnit {
 	public:
 		//! Create an extraction unit for a tar file
-		ZipExtractionUnit(const char *fName);
-		virtual bool same(ExtractionUnit * eu) {
-			if(eu->type().compare("ZipFile") != 0)
-				return false;
-			if(eu->URI().compare(this->uri) != 0)
-				return false;
-			if(eu->HASH().compare(this->hash) != 0)
-				return false;
-			return true;
-		}
-		virtual bool print(std::ostream & out) {
-			out << this->type() << " " << this->
-			    uri << " " << this->hash << std::endl;
-			return true;
-		}
+		ZipExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		};
 		virtual std::string type() {
 			return std::string("ZipFile");
 		}
@@ -508,19 +547,10 @@ namespace buildsys {
 		char *patch_path;
 	public:
 		PatchExtractionUnit(int level, char *patch_path, char *patch);
-		virtual bool same(ExtractionUnit * eu) {
-			if(eu->type().compare("PatchFile") != 0)
-				return false;
-			if(eu->URI().compare(this->uri) != 0)
-				return false;
-			if(eu->HASH().compare(this->hash) != 0)
-				return false;
-			return true;
-		}
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    level << " " << this->patch_path << " " << this->
-			    uri << " " << this->hash << std::endl;
+			    uri << " " << this->HASH() << std::endl;
 			return true;
 		}
 		virtual std::string type() {
@@ -534,18 +564,9 @@ namespace buildsys {
 	private:
 	public:
 		FileCopyExtractionUnit(const char *file);
-		virtual bool same(ExtractionUnit * eu) {
-			if(eu->type().compare("FileCopy") != 0)
-				return false;
-			if(eu->URI().compare(this->uri) != 0)
-				return false;
-			if(eu->HASH().compare(this->hash) != 0)
-				return false;
-			return true;
-		}
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
-			    uri << " " << this->hash << std::endl;
+			    uri << " " << this->HASH() << std::endl;
 			return true;
 		}
 		virtual std::string type() {
@@ -560,21 +581,13 @@ namespace buildsys {
 		std::string toDir;
 	public:
 		GitDirExtractionUnit(const char *git_dir, const char *toDir);
-		virtual bool same(ExtractionUnit * eu) {
-			if(eu->type().compare("GitDir") != 0)
-				return false;
-			if(eu->URI().compare(this->uri) != 0)
-				return false;
-			if(eu->HASH().compare(this->hash) != 0)
-				return false;
-			return true;
-		}
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    modeName() << " " << this->uri << " " << this->
-			    toDir << " " << this->
-			    hash << " " << (this->isDirty()? this->dirtyHash() : "") <<
-			    std::endl;
+			    toDir << " " << this->HASH() << " " << (this->
+								    isDirty()?
+								    this->dirtyHash() : "")
+			    << std::endl;
 			return true;
 		}
 		virtual std::string type() {
@@ -616,16 +629,16 @@ namespace buildsys {
 	};
 
 	//! A remote git dir as part of an extraction step
-	class GitExtractionUnit:public GitDirExtractionUnit {
+	class GitExtractionUnit:public GitDirExtractionUnit, public FetchUnit {
 	private:
 		std::string refspec;
 		std::string local;
 	public:
 		GitExtractionUnit(const char *remote, const char *local,
 				  std::string refspec):GitDirExtractionUnit(remote, local),
-		    refspec(refspec) {
+		    FetchUnit(remote), refspec(refspec) {
 		};
-		virtual bool fetch(Package * P);
+		virtual bool fetch(Package * P, BuildDir * d);
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {
 			return "fetch";
@@ -752,6 +765,28 @@ namespace buildsys {
 		}
 	};
 
+
+	/** A fetch description
+	 *  Describes all the fetching required for a package
+	 *  Used for checking if a package needs anything downloaded
+	 */
+	class Fetch {
+	private:
+		FetchUnit ** FUs;
+		size_t FU_count;
+	public:
+		Fetch():FUs(NULL), FU_count(0) {
+		};
+		bool add(FetchUnit * fu);
+		bool fetch(Package * P, BuildDir * d) {
+			for(size_t i = 0; i < this->FU_count; i++) {
+				if(!FUs[i]->fetch(P, d))
+					return false;
+			}
+			return true;
+		};
+	};
+
 	/** An extraction description
 	 *  Describes all the steps and files required to re-extract a package
 	 *  Used for checking a package needs extracting again
@@ -760,8 +795,9 @@ namespace buildsys {
 	private:
 		ExtractionUnit ** EUs;
 		size_t EU_count;
+		bool extracted;
 	public:
-		Extraction():EUs(NULL), EU_count(0) {
+		Extraction():EUs(NULL), EU_count(0), extracted(false) {
 		};
 		bool add(ExtractionUnit * eu);
 		bool print(std::ostream & out) {
@@ -771,13 +807,10 @@ namespace buildsys {
 			}
 			return true;
 		}
-		bool extract(Package * P, BuildDir * d) {
-			for(size_t i = 0; i < this->EU_count; i++) {
-				if(!EUs[i]->extract(P, d))
-					return false;
-			}
-			return true;
-		};
+		bool extract(Package * P, BuildDir * bd);
+		void prepareNewExtractInfo(Package * P, BuildDir * bd);
+		bool extractionRequired(Package * P, BuildDir * bd);
+		ExtractionInfoFileUnit *extractionInfo(Package * P, BuildDir * bd);
 	};
 
 	/** A build description
@@ -831,6 +864,7 @@ namespace buildsys {
 		std::string overlay;
 		NameSpace *ns;
 		BuildDir *bd;
+		Fetch *f;
 		Extraction *Extract;
 		BuildDescription *build_description;
 		Lua *lua;
@@ -841,7 +875,6 @@ namespace buildsys {
 		bool processed;
 		bool built;
 		bool building;
-		bool extracted;
 		bool codeUpdated;
 		bool was_built;
 		bool no_fetch_from;
@@ -877,10 +910,10 @@ namespace buildsys {
 		 */
 		Package(NameSpace * ns, std::string name, std::string file,
 			std::string overlay):name(name), file(file), overlay(overlay),
-		    ns(ns), bd(new BuildDir(this)), Extract(new Extraction()),
-		    build_description(new BuildDescription()), lua(new Lua()),
-		    intercept(false), depsExtraction(NULL), visiting(false),
-		    processed(false), built(false), building(false), extracted(false),
+		    ns(ns), bd(new BuildDir(this)), f(new Fetch()),
+		    Extract(new Extraction()), build_description(new BuildDescription()),
+		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
+		    processed(false), built(false), building(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false), run_secs(0) {
 			pthread_mutex_init(&this->lock, NULL);
@@ -909,6 +942,10 @@ namespace buildsys {
 		//! Returns the extraction
 		Extraction *extraction() {
 			return this->Extract;
+		};
+		//! Returns the fetch
+		Fetch *fetch() {
+			return this->f;
 		};
 		//! Returns the builddescription
 		BuildDescription *buildDescription() {
@@ -958,11 +995,13 @@ namespace buildsys {
 		};
 		//! Parse and load the lua file for this package
 		bool process();
-		//! Extract all the sources required for this package
-		bool extract();
 		//! Sets the code updated flag
 		void setCodeUpdated() {
 			this->codeUpdated = true;
+		};
+		//! Is the code updated flag set
+		bool isCodeUpdated() {
+			return this->codeUpdated;
 		};
 		/** Is this package ready for building yet ?
 		 *  \return true iff all all dependencies are built
@@ -1278,10 +1317,10 @@ namespace buildsys {
 
 using namespace buildsys;
 
-static inline char *hash_file(const char *fname)
+static inline char *hash_file(const char *path, const char *fname)
 {
 	char *cmd = NULL;
-	asprintf(&cmd, "sha256sum %s", fname);
+	asprintf(&cmd, "cd %s; sha256sum %s", path, fname);
 	FILE *f = popen(cmd, "r");
 	free(cmd);
 	char *Hash = (char *) calloc(65, sizeof(char));

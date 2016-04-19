@@ -1,4 +1,6 @@
+require('buildsys')
 depend('interceptor')
+depend('extracttarball')
 
 bd = builddir()
 

@@ -37,7 +37,7 @@ BuildDir::BuildDir(Package * P)
 
 	int res = mkdir("output", 0700);
 	if((res < 0) && (errno != EEXIST)) {
-		throw DirException((char *) "output", strerror(errno));
+		throw DirException("output", strerror(errno));
 	}
 
 	char *path = NULL;
