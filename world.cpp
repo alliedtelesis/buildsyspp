@@ -139,16 +139,12 @@ bool World::basePackage(char *filename)
 	try {
 		// Load all the lua files
 		this->p->process();
-		if(!this->areParseOnly()) {
-			// Extract all the source code
-			this->p->extract();
-		}
 	}
 	catch(Exception & E) {
 		error(E.error_msg().c_str());
 		return false;
 	}
-	if(this->areParseOnly() || this->areExtractOnly()) {
+	if(this->areParseOnly()) {
 		// We are done, no building required
 		return true;
 	}
