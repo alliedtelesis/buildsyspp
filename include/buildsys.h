@@ -1327,7 +1327,21 @@ static inline char *hash_file(const char *path, const char *fname)
 	FILE *f = popen(cmd, "r");
 	free(cmd);
 	char *Hash = (char *) calloc(65, sizeof(char));
-	fread(Hash, sizeof(char), 64, f);
+	size_t len = 65;
+	size_t loaded = 0;
+	while (!feof (f) && loaded < (len - 1)) {
+		size_t red = fread(&Hash[loaded], sizeof(char), len - loaded - 1, f);
+		loaded += red;
+	}
+	if (ferror (f)) {
+		perror("Error:");
+		exit(-1);
+	}
+	if (loaded < 20)
+	{
+		fprintf(stderr, "Failed getting sha256sum for %s in %s\n", fname, path);
+		exit(-1);
+	}
 	pclose(f);
 	return Hash;
 }
