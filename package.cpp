@@ -294,6 +294,18 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 	return ret;
 }
 
+void Package::updateBuildInfoHash()
+{
+	// populate the build.info hash
+	char *build_info_file = NULL;
+	asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
+	char *hash = hash_file(WORLD->getWorkingDir()->c_str(), build_info_file);
+	this->buildinfo_hash = std::string(hash);
+	log(this, "Hash: %s", hash);
+	free(hash);
+	free(build_info_file);
+}
+
 BuildUnit *Package::buildInfo()
 {
 	char *Info_file = NULL;
@@ -303,7 +315,11 @@ BuildUnit *Package::buildInfo()
 		res = new OutputInfoFileUnit(Info_file);
 	} else {
 		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
-		res = new BuildInfoFileUnit(Info_file);
+		if (this->buildinfo_hash.compare("") == 0) {
+			log(this, "Package %s hash is empty\n", this->bd->getShortPath());
+			return NULL;
+		}
+		res = new BuildInfoFileUnit(Info_file, this->buildinfo_hash);
 	}
 	free(Info_file);
 	return res;
@@ -319,7 +335,12 @@ void Package::prepareBuildInfo()
 	std::list < Package * >::iterator dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		this->build_description->add((*dIt)->buildInfo());
+		BuildUnit *bi = (*dIt)->buildInfo();
+		if (!bi) {
+			log(this, "bi is NULL :(");
+			exit(-1);
+		}
+		this->build_description->add(bi);
 	}
 
 	// Create the new build info file
@@ -327,7 +348,9 @@ void Package::prepareBuildInfo()
 	asprintf(&buildInfoFname, "%s/.build.info.new", this->bd->getPath());
 	std::ofstream buildInfo(buildInfoFname);
 	this->build_description->print(buildInfo);
+	buildInfo.close();
 	free(buildInfoFname);
+	this->updateBuildInfoHash();
 }
 
 void Package::updateBuildInfo(bool updateOutputHash)
@@ -364,11 +387,8 @@ bool Package::fetchFrom()
 		{"output.info", this->bd->getPath(), ".output", ".info"}
 	};
 	const char *ffrom = WORLD->fetchFrom().c_str();
-	char *build_info_file = NULL;
-	asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
-	char *hash = hash_file(WORLD->getWorkingDir()->c_str(), build_info_file);
 	log(this, "FF URL: %s/%s/%s/%s", ffrom, this->getNS()->getName().c_str(),
-	    this->name.c_str(), hash);
+	    this->name.c_str(), this->buildinfo_hash.c_str());
 
 	int count = 3;
 	if(this->isHashingOutput()) {
@@ -377,10 +397,9 @@ bool Package::fetchFrom()
 
 	for(int i = 0; !ret && i < count; i++) {
 		ret =
-		    ff_file(this, hash, files[i][0], files[i][1], files[i][2], files[i][3]);
+		    ff_file(this, this->buildinfo_hash.c_str(), files[i][0], files[i][1], files[i][2], files[i][3]);
 	}
 
-	free(hash);
 	if(ret) {
 		log(this, "Could not optimize away building");
 	} else {
@@ -618,6 +637,9 @@ bool Package::build()
 		// Just pretend we are built
 		this->built = true;
 		pthread_mutex_unlock(&this->lock);
+		if (!sb) {
+			this->updateBuildInfoHash();
+		}
 		WORLD->packageFinished(this);
 		return true;
 	}

@@ -737,7 +737,7 @@ namespace buildsys {
 		std::string uri;	//!< URI of this build info file
 		std::string hash;	//!< Hash of this build info file
 	public:
-		BuildInfoFileUnit(const char *file);
+		BuildInfoFileUnit(const char *file, std::string hash);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    uri << " " << this->hash << std::endl;
@@ -862,6 +862,7 @@ namespace buildsys {
 		std::string name;
 		std::string file;
 		std::string overlay;
+		std::string buildinfo_hash;
 		NameSpace *ns;
 		BuildDir *bd;
 		Fetch *f;
@@ -881,6 +882,8 @@ namespace buildsys {
 		bool hash_output;
 		pthread_mutex_t lock;
 		time_t run_secs;
+		//! Update the buildinfo hash file
+		void updateBuildInfoHash();
 	protected:
 		//! Extract the new staging directory this package created in the given path
 		bool extract_staging(const char *dir, std::list < std::string > *done);
@@ -910,7 +913,7 @@ namespace buildsys {
 		 */
 		Package(NameSpace * ns, std::string name, std::string file,
 			std::string overlay):name(name), file(file), overlay(overlay),
-		    ns(ns), bd(new BuildDir(this)), f(new Fetch()),
+		    buildinfo_hash(""), ns(ns), bd(new BuildDir(this)), f(new Fetch()),
 		    Extract(new Extraction()), build_description(new BuildDescription()),
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
 		    processed(false), built(false), building(false),
@@ -1324,7 +1327,21 @@ static inline char *hash_file(const char *path, const char *fname)
 	FILE *f = popen(cmd, "r");
 	free(cmd);
 	char *Hash = (char *) calloc(65, sizeof(char));
-	fread(Hash, sizeof(char), 64, f);
+	size_t len = 65;
+	size_t loaded = 0;
+	while (!feof (f) && loaded < (len - 1)) {
+		size_t red = fread(&Hash[loaded], sizeof(char), len - loaded - 1, f);
+		loaded += red;
+	}
+	if (ferror (f)) {
+		perror("Error:");
+		exit(-1);
+	}
+	if (loaded < 20)
+	{
+		fprintf(stderr, "Failed getting sha256sum for %s in %s\n", fname, path);
+		exit(-1);
+	}
 	pclose(f);
 	return Hash;
 }
