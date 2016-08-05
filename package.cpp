@@ -637,9 +637,6 @@ bool Package::build()
 		// Just pretend we are built
 		this->built = true;
 		pthread_mutex_unlock(&this->lock);
-		if (!sb) {
-			this->updateBuildInfoHash();
-		}
 		WORLD->packageFinished(this);
 		return true;
 	}
