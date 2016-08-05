@@ -430,12 +430,10 @@ ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
 	free(new_fname);
 }
 
-BuildInfoFileUnit::BuildInfoFileUnit(const char *fname)
+BuildInfoFileUnit::BuildInfoFileUnit(const char *fname, std::string hash)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(WORLD->getWorkingDir()->c_str(), fname);
-	this->hash = std::string(Hash);
-	free(Hash);
+	this->hash = hash;
 }
 
 OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
