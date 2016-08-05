@@ -315,6 +315,10 @@ BuildUnit *Package::buildInfo()
 		res = new OutputInfoFileUnit(Info_file);
 	} else {
 		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
+		if (this->buildinfo_hash.compare("") == 0) {
+			log(this, "Package %s hash is empty\n", this->bd->getShortPath());
+			return NULL;
+		}
 		res = new BuildInfoFileUnit(Info_file, this->buildinfo_hash);
 	}
 	free(Info_file);
@@ -331,7 +335,12 @@ void Package::prepareBuildInfo()
 	std::list < Package * >::iterator dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		this->build_description->add((*dIt)->buildInfo());
+		BuildUnit *bi = (*dIt)->buildInfo();
+		if (!bi) {
+			log(this, "bi is NULL :(");
+			exit(-1);
+		}
+		this->build_description->add(bi);
 	}
 
 	// Create the new build info file
