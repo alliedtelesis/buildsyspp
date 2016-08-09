@@ -79,6 +79,7 @@ void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 		asprintf(&exinfoFname, "%s/.extraction.info.new", bd->getPath());
 		std::ofstream exInfo(exinfoFname);
 		this->print(exInfo);
+		exInfo.close();
 		free(exinfoFname);
 	}
 }
