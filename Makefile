@@ -11,7 +11,7 @@ endif
 BASEFLAGS	:= -Wall -Werror -ggdb2 -pthread $(shell pkg-config --cflags $(LUAVERSION)) $(USER_DEFINES)
 CXXFLAGS	:= -std=c++11 $(BASEFLAGS)
 CFLAGS		:= -std=c99 $(BASEFLAGS)
-LDFLAGS		:= $(shell pkg-config --libs $(LUAVERSION)) -lrt -pthread
+LDFLAGS		:= $(shell pkg-config --libs $(LUAVERSION)) -lrt -pthread -lssl -lcrypto
 
 OBJS		:= $(CXXFILES:.cpp=.o) $(CFILES:.c=.o)
 

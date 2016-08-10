@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
 	}
 
 	WORLD = new World(argv[0]);
+	hash_setup();
 
 	// process arguments ...
 	// first we take a list of package names to exclusevily build
@@ -179,6 +180,7 @@ int main(int argc, char *argv[])
 		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
 
 	delete WORLD;
+	hash_shutdown();
 
 	return 0;
 }

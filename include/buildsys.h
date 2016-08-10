@@ -584,9 +584,8 @@ namespace buildsys {
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    modeName() << " " << this->uri << " " << this->
-			    toDir << " " << this->HASH() << " " << (this->
-								    isDirty()?
-								    this->dirtyHash() : "")
+			    toDir << " " << this->HASH() << " " << (this->isDirty()? this->
+								    dirtyHash() : "")
 			    << std::endl;
 			return true;
 		}
@@ -1316,32 +1315,10 @@ namespace buildsys {
 	void program_output(Package * P, const char *mesg);
 	int run(Package * P, char *program, char *argv[], const char *path,
 		char *newenvp[]);
+
+	void hash_setup(void);
+	char *hash_file(const char *fname);
+	void hash_shutdown(void);
 };
 
 using namespace buildsys;
-
-static inline char *hash_file(const char *path, const char *fname)
-{
-	char *cmd = NULL;
-	asprintf(&cmd, "cd %s; sha256sum %s", path, fname);
-	FILE *f = popen(cmd, "r");
-	free(cmd);
-	char *Hash = (char *) calloc(65, sizeof(char));
-	size_t len = 65;
-	size_t loaded = 0;
-	while (!feof (f) && loaded < (len - 1)) {
-		size_t red = fread(&Hash[loaded], sizeof(char), len - loaded - 1, f);
-		loaded += red;
-	}
-	if (ferror (f)) {
-		perror("Error:");
-		exit(-1);
-	}
-	if (loaded < 20)
-	{
-		fprintf(stderr, "Failed getting sha256sum for %s in %s\n", fname, path);
-		exit(-1);
-	}
-	pclose(f);
-	return Hash;
-}
