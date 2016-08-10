@@ -299,7 +299,7 @@ void Package::updateBuildInfoHash()
 	// populate the build.info hash
 	char *build_info_file = NULL;
 	asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
-	char *hash = hash_file(WORLD->getWorkingDir()->c_str(), build_info_file);
+	char *hash = hash_file(build_info_file);
 	this->buildinfo_hash = std::string(hash);
 	log(this, "Hash: %s", hash);
 	free(hash);
@@ -315,7 +315,7 @@ BuildUnit *Package::buildInfo()
 		res = new OutputInfoFileUnit(Info_file);
 	} else {
 		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
-		if (this->buildinfo_hash.compare("") == 0) {
+		if(this->buildinfo_hash.compare("") == 0) {
 			log(this, "Package %s hash is empty\n", this->bd->getShortPath());
 			return NULL;
 		}
@@ -336,7 +336,7 @@ void Package::prepareBuildInfo()
 
 	for(; dIt != dEnds; dIt++) {
 		BuildUnit *bi = (*dIt)->buildInfo();
-		if (!bi) {
+		if(!bi) {
 			log(this, "bi is NULL :(");
 			exit(-1);
 		}
@@ -397,7 +397,8 @@ bool Package::fetchFrom()
 
 	for(int i = 0; !ret && i < count; i++) {
 		ret =
-		    ff_file(this, this->buildinfo_hash.c_str(), files[i][0], files[i][1], files[i][2], files[i][3]);
+		    ff_file(this, this->buildinfo_hash.c_str(), files[i][0], files[i][1],
+			    files[i][2], files[i][3]);
 	}
 
 	if(ret) {
