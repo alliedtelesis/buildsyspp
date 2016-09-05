@@ -51,7 +51,7 @@ char *buildsys::hash_file(const char *fname)
 	mdctx = EVP_MD_CTX_create();
 	EVP_DigestInit_ex(mdctx, md, NULL);
 
-	FILE *f = fopen(fname, "r+");
+	FILE *f = fopen(fname, "rb");
 	if(!f) {
 		fprintf(stderr, "Failed opening: %s\n", fname);
 		return NULL;
