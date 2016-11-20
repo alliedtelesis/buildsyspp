@@ -137,7 +137,7 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 		std::list < std::string >::iterator dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
-			if((*dIt).compare(this->name) == 0)
+			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
 				return true;
 		}
 	}
@@ -166,7 +166,7 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	done->push_back(this->name);
+	done->push_back(this->getNS()->getName() + "," + this->name);
 
 	return true;
 }
@@ -178,7 +178,7 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 		std::list < std::string >::iterator dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
-			if((*dIt).compare(this->name) == 0)
+			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
 				return true;
 		}
 	}
@@ -227,7 +227,7 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	done->push_back(this->name);
+	done->push_back(this->getNS()->getName() + "," + this->name);
 
 	return true;
 }
