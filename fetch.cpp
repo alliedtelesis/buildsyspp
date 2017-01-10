@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool DownloadFetch::fetch(Package * P, BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
+	char *customFileName = strdup(filename.c_str());
 
 	int res = mkdir("dl", 0700);
 	if((res < 0) && (errno != EEXIST)) {
@@ -35,9 +36,16 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 	}
 
 	bool get = true;
-	char *fname = strrchr(location, '/');
-	if(fname != NULL) {
+	char *fname = NULL;
+
+	if(strlen(customFileName)) {
+		fname = customFileName;
+	} else {
+		fname = strrchr(location, '/');
 		fname++;
+	}
+
+	if(fname != NULL) {
 		get = false;
 		char *t = fname;
 		if(decompress) {
@@ -75,6 +83,9 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 		if(!localCacheHit) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
 			pc->addArg(location);
+			if(strlen(customFileName)) {
+				pc->addArgFmt("-O%s", customFileName);
+			}
 			if(!pc->Run(P))
 				throw CustomException("Failed to fetch file");
 			delete pc;
@@ -99,6 +110,7 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 		}
 	}
 	free(location);
+	free(customFileName);
 	return true;
 }
 
