@@ -440,11 +440,9 @@ namespace buildsys {
 	class DownloadFetch:public FetchUnit {
 	protected:
 		bool decompress;
-		std::string filename;
 	public:
-		DownloadFetch(std::string uri, bool decompress,
-			      std::string filename):FetchUnit(uri), decompress(decompress),
-		    filename(filename) {
+		DownloadFetch(std::string uri, bool decompress):FetchUnit(uri),
+		    decompress(decompress) {
 		};
 		virtual bool fetch(Package * P, BuildDir * d);
 	};

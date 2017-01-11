@@ -79,17 +79,6 @@ int li_bd_fetch(lua_State * L)
 		throw CustomException("fetch() expects a string as the first argument");
 	if(!lua_isstring(L, 3))
 		throw CustomException("fetch() expects a string as the second argument");
-	if(argc > 3) {
-		if(!lua_isboolean(L, 4) && !lua_isstring(L, 4))
-			throw
-			    CustomException
-			    ("fetch() expects either a string or boolean as the third argument");
-	} else if(argc > 4) {
-		if(!lua_isstring(L, 5) || (lua_isstring(L, 4)))
-			throw
-			    CustomException
-			    ("fetch() expects either a string as the third or fourth argument, but not both");
-	}
 
 	/* Don't fetch anything when in parse-only mode */
 	if(WORLD->areParseOnly()) {
@@ -112,21 +101,10 @@ int li_bd_fetch(lua_State * L)
 
 	if(strcmp(method, "dl") == 0) {
 		bool decompress = false;
-		const char *filename = "";
 		if(argc > 3) {
-			if(lua_isboolean(L, 4)) {
-				decompress = lua_toboolean(L, 4);
-			} else {
-				filename = strdup(lua_tostring(L, 4));
-			}
-		} else if(argc > 4) {
-			filename = strdup(lua_tostring(L, 5));
+			decompress = lua_toboolean(L, 4);
 		}
-		f = new DownloadFetch(std::string(location), decompress,
-				      std::string(filename));
-		if(strcmp(filename, "")) {
-			free(filename)
-		}
+		f = new DownloadFetch(std::string(location), decompress);
 	} else if(strcmp(method, "git") == 0) {
 		const char *branch = lua_tostring(L, 4);
 		const char *local = lua_tostring(L, 5);
