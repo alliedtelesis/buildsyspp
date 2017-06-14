@@ -129,7 +129,8 @@ static void *build_thread(void *t)
 	if(!skip) {
 		if(!p->build()) {
 			WORLD->setFailed();
-			log((p->getNS()->getName() + "," + p->getName()).c_str(), "Building failed");
+			log((p->getNS()->getName() + "," + p->getName()).c_str(),
+			    "Building failed");
 		}
 	}
 	WORLD->threadEnded();

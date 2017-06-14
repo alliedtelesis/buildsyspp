@@ -50,8 +50,8 @@ void buildsys::log(Package * P, const char *fmt, ...)
 	vasprintf(&message, fmt, args);
 	va_end(args);
 
-	fprintf(quietly ? P->getLogFile() : stderr, "%s,%s: %s\n", P->getNS()->getName().c_str(), P->getName().c_str(),
-		message);
+	fprintf(quietly ? P->getLogFile() : stderr, "%s,%s: %s\n",
+		P->getNS()->getName().c_str(), P->getName().c_str(), message);
 	free(message);
 }
 
