@@ -883,6 +883,7 @@ namespace buildsys {
 		bool hash_output;
 		pthread_mutex_t lock;
 		time_t run_secs;
+		FILE *logFile;
 		//! Update the buildinfo hash file
 		void updateBuildInfoHash();
 	protected:
@@ -919,7 +920,7 @@ namespace buildsys {
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
 		    processed(false), built(false), building(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
-		    hash_output(false), run_secs(0) {
+		    hash_output(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
 		};
 		//! Set the namespace this package is in
@@ -969,6 +970,9 @@ namespace buildsys {
 		std::string getOverlay() {
 			return this->overlay;
 		};
+		//! Get the log file for this package
+		FILE *getLogFile();
+
 		/** Depend on another package
 		 *  \param p The package to depend on
 		 */

@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <buildsys.h>
 #include <color.h>
 
+static bool quietly = false;
+
 World *buildsys::WORLD;
 
 void buildsys::log(const char *package, const char *fmt, ...)
@@ -48,7 +50,7 @@ void buildsys::log(Package * P, const char *fmt, ...)
 	vasprintf(&message, fmt, args);
 	va_end(args);
 
-	fprintf(stderr, "%s,%s: %s\n", P->getNS()->getName().c_str(), P->getName().c_str(),
+	fprintf(quietly ? P->getLogFile() : stderr, "%s,%s: %s\n", P->getNS()->getName().c_str(), P->getName().c_str(),
 		message);
 	free(message);
 }
@@ -68,13 +70,13 @@ void buildsys::program_output(Package * P, const char *mesg)
 	static int isATTY = isatty(fileno(stdout));
 	const char *color;
 
-	if(isATTY && ((color = get_color(mesg)) != NULL))
+	if(!quietly && isATTY && ((color = get_color(mesg)) != NULL))
 		fprintf(stdout, "%s,%s: %s%s%s\n",
 			P->getNS()->getName().c_str(), P->getName().c_str(), color, mesg,
 			COLOR_RESET);
 	else
-		fprintf(stdout, "%s,%s: %s\n", P->getNS()->getName().c_str(),
-			P->getName().c_str(), mesg);
+		fprintf(quietly ? P->getLogFile() : stdout, "%s,%s: %s\n",
+			P->getNS()->getName().c_str(), P->getName().c_str(), mesg);
 }
 
 int main(int argc, char *argv[])
@@ -125,6 +127,8 @@ int main(int argc, char *argv[])
 			WORLD->setParseOnly();
 		} else if(!strcmp(argv[a], "--keep-going")) {
 			WORLD->setKeepGoing();
+		} else if(!strcmp(argv[a], "--quietly")) {
+			quietly = true;
 		} else if(!strcmp(argv[a], "--")) {
 			foundDashDash = true;
 		} else {

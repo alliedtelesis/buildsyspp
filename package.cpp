@@ -44,6 +44,18 @@ BuildDir *Package::builddir()
 	return this->bd;
 }
 
+FILE *Package::getLogFile()
+{
+	if(this->logFile == NULL) {
+		BuildDir *bd = this->builddir();
+		char *fname = NULL;
+		asprintf(&fname, "%s/build.log", bd->getPath());
+		this->logFile = fopen(fname, "w");
+		free(fname);
+	}
+	return this->logFile;
+}
+
 char *Package::absolute_fetch_path(const char *location)
 {
 	char *src_path = NULL;

@@ -127,8 +127,10 @@ static void *build_thread(void *t)
 	pthread_cond_broadcast(&t_cond);
 	pthread_mutex_unlock(&t_cond_lock);
 	if(!skip) {
-		if(!p->build())
+		if(!p->build()) {
 			WORLD->setFailed();
+			log((p->getNS()->getName() + "," + p->getName()).c_str(), "Building failed");
+		}
 	}
 	WORLD->threadEnded();
 	return NULL;
