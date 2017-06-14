@@ -114,6 +114,8 @@ static void *build_thread(void *t)
 
 	log(p, "Build Thread");
 
+	WORLD->threadStarted();
+
 	bool skip = false;
 
 	if(p->isBuilding()) {
@@ -128,7 +130,7 @@ static void *build_thread(void *t)
 		if(!p->build())
 			WORLD->setFailed();
 	}
-	WORLD->condTrigger();
+	WORLD->threadEnded();
 	return NULL;
 }
 
@@ -166,6 +168,15 @@ bool World::basePackage(char *filename)
 			pthread_cond_wait(&this->cond, &this->cond_lock);
 			pthread_mutex_unlock(&this->cond_lock);
 		}
+	}
+	if(this->areKeepGoing()) {
+		pthread_mutex_lock(&this->cond_lock);
+		while(!this->p->isBuilt() && this->threads_running > 0) {
+			pthread_cond_wait(&this->cond, &this->cond_lock);
+			pthread_mutex_unlock(&this->cond_lock);
+			pthread_mutex_lock(&this->cond_lock);
+		}
+		pthread_mutex_unlock(&this->cond_lock);
 	}
 	return !this->failed;
 }

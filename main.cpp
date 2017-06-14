@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
 			a++;
 		} else if(!strcmp(argv[a], "--parse-only")) {
 			WORLD->setParseOnly();
+		} else if(!strcmp(argv[a], "--keep-going")) {
+			WORLD->setKeepGoing();
 		} else if(!strcmp(argv[a], "--")) {
 			foundDashDash = true;
 		} else {
