@@ -113,6 +113,8 @@ static void *build_thread(void *t)
 	Package *p = (Package *) t;
 
 	log(p, "Build Thread");
+	log((p->getNS()->getName() + "," + p->getName()).c_str(),
+	    "Building (%i others running)", WORLD->threadsRunning());
 
 	WORLD->threadStarted();
 
@@ -134,6 +136,10 @@ static void *build_thread(void *t)
 		}
 	}
 	WORLD->threadEnded();
+
+	log((p->getNS()->getName() + "," + p->getName()).c_str(),
+	    "Finished (%i others running)", WORLD->threadsRunning());
+
 	return NULL;
 }
 

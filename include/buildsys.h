@@ -1326,6 +1326,13 @@ namespace buildsys {
 			pthread_cond_broadcast(&this->cond);
 			pthread_mutex_unlock(&this->cond_lock);
 		};
+		//! How many threads are currently running ?
+		int threadsRunning() {
+			pthread_mutex_lock(&this->cond_lock);
+			int res = this->threads_running;
+			pthread_mutex_unlock(&this->cond_lock);
+			return res;
+		};
 		//! output the dependency graph
 		bool output_graph() {
 			if(this->graph != NULL) {
