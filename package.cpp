@@ -586,7 +586,7 @@ bool Package::packageNewInstall()
 		std::list < std::string >::iterator it = this->installFiles.begin();
 		std::list < std::string >::iterator end = this->installFiles.end();
 		for(; it != end; it++) {
-			std::cout << "Copying " << *it << " to install folder\n";
+			log(this, ("Copying " + *it + " to install folder").c_str());
 			std::unique_ptr < PackageCmd >
 			    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
 			pc->addArg(*it);
