@@ -416,7 +416,7 @@ namespace buildsys {
 		bool Run(Package * P);
 
 		//! Print the command line
-		void printCmd(const char *package);
+		void printCmd();
 	};
 
 

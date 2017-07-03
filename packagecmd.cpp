@@ -68,6 +68,10 @@ bool PackageCmd::Run(Package * P)
 	if(run(P, this->args[0], this->args, this->path, ne) != 0)
 		res = false;
 
+	if (!res) {
+		this->printCmd();
+	}
+
 	if(ne != NULL) {
 		for(int i = 0; ne[i] != NULL; i++) {
 			free(ne[i]);
@@ -77,7 +81,7 @@ bool PackageCmd::Run(Package * P)
 	return res;
 }
 
-void PackageCmd::printCmd(const char *name)
+void PackageCmd::printCmd()
 {
 	printf("Path: %s\n", this->path);
 	for(size_t i = 0; i < this->arg_count; i++) {
