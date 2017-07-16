@@ -162,7 +162,7 @@ bool CopyFetch::fetch(Package * P, BuildDir * d)
 	if(!pc->Run(P))
 		throw CustomException("Failed to copy (recursively)");
 	delete pc;
-	fprintf(stderr, "Copied data in, considering code updated\n");
+	log(P, "Copied data in, considering code updated");
 	P->setCodeUpdated();
 	free(location);
 	return true;

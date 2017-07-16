@@ -113,6 +113,10 @@ static void *build_thread(void *t)
 	Package *p = (Package *) t;
 
 	log(p, "Build Thread");
+	log((p->getNS()->getName() + "," + p->getName()).c_str(),
+	    "Building (%i others running)", WORLD->threadsRunning());
+
+	WORLD->threadStarted();
 
 	bool skip = false;
 
@@ -125,10 +129,17 @@ static void *build_thread(void *t)
 	pthread_cond_broadcast(&t_cond);
 	pthread_mutex_unlock(&t_cond_lock);
 	if(!skip) {
-		if(!p->build())
+		if(!p->build()) {
 			WORLD->setFailed();
+			log((p->getNS()->getName() + "," + p->getName()).c_str(),
+			    "Building failed");
+		}
 	}
-	WORLD->condTrigger();
+	WORLD->threadEnded();
+
+	log((p->getNS()->getName() + "," + p->getName()).c_str(),
+	    "Finished (%i others running)", WORLD->threadsRunning());
+
 	return NULL;
 }
 
@@ -166,6 +177,15 @@ bool World::basePackage(char *filename)
 			pthread_cond_wait(&this->cond, &this->cond_lock);
 			pthread_mutex_unlock(&this->cond_lock);
 		}
+	}
+	if(this->areKeepGoing()) {
+		pthread_mutex_lock(&this->cond_lock);
+		while(!this->p->isBuilt() && this->threads_running > 0) {
+			pthread_cond_wait(&this->cond, &this->cond_lock);
+			pthread_mutex_unlock(&this->cond_lock);
+			pthread_mutex_lock(&this->cond_lock);
+		}
+		pthread_mutex_unlock(&this->cond_lock);
 	}
 	return !this->failed;
 }

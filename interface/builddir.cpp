@@ -206,7 +206,7 @@ int li_bd_fetch(lua_State * L)
 		lua_getglobal(L, "P");
 		Package *P = (Package *) lua_topointer(L, -1);
 		P->setDepsExtract(path);
-		fprintf(stderr, "Will add installed files, considering code updated\n");
+		log(P, "Will add installed files, considering code updated");
 		P->setCodeUpdated();
 	} else {
 		throw CustomException("Unsupported fetch method");

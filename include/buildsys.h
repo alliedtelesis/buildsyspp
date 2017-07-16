@@ -883,6 +883,7 @@ namespace buildsys {
 		bool hash_output;
 		pthread_mutex_t lock;
 		time_t run_secs;
+		FILE *logFile;
 		//! Update the buildinfo hash file
 		void updateBuildInfoHash();
 	protected:
@@ -919,7 +920,7 @@ namespace buildsys {
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
 		    processed(false), built(false), building(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
-		    hash_output(false), run_secs(0) {
+		    hash_output(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
 		};
 		//! Set the namespace this package is in
@@ -969,6 +970,9 @@ namespace buildsys {
 		std::string getOverlay() {
 			return this->overlay;
 		};
+		//! Get the log file for this package
+		FILE *getLogFile();
+
 		/** Depend on another package
 		 *  \param p The package to depend on
 		 */
@@ -1110,8 +1114,10 @@ namespace buildsys {
 		bool cleaning;
 		bool extractOnly;
 		bool parseOnly;
+		bool keepGoing;
 		pthread_mutex_t cond_lock;
 		pthread_cond_t cond;
+		int threads_running;
 		bool outputPrefix;
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
@@ -1119,7 +1125,8 @@ namespace buildsys {
 		    namespaces(new std::list < NameSpace * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
-		    extractOnly(false), parseOnly(false), outputPrefix(true) {
+		    extractOnly(false), parseOnly(false), keepGoing(false),
+		    threads_running(0), outputPrefix(true) {
 			overlays->push_back(std::string("."));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
@@ -1187,6 +1194,18 @@ namespace buildsys {
 		//! Set parase only mode
 		void setParseOnly() {
 			this->parseOnly = true;
+		}
+
+		/** Are we operating in 'keep going' mode
+		 *  If --keep-going is parsed as a parameter, we run in 'keep-going' mode
+		 *  This will make buildsys finish any packages it is currently building before exiting if there is a fault
+		 */
+		bool areKeepGoing() {
+			return this->keepGoing;
+		}
+		//! Set keep only mode
+		void setKeepGoing() {
+			this->keepGoing = true;
 		}
 
 		/** Are we expected to output the package name as a prefix
@@ -1294,10 +1313,25 @@ namespace buildsys {
 		string_list::iterator overlaysStart();
 		//! Get the end iterator for the over list
 		string_list::iterator overlaysEnd();
-		void condTrigger() {
+		//! A thread has started
+		void threadStarted() {
 			pthread_mutex_lock(&this->cond_lock);
+			this->threads_running++;
+			pthread_mutex_unlock(&this->cond_lock);
+		}
+		//! A thread has finished
+		void threadEnded() {
+			pthread_mutex_lock(&this->cond_lock);
+			this->threads_running--;
 			pthread_cond_broadcast(&this->cond);
 			pthread_mutex_unlock(&this->cond_lock);
+		};
+		//! How many threads are currently running ?
+		int threadsRunning() {
+			pthread_mutex_lock(&this->cond_lock);
+			int res = this->threads_running;
+			pthread_mutex_unlock(&this->cond_lock);
+			return res;
 		};
 		//! output the dependency graph
 		bool output_graph() {

@@ -44,6 +44,18 @@ BuildDir *Package::builddir()
 	return this->bd;
 }
 
+FILE *Package::getLogFile()
+{
+	if(this->logFile == NULL) {
+		BuildDir *bd = this->builddir();
+		char *fname = NULL;
+		asprintf(&fname, "%s/build.log", bd->getPath());
+		this->logFile = fopen(fname, "w");
+		free(fname);
+	}
+	return this->logFile;
+}
+
 char *Package::absolute_fetch_path(const char *location)
 {
 	char *src_path = NULL;
@@ -574,7 +586,7 @@ bool Package::packageNewInstall()
 		std::list < std::string >::iterator it = this->installFiles.begin();
 		std::list < std::string >::iterator end = this->installFiles.end();
 		for(; it != end; it++) {
-			std::cout << "Copying " << *it << " to install folder\n";
+			log(this, ("Copying " + *it + " to install folder").c_str());
 			std::unique_ptr < PackageCmd >
 			    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
 			pc->addArg(*it);
