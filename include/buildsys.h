@@ -538,8 +538,11 @@ namespace buildsys {
 
 	//! A compressed file extraction unit
 	class CompressedFileExtractionUnit:public ExtractionUnit {
+	protected:
+		FetchUnit * fetch;
 	public:
 		CompressedFileExtractionUnit(const char *fName);
+		CompressedFileExtractionUnit(FetchUnit * f);
 		virtual std::string HASH();
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
@@ -554,6 +557,9 @@ namespace buildsys {
 		//! Create an extraction unit for a tar file
 		TarExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
 		};
+		//! Create an extraction unit for tar file from a fetch unit
+	TarExtractionUnit(FetchUnit * f):CompressedFileExtractionUnit(f) {
+		};
 		virtual std::string type() {
 			return std::string("TarFile");
 		}
@@ -564,6 +570,8 @@ namespace buildsys {
 	public:
 		//! Create an extraction unit for a tar file
 		ZipExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		};
+	ZipExtractionUnit(FetchUnit * f):CompressedFileExtractionUnit(f) {
 		};
 		virtual std::string type() {
 			return std::string("ZipFile");

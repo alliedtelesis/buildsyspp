@@ -431,12 +431,39 @@ int li_bd_restore(lua_State * L)
 	return 0;
 }
 
+int li_bd_extract_table(lua_State * L)
+{
+	if(lua_gettop(L) != 2)
+		throw CustomException("extract() requires exactly 1 argument");
+	if(!lua_istable(L, 1))
+		throw CustomException("extract() must be called using : not .");
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *) lua_topointer(L, -1);
+
+	CHECK_ARGUMENT_TYPE("extract", 2, FetchUnit, f);
+
+	ExtractionUnit *eu = NULL;
+	if(strstr(f->relative_path().c_str(), ".zip") != NULL) {
+		eu = new ZipExtractionUnit(f);
+	} else {
+		// The catch all for tar compressed files
+		eu = new TarExtractionUnit(f);
+	}
+	P->extraction()->add(eu);
+
+	return 0;
+}
+
 int li_bd_extract(lua_State * L)
 {
 	if(lua_gettop(L) != 2)
 		throw CustomException("extract() requires exactly 1 argument");
 	if(!lua_istable(L, 1))
 		throw CustomException("extract() must be called using : not .");
+	if(lua_istable(L, 2)) {
+		return li_bd_extract_table(L);
+	}
 	if(!lua_isstring(L, 2))
 		throw CustomException("extract() expects a string as the only argument");
 

@@ -134,17 +134,28 @@ ExtractionInfoFileUnit *Extraction::extractionInfo(Package * P, BuildDir * bd)
 	return ret;
 }
 
+CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit * f)
+{
+	this->fetch = f;
+	this->uri = f->relative_path();
+}
+
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 {
+	this->fetch = NULL;
 	this->uri = std::string(fname);
 }
 
 std::string CompressedFileExtractionUnit::HASH()
 {
 	if(this->hash == NULL) {
-		char *Hash = hash_file(this->uri.c_str());
-		this->hash = new std::string(Hash);
-		free(Hash);
+		if(this->fetch) {
+			this->hash = new std::string(this->fetch->HASH());
+		} else {
+			char *Hash = hash_file(this->uri.c_str());
+			this->hash = new std::string(Hash);
+			free(Hash);
+		}
 	}
 	return *this->hash;
 };
