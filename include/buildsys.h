@@ -419,11 +419,20 @@ namespace buildsys {
 		void printCmd();
 	};
 
+	/* A hashable unit
+	 * For fetch and extraction units.
+	 */
+	class HashableUnit {
+	public:
+		HashableUnit() {
+		};
+		virtual std::string HASH() = 0;
+	};
 
 	/* A fetch unit
 	 * Describes a way to retrieve a file/directory
 	 */
-	class FetchUnit {
+	class FetchUnit:public HashableUnit {
 	protected:
 		std::string fetch_uri;	//!< URI of this unit
 	public:
@@ -449,6 +458,7 @@ namespace buildsys {
 		    filename(filename) {
 		};
 		virtual bool fetch(Package * P, BuildDir * d);
+		virtual std::string HASH();
 	};
 
 	/* A linked file/directory
@@ -461,6 +471,7 @@ namespace buildsys {
 		virtual bool force_updated() {
 			return true;
 		};
+		virtual std::string HASH();
 	};
 
 	/* A copied file/directory
@@ -473,6 +484,7 @@ namespace buildsys {
 		virtual bool force_updated() {
 			return true;
 		};
+		virtual std::string HASH();
 	};
 
 
@@ -480,7 +492,7 @@ namespace buildsys {
 	/** An extraction unit
 	 *  Describes a single step required to re-extract a package
 	 */
-	class ExtractionUnit {
+	class ExtractionUnit:public HashableUnit {
 	protected:
 		std::string uri;	//!< URI of this unit
 		std::string * hash;	//!< Hash of this unit
@@ -648,7 +660,10 @@ namespace buildsys {
 		};
 		virtual std::string localPath() {
 			return this->local;
-		}
+		};
+		virtual std::string HASH() {
+			return *this->hash;
+		};
 	};
 
 	//! A feature/value as part of the build step

@@ -133,6 +133,18 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 }
 
 
+std::string DownloadFetch::HASH()
+{
+	char *fpath = NULL;
+	asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+		 this->final_name().c_str());
+	char *hash = hash_file(fpath);
+	free(fpath);
+	std::string ret = std::string(hash);
+	free(hash);
+	return ret;
+}
+
 bool LinkFetch::fetch(Package * P, BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
@@ -168,6 +180,11 @@ bool LinkFetch::fetch(Package * P, BuildDir * d)
 	return true;
 }
 
+std::string LinkFetch::HASH()
+{
+	return std::string("");
+}
+
 bool CopyFetch::fetch(Package * P, BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
@@ -185,6 +202,12 @@ bool CopyFetch::fetch(Package * P, BuildDir * d)
 	free(location);
 	return true;
 }
+
+std::string CopyFetch::HASH()
+{
+	return std::string("");
+}
+
 
 bool Fetch::add(FetchUnit * fu)
 {
