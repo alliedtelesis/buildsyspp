@@ -440,6 +440,8 @@ namespace buildsys {
 	public:
 		FetchUnit(std::string uri):fetch_uri(uri) {
 		};
+		virtual ~ FetchUnit() {
+		};
 		virtual bool fetch(Package * P, BuildDir * d) = 0;
 		virtual bool force_updated() {
 			return false;
@@ -514,6 +516,9 @@ namespace buildsys {
 	public:
 		ExtractionUnit():uri(std::string()), hash(NULL) {
 		};
+		virtual ~ ExtractionUnit() {
+			delete this->hash;
+		};
 		virtual bool print(std::ostream & out) = 0;
 		virtual std::string type() = 0;
 		virtual bool extract(Package * P, BuildDir * b) = 0;
@@ -531,6 +536,8 @@ namespace buildsys {
 	class BuildUnit {
 	public:
 		BuildUnit() {
+		};
+		virtual ~ BuildUnit() {
 		};
 		virtual bool print(std::ostream & out) = 0;
 		virtual std::string type() = 0;
@@ -586,6 +593,9 @@ namespace buildsys {
 		char *patch_path;
 	public:
 		PatchExtractionUnit(int level, char *patch_path, char *patch);
+		virtual ~ PatchExtractionUnit() {
+			free(patch_path);
+		};
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    level << " " << this->patch_path << " " << this->
@@ -821,6 +831,12 @@ namespace buildsys {
 	public:
 		Fetch():FUs(NULL), FU_count(0) {
 		};
+		~Fetch() {
+			for(size_t i = 0; i < this->FU_count; i++) {
+				delete this->FUs[i];
+			}
+			free(this->FUs);
+		}
 		bool add(FetchUnit * fu);
 		bool fetch(Package * P, BuildDir * d) {
 			for(size_t i = 0; i < this->FU_count; i++) {
@@ -843,6 +859,12 @@ namespace buildsys {
 	public:
 		Extraction():EUs(NULL), EU_count(0), extracted(false) {
 		};
+		~Extraction() {
+			for(size_t i = 0; i < this->EU_count; i++) {
+				delete this->EUs[i];
+			}
+			free(this->EUs);
+		}
 		bool add(ExtractionUnit * eu);
 		bool print(std::ostream & out) {
 			for(size_t i = 0; i < this->EU_count; i++) {
@@ -867,6 +889,12 @@ namespace buildsys {
 	public:
 		BuildDescription():BUs(NULL), BU_count(0) {
 		};
+		~BuildDescription() {
+			for(size_t i = 0; i < this->BU_count; i++) {
+				delete this->BUs[i];
+			}
+			free(this->BUs);
+		};
 		bool add(BuildUnit * bu);
 		bool print(std::ostream & out) {
 			for(size_t i = 0; i < this->BU_count; i++) {
@@ -885,6 +913,7 @@ namespace buildsys {
 	public:
 		NameSpace(std::string name):name(name) {
 		};
+		~NameSpace();
 		std::string getName() {
 			return name;
 		};
@@ -966,6 +995,27 @@ namespace buildsys {
 		    hash_output(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
 		};
+		~Package() {
+			while(!this->depends.empty()) {
+				this->depends.pop_front();
+			}
+			while(!this->commands.empty()) {
+				PackageCmd *pc = this->commands.front();
+				this->commands.pop_front();
+				delete pc;
+			}
+			ns = NULL;
+			delete bd;
+			delete f;
+			delete Extract;
+			delete build_description;
+			delete lua;
+			free(this->depsExtraction);
+			if(logFile) {
+				fclose(logFile);
+				logFile = NULL;
+			}
+		};
 		//! Set the namespace this package is in
 		void setNS(NameSpace * ns) {
 			if(this->ns)
@@ -1041,7 +1091,7 @@ namespace buildsys {
 		 *  and just installs this specific file
 		 *  \param i the file to install
 		 */
-		void setInstallFile(char *i) {
+		void setInstallFile(const char *i) {
 			this->installFiles.push_back(std::string(i));
 		};
 		//! Parse and load the lua file for this package

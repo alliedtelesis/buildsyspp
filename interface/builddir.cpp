@@ -329,11 +329,11 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
 		free(file_path);
 	} else if(strcmp(method, "copygit") == 0) {
-		char *src_path = NULL;
-		src_path = P->relative_fetch_path(location);
+		char *src_path = P->relative_fetch_path(location);
 		CopyGitDirExtractionUnit *cgdeu =
 		    new CopyGitDirExtractionUnit(src_path, ".");
 		P->extraction()->add(cgdeu);
+		free(src_path);
 	} else if(strcmp(method, "sm") == 0) {
 		if(mkdir(d->getWorkBuild(), 0777) && errno != EEXIST) {
 			// An error occured, try remove the file, then relink
@@ -634,7 +634,7 @@ int li_bd_installfile(lua_State * L)
 	lua_getglobal(L, "P");
 	Package *P = (Package *) lua_topointer(L, -1);
 
-	P->setInstallFile(strdup(lua_tostring(L, 2)));
+	P->setInstallFile(lua_tostring(L, 2));
 
 	return 0;
 }

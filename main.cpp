@@ -164,6 +164,10 @@ int main(int argc, char *argv[])
 	if(!WORLD->basePackage(target)) {
 		error("Building: Failed");
 		free(target);
+		if(WORLD->areKeepGoing()) {
+			delete WORLD;
+			hash_shutdown();
+		}
 		exit(-1);
 	}
 	free(target);

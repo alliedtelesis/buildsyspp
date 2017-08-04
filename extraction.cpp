@@ -281,6 +281,7 @@ bool GitDirExtractionUnit::isDirty()
 	char *cmd = NULL;
 	asprintf(&cmd, "cd %s && git diff --quiet HEAD", this->localPath().c_str());
 	int res = system(cmd);
+	free(cmd);
 	return (res != 0);
 }
 
