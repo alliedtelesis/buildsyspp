@@ -398,9 +398,9 @@ bool Package::fetchFrom()
 		{"install.tar.bz2", install_dir, this->name.c_str(), ".tar.bz2"},
 		{"output.info", this->bd->getPath(), ".output", ".info"}
 	};
-	const char *ffrom = WORLD->fetchFrom().c_str();
-	log(this, "FF URL: %s/%s/%s/%s", ffrom, this->getNS()->getName().c_str(),
-	    this->name.c_str(), this->buildinfo_hash.c_str());
+	log(this, "FF URL: %s/%s/%s/%s", WORLD->fetchFrom().c_str(),
+	    this->getNS()->getName().c_str(), this->name.c_str(),
+	    this->buildinfo_hash.c_str());
 
 	int count = 3;
 	if(this->isHashingOutput()) {

@@ -31,9 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BuildDir::BuildDir(Package * P)
 {
-	const char *gname = P->getNS()->getName().c_str();
-	const char *pname = P->getName().c_str();
-	const char *pwd = WORLD->getWorkingDir()->c_str();
+	char *gname = strdup(P->getNS()->getName().c_str());
+	char *pname = strdup(P->getName().c_str());
+	char *pwd = strdup(WORLD->getWorkingDir()->c_str());
 
 	int res = mkdir("output", 0700);
 	if((res < 0) && (errno != EEXIST)) {
@@ -182,6 +182,10 @@ BuildDir::BuildDir(Package * P)
 	}
 	this->new_install = std::string(path);
 	free(path);
+
+	free(gname);
+	free(pname);
+	free(pwd);
 }
 
 void BuildDir::clean()
