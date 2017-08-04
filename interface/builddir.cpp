@@ -258,6 +258,9 @@ int li_bd_fetch(lua_State * L)
 	lua_getglobal(L, "P");
 	Package *P = (Package *) lua_topointer(L, -1);
 
+	log(P, "Using deprecated fetch API");
+
+
 	CHECK_ARGUMENT_TYPE("fetch", 1, BuildDir, d);
 
 	char *location = strdup(lua_tostring(L, 2));
@@ -476,6 +479,8 @@ int li_bd_extract(lua_State * L)
 
 	lua_getglobal(L, "P");
 	Package *P = (Package *) lua_topointer(L, -1);
+
+	log(P, "Using deprecated extract API");
 
 	if(WORLD->forcedMode() && !WORLD->isForced(P->getName())) {
 		return 0;
