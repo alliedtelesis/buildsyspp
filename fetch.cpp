@@ -185,6 +185,22 @@ std::string LinkFetch::HASH()
 	return std::string("");
 }
 
+std::string LinkFetch::relative_path()
+{
+	char *path = strdup(this->fetch_uri.c_str());
+	const char *dname = strrchr(path, '/');
+	if(dname) {
+		dname++;
+	} else {
+		dname = path;
+	}
+
+	std::string ret = std::string(dname);
+
+	free(path);
+	return ret;
+}
+
 bool CopyFetch::fetch(Package * P, BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
@@ -206,6 +222,22 @@ bool CopyFetch::fetch(Package * P, BuildDir * d)
 std::string CopyFetch::HASH()
 {
 	return std::string("");
+}
+
+std::string CopyFetch::relative_path()
+{
+	char *path = strdup(this->fetch_uri.c_str());
+	const char *dname = strrchr(path, '/');
+	if(dname) {
+		dname++;
+	} else {
+		dname = path;
+	}
+
+	std::string ret = std::string(dname);
+
+	free(path);
+	return ret;
 }
 
 

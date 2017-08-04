@@ -104,6 +104,8 @@ extern "C" {
 	int li_bd_installfile(lua_State * L);
 	int li_bd_patch(lua_State * L);
 	int li_bd_restore(lua_State * L);
+
+	int li_fu_path(lua_State * L);
 };
 
 namespace buildsys {
@@ -442,6 +444,14 @@ namespace buildsys {
 		virtual bool force_updated() {
 			return false;
 		};
+		virtual std::string relative_path() = 0;
+		static void lua_table_r(lua_State * L) {
+			LUA_SET_TABLE_TYPE(L, FetchUnit);
+			LUA_ADD_TABLE_FUNC(L, "path", li_fu_path);
+		}
+		virtual void lua_table(lua_State * L) {
+			lua_table_r(L);
+		};
 	};
 
 	/* A downloaded file
@@ -459,6 +469,9 @@ namespace buildsys {
 		};
 		virtual bool fetch(Package * P, BuildDir * d);
 		virtual std::string HASH();
+		virtual std::string relative_path() {
+			return "dl/" + this->final_name();
+		};
 	};
 
 	/* A linked file/directory
@@ -472,6 +485,7 @@ namespace buildsys {
 			return true;
 		};
 		virtual std::string HASH();
+		virtual std::string relative_path();
 	};
 
 	/* A copied file/directory
@@ -485,6 +499,7 @@ namespace buildsys {
 			return true;
 		};
 		virtual std::string HASH();
+		virtual std::string relative_path();
 	};
 
 
@@ -663,6 +678,9 @@ namespace buildsys {
 		};
 		virtual std::string HASH() {
 			return *this->hash;
+		};
+		virtual std::string relative_path() {
+			return this->localPath();
 		};
 	};
 

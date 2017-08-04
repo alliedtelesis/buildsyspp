@@ -24,19 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <buildsys.h>
-
-#define CHECK_ARGUMENT(F,N,T)		if(!lua_is##T(L, N)) throw CustomException("" #F "() requires a " #T " as argument " #N );
-
-#define CHECK_ARGUMENT_TYPE(F,N,T,V) CHECK_ARGUMENT(F,N,table) \
-	lua_pushstring(L, #T); \
-	lua_gettable(L, N); \
-	if(!lua_isstring(L, -1) || strcmp(lua_tostring(L, -1), "yes") != 0) throw CustomException("" #F "() requires an object of type " #T " as argument " #N); \
-	lua_pop(L, 1); \
-	lua_pushstring(L, "data"); \
-	lua_gettable(L, N); \
-	if(!lua_islightuserdata(L, -1)) throw CustomException("" #F "() requires data of argument " #N " to contain something of type " #T ""); \
-	T * V = (T *)lua_topointer(L, -1); \
-	lua_pop(L, 1);
+#include "luainterface.h"
 
 static char *absolute_path(BuildDir * d, const char *dir, bool allowDL = false)
 {
@@ -66,6 +54,174 @@ static void add_env(Package * P, PackageCmd * pc)
 	free(pn_env);
 }
 
+int li_bd_fetch_table(lua_State * L)
+{
+	/* the first argument is the table, and is implicit */
+	int argc = lua_gettop(L);
+	if(argc < 1) {
+		throw CustomException("fetch() requires at least 2 arguments");
+	}
+	if(!lua_istable(L, 1))
+		throw CustomException("fetch() must be called using : not .");
+	if(!lua_istable(L, 2))
+		throw CustomException("fetch() expects a table as the first argument");
+
+	char *uri = NULL;
+	char *method = NULL;
+	char *filename = NULL;
+	bool decompress = false;
+	char *branch = NULL;
+	char *reponame = NULL;
+
+	lua_getglobal(L, "P");
+	Package *P = (Package *) lua_topointer(L, -1);
+
+	CHECK_ARGUMENT_TYPE("fetch_table", 1, BuildDir, d);
+
+	/* Get the parameters from the table */
+	lua_pushvalue(L, 2);
+	lua_pushnil(L);
+
+	while(lua_next(L, -2)) {
+		lua_pushvalue(L, -2);
+		const char *key = lua_tostring(L, -1);
+		const char *value = lua_tostring(L, -2);
+		if(key && value) {
+			if(strcmp(key, "uri") == 0) {
+				uri = strdup(value);
+			} else if(strcmp(key, "method") == 0) {
+				method = strdup(value);
+			} else if(strcmp(key, "filename") == 0) {
+				filename = strdup(value);
+			} else if(strcmp(key, "decompress") == 0) {
+				decompress = (strcmp(value, "true") == 0);
+			} else if(strcmp(key, "branch") == 0) {
+				branch = strdup(value);
+			} else if(strcmp(key, "reponame") == 0) {
+				reponame = strdup(value);
+			} else {
+				printf("Unknown key %s (%s)", key, value);
+			}
+		}
+		lua_pop(L, 2);
+	}
+	lua_pop(L, 1);
+
+	/* Create fetch object here */
+	FetchUnit *f = NULL;
+	if(strcmp(method, "dl") == 0) {
+		std::string fname;
+		if(filename) {
+			fname = std::string(filename);
+		} else {
+			fname = std::string("");
+		}
+		f = new DownloadFetch(std::string(uri), decompress, fname);
+	} else if(strcmp(method, "git") == 0) {
+		if(reponame == NULL) {
+			char *l2 = strrchr(uri, '/');
+			if(l2[1] == '\0') {
+				l2[0] = '\0';
+				l2 = strrchr(uri, '/');
+			}
+			l2++;
+			char *dotgit = strstr(l2, ".git");
+			if(dotgit) {
+				dotgit[0] = '\0';
+			}
+			reponame = l2;
+		}
+		if(branch == NULL) {
+			// Default to master
+			branch = strdup("origin/master");
+		}
+		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch);
+		f = geu;
+		P->extraction()->add(geu);
+	} else if(strcmp(method, "linkgit") == 0) {
+		char *l = P->relative_fetch_path(uri);
+		char *l2 = strrchr(l, '/');
+		if(l2[1] == '\0') {
+			l2[0] = '\0';
+			l2 = strrchr(l, '/');
+		}
+		l2++;
+		LinkGitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(uri, l2);
+		P->extraction()->add(lgdeu);
+		free(l);
+	} else if(strcmp(method, "link") == 0) {
+		f = new LinkFetch(std::string(uri));
+	} else if(strcmp(method, "copyfile") == 0) {
+		char *file_path = P->relative_fetch_path(uri);
+		P->extraction()->add(new FileCopyExtractionUnit(file_path));
+		free(file_path);
+	} else if(strcmp(method, "copygit") == 0) {
+		char *src_path = P->relative_fetch_path(uri);
+		CopyGitDirExtractionUnit *cgdeu =
+		    new CopyGitDirExtractionUnit(src_path, ".");
+		P->extraction()->add(cgdeu);
+		free(src_path);
+	} else if(strcmp(method, "sm") == 0) {
+		if(mkdir(d->getWorkBuild(), 0777) && errno != EEXIST) {
+			// An error occured, try remove the file, then relink
+			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
+			rmpc->addArg("-fr");
+			rmpc->addArg(d->getWorkBuild());
+			if(!rmpc->Run(P))
+				throw
+				    CustomException
+				    ("Failed to ln (symbolically), could not remove target first");
+			if(mkdir(d->getWorkBuild(), 0777))
+				throw
+				    CustomException
+				    ("Failed to mkdir, even after removing target first");
+			delete rmpc;
+		}
+		char *l = strdup(d->getWorkSrc());
+		char *l2 = strrchr(l, '/');
+		if(l2[1] == '\0') {
+			l2[0] = '\0';
+			l2 = strrchr(l, '/');
+		}
+		l2++;
+		GitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(uri, l2);
+		P->extraction()->add(lgdeu);
+		free(l);
+	} else if(strcmp(method, "copy") == 0) {
+		f = new CopyFetch(std::string(uri));
+	} else if(strcmp(method, "deps") == 0) {
+		char *path = absolute_path(d, uri);
+		// record this directory (need to complete this operation later)
+		lua_getglobal(L, "P");
+		Package *P = (Package *) lua_topointer(L, -1);
+		P->setDepsExtract(path);
+		log(P, "Will add installed files, considering code updated");
+		P->setCodeUpdated();
+	} else {
+		throw CustomException("Unsupported fetch method");
+	}
+
+	/* Add the fetch unit to the package */
+	if(f) {
+		P->fetch()->add(f);
+		if(f->force_updated()) {
+			P->setCodeUpdated();
+		}
+
+		/* Return the fetch object here */
+		CREATE_TABLE(L, f);
+		f->lua_table(L);
+	}
+
+	free(uri);
+	free(method);
+	free(filename);
+	free(branch);
+	free(reponame);
+
+	return 1;
+}
+
 int li_bd_fetch(lua_State * L)
 {
 	/* the first argument is the table, and is implicit */
@@ -75,6 +231,9 @@ int li_bd_fetch(lua_State * L)
 	}
 	if(!lua_istable(L, 1))
 		throw CustomException("fetch() must be called using : not .");
+	if(lua_istable(L, 2)) {
+		return li_bd_fetch_table(L);
+	}
 	if(!lua_isstring(L, 2))
 		throw CustomException("fetch() expects a string as the first argument");
 	if(!lua_isstring(L, 3))
