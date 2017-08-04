@@ -25,37 +25,56 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
+/* This is the full name of the file to be downloaded */
+std::string DownloadFetch::full_name()
+{
+	const char *fname = NULL;
+
+	if(strlen(this->filename.c_str())) {
+		fname = this->filename.c_str();
+	} else {
+		fname = strrchr(this->fetch_uri.c_str(), '/');
+		fname++;
+	}
+
+	return std::string(fname);
+}
+
+/* This is the final name, without any compressed extension */
+std::string DownloadFetch::final_name()
+{
+	std::string ret = this->full_name();
+
+	if(decompress) {
+		char *fname = strdup(ret.c_str());
+		char *ext = strrchr(fname, '.');
+		if(ext != NULL)
+			ext[0] = '\0';
+		ret = std::string(fname);
+		free(fname);
+	}
+
+	return ret;
+}
+
+
 bool DownloadFetch::fetch(Package * P, BuildDir * d)
 {
-	char *location = strdup(this->fetch_uri.c_str());
-	char *customFileName = strdup(filename.c_str());
-
 	int res = mkdir("dl", 0700);
 	if((res < 0) && (errno != EEXIST)) {
 		throw CustomException("Error: Creating download directory");
 	}
 
-	bool get = true;
-	char *fname = NULL;
+	bool get = false;
 
-	if(strlen(customFileName)) {
-		fname = customFileName;
-	} else {
-		fname = strrchr(location, '/');
-		fname++;
-	}
+	std::string fullname = this->full_name();
+	std::string fname = this->final_name();
 
-	if(fname != NULL) {
-		get = false;
-		char *t = fname;
-		if(decompress) {
-			fname = strdup(fname);
-			char *ext = strrchr(fname, '.');
-			if(ext != NULL)
-				ext[0] = '\0';
-		}
+
+	{
 		char *fpath = NULL;
-		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(), fname);
+		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+			 fname.c_str());
 		FILE *f = fopen(fpath, "r");
 		if(f == NULL) {
 			get = true;
@@ -63,18 +82,18 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 			fclose(f);
 		}
 		free(fpath);
-		if(decompress)
-			free(fname);
-		fname = t;
 	}
+
 	if(get) {
 		bool localCacheHit;
 		//Attempt to get file from local tarball cache if one is configured.
 		if(WORLD->haveTarballCache()) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
 			char *url = NULL;
-			asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(), fname);
+			asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(),
+				 fname.c_str());
 			pc->addArg(url);
+			pc->addArgFmt("-O%s", fullname.c_str());
 			free(url);
 			localCacheHit = pc->Run(P);
 			delete pc;
@@ -82,10 +101,8 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 		//If we didn't get the file from the local cache, look upstream.
 		if(!localCacheHit) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
-			pc->addArg(location);
-			if(strlen(customFileName)) {
-				pc->addArgFmt("-O%s", customFileName);
-			}
+			pc->addArg(this->fetch_uri.c_str());
+			pc->addArgFmt("-O%s", fullname.c_str());
 			if(!pc->Run(P))
 				throw CustomException("Failed to fetch file");
 			delete pc;
@@ -93,24 +110,25 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 		if(decompress) {
 			// We want to run a command on this file
 			char *cmd = NULL;
-			char *ext = strrchr(fname, '.');
+			char *filename = strdup(fname.c_str());
+			char *ext = strrchr(filename, '.');
 			if(ext == NULL) {
 				log(P->getName().c_str(),
 				    "Could not guess decompression based on extension: %s\n",
-				    fname);
+				    fname.c_str());
 			}
 
 			if(strcmp(ext, ".bz2") == 0) {
-				asprintf(&cmd, "bunzip2 -d dl/%s", fname);
+				asprintf(&cmd, "bunzip2 -d dl/%s", fullname.c_str());
 			} else if(strcmp(ext, ".gz") == 0) {
-				asprintf(&cmd, "gunzip -d dl/%s", fname);
+				asprintf(&cmd, "gunzip -d dl/%s", fullname.c_str());
 			}
 			system(cmd);
 			free(cmd);
+			free(filename);
 		}
 	}
-	free(location);
-	free(customFileName);
+
 	return true;
 }
 

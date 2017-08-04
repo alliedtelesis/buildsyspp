@@ -441,6 +441,8 @@ namespace buildsys {
 	protected:
 		bool decompress;
 		std::string filename;
+		std::string full_name();
+		std::string final_name();
 	public:
 		DownloadFetch(std::string uri, bool decompress,
 			      std::string filename):FetchUnit(uri), decompress(decompress),
