@@ -171,6 +171,7 @@ bool World::basePackage(char *filename)
 			pthread_mutex_unlock(&this->cond_lock);
 			pthread_mutex_lock(&t_cond_lock);
 			pthread_create(&tid, NULL, build_thread, toBuild);
+			pthread_detach(tid);
 			pthread_cond_wait(&t_cond, &t_cond_lock);
 			pthread_mutex_unlock(&t_cond_lock);
 		} else {
