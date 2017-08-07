@@ -85,7 +85,7 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 	}
 
 	if(get) {
-		bool localCacheHit;
+		bool localCacheHit = false;
 		//Attempt to get file from local tarball cache if one is configured.
 		if(WORLD->haveTarballCache()) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
