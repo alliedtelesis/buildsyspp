@@ -116,7 +116,7 @@ int li_bd_fetch_table(lua_State * L)
 		} else {
 			fname = std::string("");
 		}
-		f = new DownloadFetch(std::string(uri), decompress, fname);
+		f = new DownloadFetch(std::string(uri), decompress, fname, P);
 	} else if(strcmp(method, "git") == 0) {
 		if(reponame == NULL) {
 			char *l2 = strrchr(uri, '/');
@@ -135,7 +135,7 @@ int li_bd_fetch_table(lua_State * L)
 			// Default to master
 			branch = strdup("origin/master");
 		}
-		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch);
+		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch, P);
 		f = geu;
 		P->extraction()->add(geu);
 	} else if(strcmp(method, "linkgit") == 0) {
@@ -150,7 +150,7 @@ int li_bd_fetch_table(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "link") == 0) {
-		f = new LinkFetch(std::string(uri));
+		f = new LinkFetch(std::string(uri), P);
 	} else if(strcmp(method, "copyfile") == 0) {
 		char *file_path = P->relative_fetch_path(uri);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
@@ -188,7 +188,7 @@ int li_bd_fetch_table(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "copy") == 0) {
-		f = new CopyFetch(std::string(uri));
+		f = new CopyFetch(std::string(uri), P);
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = absolute_path(d, uri);
 		// record this directory (need to complete this operation later)
@@ -285,7 +285,7 @@ int li_bd_fetch(lua_State * L)
 			filename = strdup(lua_tostring(L, 5));
 		}
 		f = new DownloadFetch(std::string(location), decompress,
-				      std::string(filename));
+				      std::string(filename), P);
 		free(filename);
 	} else if(strcmp(method, "git") == 0) {
 		const char *branch = lua_tostring(L, 4);
@@ -307,7 +307,7 @@ int li_bd_fetch(lua_State * L)
 			// Default to master
 			branch = "origin/master";
 		}
-		GitExtractionUnit *geu = new GitExtractionUnit(location, local, branch);
+		GitExtractionUnit *geu = new GitExtractionUnit(location, local, branch, P);
 		f = geu;
 		P->extraction()->add(geu);
 	} else if(strcmp(method, "linkgit") == 0) {
@@ -323,7 +323,7 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "link") == 0) {
-		f = new LinkFetch(std::string(location));
+		f = new LinkFetch(std::string(location), P);
 	} else if(strcmp(method, "copyfile") == 0) {
 		char *file_path = P->relative_fetch_path(location);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path));
@@ -361,7 +361,7 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "copy") == 0) {
-		f = new CopyFetch(std::string(location));
+		f = new CopyFetch(std::string(location), P);
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = absolute_path(d, location);
 		// record this directory (need to complete this operation later)

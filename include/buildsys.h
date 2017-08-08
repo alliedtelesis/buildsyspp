@@ -437,12 +437,13 @@ namespace buildsys {
 	class FetchUnit:public HashableUnit {
 	protected:
 		std::string fetch_uri;	//!< URI of this unit
+		Package *P;	//!< Which package is this fetch unit for ?
 	public:
-		FetchUnit(std::string uri):fetch_uri(uri) {
+		FetchUnit(std::string uri, Package * P):fetch_uri(uri), P(P) {
 		};
 		virtual ~ FetchUnit() {
 		};
-		virtual bool fetch(Package * P, BuildDir * d) = 0;
+		virtual bool fetch(BuildDir * d) = 0;
 		virtual bool force_updated() {
 			return false;
 		};
@@ -466,10 +467,10 @@ namespace buildsys {
 		std::string final_name();
 	public:
 		DownloadFetch(std::string uri, bool decompress,
-			      std::string filename):FetchUnit(uri), decompress(decompress),
-		    filename(filename) {
+			      std::string filename, Package * P):FetchUnit(uri, P),
+		    decompress(decompress), filename(filename) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool fetch(BuildDir * d);
 		virtual std::string HASH();
 		virtual std::string relative_path() {
 			return "dl/" + this->final_name();
@@ -480,9 +481,9 @@ namespace buildsys {
 	 */
 	class LinkFetch:public FetchUnit {
 	public:
-		LinkFetch(std::string uri):FetchUnit(uri) {
+		LinkFetch(std::string uri, Package * P):FetchUnit(uri, P) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool fetch(BuildDir * d);
 		virtual bool force_updated() {
 			return true;
 		};
@@ -494,9 +495,9 @@ namespace buildsys {
 	 */
 	class CopyFetch:public FetchUnit {
 	public:
-		CopyFetch(std::string uri):FetchUnit(uri) {
+		CopyFetch(std::string uri, Package * P):FetchUnit(uri, P) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool fetch(BuildDir * d);
 		virtual bool force_updated() {
 			return true;
 		};
@@ -683,10 +684,11 @@ namespace buildsys {
 		std::string local;
 	public:
 		GitExtractionUnit(const char *remote, const char *local,
-				  std::string refspec):GitDirExtractionUnit(remote, local),
-		    FetchUnit(remote), refspec(refspec) {
+				  std::string refspec,
+				  Package * P):GitDirExtractionUnit(remote, local),
+		    FetchUnit(remote, P), refspec(refspec) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool fetch(BuildDir * d);
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {
 			return "fetch";
@@ -838,9 +840,9 @@ namespace buildsys {
 			free(this->FUs);
 		}
 		bool add(FetchUnit * fu);
-		bool fetch(Package * P, BuildDir * d) {
+		bool fetch(BuildDir * d) {
 			for(size_t i = 0; i < this->FU_count; i++) {
-				if(!FUs[i]->fetch(P, d))
+				if(!FUs[i]->fetch(d))
 					return false;
 			}
 			return true;

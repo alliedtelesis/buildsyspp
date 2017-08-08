@@ -73,7 +73,7 @@ void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 
 	if(bd) {
 		// Fetch anything we don't have yet
-		P->fetch()->fetch(P, bd);
+		P->fetch()->fetch(bd);
 		// Create the new extraction info file
 		char *exinfoFname = NULL;
 		asprintf(&exinfoFname, "%s/.extraction.info.new", bd->getPath());
@@ -332,7 +332,7 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
+bool GitExtractionUnit::fetch(BuildDir * d)
 {
 	char *location = strdup(this->uri.c_str());
 
@@ -357,7 +357,7 @@ bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 		pc->addArg("fetch");
 		pc->addArg("origin");
 		pc->addArg("--tags");
-		if(!pc->Run(P)) {
+		if(!pc->Run(this->P)) {
 			throw CustomException("Failed: git fetch origin --tags");
 		}
 	} else {
@@ -365,7 +365,7 @@ bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 		pc->addArg("-n");
 		pc->addArg(location);
 		pc->addArg(source_dir);
-		if(!pc->Run(P))
+		if(!pc->Run(this->P))
 			throw CustomException("Failed to git clone");
 	}
 
@@ -375,7 +375,7 @@ bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 	pc->addArg("-q");
 	pc->addArg("--detach");
 	pc->addArg(this->refspec.c_str());
-	if(!pc->Run(P))
+	if(!pc->Run(this->P))
 		throw CustomException("Failed to checkout");
 
 	free(location);

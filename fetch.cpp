@@ -58,7 +58,7 @@ std::string DownloadFetch::final_name()
 }
 
 
-bool DownloadFetch::fetch(Package * P, BuildDir * d)
+bool DownloadFetch::fetch(BuildDir * d)
 {
 	int res = mkdir("dl", 0700);
 	if((res < 0) && (errno != EEXIST)) {
@@ -95,7 +95,7 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 			pc->addArg(url);
 			pc->addArgFmt("-O%s", fullname.c_str());
 			free(url);
-			localCacheHit = pc->Run(P);
+			localCacheHit = pc->Run(this->P);
 			delete pc;
 		}
 		//If we didn't get the file from the local cache, look upstream.
@@ -103,7 +103,7 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 			PackageCmd *pc = new PackageCmd("dl", "wget");
 			pc->addArg(this->fetch_uri.c_str());
 			pc->addArgFmt("-O%s", fullname.c_str());
-			if(!pc->Run(P))
+			if(!pc->Run(this->P))
 				throw CustomException("Failed to fetch file");
 			delete pc;
 		}
@@ -145,7 +145,7 @@ std::string DownloadFetch::HASH()
 	return ret;
 }
 
-bool LinkFetch::fetch(Package * P, BuildDir * d)
+bool LinkFetch::fetch(BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd *pc = new PackageCmd(d->getPath(), "ln");
@@ -153,7 +153,7 @@ bool LinkFetch::fetch(Package * P, BuildDir * d)
 	char *l = P->relative_fetch_path(location);
 	pc->addArg(l);
 	pc->addArg(".");
-	if(!pc->Run(P)) {
+	if(!pc->Run(this->P)) {
 		// An error occured, try remove the file, then relink
 		PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
 		rmpc->addArg("-fr");
@@ -164,11 +164,11 @@ bool LinkFetch::fetch(Package * P, BuildDir * d)
 		}
 		l2++;
 		rmpc->addArg(l2);
-		if(!rmpc->Run(P))
+		if(!rmpc->Run(this->P))
 			throw
 			    CustomException
 			    ("Failed to ln (symbolically), could not remove target first");
-		if(!pc->Run(P))
+		if(!pc->Run(this->P))
 			throw
 			    CustomException
 			    ("Failed to ln (symbolically), even after removing target first");
@@ -201,7 +201,7 @@ std::string LinkFetch::relative_path()
 	return ret;
 }
 
-bool CopyFetch::fetch(Package * P, BuildDir * d)
+bool CopyFetch::fetch(BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
@@ -210,7 +210,7 @@ bool CopyFetch::fetch(Package * P, BuildDir * d)
 	pc->addArg(l);
 	pc->addArg(".");
 	free(l);
-	if(!pc->Run(P))
+	if(!pc->Run(this->P))
 		throw CustomException("Failed to copy (recursively)");
 	delete pc;
 	log(P, "Copied data in, considering code updated");
