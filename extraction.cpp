@@ -72,8 +72,6 @@ void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 	}
 
 	if(bd) {
-		// Fetch anything we don't have yet
-		P->fetch()->fetch(bd);
 		// Create the new extraction info file
 		char *exinfoFname = NULL;
 		asprintf(&exinfoFname, "%s/.extraction.info.new", bd->getPath());

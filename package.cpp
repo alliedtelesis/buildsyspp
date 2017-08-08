@@ -683,6 +683,9 @@ bool Package::build()
 		return true;
 	}
 
+	// Fetch anything we don't have yet
+	this->fetch()->fetch(bd);
+
 	clock_gettime(CLOCK_REALTIME, &start);
 
 	if(this->Extract->extractionRequired(this, this->bd)) {
