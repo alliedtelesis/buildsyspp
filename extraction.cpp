@@ -276,6 +276,10 @@ GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_d
 	this->toDir = std::string(to_dir);
 }
 
+GitDirExtractionUnit::GitDirExtractionUnit()
+{
+}
+
 bool GitDirExtractionUnit::isDirty()
 {
 	char *cmd = NULL;
@@ -332,15 +336,26 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
+GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local, std::string refspec, Package * P)
+{
+	this->uri = std::string(remote);
+
+	char *source_dir = NULL;
+	asprintf(&source_dir, "%s/source/%s", WORLD->getWorkingDir()->c_str(), local);
+	this->local = std::string(source_dir);
+	free(source_dir);
+
+	this->refspec = refspec;
+	this->P = P;
+
+	this->fetched = false;
+}
+
 bool GitExtractionUnit::fetch(BuildDir * d)
 {
 	char *location = strdup(this->uri.c_str());
-
-	char *source_dir = NULL;
+	char *source_dir = strdup(this->local.c_str());
 	const char *cwd = WORLD->getWorkingDir()->c_str();
-	asprintf(&source_dir, "%s/source/%s", cwd, this->toDir.c_str());
-
-	this->local = std::string(source_dir);
 
 	bool exists = false;
 	{
@@ -378,19 +393,43 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	if(!pc->Run(this->P))
 		throw CustomException("Failed to checkout");
 
-	free(location);
 
-	char *Hash = git_hash(source_dir);
-	this->hash = new std::string(Hash);
-	free(Hash);
+	if(!this->hash) {
+		char *Hash = git_hash(source_dir);
+		this->hash = new std::string(Hash);
+		free(Hash);
+	}
 
 	free(source_dir);
+	free(location);
+
+	this->fetched = true;
 
 	return true;
 }
 
+std::string GitExtractionUnit::HASH()
+{
+	char *digest_name = NULL;
+	asprintf(&digest_name, "%s#%s", this->uri.c_str(), this->refspec.c_str());
+	/* Check if the package contains pre-computed hashes */
+	char *Hash = P->getFileHash(digest_name);
+	free(digest_name);
+	if(Hash) {
+		this->hash = new std::string(Hash);
+		free(Hash);
+	} else {
+		this->fetch(NULL);
+	}
+	return *this->hash;
+}
+
 bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 {
+	// make sure it has been fetched
+	if(!this->fetched) {
+		this->fetch(NULL);
+	}
 	// copy to work dir
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-dpRuf");

@@ -441,6 +441,7 @@ namespace buildsys {
 	public:
 		FetchUnit(std::string uri, Package * P):fetch_uri(uri), P(P) {
 		};
+		FetchUnit() {};
 		virtual ~ FetchUnit() {
 		};
 		virtual bool fetch(BuildDir * d) = 0;
@@ -631,7 +632,9 @@ namespace buildsys {
 		std::string toDir;
 	public:
 		GitDirExtractionUnit(const char *git_dir, const char *toDir);
+		GitDirExtractionUnit();
 		virtual bool print(std::ostream & out) {
+			fprintf(stderr, "Outputting details for %s\n", this->uri.c_str());
 			out << this->type() << " " << this->
 			    modeName() << " " << this->uri << " " << this->
 			    toDir << " " << this->HASH() << " " << (this->isDirty()? this->
@@ -682,12 +685,11 @@ namespace buildsys {
 	private:
 		std::string refspec;
 		std::string local;
+		bool fetched;
 	public:
 		GitExtractionUnit(const char *remote, const char *local,
 				  std::string refspec,
-				  Package * P):GitDirExtractionUnit(remote, local),
-		    FetchUnit(remote, P), refspec(refspec) {
-		};
+				  Package * P);
 		virtual bool fetch(BuildDir * d);
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {
@@ -696,9 +698,7 @@ namespace buildsys {
 		virtual std::string localPath() {
 			return this->local;
 		};
-		virtual std::string HASH() {
-			return *this->hash;
-		};
+		virtual std::string HASH();
 		virtual std::string relative_path() {
 			return this->localPath();
 		};

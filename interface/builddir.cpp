@@ -136,7 +136,6 @@ int li_bd_fetch_table(lua_State * L)
 			branch = strdup("origin/master");
 		}
 		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch, P);
-		f = geu;
 		P->extraction()->add(geu);
 	} else if(strcmp(method, "linkgit") == 0) {
 		char *l = P->relative_fetch_path(uri);
