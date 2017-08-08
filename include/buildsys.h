@@ -1037,6 +1037,8 @@ namespace buildsys {
 		char *absolute_fetch_path(const char *location);
 		//! Get the relative fetch path for this package
 		char *relative_fetch_path(const char *location);
+		//! Get the file hash for the given file (if known)
+		char *getFileHash(const char *filename);
 		//! Recreate the build directory
 		void resetBD();
 		//! Returns the extraction

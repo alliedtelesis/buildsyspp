@@ -82,6 +82,35 @@ char *Package::relative_fetch_path(const char *location)
 }
 
 
+char *Package::getFileHash(const char *filename)
+{
+	char *ret = NULL;
+	char *hashes_file = this->relative_fetch_path("Digest");
+	FILE *hashes = fopen(hashes_file, "r");
+	if(hashes != NULL) {
+		char buf[1024];
+		memset(buf, 0, 1024);
+		while(fgets(buf, sizeof(buf), hashes) > 0) {
+			char *hash = strchr(buf, ' ');
+			if(hash != NULL) {
+				*hash = '\0';
+				hash++;
+				char *term = strchr(hash, '\n');
+				if(term) {
+					*term = '\0';
+				}
+			}
+			if(strcmp(buf, filename) == 0) {
+				ret = strdup(hash);
+				break;
+			}
+		}
+		fclose(hashes);
+	}
+	free(hashes_file);
+	return ret;
+}
+
 void Package::resetBD()
 {
 	if(this->bd != NULL) {
