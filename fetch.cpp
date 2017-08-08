@@ -135,12 +135,19 @@ bool DownloadFetch::fetch(BuildDir * d)
 
 std::string DownloadFetch::HASH()
 {
-	char *fpath = NULL;
-	asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
-		 this->final_name().c_str());
-	char *hash = hash_file(fpath);
-	free(fpath);
-	std::string ret = std::string(hash);
+	std::string ret;
+	/* Check if the package contains pre-computed hashes */
+	char *hash = P->getFileHash(this->final_name().c_str());
+	/* Otherwise fetch and calculate the hash */
+	if(!hash) {
+		this->fetch(NULL);
+		char *fpath = NULL;
+		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+			 this->final_name().c_str());
+		hash = hash_file(fpath);
+		free(fpath);
+	}
+	ret = std::string(hash);
 	free(hash);
 	return ret;
 }
