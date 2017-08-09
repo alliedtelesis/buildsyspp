@@ -438,10 +438,12 @@ namespace buildsys {
 	protected:
 		std::string fetch_uri;	//!< URI of this unit
 		Package *P;	//!< Which package is this fetch unit for ?
+		bool fetched;
 	public:
 		FetchUnit(std::string uri, Package * P):fetch_uri(uri), P(P) {
 		};
-		FetchUnit() {};
+		FetchUnit() {
+		};
 		virtual ~ FetchUnit() {
 		};
 		virtual bool fetch(BuildDir * d) = 0;
@@ -464,6 +466,7 @@ namespace buildsys {
 	protected:
 		bool decompress;
 		std::string filename;
+		std::string hash;
 		std::string full_name();
 		std::string final_name();
 	public:
@@ -634,7 +637,6 @@ namespace buildsys {
 		GitDirExtractionUnit(const char *git_dir, const char *toDir);
 		GitDirExtractionUnit();
 		virtual bool print(std::ostream & out) {
-			fprintf(stderr, "Outputting details for %s\n", this->uri.c_str());
 			out << this->type() << " " << this->
 			    modeName() << " " << this->uri << " " << this->
 			    toDir << " " << this->HASH() << " " << (this->isDirty()? this->
@@ -685,11 +687,9 @@ namespace buildsys {
 	private:
 		std::string refspec;
 		std::string local;
-		bool fetched;
 	public:
 		GitExtractionUnit(const char *remote, const char *local,
-				  std::string refspec,
-				  Package * P);
+				  std::string refspec, Package * P);
 		virtual bool fetch(BuildDir * d);
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {

@@ -334,7 +334,8 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local, std::string refspec, Package * P)
+GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
+				     std::string refspec, Package * P)
 {
 	this->uri = std::string(remote);
 
@@ -391,19 +392,29 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	if(!pc->Run(this->P))
 		throw CustomException("Failed to checkout");
 
+	bool res = true;
 
-	if(!this->hash) {
-		char *Hash = git_hash(source_dir);
+	char *Hash = git_hash(source_dir);
+
+	if(this->hash) {
+		if(strcmp(this->hash->c_str(), Hash) != 0) {
+			log(this->P,
+			    "Hash mismatch for %s\n(committed to %s, providing %s)\n",
+			    this->uri.c_str(), this->hash->c_str(), Hash);
+			res = false;
+		}
+	} else {
 		this->hash = new std::string(Hash);
-		free(Hash);
 	}
+
+	free(Hash);
 
 	free(source_dir);
 	free(location);
 
-	this->fetched = true;
+	this->fetched = res;
 
-	return true;
+	return res;
 }
 
 std::string GitExtractionUnit::HASH()
@@ -426,7 +437,9 @@ bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	// make sure it has been fetched
 	if(!this->fetched) {
-		this->fetch(NULL);
+		if(!this->fetch(NULL)) {
+			return false;
+		}
 	}
 	// copy to work dir
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));

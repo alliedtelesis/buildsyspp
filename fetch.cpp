@@ -129,13 +129,29 @@ bool DownloadFetch::fetch(BuildDir * d)
 		}
 	}
 
-	return true;
+	bool ret = true;
+
+	if(this->hash.length() != 0) {
+		char *fpath = NULL;
+		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+			 this->final_name().c_str());
+		char *hash = hash_file(fpath);
+		free(fpath);
+		if(strcmp(this->hash.c_str(), hash) != 0) {
+			log(this->P,
+			    "Hash mismatched for %s\n(committed to %s, providing %s)",
+			    this->final_name().c_str(), this->hash.c_str(), hash);
+			ret = false;
+		}
+		free(hash);
+	}
+
+	return ret;
 }
 
 
 std::string DownloadFetch::HASH()
 {
-	std::string ret;
 	/* Check if the package contains pre-computed hashes */
 	char *hash = P->getFileHash(this->final_name().c_str());
 	/* Otherwise fetch and calculate the hash */
@@ -147,9 +163,9 @@ std::string DownloadFetch::HASH()
 		hash = hash_file(fpath);
 		free(fpath);
 	}
-	ret = std::string(hash);
+	this->hash = std::string(hash);
 	free(hash);
-	return ret;
+	return this->hash;
 }
 
 bool LinkFetch::fetch(BuildDir * d)

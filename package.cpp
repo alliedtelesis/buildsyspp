@@ -682,9 +682,11 @@ bool Package::build()
 		WORLD->packageFinished(this);
 		return true;
 	}
-
 	// Fetch anything we don't have yet
-	this->fetch()->fetch(bd);
+	if(!this->fetch()->fetch(bd)) {
+		log(this, "Fetching failed");
+		return false;
+	}
 
 	clock_gettime(CLOCK_REALTIME, &start);
 
