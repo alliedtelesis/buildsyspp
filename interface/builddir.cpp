@@ -266,6 +266,7 @@ int li_bd_fetch(lua_State * L)
 	const char *method = lua_tostring(L, 3);
 
 	if(WORLD->forcedMode() && !WORLD->isForced(P->getName())) {
+		free(location);
 		return 0;
 	}
 
