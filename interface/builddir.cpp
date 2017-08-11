@@ -67,6 +67,7 @@ int li_bd_fetch_table(lua_State * L)
 		throw CustomException("fetch() expects a table as the first argument");
 
 	char *uri = NULL;
+        char *to = NULL;
 	char *method = NULL;
 	char *filename = NULL;
 	bool decompress = false;
@@ -99,6 +100,8 @@ int li_bd_fetch_table(lua_State * L)
 				branch = strdup(value);
 			} else if(strcmp(key, "reponame") == 0) {
 				reponame = strdup(value);
+			} else if(strcmp(key, "to") == 0) {
+				to = strdup(value);
 			} else {
 				printf("Unknown key %s (%s)", key, value);
 			}
@@ -189,13 +192,13 @@ int li_bd_fetch_table(lua_State * L)
 	} else if(strcmp(method, "copy") == 0) {
 		f = new CopyFetch(std::string(uri), P);
 	} else if(strcmp(method, "deps") == 0) {
-		char *path = absolute_path(d, uri);
+		char *path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
 		lua_getglobal(L, "P");
 		Package *P = (Package *) lua_topointer(L, -1);
 		P->setDepsExtract(path);
-		log(P, "Will add installed files, considering code updated");
-		P->setCodeUpdated();
+                log(P, "Will add installed files, considering code updated");
+                P->setCodeUpdated();
 	} else {
 		throw CustomException("Unsupported fetch method");
 	}
@@ -217,6 +220,7 @@ int li_bd_fetch_table(lua_State * L)
 	free(filename);
 	free(branch);
 	free(reponame);
+	free(to);
 
 	return 1;
 }
