@@ -163,32 +163,6 @@ int li_bd_fetch_table(lua_State * L)
 		    new CopyGitDirExtractionUnit(src_path, ".");
 		P->extraction()->add(cgdeu);
 		free(src_path);
-	} else if(strcmp(method, "sm") == 0) {
-		if(mkdir(d->getWorkBuild(), 0777) && errno != EEXIST) {
-			// An error occured, try remove the file, then relink
-			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
-			rmpc->addArg("-fr");
-			rmpc->addArg(d->getWorkBuild());
-			if(!rmpc->Run(P))
-				throw
-				    CustomException
-				    ("Failed to ln (symbolically), could not remove target first");
-			if(mkdir(d->getWorkBuild(), 0777))
-				throw
-				    CustomException
-				    ("Failed to mkdir, even after removing target first");
-			delete rmpc;
-		}
-		char *l = strdup(d->getWorkSrc());
-		char *l2 = strrchr(l, '/');
-		if(l2[1] == '\0') {
-			l2[0] = '\0';
-			l2 = strrchr(l, '/');
-		}
-		l2++;
-		GitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(uri, l2);
-		P->extraction()->add(lgdeu);
-		free(l);
 	} else if(strcmp(method, "copy") == 0) {
 		f = new CopyFetch(std::string(uri), P);
 	} else if(strcmp(method, "deps") == 0) {
@@ -338,32 +312,6 @@ int li_bd_fetch(lua_State * L)
 		    new CopyGitDirExtractionUnit(src_path, ".");
 		P->extraction()->add(cgdeu);
 		free(src_path);
-	} else if(strcmp(method, "sm") == 0) {
-		if(mkdir(d->getWorkBuild(), 0777) && errno != EEXIST) {
-			// An error occured, try remove the file, then relink
-			PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
-			rmpc->addArg("-fr");
-			rmpc->addArg(d->getWorkBuild());
-			if(!rmpc->Run(P))
-				throw
-				    CustomException
-				    ("Failed to ln (symbolically), could not remove target first");
-			if(mkdir(d->getWorkBuild(), 0777))
-				throw
-				    CustomException
-				    ("Failed to mkdir, even after removing target first");
-			delete rmpc;
-		}
-		char *l = strdup(d->getWorkSrc());
-		char *l2 = strrchr(l, '/');
-		if(l2[1] == '\0') {
-			l2[0] = '\0';
-			l2 = strrchr(l, '/');
-		}
-		l2++;
-		GitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(location, l2);
-		P->extraction()->add(lgdeu);
-		free(l);
 	} else if(strcmp(method, "copy") == 0) {
 		f = new CopyFetch(std::string(location), P);
 	} else if(strcmp(method, "deps") == 0) {

@@ -308,12 +308,6 @@ namespace buildsys {
 		const char *getNewInstall() {
 			return this->new_install.c_str();
 		};
-		const char *getWorkBuild() {
-			return this->work_build.c_str();
-		};
-		const char *getWorkSrc() {
-			return this->work_src.c_str();
-		};
 
 		//! Remove all the contents of this directory
 		void clean();
@@ -334,8 +328,6 @@ namespace buildsys {
 			LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
 			LUA_ADD_TABLE_STRING(L, "path", path.c_str());
 			LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
-			LUA_ADD_TABLE_STRING(L, "work_build", work_build.c_str());
-			LUA_ADD_TABLE_STRING(L, "work_src", work_src.c_str());
 		};
 	};
 

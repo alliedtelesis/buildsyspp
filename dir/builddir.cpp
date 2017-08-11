@@ -112,18 +112,6 @@ BuildDir::BuildDir(Package * P)
 			strerror(errno));
 	}
 	this->rpath = std::string(path);
-	std::string work_path = "";
-	if(strrchr(pname, '/') != NULL) {
-		const char *tmp = strrchr(pname, '/');
-		if(*(tmp + 1) != '\0') {
-			work_path = this->path + "/" + std::string((tmp + 1));
-		}
-	}
-	if(work_path == "") {
-		work_path = this->path + "/" + P->getName();
-	}
-	this->work_src = work_path;
-	this->work_build = work_path + "-build";
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/new", pwd, gname, pname) == -1) {
