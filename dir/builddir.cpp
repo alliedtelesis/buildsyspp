@@ -31,9 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BuildDir::BuildDir(Package * P)
 {
-	const char *gname = P->getNS()->getName().c_str();
-	const char *pname = P->getName().c_str();
-	const char *pwd = WORLD->getWorkingDir()->c_str();
+	char *gname = strdup(P->getNS()->getName().c_str());
+	char *pname = strdup(P->getName().c_str());
+	char *pwd = strdup(WORLD->getWorkingDir()->c_str());
 
 	int res = mkdir("output", 0700);
 	if((res < 0) && (errno != EEXIST)) {
@@ -112,18 +112,6 @@ BuildDir::BuildDir(Package * P)
 			strerror(errno));
 	}
 	this->rpath = std::string(path);
-	std::string work_path = "";
-	if(strrchr(pname, '/') != NULL) {
-		const char *tmp = strrchr(pname, '/');
-		if(*(tmp + 1) != '\0') {
-			work_path = this->path + "/" + std::string((tmp + 1));
-		}
-	}
-	if(work_path == "") {
-		work_path = this->path + "/" + P->getName();
-	}
-	this->work_src = work_path;
-	this->work_build = work_path + "-build";
 	free(path);
 	path = NULL;
 	if(asprintf(&path, "%s/output/%s/%s/new", pwd, gname, pname) == -1) {
@@ -182,6 +170,10 @@ BuildDir::BuildDir(Package * P)
 	}
 	this->new_install = std::string(path);
 	free(path);
+
+	free(gname);
+	free(pname);
+	free(pwd);
 }
 
 void BuildDir::clean()

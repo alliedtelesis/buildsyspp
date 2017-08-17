@@ -171,6 +171,7 @@ bool World::basePackage(char *filename)
 			pthread_mutex_unlock(&this->cond_lock);
 			pthread_mutex_lock(&t_cond_lock);
 			pthread_create(&tid, NULL, build_thread, toBuild);
+			pthread_detach(tid);
 			pthread_cond_wait(&t_cond, &t_cond_lock);
 			pthread_mutex_unlock(&t_cond_lock);
 		} else {
@@ -238,11 +239,18 @@ World::~World()
 {
 	delete this->features;
 	delete this->forcedDeps;
+	this->p = NULL;
+	while(!this->namespaces->empty()) {
+		NameSpace *ns = this->namespaces->front();
+		this->namespaces->pop_front();
+		delete ns;
+	}
 	delete this->namespaces;
 	delete this->overlays;
 	delete this->graph;
 	delete this->topo_graph;
 	delete this->pwd;
+	delete this->ignoredFeatures;
 	pthread_mutex_destroy(&this->cond_lock);
 	pthread_cond_destroy(&this->cond);
 }

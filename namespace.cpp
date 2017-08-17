@@ -25,6 +25,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
+NameSpace::~NameSpace()
+{
+	while(!this->packages.empty()) {
+		Package *p = this->packages.front();
+		this->packages.pop_front();
+		delete p;
+	}
+}
+
 std::list < Package * >::iterator NameSpace::packagesStart()
 {
 	return this->packages.begin();

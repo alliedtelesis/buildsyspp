@@ -95,6 +95,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		p->fd = fds[0];
 		p->P = P;
 		pthread_create(&tid, NULL, pipe_data_thread, p);
+		pthread_detach(tid);
 	}
 	// call the program ...
 	int pid = fork();

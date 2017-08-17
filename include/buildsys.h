@@ -104,6 +104,8 @@ extern "C" {
 	int li_bd_installfile(lua_State * L);
 	int li_bd_patch(lua_State * L);
 	int li_bd_restore(lua_State * L);
+
+	int li_fu_path(lua_State * L);
 };
 
 namespace buildsys {
@@ -306,12 +308,6 @@ namespace buildsys {
 		const char *getNewInstall() {
 			return this->new_install.c_str();
 		};
-		const char *getWorkBuild() {
-			return this->work_build.c_str();
-		};
-		const char *getWorkSrc() {
-			return this->work_src.c_str();
-		};
 
 		//! Remove all the contents of this directory
 		void clean();
@@ -332,8 +328,6 @@ namespace buildsys {
 			LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
 			LUA_ADD_TABLE_STRING(L, "path", path.c_str());
 			LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
-			LUA_ADD_TABLE_STRING(L, "work_build", work_build.c_str());
-			LUA_ADD_TABLE_STRING(L, "work_src", work_src.c_str());
 		};
 	};
 
@@ -419,19 +413,42 @@ namespace buildsys {
 		void printCmd();
 	};
 
+	/* A hashable unit
+	 * For fetch and extraction units.
+	 */
+	class HashableUnit {
+	public:
+		HashableUnit() {
+		};
+		virtual std::string HASH() = 0;
+	};
 
 	/* A fetch unit
 	 * Describes a way to retrieve a file/directory
 	 */
-	class FetchUnit {
+	class FetchUnit:public HashableUnit {
 	protected:
 		std::string fetch_uri;	//!< URI of this unit
+		Package *P;	//!< Which package is this fetch unit for ?
+		bool fetched;
 	public:
-		FetchUnit(std::string uri):fetch_uri(uri) {
+		FetchUnit(std::string uri, Package * P):fetch_uri(uri), P(P) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d) = 0;
+		FetchUnit() {
+		};
+		virtual ~ FetchUnit() {
+		};
+		virtual bool fetch(BuildDir * d) = 0;
 		virtual bool force_updated() {
 			return false;
+		};
+		virtual std::string relative_path() = 0;
+		static void lua_table_r(lua_State * L) {
+			LUA_SET_TABLE_TYPE(L, FetchUnit);
+			LUA_ADD_TABLE_FUNC(L, "path", li_fu_path);
+		}
+		virtual void lua_table(lua_State * L) {
+			lua_table_r(L);
 		};
 	};
 
@@ -441,36 +458,47 @@ namespace buildsys {
 	protected:
 		bool decompress;
 		std::string filename;
+		std::string hash;
+		std::string full_name();
+		std::string final_name();
 	public:
 		DownloadFetch(std::string uri, bool decompress,
-			      std::string filename):FetchUnit(uri), decompress(decompress),
-		    filename(filename) {
+			      std::string filename, Package * P):FetchUnit(uri, P),
+		    decompress(decompress), filename(filename) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool fetch(BuildDir * d);
+		virtual std::string HASH();
+		virtual std::string relative_path() {
+			return "dl/" + this->final_name();
+		};
 	};
 
 	/* A linked file/directory
 	 */
 	class LinkFetch:public FetchUnit {
 	public:
-		LinkFetch(std::string uri):FetchUnit(uri) {
+		LinkFetch(std::string uri, Package * P):FetchUnit(uri, P) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool fetch(BuildDir * d);
 		virtual bool force_updated() {
 			return true;
 		};
+		virtual std::string HASH();
+		virtual std::string relative_path();
 	};
 
 	/* A copied file/directory
 	 */
 	class CopyFetch:public FetchUnit {
 	public:
-		CopyFetch(std::string uri):FetchUnit(uri) {
+		CopyFetch(std::string uri, Package * P):FetchUnit(uri, P) {
 		};
-		virtual bool fetch(Package * P, BuildDir * d);
+		virtual bool fetch(BuildDir * d);
 		virtual bool force_updated() {
 			return true;
 		};
+		virtual std::string HASH();
+		virtual std::string relative_path();
 	};
 
 
@@ -478,12 +506,15 @@ namespace buildsys {
 	/** An extraction unit
 	 *  Describes a single step required to re-extract a package
 	 */
-	class ExtractionUnit {
+	class ExtractionUnit:public HashableUnit {
 	protected:
 		std::string uri;	//!< URI of this unit
 		std::string * hash;	//!< Hash of this unit
 	public:
 		ExtractionUnit():uri(std::string()), hash(NULL) {
+		};
+		virtual ~ ExtractionUnit() {
+			delete this->hash;
 		};
 		virtual bool print(std::ostream & out) = 0;
 		virtual std::string type() = 0;
@@ -503,14 +534,19 @@ namespace buildsys {
 	public:
 		BuildUnit() {
 		};
+		virtual ~ BuildUnit() {
+		};
 		virtual bool print(std::ostream & out) = 0;
 		virtual std::string type() = 0;
 	};
 
 	//! A compressed file extraction unit
 	class CompressedFileExtractionUnit:public ExtractionUnit {
+	protected:
+		FetchUnit * fetch;
 	public:
 		CompressedFileExtractionUnit(const char *fName);
+		CompressedFileExtractionUnit(FetchUnit * f);
 		virtual std::string HASH();
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
@@ -525,6 +561,9 @@ namespace buildsys {
 		//! Create an extraction unit for a tar file
 		TarExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
 		};
+		//! Create an extraction unit for tar file from a fetch unit
+	TarExtractionUnit(FetchUnit * f):CompressedFileExtractionUnit(f) {
+		};
 		virtual std::string type() {
 			return std::string("TarFile");
 		}
@@ -535,6 +574,8 @@ namespace buildsys {
 	public:
 		//! Create an extraction unit for a tar file
 		ZipExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		};
+	ZipExtractionUnit(FetchUnit * f):CompressedFileExtractionUnit(f) {
 		};
 		virtual std::string type() {
 			return std::string("ZipFile");
@@ -549,6 +590,9 @@ namespace buildsys {
 		char *patch_path;
 	public:
 		PatchExtractionUnit(int level, char *patch_path, char *patch);
+		virtual ~ PatchExtractionUnit() {
+			free(patch_path);
+		};
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    level << " " << this->patch_path << " " << this->
@@ -583,6 +627,7 @@ namespace buildsys {
 		std::string toDir;
 	public:
 		GitDirExtractionUnit(const char *git_dir, const char *toDir);
+		GitDirExtractionUnit();
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    modeName() << " " << this->uri << " " << this->
@@ -636,17 +681,19 @@ namespace buildsys {
 		std::string local;
 	public:
 		GitExtractionUnit(const char *remote, const char *local,
-				  std::string refspec):GitDirExtractionUnit(remote, local),
-		    FetchUnit(remote), refspec(refspec) {
-		};
-		virtual bool fetch(Package * P, BuildDir * d);
+				  std::string refspec, Package * P);
+		virtual bool fetch(BuildDir * d);
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {
 			return "fetch";
 		};
 		virtual std::string localPath() {
 			return this->local;
-		}
+		};
+		virtual std::string HASH();
+		virtual std::string relative_path() {
+			return this->localPath();
+		};
 	};
 
 	//! A feature/value as part of the build step
@@ -778,10 +825,16 @@ namespace buildsys {
 	public:
 		Fetch():FUs(NULL), FU_count(0) {
 		};
-		bool add(FetchUnit * fu);
-		bool fetch(Package * P, BuildDir * d) {
+		~Fetch() {
 			for(size_t i = 0; i < this->FU_count; i++) {
-				if(!FUs[i]->fetch(P, d))
+				delete this->FUs[i];
+			}
+			free(this->FUs);
+		}
+		bool add(FetchUnit * fu);
+		bool fetch(BuildDir * d) {
+			for(size_t i = 0; i < this->FU_count; i++) {
+				if(!FUs[i]->fetch(d))
 					return false;
 			}
 			return true;
@@ -800,6 +853,12 @@ namespace buildsys {
 	public:
 		Extraction():EUs(NULL), EU_count(0), extracted(false) {
 		};
+		~Extraction() {
+			for(size_t i = 0; i < this->EU_count; i++) {
+				delete this->EUs[i];
+			}
+			free(this->EUs);
+		}
 		bool add(ExtractionUnit * eu);
 		bool print(std::ostream & out) {
 			for(size_t i = 0; i < this->EU_count; i++) {
@@ -824,6 +883,12 @@ namespace buildsys {
 	public:
 		BuildDescription():BUs(NULL), BU_count(0) {
 		};
+		~BuildDescription() {
+			for(size_t i = 0; i < this->BU_count; i++) {
+				delete this->BUs[i];
+			}
+			free(this->BUs);
+		};
 		bool add(BuildUnit * bu);
 		bool print(std::ostream & out) {
 			for(size_t i = 0; i < this->BU_count; i++) {
@@ -842,6 +907,7 @@ namespace buildsys {
 	public:
 		NameSpace(std::string name):name(name) {
 		};
+		~NameSpace();
 		std::string getName() {
 			return name;
 		};
@@ -923,6 +989,27 @@ namespace buildsys {
 		    hash_output(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
 		};
+		~Package() {
+			while(!this->depends.empty()) {
+				this->depends.pop_front();
+			}
+			while(!this->commands.empty()) {
+				PackageCmd *pc = this->commands.front();
+				this->commands.pop_front();
+				delete pc;
+			}
+			ns = NULL;
+			delete bd;
+			delete f;
+			delete Extract;
+			delete build_description;
+			delete lua;
+			free(this->depsExtraction);
+			if(logFile) {
+				fclose(logFile);
+				logFile = NULL;
+			}
+		};
 		//! Set the namespace this package is in
 		void setNS(NameSpace * ns) {
 			if(this->ns)
@@ -942,6 +1029,8 @@ namespace buildsys {
 		char *absolute_fetch_path(const char *location);
 		//! Get the relative fetch path for this package
 		char *relative_fetch_path(const char *location);
+		//! Get the file hash for the given file (if known)
+		char *getFileHash(const char *filename);
 		//! Recreate the build directory
 		void resetBD();
 		//! Returns the extraction
@@ -998,7 +1087,7 @@ namespace buildsys {
 		 *  and just installs this specific file
 		 *  \param i the file to install
 		 */
-		void setInstallFile(char *i) {
+		void setInstallFile(const char *i) {
 			this->installFiles.push_back(std::string(i));
 		};
 		//! Parse and load the lua file for this package

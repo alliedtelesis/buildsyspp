@@ -25,37 +25,56 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-bool DownloadFetch::fetch(Package * P, BuildDir * d)
+/* This is the full name of the file to be downloaded */
+std::string DownloadFetch::full_name()
 {
-	char *location = strdup(this->fetch_uri.c_str());
-	char *customFileName = strdup(filename.c_str());
+	const char *fname = NULL;
 
+	if(strlen(this->filename.c_str())) {
+		fname = this->filename.c_str();
+	} else {
+		fname = strrchr(this->fetch_uri.c_str(), '/');
+		fname++;
+	}
+
+	return std::string(fname);
+}
+
+/* This is the final name, without any compressed extension */
+std::string DownloadFetch::final_name()
+{
+	std::string ret = this->full_name();
+
+	if(decompress) {
+		char *fname = strdup(ret.c_str());
+		char *ext = strrchr(fname, '.');
+		if(ext != NULL)
+			ext[0] = '\0';
+		ret = std::string(fname);
+		free(fname);
+	}
+
+	return ret;
+}
+
+
+bool DownloadFetch::fetch(BuildDir * d)
+{
 	int res = mkdir("dl", 0700);
 	if((res < 0) && (errno != EEXIST)) {
 		throw CustomException("Error: Creating download directory");
 	}
 
-	bool get = true;
-	char *fname = NULL;
+	bool get = false;
 
-	if(strlen(customFileName)) {
-		fname = customFileName;
-	} else {
-		fname = strrchr(location, '/');
-		fname++;
-	}
+	std::string fullname = this->full_name();
+	std::string fname = this->final_name();
 
-	if(fname != NULL) {
-		get = false;
-		char *t = fname;
-		if(decompress) {
-			fname = strdup(fname);
-			char *ext = strrchr(fname, '.');
-			if(ext != NULL)
-				ext[0] = '\0';
-		}
+
+	{
 		char *fpath = NULL;
-		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(), fname);
+		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+			 fname.c_str());
 		FILE *f = fopen(fpath, "r");
 		if(f == NULL) {
 			get = true;
@@ -63,59 +82,93 @@ bool DownloadFetch::fetch(Package * P, BuildDir * d)
 			fclose(f);
 		}
 		free(fpath);
-		if(decompress)
-			free(fname);
-		fname = t;
 	}
+
 	if(get) {
-		bool localCacheHit;
+		bool localCacheHit = false;
 		//Attempt to get file from local tarball cache if one is configured.
 		if(WORLD->haveTarballCache()) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
 			char *url = NULL;
-			asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(), fname);
+			asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(),
+				 fname.c_str());
 			pc->addArg(url);
+			pc->addArgFmt("-O%s", fullname.c_str());
 			free(url);
-			localCacheHit = pc->Run(P);
+			localCacheHit = pc->Run(this->P);
 			delete pc;
 		}
 		//If we didn't get the file from the local cache, look upstream.
 		if(!localCacheHit) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
-			pc->addArg(location);
-			if(strlen(customFileName)) {
-				pc->addArgFmt("-O%s", customFileName);
-			}
-			if(!pc->Run(P))
+			pc->addArg(this->fetch_uri.c_str());
+			pc->addArgFmt("-O%s", fullname.c_str());
+			if(!pc->Run(this->P))
 				throw CustomException("Failed to fetch file");
 			delete pc;
 		}
 		if(decompress) {
 			// We want to run a command on this file
 			char *cmd = NULL;
-			char *ext = strrchr(fname, '.');
+			char *filename = strdup(fname.c_str());
+			char *ext = strrchr(filename, '.');
 			if(ext == NULL) {
 				log(P->getName().c_str(),
 				    "Could not guess decompression based on extension: %s\n",
-				    fname);
+				    fname.c_str());
 			}
 
 			if(strcmp(ext, ".bz2") == 0) {
-				asprintf(&cmd, "bunzip2 -d dl/%s", fname);
+				asprintf(&cmd, "bunzip2 -d dl/%s", fullname.c_str());
 			} else if(strcmp(ext, ".gz") == 0) {
-				asprintf(&cmd, "gunzip -d dl/%s", fname);
+				asprintf(&cmd, "gunzip -d dl/%s", fullname.c_str());
 			}
 			system(cmd);
 			free(cmd);
+			free(filename);
 		}
 	}
-	free(location);
-	free(customFileName);
-	return true;
+
+	bool ret = true;
+
+	if(this->hash.length() != 0) {
+		char *fpath = NULL;
+		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+			 this->final_name().c_str());
+		char *hash = hash_file(fpath);
+		free(fpath);
+		if(strcmp(this->hash.c_str(), hash) != 0) {
+			log(this->P,
+			    "Hash mismatched for %s\n(committed to %s, providing %s)",
+			    this->final_name().c_str(), this->hash.c_str(), hash);
+			ret = false;
+		}
+		free(hash);
+	}
+
+	return ret;
 }
 
 
-bool LinkFetch::fetch(Package * P, BuildDir * d)
+std::string DownloadFetch::HASH()
+{
+	/* Check if the package contains pre-computed hashes */
+	char *hash = P->getFileHash(this->final_name().c_str());
+	/* Otherwise fetch and calculate the hash */
+	if(!hash) {
+		this->fetch(NULL);
+		char *fpath = NULL;
+		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+			 this->final_name().c_str());
+		hash = hash_file(fpath);
+		free(fpath);
+	}
+	this->hash = std::string(hash);
+	free(hash);
+	return this->hash;
+}
+
+bool LinkFetch::fetch(BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd *pc = new PackageCmd(d->getPath(), "ln");
@@ -123,7 +176,7 @@ bool LinkFetch::fetch(Package * P, BuildDir * d)
 	char *l = P->relative_fetch_path(location);
 	pc->addArg(l);
 	pc->addArg(".");
-	if(!pc->Run(P)) {
+	if(!pc->Run(this->P)) {
 		// An error occured, try remove the file, then relink
 		PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
 		rmpc->addArg("-fr");
@@ -134,11 +187,11 @@ bool LinkFetch::fetch(Package * P, BuildDir * d)
 		}
 		l2++;
 		rmpc->addArg(l2);
-		if(!rmpc->Run(P))
+		if(!rmpc->Run(this->P))
 			throw
 			    CustomException
 			    ("Failed to ln (symbolically), could not remove target first");
-		if(!pc->Run(P))
+		if(!pc->Run(this->P))
 			throw
 			    CustomException
 			    ("Failed to ln (symbolically), even after removing target first");
@@ -150,7 +203,28 @@ bool LinkFetch::fetch(Package * P, BuildDir * d)
 	return true;
 }
 
-bool CopyFetch::fetch(Package * P, BuildDir * d)
+std::string LinkFetch::HASH()
+{
+	return std::string("");
+}
+
+std::string LinkFetch::relative_path()
+{
+	char *path = strdup(this->fetch_uri.c_str());
+	const char *dname = strrchr(path, '/');
+	if(dname) {
+		dname++;
+	} else {
+		dname = path;
+	}
+
+	std::string ret = std::string(dname);
+
+	free(path);
+	return ret;
+}
+
+bool CopyFetch::fetch(BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
@@ -159,7 +233,7 @@ bool CopyFetch::fetch(Package * P, BuildDir * d)
 	pc->addArg(l);
 	pc->addArg(".");
 	free(l);
-	if(!pc->Run(P))
+	if(!pc->Run(this->P))
 		throw CustomException("Failed to copy (recursively)");
 	delete pc;
 	log(P, "Copied data in, considering code updated");
@@ -167,6 +241,28 @@ bool CopyFetch::fetch(Package * P, BuildDir * d)
 	free(location);
 	return true;
 }
+
+std::string CopyFetch::HASH()
+{
+	return std::string("");
+}
+
+std::string CopyFetch::relative_path()
+{
+	char *path = strdup(this->fetch_uri.c_str());
+	const char *dname = strrchr(path, '/');
+	if(dname) {
+		dname++;
+	} else {
+		dname = path;
+	}
+
+	std::string ret = std::string(dname);
+
+	free(path);
+	return ret;
+}
+
 
 bool Fetch::add(FetchUnit * fu)
 {

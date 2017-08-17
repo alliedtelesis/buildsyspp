@@ -82,6 +82,35 @@ char *Package::relative_fetch_path(const char *location)
 }
 
 
+char *Package::getFileHash(const char *filename)
+{
+	char *ret = NULL;
+	char *hashes_file = this->relative_fetch_path("Digest");
+	FILE *hashes = fopen(hashes_file, "r");
+	if(hashes != NULL) {
+		char buf[1024];
+		memset(buf, 0, 1024);
+		while(fgets(buf, sizeof(buf), hashes) > 0) {
+			char *hash = strchr(buf, ' ');
+			if(hash != NULL) {
+				*hash = '\0';
+				hash++;
+				char *term = strchr(hash, '\n');
+				if(term) {
+					*term = '\0';
+				}
+			}
+			if(strcmp(buf, filename) == 0) {
+				ret = strdup(hash);
+				break;
+			}
+		}
+		fclose(hashes);
+	}
+	free(hashes_file);
+	return ret;
+}
+
 void Package::resetBD()
 {
 	if(this->bd != NULL) {
@@ -398,9 +427,9 @@ bool Package::fetchFrom()
 		{"install.tar.bz2", install_dir, this->name.c_str(), ".tar.bz2"},
 		{"output.info", this->bd->getPath(), ".output", ".info"}
 	};
-	const char *ffrom = WORLD->fetchFrom().c_str();
-	log(this, "FF URL: %s/%s/%s/%s", ffrom, this->getNS()->getName().c_str(),
-	    this->name.c_str(), this->buildinfo_hash.c_str());
+	log(this, "FF URL: %s/%s/%s/%s", WORLD->fetchFrom().c_str(),
+	    this->getNS()->getName().c_str(), this->name.c_str(),
+	    this->buildinfo_hash.c_str());
 
 	int count = 3;
 	if(this->isHashingOutput()) {
@@ -652,6 +681,11 @@ bool Package::build()
 		pthread_mutex_unlock(&this->lock);
 		WORLD->packageFinished(this);
 		return true;
+	}
+	// Fetch anything we don't have yet
+	if(!this->fetch()->fetch(bd)) {
+		log(this, "Fetching failed");
+		return false;
 	}
 
 	clock_gettime(CLOCK_REALTIME, &start);

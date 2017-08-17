@@ -72,8 +72,6 @@ void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 	}
 
 	if(bd) {
-		// Fetch anything we don't have yet
-		P->fetch()->fetch(P, bd);
 		// Create the new extraction info file
 		char *exinfoFname = NULL;
 		asprintf(&exinfoFname, "%s/.extraction.info.new", bd->getPath());
@@ -134,17 +132,28 @@ ExtractionInfoFileUnit *Extraction::extractionInfo(Package * P, BuildDir * bd)
 	return ret;
 }
 
+CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit * f)
+{
+	this->fetch = f;
+	this->uri = f->relative_path();
+}
+
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 {
+	this->fetch = NULL;
 	this->uri = std::string(fname);
 }
 
 std::string CompressedFileExtractionUnit::HASH()
 {
 	if(this->hash == NULL) {
-		char *Hash = hash_file(this->uri.c_str());
-		this->hash = new std::string(Hash);
-		free(Hash);
+		if(this->fetch) {
+			this->hash = new std::string(this->fetch->HASH());
+		} else {
+			char *Hash = hash_file(this->uri.c_str());
+			this->hash = new std::string(Hash);
+			free(Hash);
+		}
 	}
 	return *this->hash;
 };
@@ -265,11 +274,16 @@ GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_d
 	this->toDir = std::string(to_dir);
 }
 
+GitDirExtractionUnit::GitDirExtractionUnit()
+{
+}
+
 bool GitDirExtractionUnit::isDirty()
 {
 	char *cmd = NULL;
 	asprintf(&cmd, "cd %s && git diff --quiet HEAD", this->localPath().c_str());
 	int res = system(cmd);
+	free(cmd);
 	return (res != 0);
 }
 
@@ -320,15 +334,27 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
+GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
+				     std::string refspec, Package * P)
 {
-	char *location = strdup(this->uri.c_str());
+	this->uri = std::string(remote);
 
 	char *source_dir = NULL;
-	const char *cwd = WORLD->getWorkingDir()->c_str();
-	asprintf(&source_dir, "%s/source/%s", cwd, this->toDir.c_str());
-
+	asprintf(&source_dir, "%s/source/%s", WORLD->getWorkingDir()->c_str(), local);
 	this->local = std::string(source_dir);
+	free(source_dir);
+
+	this->refspec = refspec;
+	this->P = P;
+
+	this->fetched = false;
+}
+
+bool GitExtractionUnit::fetch(BuildDir * d)
+{
+	char *location = strdup(this->uri.c_str());
+	char *source_dir = strdup(this->local.c_str());
+	const char *cwd = WORLD->getWorkingDir()->c_str();
 
 	bool exists = false;
 	{
@@ -345,7 +371,7 @@ bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 		pc->addArg("fetch");
 		pc->addArg("origin");
 		pc->addArg("--tags");
-		if(!pc->Run(P)) {
+		if(!pc->Run(this->P)) {
 			throw CustomException("Failed: git fetch origin --tags");
 		}
 	} else {
@@ -353,7 +379,7 @@ bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 		pc->addArg("-n");
 		pc->addArg(location);
 		pc->addArg(source_dir);
-		if(!pc->Run(P))
+		if(!pc->Run(this->P))
 			throw CustomException("Failed to git clone");
 	}
 
@@ -363,22 +389,58 @@ bool GitExtractionUnit::fetch(Package * P, BuildDir * d)
 	pc->addArg("-q");
 	pc->addArg("--detach");
 	pc->addArg(this->refspec.c_str());
-	if(!pc->Run(P))
+	if(!pc->Run(this->P))
 		throw CustomException("Failed to checkout");
 
-	free(location);
+	bool res = true;
 
 	char *Hash = git_hash(source_dir);
-	this->hash = new std::string(Hash);
+
+	if(this->hash) {
+		if(strcmp(this->hash->c_str(), Hash) != 0) {
+			log(this->P,
+			    "Hash mismatch for %s\n(committed to %s, providing %s)\n",
+			    this->uri.c_str(), this->hash->c_str(), Hash);
+			res = false;
+		}
+	} else {
+		this->hash = new std::string(Hash);
+	}
+
 	free(Hash);
 
 	free(source_dir);
+	free(location);
 
-	return true;
+	this->fetched = res;
+
+	return res;
+}
+
+std::string GitExtractionUnit::HASH()
+{
+	char *digest_name = NULL;
+	asprintf(&digest_name, "%s#%s", this->uri.c_str(), this->refspec.c_str());
+	/* Check if the package contains pre-computed hashes */
+	char *Hash = P->getFileHash(digest_name);
+	free(digest_name);
+	if(Hash) {
+		this->hash = new std::string(Hash);
+		free(Hash);
+	} else {
+		this->fetch(NULL);
+	}
+	return *this->hash;
 }
 
 bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 {
+	// make sure it has been fetched
+	if(!this->fetched) {
+		if(!this->fetch(NULL)) {
+			return false;
+		}
+	}
 	// copy to work dir
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-dpRuf");
