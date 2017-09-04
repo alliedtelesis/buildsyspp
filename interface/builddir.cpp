@@ -54,12 +54,12 @@ static void add_env(Package * P, PackageCmd * pc)
 	free(pn_env);
 }
 
-int li_bd_fetch_table(lua_State * L)
+int li_bd_fetch(lua_State * L)
 {
 	/* the first argument is the table, and is implicit */
 	int argc = lua_gettop(L);
 	if(argc < 1) {
-		throw CustomException("fetch() requires at least 2 arguments");
+		throw CustomException("fetch() requires 1 argument");
 	}
 	if(!lua_istable(L, 1))
 		throw CustomException("fetch() must be called using : not .");
@@ -197,145 +197,6 @@ int li_bd_fetch_table(lua_State * L)
 	free(to);
 
 	return 1;
-}
-
-int li_bd_fetch(lua_State * L)
-{
-	/* the first argument is the table, and is implicit */
-	int argc = lua_gettop(L);
-	if(argc < 1) {
-		throw CustomException("fetch() requires at least 2 arguments");
-	}
-	if(!lua_istable(L, 1))
-		throw CustomException("fetch() must be called using : not .");
-	if(lua_istable(L, 2)) {
-		return li_bd_fetch_table(L);
-	}
-	if(!lua_isstring(L, 2))
-		throw CustomException("fetch() expects a string as the first argument");
-	if(!lua_isstring(L, 3))
-		throw CustomException("fetch() expects a string as the second argument");
-	if(argc > 3) {
-		if(!lua_isboolean(L, 4) && !lua_isstring(L, 4))
-			throw
-			    CustomException
-			    ("fetch() expects either a string or boolean as the third argument");
-	} else if(argc > 4) {
-		if(!lua_isstring(L, 5) || (lua_isstring(L, 4)))
-			throw
-			    CustomException
-			    ("fetch() expects either a string as the third or fourth argument, but not both");
-	}
-
-	/* Don't fetch anything when in parse-only mode */
-	if(WORLD->areParseOnly()) {
-		return 0;
-	}
-
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
-
-	log(P, "Using deprecated fetch API");
-
-
-	CHECK_ARGUMENT_TYPE("fetch", 1, BuildDir, d);
-
-	char *location = strdup(lua_tostring(L, 2));
-	const char *method = lua_tostring(L, 3);
-
-	if(WORLD->forcedMode() && !WORLD->isForced(P->getName())) {
-		free(location);
-		return 0;
-	}
-
-	FetchUnit *f = NULL;
-
-	if(strcmp(method, "dl") == 0) {
-		bool decompress = false;
-		char *filename = strdup("");
-		if(argc > 3) {
-			if(lua_isboolean(L, 4)) {
-				decompress = lua_toboolean(L, 4);
-			} else {
-				filename = strdup(lua_tostring(L, 4));
-			}
-		} else if(argc > 4) {
-			filename = strdup(lua_tostring(L, 5));
-		}
-		f = new DownloadFetch(std::string(location), decompress,
-				      std::string(filename), P);
-		free(filename);
-	} else if(strcmp(method, "git") == 0) {
-		const char *branch = lua_tostring(L, 4);
-		const char *local = lua_tostring(L, 5);
-		if(local == NULL) {
-			char *l2 = strrchr(location, '/');
-			if(l2[1] == '\0') {
-				l2[0] = '\0';
-				l2 = strrchr(location, '/');
-			}
-			l2++;
-			char *dotgit = strstr(l2, ".git");
-			if(dotgit) {
-				dotgit[0] = '\0';
-			}
-			local = l2;
-		}
-		if(branch == NULL) {
-			// Default to master
-			branch = "origin/master";
-		}
-		GitExtractionUnit *geu = new GitExtractionUnit(location, local, branch, P);
-		f = geu;
-		P->extraction()->add(geu);
-	} else if(strcmp(method, "linkgit") == 0) {
-		char *l = P->relative_fetch_path(location);
-		char *l2 = strrchr(l, '/');
-		if(l2[1] == '\0') {
-			l2[0] = '\0';
-			l2 = strrchr(l, '/');
-		}
-		l2++;
-		LinkGitDirExtractionUnit *lgdeu =
-		    new LinkGitDirExtractionUnit(location, l2);
-		P->extraction()->add(lgdeu);
-		free(l);
-	} else if(strcmp(method, "link") == 0) {
-		f = new LinkFetch(std::string(location), P);
-	} else if(strcmp(method, "copyfile") == 0) {
-		char *file_path = P->relative_fetch_path(location);
-		P->extraction()->add(new FileCopyExtractionUnit(file_path));
-		free(file_path);
-	} else if(strcmp(method, "copygit") == 0) {
-		char *src_path = P->relative_fetch_path(location);
-		CopyGitDirExtractionUnit *cgdeu =
-		    new CopyGitDirExtractionUnit(src_path, ".");
-		P->extraction()->add(cgdeu);
-		free(src_path);
-	} else if(strcmp(method, "copy") == 0) {
-		f = new CopyFetch(std::string(location), P);
-	} else if(strcmp(method, "deps") == 0) {
-		char *path = absolute_path(d, location);
-		// record this directory (need to complete this operation later)
-		lua_getglobal(L, "P");
-		Package *P = (Package *) lua_topointer(L, -1);
-		P->setDepsExtract(path);
-		log(P, "Will add installed files, considering code updated");
-		P->setCodeUpdated();
-	} else {
-		throw CustomException("Unsupported fetch method");
-	}
-
-	if(f) {
-		P->fetch()->add(f);
-		if(f->force_updated()) {
-			P->setCodeUpdated();
-		}
-	}
-
-	free(location);
-
-	return 0;
 }
 
 int li_bd_restore(lua_State * L)
