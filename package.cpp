@@ -664,6 +664,15 @@ bool Package::build()
 			return false;
 	}
 
+	if((WORLD->forcedMode() && !WORLD->isForced(this->name))) {
+		pthread_mutex_lock(&this->lock);
+		log(this, "Building suppressed");
+		// Just pretend we are built
+		this->built = true;
+		pthread_mutex_unlock(&this->lock);
+		WORLD->packageFinished(this);
+		return true;
+	}
 	// Create the new extraction.info file
 	this->Extract->prepareNewExtractInfo(this, this->bd);
 
@@ -673,10 +682,10 @@ bool Package::build()
 	// Check if building is required
 	bool sb = this->shouldBuild();
 
-	if((WORLD->forcedMode() && !WORLD->isForced(this->name)) || (!sb)) {
+	if(!sb) {
 		pthread_mutex_lock(&this->lock);
 		log(this, "Not required");
-		// Just pretend we are built
+		// Already built
 		this->built = true;
 		pthread_mutex_unlock(&this->lock);
 		WORLD->packageFinished(this);
