@@ -335,6 +335,20 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 	return ret;
 }
 
+void Package::updateBuildInfoHashExisting()
+{
+	// populate the build.info hash
+	char *build_info_file = NULL;
+	asprintf(&build_info_file, "%s/.build.info", this->bd->getPath());
+	char *hash = hash_file(build_info_file);
+	if(hash != NULL) {
+		this->buildinfo_hash = std::string(hash);
+	}
+	log(this, "Hash: %s", hash);
+	free(hash);
+	free(build_info_file);
+}
+
 void Package::updateBuildInfoHash()
 {
 	// populate the build.info hash
@@ -357,7 +371,8 @@ BuildUnit *Package::buildInfo()
 	} else {
 		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
 		if(this->buildinfo_hash.compare("") == 0) {
-			log(this, "Package %s hash is empty\n", this->bd->getShortPath());
+			log(this, "build.info (in %s) is empty", this->bd->getShortPath());
+			log(this, "You probably need to build this package");
 			return NULL;
 		}
 		res = new BuildInfoFileUnit(Info_file, this->buildinfo_hash);
@@ -665,6 +680,8 @@ bool Package::build()
 	}
 
 	if((WORLD->forcedMode() && !WORLD->isForced(this->name))) {
+		// Set the build.info hash based on what is currently present
+		this->updateBuildInfoHashExisting();
 		pthread_mutex_lock(&this->lock);
 		log(this, "Building suppressed");
 		// Just pretend we are built

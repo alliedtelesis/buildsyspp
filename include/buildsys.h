@@ -950,8 +950,10 @@ namespace buildsys {
 		pthread_mutex_t lock;
 		time_t run_secs;
 		FILE *logFile;
-		//! Update the buildinfo hash file
+		//! Set the buildinfo file hash from the new .build.info.new file
 		void updateBuildInfoHash();
+		//! Set the buildinfo file hash from the existing .build.info file
+		void updateBuildInfoHashExisting();
 	protected:
 		//! Extract the new staging directory this package created in the given path
 		bool extract_staging(const char *dir, std::list < std::string > *done);
