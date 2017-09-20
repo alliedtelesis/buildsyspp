@@ -60,10 +60,12 @@ char *Package::absolute_fetch_path(const char *location)
 {
 	char *src_path = NULL;
 	const char *cwd = WORLD->getWorkingDir()->c_str();
-	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.') {
+	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
 		asprintf(&src_path, "%s/%s", cwd, location);
+	} else if(location[0] == '.') {
+		asprintf(&src_path, "%s/%s/%s", cwd, this->getOverlay().c_str(), location);
 	} else {
-		asprintf(&src_path, "%s/%s/%s/%s", cwd, this->getOverlay().c_str(),
+		asprintf(&src_path, "%s/%s/package/%s/%s", cwd, this->getOverlay().c_str(),
 			 this->getName().c_str(), location);
 	}
 	return src_path;
@@ -72,8 +74,10 @@ char *Package::absolute_fetch_path(const char *location)
 char *Package::relative_fetch_path(const char *location)
 {
 	char *src_path = NULL;
-	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.') {
+	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
 		src_path = strdup(location);
+	} else if(location[0] == '.') {
+		asprintf(&src_path, "%s/%s", this->getOverlay().c_str(), location);
 	} else {
 		asprintf(&src_path, "%s/package/%s/%s", this->getOverlay().c_str(),
 			 this->getName().c_str(), location);
