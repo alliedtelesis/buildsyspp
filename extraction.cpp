@@ -368,11 +368,18 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(exists ? source_dir : cwd, "git"));
 
 	if(exists) {
-		pc->addArg("fetch");
-		pc->addArg("origin");
-		pc->addArg("--tags");
-		if(!pc->Run(this->P)) {
-			throw CustomException("Failed: git fetch origin --tags");
+		/* Check if the commit is already present */
+		std::string cmd =
+		    "cd " + std::string(source_dir) + "; git cat-file -e " + this->refspec +
+		    " 2>/dev/null";
+		if(system(cmd.c_str()) != 0) {
+			/* If not, fetch everything from origin */
+			pc->addArg("fetch");
+			pc->addArg("origin");
+			pc->addArg("--tags");
+			if(!pc->Run(this->P)) {
+				throw CustomException("Failed: git fetch origin --tags");
+			}
 		}
 	} else {
 		pc->addArg("clone");

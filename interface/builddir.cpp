@@ -67,7 +67,7 @@ int li_bd_fetch(lua_State * L)
 		throw CustomException("fetch() expects a table as the first argument");
 
 	char *uri = NULL;
-        char *to = NULL;
+	char *to = NULL;
 	char *method = NULL;
 	char *filename = NULL;
 	bool decompress = false;
@@ -171,8 +171,8 @@ int li_bd_fetch(lua_State * L)
 		lua_getglobal(L, "P");
 		Package *P = (Package *) lua_topointer(L, -1);
 		P->setDepsExtract(path);
-                log(P, "Will add installed files, considering code updated");
-                P->setCodeUpdated();
+		log(P, "Will add installed files, considering code updated");
+		P->setCodeUpdated();
 	} else {
 		throw CustomException("Unsupported fetch method");
 	}

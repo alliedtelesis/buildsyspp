@@ -60,10 +60,12 @@ char *Package::absolute_fetch_path(const char *location)
 {
 	char *src_path = NULL;
 	const char *cwd = WORLD->getWorkingDir()->c_str();
-	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.') {
+	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
 		asprintf(&src_path, "%s/%s", cwd, location);
+	} else if(location[0] == '.') {
+		asprintf(&src_path, "%s/%s/%s", cwd, this->getOverlay().c_str(), location);
 	} else {
-		asprintf(&src_path, "%s/%s/%s/%s", cwd, this->getOverlay().c_str(),
+		asprintf(&src_path, "%s/%s/package/%s/%s", cwd, this->getOverlay().c_str(),
 			 this->getName().c_str(), location);
 	}
 	return src_path;
@@ -72,8 +74,10 @@ char *Package::absolute_fetch_path(const char *location)
 char *Package::relative_fetch_path(const char *location)
 {
 	char *src_path = NULL;
-	if(location[0] == '/' || !strncmp(location, "dl/", 3) || location[0] == '.') {
+	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
 		src_path = strdup(location);
+	} else if(location[0] == '.') {
+		asprintf(&src_path, "%s/%s", this->getOverlay().c_str(), location);
 	} else {
 		asprintf(&src_path, "%s/package/%s/%s", this->getOverlay().c_str(),
 			 this->getName().c_str(), location);
@@ -335,6 +339,20 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 	return ret;
 }
 
+void Package::updateBuildInfoHashExisting()
+{
+	// populate the build.info hash
+	char *build_info_file = NULL;
+	asprintf(&build_info_file, "%s/.build.info", this->bd->getPath());
+	char *hash = hash_file(build_info_file);
+	if(hash != NULL) {
+		this->buildinfo_hash = std::string(hash);
+	}
+	log(this, "Hash: %s", hash);
+	free(hash);
+	free(build_info_file);
+}
+
 void Package::updateBuildInfoHash()
 {
 	// populate the build.info hash
@@ -357,7 +375,8 @@ BuildUnit *Package::buildInfo()
 	} else {
 		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
 		if(this->buildinfo_hash.compare("") == 0) {
-			log(this, "Package %s hash is empty\n", this->bd->getShortPath());
+			log(this, "build.info (in %s) is empty", this->bd->getShortPath());
+			log(this, "You probably need to build this package");
 			return NULL;
 		}
 		res = new BuildInfoFileUnit(Info_file, this->buildinfo_hash);
@@ -664,6 +683,17 @@ bool Package::build()
 			return false;
 	}
 
+	if((WORLD->forcedMode() && !WORLD->isForced(this->name))) {
+		// Set the build.info hash based on what is currently present
+		this->updateBuildInfoHashExisting();
+		pthread_mutex_lock(&this->lock);
+		log(this, "Building suppressed");
+		// Just pretend we are built
+		this->built = true;
+		pthread_mutex_unlock(&this->lock);
+		WORLD->packageFinished(this);
+		return true;
+	}
 	// Create the new extraction.info file
 	this->Extract->prepareNewExtractInfo(this, this->bd);
 
@@ -673,10 +703,10 @@ bool Package::build()
 	// Check if building is required
 	bool sb = this->shouldBuild();
 
-	if((WORLD->forcedMode() && !WORLD->isForced(this->name)) || (!sb)) {
+	if(!sb) {
 		pthread_mutex_lock(&this->lock);
 		log(this, "Not required");
-		// Just pretend we are built
+		// Already built
 		this->built = true;
 		pthread_mutex_unlock(&this->lock);
 		WORLD->packageFinished(this);

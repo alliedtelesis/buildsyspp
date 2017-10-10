@@ -109,9 +109,12 @@ int li_builddir(lua_State * L)
 	CREATE_TABLE(L, P->builddir());
 	P->builddir()->lua_table(L);
 
-	if((args == 1 && lua_toboolean(L, 1)) ||
-	   (WORLD->areCleaning() &&
-	    !(WORLD->forcedMode() && !WORLD->isForced(P->getName())))) {
+	bool clean_requested = (args == 1 && lua_toboolean(L, 1));
+
+	if((clean_requested || WORLD->areCleaning()) &&
+	   !WORLD->areParseOnly() &&
+	   !(WORLD->forcedMode() && !WORLD->isForced(P->getName()))) {
+		log(P, "Cleaning");
 		P->builddir()->clean();
 	}
 

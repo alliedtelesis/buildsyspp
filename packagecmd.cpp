@@ -68,7 +68,7 @@ bool PackageCmd::Run(Package * P)
 	if(run(P, this->args[0], this->args, this->path, ne) != 0)
 		res = false;
 
-	if (!res) {
+	if(!res) {
 		this->printCmd();
 	}
 
