@@ -145,7 +145,18 @@ static void *build_thread(void *t)
 
 bool World::basePackage(char *filename)
 {
-	this->p = new Package(this->findNameSpace(filename), filename, filename, "");
+	// Strip the directory from the base package name
+	const char *pname = basename(filename);
+
+	// Strip the '.lua' from end of the filename for the namespace name
+	char *nsname = strdup(pname);
+	int p_len = strlen(pname);
+	if(nsname[p_len - 4] == '.') {
+		nsname[p_len - 4] = '\0';
+	}
+
+	this->p = new Package(this->findNameSpace(nsname), pname, filename, "");
+	free(nsname);
 
 	try {
 		// Load all the lua files

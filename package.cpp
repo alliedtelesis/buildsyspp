@@ -373,12 +373,12 @@ BuildUnit *Package::buildInfo()
 		asprintf(&Info_file, "%s/.output.info", this->bd->getShortPath());
 		res = new OutputInfoFileUnit(Info_file);
 	} else {
-		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
 		if(this->buildinfo_hash.compare("") == 0) {
 			log(this, "build.info (in %s) is empty", this->bd->getShortPath());
 			log(this, "You probably need to build this package");
 			return NULL;
 		}
+		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
 		res = new BuildInfoFileUnit(Info_file, this->buildinfo_hash);
 	}
 	free(Info_file);
