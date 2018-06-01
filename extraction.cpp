@@ -49,6 +49,18 @@ static char *git_diff_hash(const char *gdir)
 	return Commit;
 }
 
+static char *git_remote(const char *gdir, const char *remote)
+{
+	char *cmd = NULL;
+	asprintf(&cmd, "cd %s && git config --local --get remote.%s.url", gdir, remote);
+	FILE *f = popen(cmd, "r");
+	char *Remote = (char *) calloc(1025, sizeof(char));
+	fread(Remote, sizeof(char), 1024, f);
+	pclose(f);
+	free(cmd);
+	return Remote;
+}
+
 bool Extraction::add(ExtractionUnit * eu)
 {
 	ExtractionUnit **t = this->EUs;
@@ -350,6 +362,43 @@ GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
 	this->fetched = false;
 }
 
+bool GitExtractionUnit::updateOrigin()
+{
+	char *location = strdup(this->uri.c_str());
+	char *source_dir = strdup(this->local.c_str());
+	char *remote_url = git_remote(source_dir, "origin");
+
+	if(strcmp(remote_url, location) != 0) {
+		std::unique_ptr < PackageCmd > pc(new PackageCmd(source_dir, "git"));
+		pc->addArg("remote");
+		// If the remote doesn't exist, add it
+		if(strcmp(remote_url, "") == 0) {
+			pc->addArg("add");
+		} else {
+			pc->addArg("set-url");
+		}
+		pc->addArg("origin");
+		pc->addArg(location);
+		if(!pc->Run(this->P)) {
+			throw CustomException("Failed: git remote set-url origin");
+		}
+		// Forcibly fetch if the remote url has change,
+		// if the ref is origin the user wont get what they wanted otherwise
+		pc.reset(new PackageCmd(source_dir, "git"));
+		pc->addArg("fetch");
+		pc->addArg("origin");
+		pc->addArg("--tags");
+		if(!pc->Run(this->P)) {
+			throw CustomException("Failed: git fetch origin --tags");
+		}
+	}
+
+	free(location);
+	free(source_dir);
+	free(remote_url);
+	return true;
+}
+
 bool GitExtractionUnit::fetch(BuildDir * d)
 {
 	char *location = strdup(this->uri.c_str());
@@ -368,6 +417,8 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(exists ? source_dir : cwd, "git"));
 
 	if(exists) {
+		/* Update the origin */
+		this->updateOrigin();
 		/* Check if the commit is already present */
 		std::string cmd =
 		    "cd " + std::string(source_dir) + "; git cat-file -e " + this->refspec +

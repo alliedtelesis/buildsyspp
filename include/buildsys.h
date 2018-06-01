@@ -679,6 +679,7 @@ namespace buildsys {
 	private:
 		std::string refspec;
 		std::string local;
+		bool updateOrigin();
 	public:
 		GitExtractionUnit(const char *remote, const char *local,
 				  std::string refspec, Package * P);
