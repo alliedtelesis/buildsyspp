@@ -28,8 +28,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static char *git_hash(const char *gdir)
 {
 	char *cmd = NULL;
-	asprintf(&cmd, "cd %s && git rev-parse HEAD", gdir);
+	if(asprintf(&cmd, "cd %s && git rev-parse HEAD", gdir) < 0) {
+		throw MemoryException();
+	}
 	FILE *f = popen(cmd, "r");
+	if(f == NULL) {
+		throw CustomException("git rev-parse HEAD failed");
+	}
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	pclose(f);
@@ -40,8 +45,13 @@ static char *git_hash(const char *gdir)
 static char *git_diff_hash(const char *gdir)
 {
 	char *cmd = NULL;
-	asprintf(&cmd, "cd %s && git diff HEAD | sha1sum", gdir);
+	if(asprintf(&cmd, "cd %s && git diff HEAD | sha1sum", gdir) < 0) {
+		throw MemoryException();
+	}
 	FILE *f = popen(cmd, "r");
+	if(f == NULL) {
+		throw CustomException("git diff | sha1sum failed");
+	}
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	pclose(f);
@@ -52,8 +62,14 @@ static char *git_diff_hash(const char *gdir)
 static char *git_remote(const char *gdir, const char *remote)
 {
 	char *cmd = NULL;
-	asprintf(&cmd, "cd %s && git config --local --get remote.%s.url", gdir, remote);
+	if(asprintf(&cmd, "cd %s && git config --local --get remote.%s.url", gdir, remote) <
+	   0) {
+		throw MemoryException();
+	}
 	FILE *f = popen(cmd, "r");
+	if(f == NULL) {
+		throw CustomException("git config --local --get remote. .url failed");
+	}
 	char *Remote = (char *) calloc(1025, sizeof(char));
 	fread(Remote, sizeof(char), 1024, f);
 	pclose(f);
