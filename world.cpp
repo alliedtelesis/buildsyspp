@@ -120,20 +120,26 @@ static void *build_thread(void *t)
 
 	bool skip = false;
 
-	if(p->isBuilding()) {
-		skip = true;
-	}
-	if(!skip)
-		p->setBuilding();
-	pthread_mutex_lock(&t_cond_lock);
-	pthread_cond_broadcast(&t_cond);
-	pthread_mutex_unlock(&t_cond_lock);
-	if(!skip) {
-		if(!p->build()) {
-			WORLD->setFailed();
-			log((p->getNS()->getName() + "," + p->getName()).c_str(),
-			    "Building failed");
+	try {
+		if(p->isBuilding()) {
+			skip = true;
 		}
+		if(!skip)
+			p->setBuilding();
+		pthread_mutex_lock(&t_cond_lock);
+		pthread_cond_broadcast(&t_cond);
+		pthread_mutex_unlock(&t_cond_lock);
+		if(!skip) {
+			if(!p->build()) {
+				WORLD->setFailed();
+				log((p->getNS()->getName() + "," + p->getName()).c_str(),
+				    "Building failed");
+			}
+		}
+	}
+	catch(Exception & E) {
+		error(E.error_msg().c_str());
+		throw E;
 	}
 	WORLD->threadEnded();
 

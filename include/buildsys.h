@@ -118,7 +118,9 @@ namespace buildsys {
 	class Exception {
 	public:
 		//! Return the error message for this exception
-		virtual std::string error_msg() = 0;
+		virtual std::string error_msg() {
+			return "";
+		};
 	};
 
 	/*! An exception with a custom error message */

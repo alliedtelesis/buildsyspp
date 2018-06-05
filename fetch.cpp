@@ -156,12 +156,9 @@ std::string DownloadFetch::HASH()
 	char *hash = P->getFileHash(this->final_name().c_str());
 	/* Otherwise fetch and calculate the hash */
 	if(!hash) {
-		this->fetch(NULL);
-		char *fpath = NULL;
-		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
-			 this->final_name().c_str());
-		hash = hash_file(fpath);
-		free(fpath);
+		log(P, "No hash for %s in package/%s/Digest", this->final_name().c_str(),
+		    P->getName().c_str());
+		throw CustomException("Missing hash");
 	}
 	this->hash = std::string(hash);
 	free(hash);
