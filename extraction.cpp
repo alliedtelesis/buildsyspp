@@ -491,6 +491,20 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	return res;
 }
 
+static bool refspec_is_commitid(std::string refspec)
+{
+	const char *refspec_str = refspec.c_str();
+	if(strlen(refspec_str) != 40) {
+		return false;
+	}
+	for(int i = 0; i < 40; i++) {
+		if(!isxdigit(refspec_str[i])) {
+			return false;
+		}
+	}
+	return true;
+}
+
 std::string GitExtractionUnit::HASH()
 {
 	char *digest_name = NULL;
@@ -501,6 +515,8 @@ std::string GitExtractionUnit::HASH()
 	if(Hash) {
 		this->hash = new std::string(Hash);
 		free(Hash);
+	} else if(refspec_is_commitid(this->refspec)) {
+		this->hash = new std::string(this->refspec);
 	} else {
 		this->fetch(NULL);
 	}
