@@ -25,21 +25,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-static char *git_hash(const char *gdir)
+static char *git_hash_ref(const char *gdir, const char *refspec)
 {
 	char *cmd = NULL;
-	if(asprintf(&cmd, "cd %s && git rev-parse HEAD", gdir) < 0) {
+	if(asprintf(&cmd, "cd %s && git rev-parse %s", gdir, refspec) < 0) {
 		throw MemoryException();
 	}
 	FILE *f = popen(cmd, "r");
 	if(f == NULL) {
-		throw CustomException("git rev-parse HEAD failed");
+		throw CustomException("git rev-parse ref failed");
 	}
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	pclose(f);
 	free(cmd);
 	return Commit;
+}
+
+static char *git_hash(const char *gdir)
+{
+	return git_hash_ref(gdir, "HEAD");
 }
 
 static char *git_diff_hash(const char *gdir)
@@ -457,15 +462,34 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 			throw CustomException("Failed to git clone");
 	}
 
-	pc.reset(new PackageCmd(source_dir, "git"));
-	// switch to refspec
-	pc->addArg("checkout");
-	pc->addArg("-q");
-	pc->addArg("--detach");
-	pc->addArg(this->refspec.c_str());
-	if(!pc->Run(this->P))
-		throw CustomException("Failed to checkout");
-
+	if(this->refspec.compare("HEAD")) {
+		// Don't touch it
+	} else {
+		std::string cmd =
+		    "cd " + std::string(source_dir) +
+		    "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
+		if(system(cmd.c_str()) == 0) {
+			char *head_hash = git_hash_ref(source_dir, "HEAD");
+			char *branch_hash = git_hash_ref(source_dir, this->refspec.c_str());
+			if(strcmp(head_hash, branch_hash)) {
+				throw CustomException("Asked to use branch: " +
+						      this->refspec + ", but " +
+						      source_dir +
+						      " is off somewhere else");
+			}
+			free(head_hash);
+			free(branch_hash);
+		} else {
+			pc.reset(new PackageCmd(source_dir, "git"));
+			// switch to refspec
+			pc->addArg("checkout");
+			pc->addArg("-q");
+			pc->addArg("--detach");
+			pc->addArg(this->refspec.c_str());
+			if(!pc->Run(this->P))
+				throw CustomException("Failed to checkout");
+		}
+	}
 	bool res = true;
 
 	char *Hash = git_hash(source_dir);
