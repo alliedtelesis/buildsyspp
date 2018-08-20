@@ -462,7 +462,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 			throw CustomException("Failed to git clone");
 	}
 
-	if(this->refspec.compare("HEAD")) {
+	if(this->refspec.compare("HEAD") == 0) {
 		// Don't touch it
 	} else {
 		std::string cmd =
