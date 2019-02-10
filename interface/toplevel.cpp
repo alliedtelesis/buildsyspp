@@ -154,30 +154,67 @@ int li_depend(lua_State * L)
 	}
 
 	NameSpace *ns = NULL;
-	if(lua_gettop(L) == 2) {
-		if(lua_type(L, 2) != LUA_TSTRING) {
-			throw
-			    CustomException
-			    ("depend() takes a string as the second argument");
-		}
-		ns = WORLD->findNameSpace(std::string(lua_tostring(L, 2)));
-	}
 	// get the current package
 	lua_getglobal(L, "P");
 	Package *P = (Package *) lua_topointer(L, -1);
+	lua_pop(L, 1);
+
 	if(lua_type(L, 1) == LUA_TSTRING) {
+		if(lua_gettop(L) == 2) {
+			if(lua_type(L, 2) != LUA_TSTRING) {
+				throw
+				    CustomException
+				    ("depend() takes a string as the second argument");
+			}
+			ns = WORLD->findNameSpace(std::string(lua_tostring(L, 2)));
+		}
 		depend(P, ns, lua_tostring(L, 1));
 	} else if(lua_istable(L, 1)) {
+		std::list < std::string > package_names;
 		lua_pushnil(L);	/* first key */
 		while(lua_next(L, 1) != 0) {
 			/* uses 'key' (at index -2) and 'value' (at index -1) */
-			if(lua_type(L, -1) != LUA_TSTRING)
+			if(lua_type(L, -2) != LUA_TSTRING) {
 				throw
 				    CustomException
-				    ("depend() requires a table of strings as the only argument\n");
-			depend(P, ns, lua_tostring(L, -1));
+				    ("depend() requires a table with strings as keys\n");
+			}
+			const char *key = lua_tostring(L, -2);
+			if(strcmp(key, "package") == 0 || strcmp(key, "packages") == 0) {
+				if(lua_type(L, -1) == LUA_TSTRING) {
+					package_names.push_back(std::string(lua_tostring
+									    (L, -1)));
+				} else if(lua_istable(L, -1)) {
+					lua_pushnil(L);
+					while(lua_next(L, -2) != 0) {
+						if(lua_type(L, -1) != LUA_TSTRING) {
+							throw
+							    CustomException
+							    ("depend() requires a single package name or table of package names\n");
+						}
+						package_names.push_back(std::string
+									(lua_tostring
+									 (L, -1)));
+						lua_pop(L, 1);
+					}
+				} else {
+					throw
+					    CustomException
+					    ("depend() requires a single package name or table of package names\n");
+				}
+			} else if(strcmp(key, "namespace") == 0) {
+				if(lua_type(L, -1) != LUA_TSTRING) {
+					throw
+					    CustomException
+					    ("depend() requires a string for the namespace name\n");
+				}
+				ns = WORLD->findNameSpace(std::string(lua_tostring(L, -1)));
+			}
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
+		}
+		for(auto iter = package_names.begin(); iter != package_names.end(); iter++) {
+			depend(P, ns, (*iter).c_str());
 		}
 	} else {
 		throw CustomException("depend() takes a string or a table of strings");
