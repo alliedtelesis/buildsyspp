@@ -387,6 +387,10 @@ BuildUnit *Package::buildInfo()
 
 void Package::prepareBuildInfo()
 {
+	if(this->buildInfoPrepared) {
+		return;
+	}
+
 	// Add the extraction info file
 	this->build_description->add(this->Extract->extractionInfo(this, this->bd));
 
@@ -411,6 +415,7 @@ void Package::prepareBuildInfo()
 	buildInfo.close();
 	free(buildInfoFname);
 	this->updateBuildInfoHash();
+	this->buildInfoPrepared = true;
 }
 
 void Package::updateBuildInfo(bool updateOutputHash)
@@ -473,7 +478,7 @@ bool Package::fetchFrom()
 	return ret;
 }
 
-bool Package::shouldBuild()
+bool Package::shouldBuild(bool locally)
 {
 	// we need to rebuild if the code is updated
 	if(this->codeUpdated)
@@ -516,14 +521,18 @@ bool Package::shouldBuild()
 	cmd = NULL;
 
 	// if there are changes,
-	if(res != 0 || (ret && !this->codeUpdated)) {
+	if(res != 0 || ret) {
 		// see if we can grab new staging/install files
-		if(this->canFetchFrom() && WORLD->canFetchFrom()) {
+		if(!locally && this->canFetchFrom() && WORLD->canFetchFrom()) {
 			ret = this->fetchFrom();
 		} else {
 			// otherwise, make sure we get (re)built
 			ret = true;
 		}
+	}
+
+	if(locally) {
+		ret = true;
 	}
 
 	return ret;
@@ -665,12 +674,12 @@ bool Package::packageNewInstall()
 	return true;
 }
 
-bool Package::build()
+bool Package::build(bool locally)
 {
 	struct timespec start, end;
 
 	// Already build, pretend to successfully build
-	if(this->isBuilt()) {
+	if((locally && this->wasBuilt()) || (!locally && this->isBuilt())) {
 		return true;
 	}
 
@@ -701,7 +710,7 @@ bool Package::build()
 	this->prepareBuildInfo();
 
 	// Check if building is required
-	bool sb = this->shouldBuild();
+	bool sb = this->shouldBuild(locally);
 
 	if(!sb) {
 		pthread_mutex_lock(&this->lock);
@@ -712,6 +721,17 @@ bool Package::build()
 		WORLD->packageFinished(this);
 		return true;
 	}
+	// Need to check that any packages that need to have been built locally
+	// actually have been
+	dIt = this->dependsStart();
+	for(; dIt != dEnds; dIt++) {
+		if((*dIt)->getLocally()) {
+			log((*dIt)->getPackage(), "Build triggered by %s", this->getName().c_str());
+			if(!(*dIt)->getPackage()->build(true))
+				return false;
+		}
+	}
+
 	// Fetch anything we don't have yet
 	if(!this->fetch()->fetch(bd)) {
 		log(this, "Fetching failed");

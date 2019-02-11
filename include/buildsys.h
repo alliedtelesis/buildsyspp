@@ -965,6 +965,7 @@ namespace buildsys {
 		string_list installFiles;
 		bool visiting;
 		bool processed;
+		bool buildInfoPrepared;
 		bool built;
 		bool building;
 		bool codeUpdated;
@@ -999,6 +1000,13 @@ namespace buildsys {
 		bool packageNewStaging();
 		//! Package up the new/install directory (or installFile, if set)
 		bool packageNewInstall();
+		/** Should this package be rebuilt ?
+		 *  This returns true when any of the following occur:
+		 *  - The output staging or install tarballs are removed
+		 *  - The package file changes
+		 *  - Any of the feature values that are used by the package change
+		 */
+		bool shouldBuild(bool locally);
 	public:
 		/** Create a package
 		 *  Constucts a package with a given name, based on a specific file
@@ -1010,7 +1018,7 @@ namespace buildsys {
 		    buildinfo_hash(""), ns(ns), bd(new BuildDir(this)), f(new Fetch()),
 		    Extract(new Extraction()), build_description(new BuildDescription()),
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
-		    processed(false), built(false), building(false),
+		    processed(false), buildInfoPrepared(false), built(false), building(false),
 		    codeUpdated(false), was_built(false), no_fetch_from(false),
 		    hash_output(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
@@ -1158,15 +1166,8 @@ namespace buildsys {
 		bool isHashingOutput() {
 			return this->hash_output;
 		};
-		/** Should this package be rebuilt ?
-		 *  This returns true when any of the following occur:
-		 *  - The output staging or install tarballs are removed
-		 *  - The package file changes
-		 *  - Any of the feature values that are used by the package change
-		 */
-		bool shouldBuild();
 		//! Build this package
-		bool build();
+		bool build(bool locally = false);
 		//! Has building of this package already started ?
 		bool isBuilding();
 		//! Tell this package it is now building
