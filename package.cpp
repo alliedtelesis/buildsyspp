@@ -25,12 +25,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-std::list < Package * >::iterator Package::dependsStart()
+std::list < PackageDepend * >::iterator Package::dependsStart()
 {
 	return this->depends.begin();
 }
 
-std::list < Package * >::iterator Package::dependsEnd()
+std::list < PackageDepend * >::iterator Package::dependsEnd()
 {
 	return this->depends.end();
 }
@@ -161,11 +161,11 @@ bool Package::process()
 
 	this->processed = true;
 
-	std::list < Package * >::iterator iter = this->dependsStart();
-	std::list < Package * >::iterator end = this->dependsEnd();
+	auto iter = this->dependsStart();
+	auto end = this->dependsEnd();
 
 	for(; iter != end; iter++) {
-		if(!(*iter)->process()) {
+		if(!(*iter)->getPackage()->process()) {
 			throw CustomException("dependency failure");
 			return false;
 		}
@@ -187,11 +187,11 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	std::list < Package * >::iterator dIt = this->dependsStart();
-	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	auto dIt = this->dependsStart();
+	auto dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->extract_staging(dir, done))
+		if(!(*dIt)->getPackage()->extract_staging(dir, done))
 			return false;
 	}
 
@@ -228,12 +228,12 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	std::list < Package * >::iterator dIt = this->dependsStart();
-	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	auto dIt = this->dependsStart();
+	auto dEnds = this->dependsEnd();
 
 	if(!this->intercept) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->extract_install(dir, done))
+			if(!(*dIt)->getPackage()->extract_install(dir, done))
 				return false;
 		}
 	}
@@ -283,12 +283,12 @@ bool Package::canBuild()
 		return true;
 	}
 
-	std::list < Package * >::iterator dIt = this->dependsStart();
-	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	auto dIt = this->dependsStart();
+	auto dEnds = this->dependsEnd();
 
 	if(dIt != dEnds) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->isBuilt())
+			if(!(*dIt)->getPackage()->isBuilt())
 				return false;
 		}
 	}
@@ -391,11 +391,11 @@ void Package::prepareBuildInfo()
 	this->build_description->add(this->Extract->extractionInfo(this, this->bd));
 
 	// Add each of our dependencies build info files
-	std::list < Package * >::iterator dIt = this->dependsStart();
-	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	auto dIt = this->dependsStart();
+	auto dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		BuildUnit *bi = (*dIt)->buildInfo();
+		BuildUnit *bi = (*dIt)->getPackage()->buildInfo();
 		if(!bi) {
 			log(this, "bi is NULL :(");
 			exit(-1);
@@ -441,10 +441,10 @@ bool Package::fetchFrom()
 	char *staging_dir = strdup(this->getNS()->getStagingDir().c_str());
 	char *install_dir = strdup(this->getNS()->getInstallDir().c_str());
 	const char *files[4][4] = {
-		{"usable", staging_dir, this->name.c_str(), ".tar.bz2.ff"},
-		{"staging.tar.bz2", staging_dir, this->name.c_str(), ".tar.bz2"},
-		{"install.tar.bz2", install_dir, this->name.c_str(), ".tar.bz2"},
-		{"output.info", this->bd->getPath(), ".output", ".info"}
+		{ "usable", staging_dir, this->name.c_str(), ".tar.bz2.ff" },
+		{ "staging.tar.bz2", staging_dir, this->name.c_str(), ".tar.bz2" },
+		{ "install.tar.bz2", install_dir, this->name.c_str(), ".tar.bz2" },
+		{ "output.info", this->bd->getPath(), ".output", ".info" }
 	};
 	log(this, "FF URL: %s/%s/%s/%s", WORLD->fetchFrom().c_str(),
 	    this->getNS()->getName().c_str(), this->name.c_str(),
@@ -556,10 +556,10 @@ bool Package::prepareBuildDirs()
 	}
 
 	std::list < std::string > *done = new std::list < std::string > ();
-	std::list < Package * >::iterator dIt = this->dependsStart();
-	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	auto dIt = this->dependsStart();
+	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->extract_staging(staging_dir, done))
+		if(!(*dIt)->getPackage()->extract_staging(staging_dir, done))
 			return false;
 	}
 	log(this, "Done (%d)", done->size());
@@ -599,10 +599,10 @@ bool Package::extractInstallDepends()
 
 	log(this, "Extracting installed files from dependencies ...");
 	std::list < std::string > *done = new std::list < std::string > ();
-	std::list < Package * >::iterator dIt = this->dependsStart();
-	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	auto dIt = this->dependsStart();
+	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->extract_install(this->depsExtraction, done))
+		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done))
 			return false;
 	}
 	delete done;
@@ -674,12 +674,12 @@ bool Package::build()
 		return true;
 	}
 
-	std::list < Package * >::iterator dIt = this->dependsStart();
-	std::list < Package * >::iterator dEnds = this->dependsEnd();
+	auto dIt = this->dependsStart();
+	auto dEnds = this->dependsEnd();
 
 	/* Check our dependencies are already built, or build them */
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->build())
+		if(!(*dIt)->getPackage()->build())
 			return false;
 	}
 

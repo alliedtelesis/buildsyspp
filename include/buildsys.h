@@ -924,10 +924,31 @@ namespace buildsys {
 		std::string getInstallDir();
 	};
 
+	//! A dependency on another Package
+	class PackageDepend {
+	private:
+		Package * p;
+		bool locally;
+	public:
+		//! Create a package dependency
+		PackageDepend(Package * p, bool locally):p(p), locally(locally) {
+		};
+		~PackageDepend() {
+		};
+		//! Get the package
+		Package *getPackage() {
+			return this->p;
+		};
+		//! Get the locally flag
+		bool getLocally() {
+			return this->locally;
+		};
+	};
+
 	//! A package to build
 	class Package {
 	private:
-		std::list < Package * >depends;
+		std::list < PackageDepend * >depends;
 		std::list < PackageCmd * >commands;
 		std::string name;
 		std::string file;
@@ -996,7 +1017,9 @@ namespace buildsys {
 		};
 		~Package() {
 			while(!this->depends.empty()) {
+				PackageDepend *pd = this->depends.front();
 				this->depends.pop_front();
+				delete pd;
 			}
 			while(!this->commands.empty()) {
 				PackageCmd *pc = this->commands.front();
@@ -1070,7 +1093,7 @@ namespace buildsys {
 		/** Depend on another package
 		 *  \param p The package to depend on
 		 */
-		void depend(Package * p) {
+		void depend(PackageDepend * p) {
 			this->depends.push_back(p);
 		};
 		/** Set the location to extract install directories to
@@ -1150,9 +1173,9 @@ namespace buildsys {
 		void setBuilding();
 
 		//! Get the start iterator for the dependencies list
-		std::list < Package * >::iterator dependsStart();
+		std::list < PackageDepend * >::iterator dependsStart();
 		//! Get the end iterator for the dependencies list
-		std::list < Package * >::iterator dependsEnd();
+		std::list < PackageDepend * >::iterator dependsEnd();
 
 		/** Print the label for use on the graph
 		 * Prints the package name, number of commands to run, and time spent building

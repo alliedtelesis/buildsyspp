@@ -75,12 +75,12 @@ Internal_Graph::Internal_Graph()
 	    N != WORLD->nameSpacesEnd(); N++) {
 		for(std::list < Package * >::iterator I = (*N)->packagesStart();
 		    I != (*N)->packagesEnd(); I++) {
-			for(std::list < Package * >::iterator J = (*I)->dependsStart();
-			    J != (*I)->dependsEnd(); J++) {
+			for(auto J = (*I)->dependsStart(); J != (*I)->dependsEnd(); J++) {
 				Edge e;
 				bool inserted;
 				boost::tie(e, inserted) =
-				    add_edge((*Nodes)[(*I)], (*Nodes)[(*J)], g);
+				    add_edge((*Nodes)[(*I)], (*Nodes)[(*J)->getPackage()],
+					     g);
 			}
 		}
 	}
