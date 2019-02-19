@@ -1229,6 +1229,60 @@ namespace buildsys {
 		void deleteNode(Package * p);
 	};
 
+	class PackageQueue {
+	private:
+		std::list < Package * >queue;
+		pthread_mutex_t lock;
+		pthread_cond_t cond;
+		int started;
+		int finished;
+	public:
+		PackageQueue():lock(PTHREAD_MUTEX_INITIALIZER),
+		    cond(PTHREAD_COND_INITIALIZER), started(0), finished(0) {
+		};
+		~PackageQueue() {
+		};
+		void start() {
+			pthread_mutex_lock(&this->lock);
+			this->started++;
+			pthread_mutex_unlock(&this->lock);
+		}
+		void finish() {
+			pthread_mutex_lock(&this->lock);
+			this->finished++;
+			pthread_cond_broadcast(&this->cond);
+			pthread_mutex_unlock(&this->lock);
+		}
+		void push(Package * p) {
+			pthread_mutex_lock(&this->lock);
+			queue.push_back(p);
+			pthread_mutex_unlock(&this->lock);
+		}
+		Package *pop() {
+			pthread_mutex_lock(&this->lock);
+			Package *p = NULL;
+			if(!this->queue.empty()) {
+				p = this->queue.front();
+				this->queue.pop_front();
+			}
+			pthread_mutex_unlock(&this->lock);
+			return p;
+		}
+		bool done() {
+			pthread_mutex_lock(&this->lock);
+			bool res = (this->started == this->finished) && this->queue.empty();
+			pthread_mutex_unlock(&this->lock);
+			return res;
+		}
+		void wait() {
+			pthread_mutex_lock(&this->lock);
+			if(this->queue.empty()) {
+				pthread_cond_wait(&this->cond, &this->lock);
+			}
+			pthread_mutex_unlock(&this->lock);
+		}
+	};
+
 	//! The world, everything that everything needs to access
 	class World {
 	private:
