@@ -1,4 +1,4 @@
-CXXFILES	:= $(wildcard *.cpp) $(wildcard dir/*.cpp) $(wildcard interface/*.cpp)
+CXXFILES	:= $(wildcard *.cpp) $(wildcard dir/*.cpp) $(wildcard interface/*.cpp) $(wildcard extraction/*.cpp)
 CFILES		:= 
 
 HEADERS		:= $(wildcard include/*.h) include/buildsys.h.gch
