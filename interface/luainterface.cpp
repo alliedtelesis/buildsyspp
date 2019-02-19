@@ -25,16 +25,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
+
+static thread_local Package *__current_package = NULL;
+
 void li_set_package(lua_State * L, Package * p)
 {
-	lua_pushlightuserdata(L, p);
-	lua_setglobal(L, "P");
+	__current_package = p;
 }
 
 Package *li_get_package(lua_State * L)
 {
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
-	lua_pop(L, 1);
-	return P;
+	return __current_package;
 }
