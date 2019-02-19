@@ -907,8 +907,12 @@ namespace buildsys {
 	private:
 		std::string name;
 		std::list < Package * >packages;
+		pthread_mutex_t lock;
+		void _addPackage(Package * p);
+		void _removePackage(Package * p);
 	public:
 		NameSpace(std::string name):name(name) {
+			pthread_mutex_init(&this->lock, NULL);
 		};
 		~NameSpace();
 		std::string getName() {
@@ -1018,9 +1022,9 @@ namespace buildsys {
 		    buildinfo_hash(""), ns(ns), bd(new BuildDir(this)), f(new Fetch()),
 		    Extract(new Extraction()), build_description(new BuildDescription()),
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
-		    processed(false), buildInfoPrepared(false), built(false), building(false),
-		    codeUpdated(false), was_built(false), no_fetch_from(false),
-		    hash_output(false), run_secs(0), logFile(NULL) {
+		    processed(false), buildInfoPrepared(false), built(false),
+		    building(false), codeUpdated(false), was_built(false),
+		    no_fetch_from(false), hash_output(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
 		};
 		~Package() {

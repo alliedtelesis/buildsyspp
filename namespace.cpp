@@ -63,11 +63,15 @@ Package *NameSpace::findPackage(std::string name)
 {
 	std::string file;
 	std::string overlay;
+
+	pthread_mutex_lock(&this->lock);
 	std::list < Package * >::iterator iter = this->packagesStart();
 	std::list < Package * >::iterator iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++) {
-		if((*iter)->getName().compare(name) == 0)
+		if((*iter)->getName().compare(name) == 0) {
+			pthread_mutex_unlock(&this->lock);
 			return (*iter);
+		}
 	}
 
 	// Package not found, create it
@@ -118,19 +122,35 @@ Package *NameSpace::findPackage(std::string name)
 	}
 
 	Package *p = new Package(this, name, file, overlay);
-	this->addPackage(p);
+	this->_addPackage(p);
+
+	pthread_mutex_unlock(&this->lock);
 
 	return p;
 }
 
-void NameSpace::addPackage(Package * p)
+void NameSpace::_addPackage(Package * p)
 {
 	this->packages.push_back(p);
 	if(p->getNS() != this)
 		p->setNS(this);
 };
 
-void NameSpace::removePackage(Package * P)
+void NameSpace::addPackage(Package * p)
 {
-	this->packages.remove(P);
+	pthread_mutex_lock(&this->lock);
+	this->_addPackage(p);
+	pthread_mutex_unlock(&this->lock);
+}
+
+void NameSpace::_removePackage(Package * p)
+{
+	this->packages.remove(p);
+}
+
+void NameSpace::removePackage(Package * p)
+{
+	pthread_mutex_lock(&this->lock);
+	this->_removePackage(p);
+	pthread_mutex_unlock(&this->lock);
 }
