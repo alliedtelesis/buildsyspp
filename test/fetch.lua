@@ -23,22 +23,32 @@ function tarball(args)
     end
 
     local url = args.url
-    if (url == nil) then
+    if url == nil then
         url = args.site .. sourcedir .. args.ext
     end
 
     local file = args.file
-    if (args.file == nil) then
+    local custom_file_name = false
+    if args.file == nil then
         file = sourcedir .. args.ext
+    else
+        custom_file_name = true
     end
 
     local dist = true
-    if (args.dist ~= nil) then
+    if args.dist ~= nil then
         dist = args.dist
     end
 
-    bd:fetch(url, 'dl')
-    bd:extract('dl/' .. file)
+    local f_args = {
+        uri = url,
+        method = 'dl',
+    }
+    if custom_file_name then
+        f_args.filename = file
+    end
+
+    bd:extract(bd:fetch(f_args))
 
     -- Create fetch object
     local fetch = {
@@ -68,11 +78,17 @@ function git(args)
     local sourcedir = args.package
 
     local dist = false
-    if (args.dist ~= nil) then
+    if args.dist ~= nil then
         dist = args.dist
     end
 
-    bd:fetch(args.url, 'git', args.head, args.package)
+    local f_args = {
+        uri = args.url,
+        method = 'git',
+        branch = args.head,
+        reponame = args.package,
+    }
+    bd:fetch(f_args)
 
     -- Create fetch object
     local fetch = {
@@ -100,7 +116,43 @@ function copygit(args)
     local sourcedir = args.package
     local dist = false
 
-    bd:fetch(args.url, 'copygit')
+    local f_args = {
+        uri = args.url,
+        method = 'copygit',
+    }
+    bd:fetch(f_args)
+
+    -- Create fetch object
+    local fetch = {
+        _sourcedir = sourcedir,
+        _dist = dist,
+    }
+    fetch.sourcedir = function(fetch)
+        return fetch._sourcedir
+    end
+    fetch.dist = function(fetch)
+        return fetch._dist
+    end
+
+    return fetch
+end
+
+--[[
+Linkgit a local git repo
+
+- package, the name of the package
+- url, the relative path to the repo
+]]
+function linkgit(args)
+    local bd = builddir()
+    local sourcedir = args.package
+    local dist = false
+
+    local f_args = {
+        uri = args.url,
+        method = 'linkgit',
+    }
+    bd:fetch(f_args)
 
     -- Create fetch object
     local fetch = {
@@ -138,7 +190,7 @@ If version is 'git':
 function tarball_or_git(args)
     local fetch
 
-    if (args.version == 'git') then
+    if args.version == 'git' then
         fetch = git {
             package = args.package,
             url = args.git_url,
@@ -161,19 +213,19 @@ function tarball_or_git(args)
 end
 
 
-function find_in_string(string,search,start_at)
-    local start,finish = string:find(search,start_at)
+function find_in_string(string, search, start_at)
+    local start, finish = string:find(search, start_at)
     if start == nil then
         return nil
     end
-    local found = string:sub(start,finish)
+    local found = string:sub(start, finish)
 
     while found ~= search do
-        start,finish = string:find(search,start+1)
+        start, finish = string:find(search, start + 1)
         if start == nil then
             return nil
         end
-        found = string:sub(start,finish)
+        found = string:sub(start, finish)
     end
 
     return start
@@ -193,20 +245,25 @@ Fetch from a url, either http or git or a relative path
 --- http://site/path/package-version.tar.gz
 -- copygit urls
 --- ../package
+
+- custom_tarball_name
+-- The name to save the downloaded tarball as
+
+- linkgit, if 'yes', the source directory is soft-linked rather than copied
 ]]
 function fetch_url(args)
     local fetch = nil
     local url = args.url
     local version = nil
 
-    if (url:find("git:") == 1 or url:find("ssh:") == 1 or find_in_string(url, '.git')) then
-        local hashstart,_ = url:find("#")
+    if url:find("git:") == 1 or url:find("ssh:") == 1 or find_in_string(url, '.git') then
+        local hashstart, _ = url:find("#")
         local giturl = url
         local githead = 'origin/master'
         version = 'git'
         if hashstart ~= nil then
-            giturl = url:sub(1,hashstart-1)
-            githead = url:sub(hashstart+1)
+            giturl = url:sub(1, hashstart - 1)
+            githead = url:sub(hashstart + 1)
         end
         fetch = git {
             package = args.package,
@@ -215,40 +272,71 @@ function fetch_url(args)
         }
     end
 
-    if (fetch == nil and (url:find("http") == 1 or url:find("ftp:") == 1)) then
-        local slash,_ = url:find("/")
+    if fetch == nil and (url:find("http") == 1 or url:find("ftp:") == 1) then
+        local slash, _ = url:find("/")
         local lastslash
         while slash do
             lastslash = slash
-            slash,_ = url:find("/", lastslash+1)
+            slash, _ = url:find("/", lastslash + 1)
         end
-        extensions = {'-src', '.src', '.tar', '.tgz', '.tbz2', '.txz', '.zip'}
-        for _,ext in pairs(extensions) do
+        extensions = {
+            '-src',
+            '.src',
+            '.tar',
+            '.tgz',
+            '.tbz2',
+            '.txz',
+            '.zip',
+        }
+        for _, ext in pairs(extensions) do
             extstart = find_in_string(url, ext, lastslash)
             if extstart ~= nil then
                 break
             end
         end
-        local sourcedir = url:sub(lastslash+1, extstart-1)
+
+        local file = nil
+        local sourcedir = nil
+        if args.custom_tarball_name ~= nil then
+            file = args.custom_tarball_name
+            for _, ext in pairs(extensions) do
+                extstart = find_in_string(args.custom_tarball_name, ext, 1)
+                if extstart ~= nil then
+                    break
+                end
+            end
+            sourcedir = args.custom_tarball_name:sub(1, extstart - 1)
+        else
+            sourcedir = url:sub(lastslash + 1, extstart - 1)
+        end
+
         local ext = url:sub(extstart)
         local dash = sourcedir:find("-")
         version = ""
         if dash ~= nil then
-            version = sourcedir:sub(dash+1)
+            version = sourcedir:sub(dash + 1)
         end
         fetch = tarball {
             package = args.package,
             url = url,
-            sourcedir = sourcedir,
+            sourcedir = args.sourcedir or sourcedir,
             ext = ext,
+            file = file,
         }
     end
 
     if fetch == nil then
-        fetch = copygit {
-            package = args.package,
-            url = url,
-        }
+        if args.linkgit == 'yes' then
+            fetch = linkgit {
+                package = args.package,
+                url = url,
+            }
+        else
+            fetch = copygit {
+                package = args.package,
+                url = url,
+            }
+        end
         version = 'git'
     end
 
@@ -268,7 +356,7 @@ function fetch_apply_patches(args)
     local fetch = args.fetch
     local bd = builddir()
     local patch_level = args.patch_level
-    if (patch_level == nil) then
+    if patch_level == nil then
         patch_level = '1'
     end
 
