@@ -968,7 +968,7 @@ namespace buildsys {
 		char *depsExtraction;
 		string_list installFiles;
 		bool visiting;
-		bool processed;
+		bool processing_queued;
 		bool buildInfoPrepared;
 		bool built;
 		bool building;
@@ -1022,7 +1022,7 @@ namespace buildsys {
 		    buildinfo_hash(""), ns(ns), bd(new BuildDir(this)), f(new Fetch()),
 		    Extract(new Extraction()), build_description(new BuildDescription()),
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
-		    processed(false), buildInfoPrepared(false), built(false),
+		    processing_queued(false), buildInfoPrepared(false), built(false),
 		    building(false), codeUpdated(false), was_built(false),
 		    no_fetch_from(false), hash_output(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
@@ -1130,6 +1130,14 @@ namespace buildsys {
 		void setInstallFile(const char *i) {
 			this->installFiles.push_back(std::string(i));
 		};
+		//! Mark this package as queued for processing (returns false if already marked)
+		bool setProcessingQueued() {
+			pthread_mutex_lock(&this->lock);
+			bool res = !this->processing_queued;
+			this->processing_queued = true;
+			pthread_mutex_unlock(&this->lock);
+			return res;
+		}
 		//! Parse and load the lua file for this package
 		bool process();
 		//! Sets the code updated flag

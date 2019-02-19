@@ -137,9 +137,6 @@ void Package::printLabel(std::ostream & out)
 
 bool Package::process()
 {
-	if(this->processed == true)
-		return true;
-
 	log(this, "Processing (%s)", this->file.c_str());
 
 	this->build_description->add(new PackageFileUnit(this->file.c_str()));
@@ -152,18 +149,6 @@ bool Package::process()
 	this->lua->setGlobal(std::string("P"), this);
 
 	this->lua->processFile(file.c_str());
-
-	this->processed = true;
-
-	auto iter = this->dependsStart();
-	auto end = this->dependsEnd();
-
-	for(; iter != end; iter++) {
-		if(!(*iter)->getPackage()->process()) {
-			throw CustomException("dependency failure");
-			return false;
-		}
-	}
 
 	return true;
 }

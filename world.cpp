@@ -149,6 +149,43 @@ static void *build_thread(void *t)
 	return NULL;
 }
 
+static std::list < Package * >processing_queue;
+
+static bool process_package(Package * p)
+{
+	try {
+		if(!p->process()) {
+			return false;
+		}
+	}
+	catch(Exception & E) {
+		log(p, E.error_msg().c_str());
+		throw E;
+	}
+
+	auto iter = p->dependsStart();
+	auto end = p->dependsEnd();
+
+	for(; iter != end; iter++) {
+		Package *dp = (*iter)->getPackage();
+		if(dp->setProcessingQueued()) {
+			processing_queue.push_back(dp);
+		}
+	}
+
+	return true;
+}
+
+static bool process_packages()
+{
+	while(!processing_queue.empty()) {
+		Package *toProcess = processing_queue.front();
+		processing_queue.pop_front();
+		process_package(toProcess);
+	}
+	return true;
+}
+
 bool World::basePackage(char *filename)
 {
 	// Strip the directory from the base package name
@@ -164,14 +201,9 @@ bool World::basePackage(char *filename)
 	this->p = new Package(this->findNameSpace(nsname), pname, filename, "");
 	free(nsname);
 
-	try {
-		// Load all the lua files
-		this->p->process();
-	}
-	catch(Exception & E) {
-		error(E.error_msg().c_str());
-		return false;
-	}
+
+	processing_queue.push_back(this->p);
+	process_packages();
 
 	// Check for dependency loops
 	if(!this->p->checkForDependencyLoops()) {
