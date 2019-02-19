@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 #include <sys/stat.h>
+#include "luainterface.h"
 
 static int li_name(lua_State * L)
 {
@@ -33,8 +34,7 @@ static int li_name(lua_State * L)
 	}
 	int args = lua_gettop(L);
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	if(args == 0) {
 		std::string value = P->getNS()->getName();
@@ -56,8 +56,7 @@ static int li_feature(lua_State * L)
 		throw CustomException("feature() takes 1 to 3 arguments");
 	}
 	if(lua_gettop(L) == 1) {
-		lua_getglobal(L, "P");
-		Package *P = (Package *) lua_topointer(L, -1);
+		Package *P = li_get_package(L);
 
 		if(lua_type(L, 1) != LUA_TSTRING)
 			throw CustomException("Argument to feature() must be a string");
@@ -102,8 +101,7 @@ int li_builddir(lua_State * L)
 		throw CustomException("builddir() takes 1 or no arguments");
 	}
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	// create a table, since this is actually an object
 	CREATE_TABLE(L, P->builddir());
@@ -123,8 +121,7 @@ int li_builddir(lua_State * L)
 
 int li_intercept(lua_State * L)
 {
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	P->setIntercept();
 
@@ -155,9 +152,7 @@ int li_depend(lua_State * L)
 
 	NameSpace *ns = NULL;
 	// get the current package
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
-	lua_pop(L, 1);
+	Package *P = li_get_package(L);
 
 	if(lua_type(L, 1) == LUA_TSTRING) {
 		if(lua_gettop(L) == 2) {
@@ -239,8 +234,7 @@ int li_buildlocally(lua_State * L)
 		throw CustomException("buildlocally() takes no arguments");
 	}
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	// Do not try and download the final result for this package
 	// probably because it breaks something else that builds later
@@ -256,8 +250,7 @@ int li_hashoutput(lua_State * L)
 		throw CustomException("buildlocally() takes no arguments");
 	}
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	// Instead of depender using build.info hash
 	// create an output.info and get them to hash that
@@ -281,8 +274,7 @@ int li_require(lua_State * L)
 		throw CustomException("Argument to require() must be a string");
 	}
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	char *fName = NULL;
 	asprintf(&fName, "%s.lua", lua_tostring(L, 1));

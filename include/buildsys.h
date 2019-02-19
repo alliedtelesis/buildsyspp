@@ -245,6 +245,10 @@ namespace buildsys {
 			lua_pushlightuserdata(state, data);
 			lua_setglobal(state, name.c_str());
 		}
+		//! Get the lua_State
+		lua_State *luaState() {
+			return state;
+		}
 	};
 
 	//! A directory to perform actions on

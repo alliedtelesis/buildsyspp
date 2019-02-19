@@ -74,8 +74,7 @@ int li_bd_fetch(lua_State * L)
 	char *branch = NULL;
 	char *reponame = NULL;
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	CHECK_ARGUMENT_TYPE("fetch_table", 1, BuildDir, d);
 
@@ -168,8 +167,6 @@ int li_bd_fetch(lua_State * L)
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
-		lua_getglobal(L, "P");
-		Package *P = (Package *) lua_topointer(L, -1);
 		P->setDepsExtract(path);
 		log(P, "Will add installed files, considering code updated");
 		P->setCodeUpdated();
@@ -213,8 +210,7 @@ int li_bd_restore(lua_State * L)
 	if(!lua_isstring(L, 3))
 		throw CustomException("restore() expects a string as the second argument");
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	CHECK_ARGUMENT_TYPE("restore", 1, BuildDir, d);
 
@@ -254,8 +250,7 @@ int li_bd_extract_table(lua_State * L)
 	if(!lua_istable(L, 1))
 		throw CustomException("extract() must be called using : not .");
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	CHECK_ARGUMENT_TYPE("extract", 2, FetchUnit, f);
 
@@ -290,8 +285,7 @@ int li_bd_extract(lua_State * L)
 	BuildDir *d = (BuildDir *) lua_topointer(L, -1);
 	lua_pop(L, 1);
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	log(P, "Using deprecated extract API");
 
@@ -339,8 +333,7 @@ int li_bd_cmd(lua_State * L)
 
 	CHECK_ARGUMENT_TYPE("cmd", 1, BuildDir, d);
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	char *dir = relative_path(d, lua_tostring(L, 2));
 	const char *app = lua_tostring(L, 3);
@@ -396,8 +389,7 @@ int li_bd_patch(lua_State * L)
 		    CustomException
 		    ("patch() expects a table of strings as the third argument");
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	if(WORLD->forcedMode() && !WORLD->isForced(P->getName())) {
 		return true;
@@ -444,8 +436,7 @@ int li_bd_installfile(lua_State * L)
 		throw
 		    CustomException("installfile() expects a string as the only argument");
 
-	lua_getglobal(L, "P");
-	Package *P = (Package *) lua_topointer(L, -1);
+	Package *P = li_get_package(L);
 
 	P->setInstallFile(lua_tostring(L, 2));
 

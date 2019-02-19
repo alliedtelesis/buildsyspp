@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <buildsys.h>
+#include "interface/luainterface.h"
 
 std::list < PackageDepend * >::iterator Package::dependsStart()
 {
@@ -146,7 +147,7 @@ bool Package::process()
 		exit(-1);
 	}
 
-	this->lua->setGlobal(std::string("P"), this);
+	li_set_package(this->lua->luaState(), this);
 
 	this->lua->processFile(file.c_str());
 
