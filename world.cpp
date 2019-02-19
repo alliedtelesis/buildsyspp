@@ -172,6 +172,13 @@ bool World::basePackage(char *filename)
 		error(E.error_msg().c_str());
 		return false;
 	}
+
+	// Check for dependency loops
+	if(!this->p->checkForDependencyLoops()) {
+		error("Dependency Loop Detected");
+		return false;
+	}
+
 	if(this->areParseOnly()) {
 		// We are done, no building required
 		return true;

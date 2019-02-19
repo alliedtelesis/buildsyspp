@@ -137,14 +137,8 @@ void Package::printLabel(std::ostream & out)
 
 bool Package::process()
 {
-	if(this->visiting == true) {
-		log(this, "dependency loop!!!");
-		return false;
-	}
 	if(this->processed == true)
 		return true;
-
-	this->visiting = true;
 
 	log(this, "Processing (%s)", this->file.c_str());
 
@@ -171,7 +165,30 @@ bool Package::process()
 		}
 	}
 
+	return true;
+}
+
+bool Package::checkForDependencyLoops()
+{
+	if(this->visiting == true) {
+		log(this, "Cyclic Dependency");
+		return false;
+	}
+
+	this->visiting = true;
+
+	auto iter = this->dependsStart();
+	auto end = this->dependsEnd();
+
+	for(; iter != end; iter++) {
+		if(!(*iter)->getPackage()->checkForDependencyLoops()) {
+			log(this, "Child failed dependency loop check");
+			return false;
+		}
+	}
+
 	this->visiting = false;
+
 	return true;
 }
 
@@ -390,7 +407,6 @@ void Package::prepareBuildInfo()
 	if(this->buildInfoPrepared) {
 		return;
 	}
-
 	// Add the extraction info file
 	this->build_description->add(this->Extract->extractionInfo(this, this->bd));
 
@@ -726,7 +742,8 @@ bool Package::build(bool locally)
 	dIt = this->dependsStart();
 	for(; dIt != dEnds; dIt++) {
 		if((*dIt)->getLocally()) {
-			log((*dIt)->getPackage(), "Build triggered by %s", this->getName().c_str());
+			log((*dIt)->getPackage(), "Build triggered by %s",
+			    this->getName().c_str());
 			if(!(*dIt)->getPackage()->build(true))
 				return false;
 		}

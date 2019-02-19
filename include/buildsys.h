@@ -1170,6 +1170,10 @@ namespace buildsys {
 		bool isHashingOutput() {
 			return this->hash_output;
 		};
+
+		//! Check for any dependency loops
+		bool checkForDependencyLoops();
+
 		//! Build this package
 		bool build(bool locally = false);
 		//! Has building of this package already started ?
