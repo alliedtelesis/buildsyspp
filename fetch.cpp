@@ -73,7 +73,7 @@ bool DownloadFetch::fetch(BuildDir * d)
 
 	{
 		char *fpath = NULL;
-		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+		asprintf(&fpath, "%s/dl/%s", d->getWorld()->getWorkingDir()->c_str(),
 			 fname.c_str());
 		FILE *f = fopen(fpath, "r");
 		if(f == NULL) {
@@ -87,10 +87,10 @@ bool DownloadFetch::fetch(BuildDir * d)
 	if(get) {
 		bool localCacheHit = false;
 		//Attempt to get file from local tarball cache if one is configured.
-		if(WORLD->haveTarballCache()) {
+		if(d->getWorld()->haveTarballCache()) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
 			char *url = NULL;
-			asprintf(&url, "%s/%s", WORLD->tarballCache().c_str(),
+			asprintf(&url, "%s/%s", d->getWorld()->tarballCache().c_str(),
 				 fname.c_str());
 			pc->addArg(url);
 			pc->addArgFmt("-O%s", fullname.c_str());
@@ -133,7 +133,7 @@ bool DownloadFetch::fetch(BuildDir * d)
 
 	if(this->hash.length() != 0) {
 		char *fpath = NULL;
-		asprintf(&fpath, "%s/dl/%s", WORLD->getWorkingDir()->c_str(),
+		asprintf(&fpath, "%s/dl/%s", d->getWorld()->getWorkingDir()->c_str(),
 			 this->final_name().c_str());
 		char *hash = hash_file(fpath);
 		free(fpath);

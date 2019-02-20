@@ -132,7 +132,8 @@ GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
 	this->uri = std::string(remote);
 
 	char *source_dir = NULL;
-	asprintf(&source_dir, "%s/source/%s", WORLD->getWorkingDir()->c_str(), local);
+	asprintf(&source_dir, "%s/source/%s", P->getWorld()->getWorkingDir()->c_str(),
+		 local);
 	this->local = std::string(source_dir);
 	free(source_dir);
 
@@ -183,7 +184,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 {
 	char *location = strdup(this->uri.c_str());
 	char *source_dir = strdup(this->local.c_str());
-	const char *cwd = WORLD->getWorkingDir()->c_str();
+	const char *cwd = d->getWorld()->getWorkingDir()->c_str();
 
 	bool exists = false;
 	{
@@ -318,7 +319,8 @@ bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc->addArg("-sfT");
 
 	if(this->uri[0] == '.') {
-		pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
+		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir()->c_str(),
+			      this->uri.c_str());
 	} else {
 		pc->addArg(this->uri.c_str());
 	}
@@ -337,7 +339,8 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc->addArg("-dpRuf");
 
 	if(this->uri[0] == '.') {
-		pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
+		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir()->c_str(),
+			      this->uri.c_str());
 	} else {
 		pc->addArg(this->uri);
 	}

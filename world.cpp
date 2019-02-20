@@ -44,7 +44,7 @@ NameSpace *World::findNameSpace(std::string name)
 			return (*iter);
 	}
 
-	NameSpace *ns = new NameSpace(name);
+	NameSpace *ns = new NameSpace(this, name);
 	this->namespaces->push_back(ns);
 	return ns;
 }
@@ -111,12 +111,13 @@ static pthread_cond_t t_cond = PTHREAD_COND_INITIALIZER;
 static void *build_thread(void *t)
 {
 	Package *p = (Package *) t;
+	World *w = p->getNS()->getWorld();
 
 	log(p, "Build Thread");
 	log((p->getNS()->getName() + "," + p->getName()).c_str(),
-	    "Building (%i others running)", WORLD->threadsRunning());
+	    "Building (%i others running)", w->threadsRunning());
 
-	WORLD->threadStarted();
+	w->threadStarted();
 
 	bool skip = false;
 
@@ -131,7 +132,7 @@ static void *build_thread(void *t)
 		pthread_mutex_unlock(&t_cond_lock);
 		if(!skip) {
 			if(!p->build()) {
-				WORLD->setFailed();
+				w->setFailed();
 				log((p->getNS()->getName() + "," + p->getName()).c_str(),
 				    "Building failed");
 			}
@@ -141,10 +142,10 @@ static void *build_thread(void *t)
 		error(E.error_msg().c_str());
 		throw E;
 	}
-	WORLD->threadEnded();
+	w->threadEnded();
 
 	log((p->getNS()->getName() + "," + p->getName()).c_str(),
-	    "Finished (%i others running)", WORLD->threadsRunning());
+	    "Finished (%i others running)", w->threadsRunning());
 
 	return NULL;
 }
@@ -225,8 +226,8 @@ bool World::basePackage(char *filename)
 		// We are done, no building required
 		return true;
 	}
-	this->graph = new Internal_Graph();
-	this->topo_graph = new Internal_Graph();
+	this->graph = new Internal_Graph(this);
+	this->topo_graph = new Internal_Graph(this);
 
 	this->topo_graph->topological();
 	while(!this->isFailed() && !this->p->isBuilt()) {

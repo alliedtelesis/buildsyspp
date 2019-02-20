@@ -84,7 +84,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 #endif
 
 	int fds[2];
-	if(WORLD->areOutputPrefix()) {
+	if(P->getWorld()->areOutputPrefix()) {
 		int res = pipe(fds);
 		struct params *p = (struct params *) malloc(sizeof(struct params));
 		pthread_t tid;
@@ -103,7 +103,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		log(P, "fork() failed: %s", strerror(errno));
 		exit(-1);
 	} else if(pid == 0) {	// child process
-		if(WORLD->areOutputPrefix()) {
+		if(P->getWorld()->areOutputPrefix()) {
 			close(fds[0]);
 			dup2(fds[1], STDOUT_FILENO);
 			dup2(fds[1], STDERR_FILENO);
@@ -120,7 +120,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		log(P, "Failed Running %s", program);
 		exit(-1);
 	} else {
-		if(WORLD->areOutputPrefix()) {
+		if(P->getWorld()->areOutputPrefix()) {
 			close(fds[1]);
 		}
 		int status = 0;

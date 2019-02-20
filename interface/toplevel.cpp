@@ -45,7 +45,7 @@ static int li_name(lua_State * L)
 		throw CustomException("Argument to name() must be a string");
 	const char *value = lua_tostring(L, 1);
 
-	P->setNS(WORLD->findNameSpace(value));
+	P->setNS(P->getWorld()->findNameSpace(value));
 
 	return 0;
 }
@@ -55,17 +55,18 @@ static int li_feature(lua_State * L)
 	if(lua_gettop(L) < 1 || lua_gettop(L) > 3) {
 		throw CustomException("feature() takes 1 to 3 arguments");
 	}
-	if(lua_gettop(L) == 1) {
-		Package *P = li_get_package(L);
+	Package *P = li_get_package(L);
 
+	if(lua_gettop(L) == 1) {
 		if(lua_type(L, 1) != LUA_TSTRING)
 			throw CustomException("Argument to feature() must be a string");
 		const char *key = lua_tostring(L, 1);
 		try {
-			std::string value = WORLD->getFeature(std::string(key));
+			std::string value = P->getWorld()->getFeature(std::string(key));
 			lua_pushstring(L, value.c_str());
 			P->buildDescription()->add(new
-						   FeatureValueUnit(key, value.c_str()));
+						   FeatureValueUnit(P->getWorld(), key,
+								    value.c_str()));
 		}
 		catch(NoKeyException & E) {
 			lua_pushnil(L);
@@ -85,11 +86,11 @@ static int li_feature(lua_State * L)
 	const char *value = lua_tostring(L, 2);
 
 	if(lua_gettop(L) == 3) {
-		WORLD->setFeature(std::string(key), std::string(value),
-				  lua_toboolean(L, -3));
+		P->getWorld()->setFeature(std::string(key), std::string(value),
+					  lua_toboolean(L, -3));
 	}
 
-	WORLD->setFeature(std::string(key), std::string(value));
+	P->getWorld()->setFeature(std::string(key), std::string(value));
 	return 0;
 }
 
@@ -109,9 +110,9 @@ int li_builddir(lua_State * L)
 
 	bool clean_requested = (args == 1 && lua_toboolean(L, 1));
 
-	if((clean_requested || WORLD->areCleaning()) &&
-	   !WORLD->areParseOnly() &&
-	   !(WORLD->forcedMode() && !WORLD->isForced(P->getName()))) {
+	if((clean_requested || P->getWorld()->areCleaning()) &&
+	   !P->getWorld()->areParseOnly() &&
+	   !(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName()))) {
 		log(P, "Cleaning");
 		P->builddir()->clean();
 	}
@@ -161,7 +162,7 @@ int li_depend(lua_State * L)
 				    CustomException
 				    ("depend() takes a string as the second argument");
 			}
-			ns = WORLD->findNameSpace(std::string(lua_tostring(L, 2)));
+			ns = P->getWorld()->findNameSpace(std::string(lua_tostring(L, 2)));
 		}
 		depend(P, ns, false, lua_tostring(L, 1));
 	} else if(lua_istable(L, 1)) {
@@ -204,7 +205,9 @@ int li_depend(lua_State * L)
 					    CustomException
 					    ("depend() requires a string for the namespace name\n");
 				}
-				ns = WORLD->findNameSpace(std::string(lua_tostring(L, -1)));
+				ns = P->
+				    getWorld()->findNameSpace(std::
+							      string(lua_tostring(L, -1)));
 			} else if(strcmp(key, "locally") == 0) {
 				if(lua_type(L, -1) == LUA_TBOOLEAN) {
 					locally = lua_toboolean(L, -1);
@@ -289,8 +292,8 @@ int li_require(lua_State * L)
 		success = true;
 	} else {
 		// Look through all the overlays for this file
-		string_list::iterator iter = WORLD->overlaysStart();
-		string_list::iterator iterEnd = WORLD->overlaysEnd();
+		string_list::iterator iter = P->getWorld()->overlaysStart();
+		string_list::iterator iterEnd = P->getWorld()->overlaysEnd();
 		for(; iter != iterEnd; iter++) {
 			char *overlayFName = NULL;
 			if(asprintf(&overlayFName, "%s/%s", iter->c_str(), fName) <= 0) {

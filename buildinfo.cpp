@@ -82,7 +82,7 @@ OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
 
 bool FeatureValueUnit::print(std::ostream & out)
 {
-	if(!WORLD->isIgnoredFeature(this->feature)) {
+	if(!this->WORLD->isIgnoredFeature(this->feature)) {
 		out << this->type() << " " << this->
 		    feature << " " << this->value << std::endl;
 	}

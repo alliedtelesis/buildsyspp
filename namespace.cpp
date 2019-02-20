@@ -88,8 +88,8 @@ Package *NameSpace::findPackage(std::string name)
 			lastPart = strdup(lastPart + 1);
 		}
 
-		string_list::iterator iter = WORLD->overlaysStart();
-		string_list::iterator iterEnd = WORLD->overlaysEnd();
+		string_list::iterator iter = this->WORLD->overlaysStart();
+		string_list::iterator iterEnd = this->WORLD->overlaysEnd();
 		for(; iter != iterEnd; iter++) {
 			if(asprintf
 			   (&luaFile, "%s/package/%s/%s.lua", iter->c_str(), dependPath,
@@ -153,4 +153,9 @@ void NameSpace::removePackage(Package * p)
 	pthread_mutex_lock(&this->lock);
 	this->_removePackage(p);
 	pthread_mutex_unlock(&this->lock);
+}
+
+World *NameSpace::getWorld()
+{
+	return this->WORLD;
 }

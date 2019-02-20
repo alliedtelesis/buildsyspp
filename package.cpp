@@ -60,7 +60,7 @@ FILE *Package::getLogFile()
 char *Package::absolute_fetch_path(const char *location)
 {
 	char *src_path = NULL;
-	const char *cwd = WORLD->getWorkingDir()->c_str();
+	const char *cwd = this->getWorld()->getWorkingDir()->c_str();
 	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
 		asprintf(&src_path, "%s/%s", cwd, location);
 	} else if(location[0] == '.') {
@@ -198,7 +198,7 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 			return false;
 	}
 
-	const char *pwd = WORLD->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
 
 	if(this->bd != NULL) {
 		std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
@@ -241,7 +241,7 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 		}
 	}
 
-	const char *pwd = WORLD->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
 
 	if(this->bd != NULL) {
 		if(!this->installFiles.empty()) {
@@ -328,7 +328,7 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 {
 	bool ret = false;
 	char *url = NULL;
-	asprintf(&url, "%s/%s/%s/%s/%s", WORLD->fetchFrom().c_str(),
+	asprintf(&url, "%s/%s/%s/%s/%s", P->getWorld()->fetchFrom().c_str(),
 		 P->getNS()->getName().c_str(), P->getName().c_str(), hash, rfile);
 	char *cmd = NULL;
 	asprintf(&cmd, "wget -q %s -O %s/%s%s", url, path, fname, fext);
@@ -453,7 +453,7 @@ bool Package::fetchFrom()
 		{ "install.tar.bz2", install_dir, this->name.c_str(), ".tar.bz2" },
 		{ "output.info", this->bd->getPath(), ".output", ".info" }
 	};
-	log(this, "FF URL: %s/%s/%s/%s", WORLD->fetchFrom().c_str(),
+	log(this, "FF URL: %s/%s/%s/%s", this->getWorld()->fetchFrom().c_str(),
 	    this->getNS()->getName().c_str(), this->name.c_str(),
 	    this->buildinfo_hash.c_str());
 
@@ -489,7 +489,7 @@ bool Package::shouldBuild(bool locally)
 	if(!this->installFiles.empty())
 		return true;
 
-	const char *pwd = WORLD->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
 	// lets make sure the install file (still) exists
 	bool ret = false;
 	char *fname = NULL;
@@ -525,7 +525,7 @@ bool Package::shouldBuild(bool locally)
 	// if there are changes,
 	if(res != 0 || ret) {
 		// see if we can grab new staging/install files
-		if(!locally && this->canFetchFrom() && WORLD->canFetchFrom()) {
+		if(!locally && this->canFetchFrom() && this->getWorld()->canFetchFrom()) {
 			ret = this->fetchFrom();
 		} else {
 			// otherwise, make sure we get (re)built
@@ -549,7 +549,7 @@ bool Package::prepareBuildDirs()
 
 	{			// Clean out the (new) staging/install directories
 		char *cmd = NULL;
-		const char *pwd = WORLD->getWorkingDir()->c_str();
+		const char *pwd = this->getWorld()->getWorkingDir()->c_str();
 		asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd,
 			 this->getNS()->getName().c_str(), this->name.c_str());
 		system(cmd);
@@ -589,7 +589,7 @@ bool Package::extractInstallDepends()
 	log(this, "Removing old install files ...");
 	{
 		std::unique_ptr < PackageCmd >
-		    pc(new PackageCmd(WORLD->getWorkingDir()->c_str(), "rm"));
+		    pc(new PackageCmd(this->getWorld()->getWorkingDir()->c_str(), "rm"));
 		pc->addArg("-fr");
 		pc->addArg(this->depsExtraction);
 		if(!pc->Run(this)) {
@@ -627,7 +627,8 @@ bool Package::packageNewStaging()
 	pc->addArg("-x");
 	pc->addArg("cpio");
 	pc->addArg("-wf");
-	pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", WORLD->getWorkingDir()->c_str(),
+	pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2",
+		      this->getWorld()->getWorkingDir()->c_str(),
 		      this->getNS()->getName().c_str(), this->name.c_str());
 	pc->addArg(".");
 
@@ -640,7 +641,7 @@ bool Package::packageNewStaging()
 
 bool Package::packageNewInstall()
 {
-	const char *pwd = WORLD->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
 	if(!this->installFiles.empty()) {
 		std::list < std::string >::iterator it = this->installFiles.begin();
 		std::list < std::string >::iterator end = this->installFiles.end();
@@ -694,7 +695,7 @@ bool Package::build(bool locally)
 			return false;
 	}
 
-	if((WORLD->forcedMode() && !WORLD->isForced(this->name))) {
+	if((this->getWorld()->forcedMode() && !this->getWorld()->isForced(this->name))) {
 		// Set the build.info hash based on what is currently present
 		this->updateBuildInfoHashExisting();
 		pthread_mutex_lock(&this->lock);
@@ -702,7 +703,7 @@ bool Package::build(bool locally)
 		// Just pretend we are built
 		this->built = true;
 		pthread_mutex_unlock(&this->lock);
-		WORLD->packageFinished(this);
+		this->getWorld()->packageFinished(this);
 		return true;
 	}
 	// Create the new extraction.info file
@@ -720,7 +721,7 @@ bool Package::build(bool locally)
 		// Already built
 		this->built = true;
 		pthread_mutex_unlock(&this->lock);
-		WORLD->packageFinished(this);
+		this->getWorld()->packageFinished(this);
 		return true;
 	}
 	// Need to check that any packages that need to have been built locally
@@ -792,7 +793,7 @@ bool Package::build(bool locally)
 	this->built = true;
 	this->was_built = true;
 	pthread_mutex_unlock(&this->lock);
-	WORLD->packageFinished(this);
+	this->getWorld()->packageFinished(this);
 
 	return true;
 }

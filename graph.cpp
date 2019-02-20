@@ -48,15 +48,15 @@ template < class Name > class graphnode_property_writer {
 	}
 };
 
-Internal_Graph::Internal_Graph()
+Internal_Graph::Internal_Graph(World * W)
 {
 	this->c = NULL;
 	// Setup for graphing
 	this->Nodes = new NodeVertexMap();
 	this->NodeMap = new VertexNodeMap();
 
-	for(std::list < NameSpace * >::iterator N = WORLD->nameSpacesStart();
-	    N != WORLD->nameSpacesEnd(); N++) {
+	for(std::list < NameSpace * >::iterator N = W->nameSpacesStart();
+	    N != W->nameSpacesEnd(); N++) {
 		for(std::list < Package * >::iterator I = (*N)->packagesStart();
 		    I != (*N)->packagesEnd(); I++) {
 			NodeVertexMap::iterator pos;
@@ -71,8 +71,8 @@ Internal_Graph::Internal_Graph()
 		}
 	}
 
-	for(std::list < NameSpace * >::iterator N = WORLD->nameSpacesStart();
-	    N != WORLD->nameSpacesEnd(); N++) {
+	for(std::list < NameSpace * >::iterator N = W->nameSpacesStart();
+	    N != W->nameSpacesEnd(); N++) {
 		for(std::list < Package * >::iterator I = (*N)->packagesStart();
 		    I != (*N)->packagesEnd(); I++) {
 			for(auto J = (*I)->dependsStart(); J != (*I)->dependsEnd(); J++) {

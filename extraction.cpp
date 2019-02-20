@@ -144,7 +144,7 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 		throw CustomException("Error: Creating download directory");
 	}
 	pc->addArg("xf");
-	pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
+	pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir()->c_str(), this->uri.c_str());
 
 	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
@@ -162,7 +162,7 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 	}
 
 	pc->addArg("-o");
-	pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), this->uri.c_str());
+	pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir()->c_str(), this->uri.c_str());
 
 	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
@@ -195,7 +195,7 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc_dry->addArg("-i");
 	pc->addArg("-i");
 
-	const char *pwd = WORLD->getWorkingDir()->c_str();
+	const char *pwd = P->getWorld()->getWorkingDir()->c_str();
 	pc_dry->addArgFmt("%s/%s", pwd, this->uri.c_str());
 	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
 
@@ -229,7 +229,7 @@ bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 	if(path[0] == '/') {
 		pc->addArg(path);
 	} else {
-		pc->addArgFmt("%s/%s", WORLD->getWorkingDir()->c_str(), path);
+		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir()->c_str(), path);
 	}
 
 	pc->addArg(".");

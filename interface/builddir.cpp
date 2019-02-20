@@ -217,7 +217,7 @@ int li_bd_restore(lua_State * L)
 	char *location = strdup(lua_tostring(L, 2));
 	const char *method = lua_tostring(L, 3);
 
-	if(WORLD->forcedMode() && !WORLD->isForced(P->getName())) {
+	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
 		return 0;
 	}
 
@@ -289,7 +289,7 @@ int li_bd_extract(lua_State * L)
 
 	log(P, "Using deprecated extract API");
 
-	if(WORLD->forcedMode() && !WORLD->isForced(P->getName())) {
+	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
 		return 0;
 	}
 
@@ -391,7 +391,7 @@ int li_bd_patch(lua_State * L)
 
 	Package *P = li_get_package(L);
 
-	if(WORLD->forcedMode() && !WORLD->isForced(P->getName())) {
+	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
 		return true;
 	}
 

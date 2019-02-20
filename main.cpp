@@ -28,8 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static bool quietly = false;
 
-World *buildsys::WORLD;
-
 void buildsys::log(const char *package, const char *fmt, ...)
 {
 	char *message = NULL;
@@ -93,7 +91,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	WORLD = new World(argv[0]);
+	World *WORLD = new World(argv[0]);
 	hash_setup();
 
 	// process arguments ...

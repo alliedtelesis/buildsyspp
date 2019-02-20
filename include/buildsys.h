@@ -113,6 +113,7 @@ namespace buildsys {
 	typedef std::list < std::string > string_list;
 
 	class Package;
+	class World;
 
 	/*! The catchable exception */
 	class Exception {
@@ -283,6 +284,7 @@ namespace buildsys {
 		std::string new_install;
 		std::string work_build;
 		std::string work_src;
+		World *WORLD;
 	public:
 		/** Create a build directory
 		 *  \param P The package this directory is for
@@ -314,7 +316,10 @@ namespace buildsys {
 		const char *getNewInstall() {
 			return this->new_install.c_str();
 		};
-
+		//! Get the world this builddir is part of
+		World *getWorld() {
+			return this->WORLD;
+		};
 		//! Remove all the contents of this directory
 		void clean();
 
@@ -708,10 +713,11 @@ namespace buildsys {
 	private:
 		std::string feature;
 		std::string value;
+		World *WORLD;
 	public:
-		FeatureValueUnit(const char *feature,
+		FeatureValueUnit(World * WORLD, const char *feature,
 				 const char *value):feature(std::string(feature)),
-		    value(std::string(value)) {
+		    value(std::string(value)), WORLD(WORLD) {
 		};
 		virtual bool print(std::ostream & out);
 		virtual std::string type() {
@@ -914,8 +920,9 @@ namespace buildsys {
 		pthread_mutex_t lock;
 		void _addPackage(Package * p);
 		void _removePackage(Package * p);
+		World *WORLD;
 	public:
-		NameSpace(std::string name):name(name) {
+		NameSpace(World * W, std::string name):name(name), WORLD(W) {
 			pthread_mutex_init(&this->lock, NULL);
 		};
 		~NameSpace();
@@ -930,6 +937,8 @@ namespace buildsys {
 		void removePackage(Package * p);
 		std::string getStagingDir();
 		std::string getInstallDir();
+		//! Get the World this NS belongs to
+		World *getWorld();
 	};
 
 	//! A dependency on another Package
@@ -1066,6 +1075,10 @@ namespace buildsys {
 		//! Returns the namespace this package is in
 		NameSpace *getNS() {
 			return this->ns;
+		};
+		//! Return the world this package is in
+		World *getWorld() {
+			return this->ns->getWorld();
 		};
 		//! Returns the build directory being used by this package
 		BuildDir *builddir();
@@ -1221,7 +1234,7 @@ namespace buildsys {
 		container *c;
 	public:
 		//! Create an Internal_Graph
-		Internal_Graph();
+		Internal_Graph(World * W);
 		~Internal_Graph();
 		//! Output the graph to dependencies.dot
 		void output();
@@ -1535,8 +1548,6 @@ namespace buildsys {
 		//! populate the arguments list with out forced build list
 		bool populateForcedList(PackageCmd * pc);
 	};
-	extern World *WORLD;
-
 	bool interfaceSetup(Lua * lua);
 	void log(const char *package, const char *fmt, ...);
 	void log(Package * P, const char *fmt, ...);
