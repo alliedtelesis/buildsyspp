@@ -210,6 +210,7 @@ bool World::basePackage(char *filename)
 
 	this->p = new Package(this->findNameSpace(nsname), pname, filename, "");
 	free(nsname);
+	this->p->setNS(this->p->getNS());
 
 	pq = new PackageQueue();
 	pq->push(this->p);
