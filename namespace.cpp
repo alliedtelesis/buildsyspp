@@ -110,7 +110,7 @@ Package *NameSpace::findPackage(std::string name)
 		}
 
 		if(!found) {
-			throw CustomException("Failed opening Package");
+			throw CustomException("Package not found: " + name);
 		}
 
 
