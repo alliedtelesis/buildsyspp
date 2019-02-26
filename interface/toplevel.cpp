@@ -281,7 +281,7 @@ int li_require(lua_State * L)
 
 	char *fName = NULL;
 	asprintf(&fName, "%s.lua", lua_tostring(L, 1));
-	char *relativeFName = P->relative_fetch_path(fName);
+	char *relativeFName = P->relative_fetch_path(fName, true);
 
 	// Check whether the relative file path exists. If it does
 	// not exist then we use the original file path
@@ -290,26 +290,6 @@ int li_require(lua_State * L)
 		P->getLua()->processFile(relativeFName);
 		P->buildDescription()->add(new RequireFileUnit(relativeFName));
 		success = true;
-	} else {
-		// Look through all the overlays for this file
-		string_list::iterator iter = P->getWorld()->overlaysStart();
-		string_list::iterator iterEnd = P->getWorld()->overlaysEnd();
-		for(; iter != iterEnd; iter++) {
-			char *overlayFName = NULL;
-			if(asprintf(&overlayFName, "%s/%s", iter->c_str(), fName) <= 0) {
-				throw CustomException("Error with asprintf");
-			}
-			if(stat(overlayFName, &buf) == 0) {
-				P->getLua()->processFile(overlayFName);
-				P->buildDescription()->add(new
-							   RequireFileUnit(overlayFName));
-				success = true;
-			}
-			free(overlayFName);
-			if(success) {
-				break;
-			}
-		}
 	}
 
 	if(!success) {

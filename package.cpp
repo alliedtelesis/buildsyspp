@@ -57,31 +57,61 @@ FILE *Package::getLogFile()
 	return this->logFile;
 }
 
-char *Package::absolute_fetch_path(const char *location)
+char *Package::absolute_fetch_path(const char *location, bool also_root)
 {
-	char *src_path = NULL;
 	const char *cwd = this->getWorld()->getWorkingDir()->c_str();
-	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
-		asprintf(&src_path, "%s/%s", cwd, location);
-	} else if(location[0] == '.') {
-		asprintf(&src_path, "%s/%s/%s", cwd, this->getOverlay().c_str(), location);
-	} else {
-		asprintf(&src_path, "%s/%s/package/%s/%s", cwd, this->getOverlay().c_str(),
-			 this->getName().c_str(), location);
-	}
+	char *src_path;
+	char *src_path_tmp = this->relative_fetch_path(location);
+
+	asprintf(&src_path, "%s/%s", cwd, src_path_tmp);
+
+	free(src_path_tmp);
 	return src_path;
 }
 
-char *Package::relative_fetch_path(const char *location)
+char *Package::relative_fetch_path(const char *location, bool also_root)
 {
 	char *src_path = NULL;
+
 	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
 		src_path = strdup(location);
-	} else if(location[0] == '.') {
-		asprintf(&src_path, "%s/%s", this->getOverlay().c_str(), location);
 	} else {
-		asprintf(&src_path, "%s/package/%s/%s", this->getOverlay().c_str(),
-			 this->getName().c_str(), location);
+		string_list::iterator iter = this->getWorld()->overlaysStart();
+		string_list::iterator end = this->getWorld()->overlaysEnd();
+		struct stat buf;
+
+		if(location[0] == '.') {
+			for(; iter != end; iter++) {
+				asprintf(&src_path, "%s/%s", (*iter).c_str(), location);
+				if(stat(src_path, &buf) == 0) {
+					break;
+				}
+				free(src_path);
+				src_path = NULL;
+			}
+		} else {
+			for(; iter != end; iter++) {
+				asprintf(&src_path, "%s/package/%s/%s", (*iter).c_str(),
+					 this->getName().c_str(), location);
+				if(stat(src_path, &buf) == 0) {
+					break;
+				}
+				free(src_path);
+				src_path = NULL;
+				if(also_root) {
+					asprintf(&src_path, "%s/%s", (*iter).c_str(),
+						 location);
+					if(stat(src_path, &buf) == 0) {
+						break;
+					}
+					free(src_path);
+					src_path = NULL;
+				}
+			}
+		}
+		if(src_path == NULL) {
+			throw FileNotFoundException(location, this->getName().c_str());
+		}
 	}
 	return src_path;
 }
