@@ -297,7 +297,7 @@ bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	// make sure it has been fetched
 	if(!this->fetched) {
-		if(!this->fetch(NULL)) {
+		if(!this->fetch(bd)) {
 			return false;
 		}
 	}
