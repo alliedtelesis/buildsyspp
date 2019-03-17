@@ -25,6 +25,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
+static bool directory_exists(const char *dir)
+{
+	struct stat info;
+
+	if(stat(dir, &info) != 0) {
+		/* Nothing here */
+		return false;
+	} else if(S_ISDIR(info.st_mode)) {
+		/* Actually a directory */
+		return true;
+	}
+	/* Something other than a directory */
+	return false;
+}
+
 static bool refspec_is_commitid(std::string refspec)
 {
 	const char *refspec_str = refspec.c_str();
@@ -111,6 +126,10 @@ GitDirExtractionUnit::GitDirExtractionUnit()
 
 bool GitDirExtractionUnit::isDirty()
 {
+	if(!directory_exists(this->localPath().c_str())) {
+		/* If the source directory doesn't exist, then it can't be dirty */
+		return false;
+	}
 	char *cmd = NULL;
 	asprintf(&cmd, "cd %s && git diff --quiet HEAD", this->localPath().c_str());
 	int res = system(cmd);
@@ -186,14 +205,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	char *source_dir = strdup(this->local.c_str());
 	const char *cwd = d->getWorld()->getWorkingDir()->c_str();
 
-	bool exists = false;
-	{
-		struct stat s;
-		int err = stat(source_dir, &s);
-		if(err == 0 && S_ISDIR(s.st_mode)) {
-			exists = true;
-		}
-	}
+	bool exists = directory_exists(source_dir);
 
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(exists ? source_dir : cwd, "git"));
 
