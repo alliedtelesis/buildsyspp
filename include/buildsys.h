@@ -320,8 +320,10 @@ namespace buildsys {
 		World *getWorld() {
 			return this->WORLD;
 		};
-		//! Remove all the contents of this directory
+		//! Remove all of the work directory contents
 		void clean();
+		//! Remove all of the staging directory contents
+		void cleanStaging();
 
 		static void lua_table_r(lua_State * L) {
 			LUA_SET_TABLE_TYPE(L, BuildDir);
@@ -989,6 +991,7 @@ namespace buildsys {
 		bool was_built;
 		bool no_fetch_from;
 		bool hash_output;
+		bool suppress_remove_staging;
 		pthread_mutex_t lock;
 		time_t run_secs;
 		FILE *logFile;
@@ -1017,6 +1020,8 @@ namespace buildsys {
 		bool packageNewStaging();
 		//! Package up the new/install directory (or installFile, if set)
 		bool packageNewInstall();
+		//! Remove the staging directory (to save space, if not suppressed)
+		void cleanStaging();
 		/** Should this package be rebuilt ?
 		 *  This returns true when any of the following occur:
 		 *  - The output staging or install tarballs are removed
@@ -1037,7 +1042,8 @@ namespace buildsys {
 		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
 		    processing_queued(false), buildInfoPrepared(false), built(false),
 		    building(false), codeUpdated(false), was_built(false),
-		    no_fetch_from(false), hash_output(false), run_secs(0), logFile(NULL) {
+		    no_fetch_from(false), hash_output(false),
+		    suppress_remove_staging(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
 		};
 		~Package() {
@@ -1154,6 +1160,10 @@ namespace buildsys {
 			this->processing_queued = true;
 			pthread_mutex_unlock(&this->lock);
 			return res;
+		}
+		//! Set to prevent the staging directory from being removed at the end of the build
+		void setSuppressRemoveStaging() {
+			this->suppress_remove_staging = true;
 		}
 		//! Parse and load the lua file for this package
 		bool process();

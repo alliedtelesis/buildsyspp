@@ -707,6 +707,14 @@ bool Package::packageNewInstall()
 	return true;
 }
 
+void Package::cleanStaging()
+{
+	if(this->suppress_remove_staging) {
+		return;
+	}
+	this->bd->cleanStaging();
+}
+
 bool Package::build(bool locally)
 {
 	struct timespec start, end;
@@ -810,6 +818,8 @@ bool Package::build(bool locally)
 	if(!this->packageNewInstall()) {
 		return false;
 	}
+
+	this->cleanStaging();
 
 	this->updateBuildInfo();
 

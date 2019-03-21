@@ -188,3 +188,11 @@ void BuildDir::clean()
 		// We should complain here
 	}
 }
+
+void BuildDir::cleanStaging()
+{
+	char *cmd = NULL;
+	asprintf(&cmd, "rm -fr %s", this->staging.c_str());
+	system(cmd);
+	free(cmd);
+}

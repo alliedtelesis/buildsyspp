@@ -129,6 +129,15 @@ int li_intercept(lua_State * L)
 	return 0;
 }
 
+int li_keepstaging(lua_State * L)
+{
+	Package *P = li_get_package(L);
+
+	P->setSuppressRemoveStaging();
+
+	return 0;
+}
+
 static void depend(Package * P, NameSpace * ns, bool locally, const char *name)
 {
 	Package *p = NULL;
@@ -307,6 +316,7 @@ bool buildsys::interfaceSetup(Lua * lua)
 	lua->registerFunc("depend", li_depend);
 	lua->registerFunc("feature", li_feature);
 	lua->registerFunc("intercept", li_intercept);
+	lua->registerFunc("keepstaging", li_keepstaging);
 	lua->registerFunc("name", li_name);
 	lua->registerFunc("buildlocally", li_buildlocally);
 	lua->registerFunc("hashoutput", li_hashoutput);
