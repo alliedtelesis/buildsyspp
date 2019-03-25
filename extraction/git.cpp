@@ -289,18 +289,20 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 
 std::string GitExtractionUnit::HASH()
 {
-	char *digest_name = NULL;
-	asprintf(&digest_name, "%s#%s", this->uri.c_str(), this->refspec.c_str());
-	/* Check if the package contains pre-computed hashes */
-	char *Hash = P->getFileHash(digest_name);
-	free(digest_name);
-	if(Hash) {
-		this->hash = new std::string(Hash);
-		free(Hash);
-	} else if(refspec_is_commitid(this->refspec)) {
+	if(refspec_is_commitid(this->refspec)) {
 		this->hash = new std::string(this->refspec);
 	} else {
-		this->fetch(NULL);
+		char *digest_name = NULL;
+		asprintf(&digest_name, "%s#%s", this->uri.c_str(), this->refspec.c_str());
+		/* Check if the package contains pre-computed hashes */
+		char *Hash = P->getFileHash(digest_name);
+		free(digest_name);
+		if(Hash) {
+			this->hash = new std::string(Hash);
+			free(Hash);
+		} else {
+			this->fetch(NULL);
+		}
 	}
 	return *this->hash;
 }
