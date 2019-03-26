@@ -301,7 +301,7 @@ std::string GitExtractionUnit::HASH()
 			this->hash = new std::string(Hash);
 			free(Hash);
 		} else {
-			this->fetch(NULL);
+			this->fetch(P->builddir());
 		}
 	}
 	return *this->hash;
