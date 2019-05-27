@@ -303,6 +303,20 @@ bool World::isIgnoredFeature(std::string feature)
 	return false;
 }
 
+DLObject *World::findDLObject(std::string fname)
+{
+	std::list < DLObject * >::iterator iter = this->dlobjects->begin();
+	std::list < DLObject * >::iterator iterEnd = this->dlobjects->end();
+	for(; iter != iterEnd; iter++) {
+		if((*iter)->fileName().compare(fname) == 0)
+			return (*iter);
+	}
+
+	DLObject *dlo = new DLObject(fname);
+	this->dlobjects->push_back(dlo);
+	return dlo;
+}
+
 World::~World()
 {
 	delete this->features;
@@ -314,6 +328,12 @@ World::~World()
 		delete ns;
 	}
 	delete this->namespaces;
+	while(!this->dlobjects->empty()) {
+		DLObject *dlo = this->dlobjects->front();
+		this->dlobjects->pop_front();
+		delete dlo;
+	}
+	delete this->dlobjects;
 	delete this->overlays;
 	delete this->graph;
 	delete this->topo_graph;

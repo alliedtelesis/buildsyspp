@@ -426,6 +426,34 @@ namespace buildsys {
 		void printCmd();
 	};
 
+	/* A Downloaded Object
+	 * Used to prevent multiple packages downloading the same file at the same time
+	 */
+	class DLObject {
+	private:
+		std::string filename;
+		std::string hash;
+		pthread_mutex_t dl_lock;
+	public:
+		DLObject(std::string filename):filename(filename),
+		    dl_lock(PTHREAD_MUTEX_INITIALIZER) {
+		} std::string fileName() {
+			return this->filename;
+		}
+		std::string HASH() {
+			return this->hash;
+		}
+		void setHASH(std::string hash) {
+			this->hash = hash;
+		}
+		void lock() {
+			pthread_mutex_lock(&this->dl_lock);
+		}
+		void unlock() {
+			pthread_mutex_unlock(&this->dl_lock);
+		}
+	};
+
 	/* A hashable unit
 	 * For fetch and extraction units.
 	 */
@@ -1317,6 +1345,7 @@ namespace buildsys {
 		key_value *features;
 		string_list *forcedDeps;
 		std::list < NameSpace * >*namespaces;
+		std::list < DLObject * >*dlobjects;
 		Package *p;
 		string_list *overlays;
 		Internal_Graph *graph;
@@ -1338,6 +1367,7 @@ namespace buildsys {
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
 		    forcedDeps(new string_list()),
 		    namespaces(new std::list < NameSpace * >()),
+		    dlobjects(new std::list < DLObject * >()),
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
 		    extractOnly(false), parseOnly(false), keepGoing(false),
@@ -1463,6 +1493,9 @@ namespace buildsys {
 		bool noIgnoredFeatures() {
 			return this->ignoredFeatures->empty();
 		}
+
+		//! Find (or create) a DLObject for a given full file name
+		DLObject *findDLObject(std::string);
 
 		//! Start the processing and building steps with the given meta package
 		bool basePackage(char *filename);

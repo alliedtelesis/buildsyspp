@@ -70,6 +70,28 @@ bool DownloadFetch::fetch(BuildDir * d)
 	std::string fullname = this->full_name();
 	std::string fname = this->final_name();
 
+	/* Hold a lock while we download this file
+	 * Also checks for conflicting hashes for the same file
+	 */
+	DLObject *dlobj = d->getWorld()->findDLObject(fullname);
+	if(dlobj == NULL) {
+		log(this->P, "Failed to get the DLObject for %s\n", fullname.c_str());
+		return false;
+	}
+
+	dlobj->lock();
+	if(this->hash.length() != 0) {
+		if(dlobj->HASH().length() != 0) {
+			if(dlobj->HASH().compare(this->hash) != 0) {
+				log(this->P,
+				    "Another package has already downloaded %s with hash %s (but we need %s)\n",
+				    fullname.c_str(), dlobj->HASH().c_str(),
+				    this->hash.c_str());
+				dlobj->unlock();
+				return false;
+			}
+		}
+	}
 
 	{
 		char *fpath = NULL;
@@ -146,6 +168,8 @@ bool DownloadFetch::fetch(BuildDir * d)
 		free(hash);
 	}
 
+	dlobj->unlock();
+
 	return ret;
 }
 
@@ -158,7 +182,7 @@ std::string DownloadFetch::HASH()
 	if(!hash) {
 		log(P, "No hash for %s in package/%s/Digest", this->final_name().c_str(),
 		    P->getName().c_str());
-		throw CustomException("Missing hash");
+		throw CustomException("Missing hash " + P->getName());
 	}
 	this->hash = std::string(hash);
 	free(hash);
