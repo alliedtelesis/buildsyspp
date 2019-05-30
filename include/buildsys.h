@@ -1336,8 +1336,11 @@ namespace buildsys {
 		}
 		void wait() {
 			pthread_mutex_lock(&this->lock);
-			if(this->queue.empty()) {
-				pthread_cond_wait(&this->cond, &this->lock);
+			if (this->started != this->finished)
+			{
+				if(this->queue.empty()) {
+					pthread_cond_wait(&this->cond, &this->lock);
+				}
 			}
 			pthread_mutex_unlock(&this->lock);
 		}
