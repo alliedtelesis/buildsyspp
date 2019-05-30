@@ -171,9 +171,11 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 }
 
 
-PatchExtractionUnit::PatchExtractionUnit(int level, char *pp, char *uri)
+PatchExtractionUnit::PatchExtractionUnit(int level, const char *pp, const char *uri,
+					 const char *fname_short)
 {
 	this->uri = std::string(uri);
+	this->fname_short = std::string(fname_short);
 	char *Hash = hash_file(uri);
 	this->hash = new std::string(Hash);
 	free(Hash);

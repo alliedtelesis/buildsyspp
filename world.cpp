@@ -208,7 +208,7 @@ bool World::basePackage(char *filename)
 		nsname[p_len - 4] = '\0';
 	}
 
-	this->p = new Package(this->findNameSpace(nsname), pname, filename, "");
+	this->p = new Package(this->findNameSpace(nsname), pname, filename, filename, "");
 	free(nsname);
 	this->p->setNS(this->p->getNS());
 

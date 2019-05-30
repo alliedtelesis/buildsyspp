@@ -170,7 +170,10 @@ bool Package::process()
 {
 	log(this, "Processing (%s)", this->file.c_str());
 
-	this->build_description->add(new PackageFileUnit(this->file.c_str()));
+	this->
+	    build_description->add(new
+				   PackageFileUnit(this->file.c_str(),
+						   this->file_short.c_str()));
 
 	if(!interfaceSetup(this->lua)) {
 		error("interfaceSetup: Failed");

@@ -629,15 +629,17 @@ namespace buildsys {
 	private:
 		int level;
 		char *patch_path;
+		std::string fname_short;
 	public:
-		PatchExtractionUnit(int level, char *patch_path, char *patch);
+		PatchExtractionUnit(int level, const char *patch_path,
+				    const char *patch_fname, const char *fname_short);
 		virtual ~ PatchExtractionUnit() {
 			free(patch_path);
 		};
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    level << " " << this->patch_path << " " << this->
-			    uri << " " << this->HASH() << std::endl;
+			    fname_short << " " << this->HASH() << std::endl;
 			return true;
 		}
 		virtual std::string type() {
@@ -777,7 +779,7 @@ namespace buildsys {
 		std::string uri;	//!< URI of this package file
 		std::string hash;	//!< Hash of this package file
 	public:
-		PackageFileUnit(const char *file);
+		PackageFileUnit(const char *file, const char *file_short);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    uri << " " << this->hash << std::endl;
@@ -794,7 +796,7 @@ namespace buildsys {
 		std::string uri;	//!< URI of this package file
 		std::string hash;	//!< Hash of this package file
 	public:
-		RequireFileUnit(const char *file);
+		RequireFileUnit(const char *file, const char *file_short);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    uri << " " << this->hash << std::endl;
@@ -999,6 +1001,7 @@ namespace buildsys {
 		std::list < PackageCmd * >commands;
 		std::string name;
 		std::string file;
+		std::string file_short;
 		std::string overlay;
 		std::string buildinfo_hash;
 		NameSpace *ns;
@@ -1063,11 +1066,12 @@ namespace buildsys {
 		 *  \param name The name of this package
 		 *  \param file The lua file describing this package
 		 */
-		Package(NameSpace * ns, std::string name, std::string file,
-			std::string overlay):name(name), file(file), overlay(overlay),
-		    buildinfo_hash(""), ns(ns), bd(new BuildDir(this)), f(new Fetch()),
-		    Extract(new Extraction()), build_description(new BuildDescription()),
-		    lua(new Lua()), intercept(false), depsExtraction(NULL), visiting(false),
+		Package(NameSpace * ns, std::string name, std::string file_short,
+			std::string file, std::string overlay):name(name), file(file),
+		    file_short(file_short), overlay(overlay), buildinfo_hash(""), ns(ns),
+		    bd(new BuildDir(this)), f(new Fetch()), Extract(new Extraction()),
+		    build_description(new BuildDescription()), lua(new Lua()),
+		    intercept(false), depsExtraction(NULL), visiting(false),
 		    processing_queued(false), buildInfoPrepared(false), built(false),
 		    building(false), codeUpdated(false), was_built(false),
 		    no_fetch_from(false), hash_output(false),

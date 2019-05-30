@@ -297,7 +297,7 @@ int li_require(lua_State * L)
 	struct stat buf;
 	if(stat(relativeFName, &buf) == 0) {
 		P->getLua()->processFile(relativeFName);
-		P->buildDescription()->add(new RequireFileUnit(relativeFName));
+		P->buildDescription()->add(new RequireFileUnit(relativeFName, fName));
 		success = true;
 	}
 

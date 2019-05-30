@@ -62,6 +62,7 @@ std::string NameSpace::getInstallDir()
 Package *NameSpace::findPackage(std::string name)
 {
 	std::string file;
+	std::string file_short;
 	std::string overlay;
 
 	pthread_mutex_lock(&this->lock);
@@ -78,6 +79,7 @@ Package *NameSpace::findPackage(std::string name)
 	{
 		// check that the dependency exists
 		char *luaFile = NULL;
+		char *relativeFName = NULL;
 		char *dependPath = strdup(name.c_str());
 		char *lastPart = strrchr(dependPath, '/');
 		bool found = false;
@@ -88,12 +90,14 @@ Package *NameSpace::findPackage(std::string name)
 			lastPart = strdup(lastPart + 1);
 		}
 
+		if(asprintf(&relativeFName, "package/%s/%s.lua", dependPath, lastPart) <= 0) {
+			throw CustomException("Error with asprintf");
+		}
+
 		string_list::iterator iter = this->WORLD->overlaysStart();
 		string_list::iterator iterEnd = this->WORLD->overlaysEnd();
 		for(; iter != iterEnd; iter++) {
-			if(asprintf
-			   (&luaFile, "%s/package/%s/%s.lua", iter->c_str(), dependPath,
-			    lastPart) <= 0) {
+			if(asprintf(&luaFile, "%s/%s", iter->c_str(), relativeFName) <= 0) {
 				throw CustomException("Error with asprintf");
 			}
 			FILE *f = fopen(luaFile, "r");
@@ -119,9 +123,11 @@ Package *NameSpace::findPackage(std::string name)
 
 		file = std::string(luaFile);
 		free(luaFile);
+		file_short = std::string(relativeFName);
+		free(relativeFName);
 	}
 
-	Package *p = new Package(this, name, file, overlay);
+	Package *p = new Package(this, name, file_short, file, overlay);
 	this->_addPackage(p);
 
 	pthread_mutex_unlock(&this->lock);

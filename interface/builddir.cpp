@@ -413,7 +413,8 @@ int li_bd_patch(lua_State * L)
 				    ("patch() requires a table of strings as the third argument\n");
 			uri = P->relative_fetch_path(lua_tostring(L, -1));
 			PatchExtractionUnit *peu =
-			    new PatchExtractionUnit(patch_depth, patch_path, uri);
+			    new PatchExtractionUnit(patch_depth, patch_path, uri,
+						    lua_tostring(L, -1));
 			P->extraction()->add(peu);
 			free(uri);
 		}
