@@ -214,9 +214,10 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname)
+FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname, const char *fname_short)
 {
 	this->uri = std::string(fname);
+	this->fname_short = std::string(fname_short);
 	char *Hash = hash_file(fname);
 	this->hash = new std::string(Hash);
 	free(Hash);

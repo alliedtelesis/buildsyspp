@@ -154,7 +154,7 @@ int li_bd_fetch(lua_State * L)
 		f = new LinkFetch(std::string(uri), P);
 	} else if(strcmp(method, "copyfile") == 0) {
 		char *file_path = P->relative_fetch_path(uri);
-		P->extraction()->add(new FileCopyExtractionUnit(file_path));
+		P->extraction()->add(new FileCopyExtractionUnit(file_path, uri));
 		free(file_path);
 	} else if(strcmp(method, "copygit") == 0) {
 		char *src_path = P->relative_fetch_path(uri);

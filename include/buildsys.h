@@ -651,11 +651,12 @@ namespace buildsys {
 	//! A file copy as part of the extraction step
 	class FileCopyExtractionUnit:public ExtractionUnit {
 	private:
+		std::string fname_short;
 	public:
-		FileCopyExtractionUnit(const char *file);
+		FileCopyExtractionUnit(const char *file, const char *fname_short);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
-			    uri << " " << this->HASH() << std::endl;
+			    fname_short << " " << this->HASH() << std::endl;
 			return true;
 		}
 		virtual std::string type() {
