@@ -127,6 +127,9 @@ int main(int argc, char *argv[])
 			WORLD->setKeepGoing();
 		} else if(!strcmp(argv[a], "--quietly")) {
 			quietly = true;
+		} else if(!strcmp(argv[a], "--parallel-packages") || !strcmp(argv[a], "-j")) {
+			WORLD->setThreadsLimit(atoi(argv[a + 1]));
+			a++;
 		} else if(!strcmp(argv[a], "--")) {
 			foundDashDash = true;
 		} else {

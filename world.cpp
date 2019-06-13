@@ -233,7 +233,10 @@ bool World::basePackage(char *filename)
 	this->topo_graph->topological();
 	while(!this->isFailed() && !this->p->isBuilt()) {
 		pthread_mutex_lock(&this->cond_lock);
-		Package *toBuild = this->topo_graph->topoNext();
+		Package *toBuild = NULL;
+		if(this->threads_limit == 0 || this->threads_running < this->threads_limit) {
+			toBuild = this->topo_graph->topoNext();
+		}
 		if(toBuild != NULL) {
 			pthread_t tid;
 			pthread_mutex_unlock(&this->cond_lock);

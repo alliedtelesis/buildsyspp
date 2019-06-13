@@ -1336,8 +1336,7 @@ namespace buildsys {
 		}
 		void wait() {
 			pthread_mutex_lock(&this->lock);
-			if (this->started != this->finished)
-			{
+			if(this->started != this->finished) {
 				if(this->queue.empty()) {
 					pthread_cond_wait(&this->cond, &this->lock);
 				}
@@ -1370,6 +1369,7 @@ namespace buildsys {
 		pthread_mutex_t cond_lock;
 		pthread_cond_t cond;
 		int threads_running;
+		int threads_limit;
 		bool outputPrefix;
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
@@ -1379,7 +1379,7 @@ namespace buildsys {
 		    overlays(new string_list()), graph(NULL),
 		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
 		    extractOnly(false), parseOnly(false), keepGoing(false),
-		    threads_running(0), outputPrefix(true) {
+		    threads_running(0), threads_limit(0), outputPrefix(true) {
 			overlays->push_back(std::string("."));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = new std::string(pwd);
@@ -1588,6 +1588,10 @@ namespace buildsys {
 			int res = this->threads_running;
 			pthread_mutex_unlock(&this->cond_lock);
 			return res;
+		};
+		//! Adjust the thread limit
+		void setThreadsLimit(int tl) {
+			this->threads_limit = tl;
 		};
 		//! output the dependency graph
 		bool output_graph() {
