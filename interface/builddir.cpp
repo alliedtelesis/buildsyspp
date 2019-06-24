@@ -73,6 +73,7 @@ int li_bd_fetch(lua_State * L)
 	bool decompress = false;
 	char *branch = NULL;
 	char *reponame = NULL;
+	bool listedonly = false;
 
 	Package *P = li_get_package(L);
 
@@ -101,6 +102,8 @@ int li_bd_fetch(lua_State * L)
 				reponame = strdup(value);
 			} else if(strcmp(key, "to") == 0) {
 				to = strdup(value);
+			} else if(strcmp(key, "listedonly") == 0) {
+				listedonly = (strcmp(value, "true") == 0);
 			} else {
 				printf("Unknown key %s (%s)", key, value);
 			}
@@ -167,7 +170,7 @@ int li_bd_fetch(lua_State * L)
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
-		P->setDepsExtract(path);
+		P->setDepsExtract(path, listedonly);
 		log(P, "Will add installed files, considering code updated");
 		P->setCodeUpdated();
 	} else {

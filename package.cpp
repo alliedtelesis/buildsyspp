@@ -251,7 +251,8 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 	return true;
 }
 
-bool Package::extract_install(const char *dir, std::list < std::string > *done)
+bool Package::extract_install(const char *dir, std::list < std::string > *done,
+			      bool includeChildren)
 {
 	{
 		std::list < std::string >::iterator dIt = done->begin();
@@ -266,9 +267,10 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done)
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 
-	if(!this->intercept) {
+	if(includeChildren && !this->intercept) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->getPackage()->extract_install(dir, done))
+			if(!(*dIt)->
+			   getPackage()->extract_install(dir, done, includeChildren))
 				return false;
 		}
 	}
@@ -645,7 +647,8 @@ bool Package::extractInstallDepends()
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done))
+		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done,
+							  !this->depsExtractionDirectOnly))
 			return false;
 	}
 	delete done;

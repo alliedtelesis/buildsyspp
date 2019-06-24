@@ -1013,6 +1013,7 @@ namespace buildsys {
 		Lua *lua;
 		bool intercept;
 		char *depsExtraction;
+		bool depsExtractionDirectOnly;
 		string_list installFiles;
 		bool visiting;
 		bool processing_queued;
@@ -1035,7 +1036,8 @@ namespace buildsys {
 		//! Extract the new staging directory this package created in the given path
 		bool extract_staging(const char *dir, std::list < std::string > *done);
 		//! Extract the new install directory this package created in the given path
-		bool extract_install(const char *dir, std::list < std::string > *done);
+		bool extract_install(const char *dir, std::list < std::string > *done,
+				     bool includeChildren);
 		//! prepare the (new) build.info file
 		void prepareBuildInfo();
 		//! update the build.info file
@@ -1072,9 +1074,9 @@ namespace buildsys {
 		    file_short(file_short), overlay(overlay), buildinfo_hash(""), ns(ns),
 		    bd(new BuildDir(this)), f(new Fetch()), Extract(new Extraction()),
 		    build_description(new BuildDescription()), lua(new Lua()),
-		    intercept(false), depsExtraction(NULL), visiting(false),
-		    processing_queued(false), buildInfoPrepared(false), built(false),
-		    building(false), codeUpdated(false), was_built(false),
+		    intercept(false), depsExtraction(NULL), depsExtractionDirectOnly(false),
+		    visiting(false), processing_queued(false), buildInfoPrepared(false),
+		    built(false), building(false), codeUpdated(false), was_built(false),
 		    no_fetch_from(false), hash_output(false),
 		    suppress_remove_staging(false), run_secs(0), logFile(NULL) {
 			pthread_mutex_init(&this->lock, NULL);
@@ -1167,10 +1169,13 @@ namespace buildsys {
 		/** Set the location to extract install directories to
 		 *  During the build, all files that all dependencies have installed
 		 *  will be extracted to the given path
+		 *  The directonly parameter limits this to only listed dependencies
+		 *  i.e. not anything they also depend on
 		 *  \param de relative path to extract dependencies to
 		 */
-		void setDepsExtract(char *de) {
+		void setDepsExtract(char *de, bool directonly) {
 			this->depsExtraction = de;
+			this->depsExtractionDirectOnly = directonly;
 		};
 		//! Add a command to run during the build stage
 			/** \param pc The comamnd to run
