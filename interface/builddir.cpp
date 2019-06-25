@@ -115,6 +115,10 @@ int li_bd_fetch(lua_State * L)
 	/* Create fetch object here */
 	FetchUnit *f = NULL;
 	if(strcmp(method, "dl") == 0) {
+		if(uri == NULL) {
+			throw CustomException("fetch method = dl requires uri to be set");
+		}
+
 		std::string fname;
 		if(filename) {
 			fname = std::string(filename);
@@ -123,6 +127,10 @@ int li_bd_fetch(lua_State * L)
 		}
 		f = new DownloadFetch(std::string(uri), decompress, fname, P);
 	} else if(strcmp(method, "git") == 0) {
+		if(uri == NULL) {
+			throw CustomException("fetch method = git requires uri to be set");
+		}
+
 		if(reponame == NULL) {
 			char *l2 = strrchr(uri, '/');
 			if(l2[1] == '\0') {
@@ -143,6 +151,11 @@ int li_bd_fetch(lua_State * L)
 		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch, P);
 		P->extraction()->add(geu);
 	} else if(strcmp(method, "linkgit") == 0) {
+		if(uri == NULL) {
+			throw
+			    CustomException
+			    ("fetch method = linkgit requires uri to be set");
+		}
 		char *l = P->relative_fetch_path(uri);
 		char *l2 = strrchr(l, '/');
 		if(l2[1] == '\0') {
@@ -154,18 +167,34 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l);
 	} else if(strcmp(method, "link") == 0) {
+		if(uri == NULL) {
+			throw CustomException("fetch method = link requires uri to be set");
+		}
 		f = new LinkFetch(std::string(uri), P);
 	} else if(strcmp(method, "copyfile") == 0) {
+		if(uri == NULL) {
+			throw
+			    CustomException
+			    ("fetch method = copyfile requires uri to be set");
+		}
 		char *file_path = P->relative_fetch_path(uri);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path, uri));
 		free(file_path);
 	} else if(strcmp(method, "copygit") == 0) {
+		if(uri == NULL) {
+			throw
+			    CustomException
+			    ("fetch method = copygit requires uri to be set");
+		}
 		char *src_path = P->relative_fetch_path(uri);
 		CopyGitDirExtractionUnit *cgdeu =
 		    new CopyGitDirExtractionUnit(src_path, ".");
 		P->extraction()->add(cgdeu);
 		free(src_path);
 	} else if(strcmp(method, "copy") == 0) {
+		if(uri == NULL) {
+			throw CustomException("fetch method = copy requires uri to be set");
+		}
 		f = new CopyFetch(std::string(uri), P);
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = absolute_path(d, to);
