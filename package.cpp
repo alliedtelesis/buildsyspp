@@ -48,11 +48,9 @@ BuildDir *Package::builddir()
 FILE *Package::getLogFile()
 {
 	if(this->logFile == NULL) {
-		BuildDir *bd = this->builddir();
-		char *fname = NULL;
-		asprintf(&fname, "%s/build.log", bd->getPath());
-		this->logFile = fopen(fname, "w");
-		free(fname);
+		std::string fname = string_format("%s/build.log",
+						  this->builddir()->getPath());
+		this->logFile = fopen(fname.c_str(), "w");
 	}
 	return this->logFile;
 }
@@ -372,18 +370,17 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 		    const char *fname, const char *fext)
 {
 	bool ret = false;
-	char *url = NULL;
-	asprintf(&url, "%s/%s/%s/%s/%s", P->getWorld()->fetchFrom().c_str(),
-		 P->getNS()->getName().c_str(), P->getName().c_str(), hash, rfile);
-	char *cmd = NULL;
-	asprintf(&cmd, "wget -q %s -O %s/%s%s", url, path, fname, fext);
-	int res = system(cmd);
+	std::string url = string_format("%s/%s/%s/%s/%s",
+					P->getWorld()->fetchFrom().c_str(),
+					P->getNS()->getName().c_str(),
+					P->getName().c_str(), hash, rfile);
+	std::string cmd = string_format("wget -q %s -O %s/%s%s", url.c_str(),
+					path, fname, fext);
+	int res = system(cmd.c_str());
 	if(res != 0) {
 		log(P, "Failed to get %s", rfile);
 		ret = true;
 	}
-	free(cmd);
-	free(url);
 	return ret;
 }
 
@@ -406,21 +403,21 @@ void Package::updateBuildInfoHash()
 
 BuildUnit *Package::buildInfo()
 {
-	char *Info_file = NULL;
 	BuildUnit *res;
 	if(this->isHashingOutput()) {
-		asprintf(&Info_file, "%s/.output.info", this->bd->getShortPath());
-		res = new OutputInfoFileUnit(Info_file);
+		std::string info_file = string_format("%s/.output.info",
+						      this->bd->getShortPath());
+		res = new OutputInfoFileUnit(info_file.c_str());
 	} else {
 		if(this->buildinfo_hash.compare("") == 0) {
 			log(this, "build.info (in %s) is empty", this->bd->getShortPath());
 			log(this, "You probably need to build this package");
 			return NULL;
 		}
-		asprintf(&Info_file, "%s/.build.info", this->bd->getShortPath());
-		res = new BuildInfoFileUnit(Info_file, this->buildinfo_hash);
+		std::string info_file = string_format("%s/.build.info",
+						      this->bd->getShortPath());
+		res = new BuildInfoFileUnit(info_file.c_str(), this->buildinfo_hash);
 	}
-	free(Info_file);
 	return res;
 }
 
@@ -446,12 +443,11 @@ void Package::prepareBuildInfo()
 	}
 
 	// Create the new build info file
-	char *buildInfoFname = NULL;
-	asprintf(&buildInfoFname, "%s/.build.info.new", this->bd->getPath());
-	std::ofstream buildInfo(buildInfoFname);
+	std::string buildInfoFname = string_format("%s/.build.info.new",
+						   this->bd->getPath());
+	std::ofstream buildInfo(buildInfoFname.c_str());
 	this->build_description->print(buildInfo);
 	buildInfo.close();
-	free(buildInfoFname);
 	this->updateBuildInfoHash();
 	this->buildInfoPrepared = true;
 }
@@ -459,22 +455,17 @@ void Package::prepareBuildInfo()
 void Package::updateBuildInfo(bool updateOutputHash)
 {
 	// mv the build info file into the regular place
-	char *oldfname = NULL;
-	char *newfname = NULL;
-	asprintf(&oldfname, "%s/.build.info.new", this->bd->getPath());
-	asprintf(&newfname, "%s/.build.info", this->bd->getPath());
-	rename(oldfname, newfname);
-	free(oldfname);
-	free(newfname);
+	std::string oldfname = string_format("%s/.build.info.new", this->bd->getPath());
+	std::string newfname = string_format("%s/.build.info", this->bd->getPath());
+	rename(oldfname.c_str(), newfname.c_str());
 
 	if(updateOutputHash && this->isHashingOutput()) {
 		// Hash the entire new path
-		char *cmd = NULL;
-		asprintf(&cmd,
-			 "cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
-			 this->bd->getNewPath(), this->bd->getPath());
-		system(cmd);
-		free(cmd);
+		std::string cmd =
+		    string_format
+		    ("cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
+		     this->bd->getNewPath(), this->bd->getPath());
+		system(cmd.c_str());
 	}
 }
 
@@ -528,35 +519,30 @@ bool Package::shouldBuild(bool locally)
 	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
 	// lets make sure the install file (still) exists
 	bool ret = false;
-	char *fname = NULL;
-	asprintf(&fname, "%s/output/%s/install/%s.tar.bz2", pwd,
-		 this->getNS()->getName().c_str(), this->name.c_str());
-	FILE *f = fopen(fname, "r");
-	if(f == NULL) {
-		ret = true;
-	} else {
-		fclose(f);
-	}
-	free(fname);
-	fname = NULL;
-	// Now lets check that the staging file (still) exists
-	asprintf(&fname, "%s/output/%s/staging/%s.tar.bz2", pwd,
-		 this->getNS()->getName().c_str(), this->name.c_str());
-	f = fopen(fname, "r");
-	if(f == NULL) {
-		ret = true;
-	} else {
-		fclose(f);
-	}
-	free(fname);
-	fname = NULL;
 
-	char *cmd = NULL;
-	asprintf(&cmd, "cmp -s %s/.build.info.new %s/.build.info", this->bd->getPath(),
-		 this->bd->getPath());
-	int res = system(cmd);
-	free(cmd);
-	cmd = NULL;
+	std::string fname = string_format("%s/output/%s/install/%s.tar.bz2", pwd,
+					  this->getNS()->getName().c_str(),
+					  this->name.c_str());
+	FILE *f = fopen(fname.c_str(), "r");
+	if(f == NULL) {
+		ret = true;
+	} else {
+		fclose(f);
+	}
+
+	// Now lets check that the staging file (still) exists
+	fname = string_format("%s/output/%s/staging/%s.tar.bz2", pwd,
+			      this->getNS()->getName().c_str(), this->name.c_str());
+	f = fopen(fname.c_str(), "r");
+	if(f == NULL) {
+		ret = true;
+	} else {
+		fclose(f);
+	}
+
+	std::string cmd = string_format("cmp -s %s/.build.info.new %s/.build.info",
+					this->bd->getPath(), this->bd->getPath());
+	int res = system(cmd.c_str());
 
 	// if there are changes,
 	if(res != 0 || ret) {
@@ -578,41 +564,34 @@ bool Package::shouldBuild(bool locally)
 
 bool Package::prepareBuildDirs()
 {
-	char *staging_dir = NULL;
-	asprintf(&staging_dir, "output/%s/%s/staging", this->getNS()->getName().c_str(),
-		 this->name.c_str());
+	std::string staging_dir = string_format("output/%s/%s/staging",
+						this->getNS()->getName().c_str(),
+						this->name.c_str());
 	log(this, "Generating staging directory ...");
 
 	{			// Clean out the (new) staging/install directories
-		char *cmd = NULL;
 		const char *pwd = this->getWorld()->getWorkingDir()->c_str();
-		asprintf(&cmd, "rm -fr %s/output/%s/%s/new/install/*", pwd,
-			 this->getNS()->getName().c_str(), this->name.c_str());
-		system(cmd);
-		free(cmd);
-		cmd = NULL;
-		asprintf(&cmd, "rm -fr %s/output/%s/%s/new/staging/*", pwd,
-			 this->getNS()->getName().c_str(), this->name.c_str());
-		system(cmd);
-		free(cmd);
-		cmd = NULL;
-		asprintf(&cmd, "rm -fr %s/output/%s/%s/staging/*", pwd,
-			 this->getNS()->getName().c_str(), this->name.c_str());
-		system(cmd);
-		free(cmd);
+		std::string cmd = string_format("rm -fr %s/output/%s/%s/new/install/*", pwd,
+						this->getNS()->getName().c_str(),
+						this->name.c_str());
+		system(cmd.c_str());
+		cmd = string_format("rm -fr %s/output/%s/%s/new/staging/*", pwd,
+				    this->getNS()->getName().c_str(), this->name.c_str());
+		system(cmd.c_str());
+		cmd = string_format("rm -fr %s/output/%s/%s/staging/*", pwd,
+				    this->getNS()->getName().c_str(), this->name.c_str());
+		system(cmd.c_str());
 	}
 
 	std::list < std::string > *done = new std::list < std::string > ();
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_staging(staging_dir, done))
+		if(!(*dIt)->getPackage()->extract_staging(staging_dir.c_str(), done))
 			return false;
 	}
 	log(this, "Done (%d)", done->size());
 	delete done;
-	free(staging_dir);
-	staging_dir = NULL;
 	return true;
 }
 
