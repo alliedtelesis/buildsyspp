@@ -94,16 +94,15 @@ bool DownloadFetch::fetch(BuildDir * d)
 	}
 
 	{
-		char *fpath = NULL;
-		asprintf(&fpath, "%s/dl/%s", d->getWorld()->getWorkingDir()->c_str(),
-			 fname.c_str());
-		FILE *f = fopen(fpath, "r");
+		std::string fpath = string_format("%s/dl/%s",
+						  d->getWorld()->getWorkingDir()->c_str(),
+						  fname.c_str());
+		FILE *f = fopen(fpath.c_str(), "r");
 		if(f == NULL) {
 			get = true;
 		} else {
 			fclose(f);
 		}
-		free(fpath);
 	}
 
 	if(get) {
@@ -111,12 +110,12 @@ bool DownloadFetch::fetch(BuildDir * d)
 		//Attempt to get file from local tarball cache if one is configured.
 		if(d->getWorld()->haveTarballCache()) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
-			char *url = NULL;
-			asprintf(&url, "%s/%s", d->getWorld()->tarballCache().c_str(),
-				 fname.c_str());
-			pc->addArg(url);
+			std::string url = string_format("%s/%s",
+							d->getWorld()->
+							tarballCache().c_str(),
+							fname.c_str());
+			pc->addArg(url.c_str());
 			pc->addArgFmt("-O%s", fullname.c_str());
-			free(url);
 			localCacheHit = pc->Run(this->P);
 			delete pc;
 		}
@@ -131,7 +130,7 @@ bool DownloadFetch::fetch(BuildDir * d)
 		}
 		if(decompress) {
 			// We want to run a command on this file
-			char *cmd = NULL;
+			std::string cmd = std::string();
 			char *filename = strdup(fname.c_str());
 			char *ext = strrchr(filename, '.');
 			if(ext == NULL) {
@@ -141,12 +140,11 @@ bool DownloadFetch::fetch(BuildDir * d)
 			}
 
 			if(strcmp(ext, ".bz2") == 0) {
-				asprintf(&cmd, "bunzip2 -d dl/%s", fullname.c_str());
+				cmd = string_format("bunzip2 -d dl/%s", fullname.c_str());
 			} else if(strcmp(ext, ".gz") == 0) {
-				asprintf(&cmd, "gunzip -d dl/%s", fullname.c_str());
+				cmd = string_format("gunzip -d dl/%s", fullname.c_str());
 			}
-			system(cmd);
-			free(cmd);
+			system(cmd.c_str());
 			free(filename);
 		}
 	}
