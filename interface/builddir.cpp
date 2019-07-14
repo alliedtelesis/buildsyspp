@@ -36,13 +36,13 @@ static std::string absolute_path(BuildDir * d, const char *dir, bool allowDL = f
 	return path;
 }
 
-static char *relative_path(BuildDir * d, const char *dir, bool allowDL = false)
+static std::string relative_path(BuildDir * d, const char *dir, bool allowDL = false)
 {
-	char *path = NULL;
+	std::string path("");
 	if(dir[0] == '/' || (allowDL && !strncmp(dir, "dl/", 3)))
-		asprintf(&path, "%s", dir);
+		path = string_format("%s", dir);
 	else
-		asprintf(&path, "%s/%s", d->getShortPath(), dir);
+		path = string_format("%s/%s", d->getShortPath(), dir);
 	return path;
 }
 
@@ -332,18 +332,17 @@ int li_bd_extract(lua_State * L)
 	}
 
 	const char *fName = lua_tostring(L, 2);
-	char *realFName = relative_path(d, fName, true);
+	std::string realFName = relative_path(d, fName, true);
 
 	ExtractionUnit *eu = NULL;
 	if(strstr(fName, ".zip") != NULL) {
-		eu = new ZipExtractionUnit(realFName);
+		eu = new ZipExtractionUnit(realFName.c_str());
 	} else {
 		// The catch all for tar compressed files
-		eu = new TarExtractionUnit(realFName);
+		eu = new TarExtractionUnit(realFName.c_str());
 	}
 	P->extraction()->add(eu);
 
-	free(realFName);
 	return 0;
 }
 
@@ -373,10 +372,10 @@ int li_bd_cmd(lua_State * L)
 
 	Package *P = li_get_package(L);
 
-	char *dir = relative_path(d, lua_tostring(L, 2));
+	std::string dir = relative_path(d, lua_tostring(L, 2));
 	const char *app = lua_tostring(L, 3);
 
-	PackageCmd *pc = new PackageCmd(dir, app);
+	PackageCmd *pc = new PackageCmd(dir.c_str(), app);
 
 	lua_pushnil(L);		/* first key */
 	while(lua_next(L, 4) != 0) {
@@ -407,8 +406,6 @@ int li_bd_cmd(lua_State * L)
 	add_env(P, pc);
 	P->addCommand(pc);
 
-	free(dir);
-
 	return 0;
 }
 
@@ -435,10 +432,9 @@ int li_bd_patch(lua_State * L)
 
 	CHECK_ARGUMENT_TYPE("patch", 1, BuildDir, d);
 
-	char *patch_path = relative_path(d, lua_tostring(L, 2), true);
+	std::string patch_path = relative_path(d, lua_tostring(L, 2), true);
 
 	int patch_depth = lua_tonumber(L, 3);
-
 
 	lua_pushnil(L);		/* first key */
 	while(lua_next(L, 4) != 0) {
@@ -451,7 +447,7 @@ int li_bd_patch(lua_State * L)
 				    ("patch() requires a table of strings as the third argument\n");
 			uri = P->relative_fetch_path(lua_tostring(L, -1));
 			PatchExtractionUnit *peu =
-			    new PatchExtractionUnit(patch_depth, patch_path, uri,
+			    new PatchExtractionUnit(patch_depth, patch_path.c_str(), uri,
 						    lua_tostring(L, -1));
 			P->extraction()->add(peu);
 			free(uri);
@@ -459,8 +455,6 @@ int li_bd_patch(lua_State * L)
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);
 	}
-
-	free(patch_path);
 
 	return 0;
 }
