@@ -26,13 +26,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <buildsys.h>
 #include "luainterface.h"
 
-static char *absolute_path(BuildDir * d, const char *dir, bool allowDL = false)
+static std::string absolute_path(BuildDir * d, const char *dir, bool allowDL = false)
 {
-	char *path = NULL;
+	std::string path("");
 	if(dir[0] == '/' || (allowDL && !strncmp(dir, "dl/", 3)))
-		asprintf(&path, "%s", dir);
+		path = string_format("%s", dir);
 	else
-		asprintf(&path, "%s/%s", d->getPath(), dir);
+		path = string_format("%s/%s", d->getPath(), dir);
 	return path;
 }
 
@@ -203,10 +203,9 @@ int li_bd_fetch(lua_State * L)
 		}
 		f = new CopyFetch(std::string(uri), P);
 	} else if(strcmp(method, "deps") == 0) {
-		char *path = absolute_path(d, to);
+		std::string path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
-		P->setDepsExtract(std::string(path), listedonly);
-		free(path);
+		P->setDepsExtract(path, listedonly);
 		log(P, "Will add installed files, considering code updated");
 		P->setCodeUpdated();
 	} else {
