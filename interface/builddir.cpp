@@ -48,10 +48,8 @@ static std::string relative_path(BuildDir * d, const char *dir, bool allowDL = f
 
 static void add_env(Package * P, PackageCmd * pc)
 {
-	char *pn_env = NULL;
-	asprintf(&pn_env, "BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env);
-	free(pn_env);
+	std::string pn_env = string_format("BS_PACKAGE_NAME=%s", P->getName().c_str());
+	pc->addEnv(pn_env.c_str());
 }
 
 int li_bd_fetch(lua_State * L)
