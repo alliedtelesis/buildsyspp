@@ -49,12 +49,10 @@ void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 
 	if(bd) {
 		// Create the new extraction info file
-		char *exinfoFname = NULL;
-		asprintf(&exinfoFname, "%s/.extraction.info.new", bd->getPath());
-		std::ofstream exInfo(exinfoFname);
+		std::string fname = string_format("%s/.extraction.info.new", bd->getPath());
+		std::ofstream exInfo(fname.c_str());
 		this->print(exInfo);
 		exInfo.close();
-		free(exinfoFname);
 	}
 }
 
@@ -64,12 +62,10 @@ bool Extraction::extractionRequired(Package * P, BuildDir * bd)
 		return false;
 	}
 
-	char *cmd = NULL;
-	asprintf(&cmd, "cmp -s %s/.extraction.info.new %s/.extraction.info",
-		 bd->getPath(), bd->getPath());
-	int res = system(cmd);
-	free(cmd);
-	cmd = NULL;
+	std::string cmd =
+	    string_format("cmp -s %s/.extraction.info.new %s/.extraction.info",
+			  bd->getPath(), bd->getPath());
+	int res = system(cmd.c_str());
 
 	// if there are changes,
 	if(res != 0 || P->isCodeUpdated()) {	// Extract our source code
@@ -88,23 +84,17 @@ bool Extraction::extract(Package * P, BuildDir * bd)
 	}
 
 	// mv the file into the regular place
-	char *oldfname = NULL;
-	char *newfname = NULL;
-	asprintf(&oldfname, "%s/.extraction.info.new", bd->getPath());
-	asprintf(&newfname, "%s/.extraction.info", bd->getPath());
-	rename(oldfname, newfname);
-	free(oldfname);
-	free(newfname);
+	std::string oldfname = string_format("%s/.extraction.info.new", bd->getPath());
+	std::string newfname = string_format("%s/.extraction.info", bd->getPath());
+	rename(oldfname.c_str(), newfname.c_str());
 
 	return true;
 };
 
 ExtractionInfoFileUnit *Extraction::extractionInfo(Package * P, BuildDir * bd)
 {
-	char *extractionInfoFname = NULL;
-	asprintf(&extractionInfoFname, "%s/.extraction.info", bd->getShortPath());
-	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(extractionInfoFname);
-	free(extractionInfoFname);
+	std::string fname = string_format("%s/.extraction.info", bd->getShortPath());
+	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(fname.c_str());
 	return ret;
 }
 
