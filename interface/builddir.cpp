@@ -205,7 +205,8 @@ int li_bd_fetch(lua_State * L)
 	} else if(strcmp(method, "deps") == 0) {
 		char *path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
-		P->setDepsExtract(path, listedonly);
+		P->setDepsExtract(std::string(path), listedonly);
+		free(path);
 		log(P, "Will add installed files, considering code updated");
 		P->setCodeUpdated();
 	} else {

@@ -597,7 +597,7 @@ bool Package::prepareBuildDirs()
 
 bool Package::extractInstallDepends()
 {
-	if(this->depsExtraction == NULL) {
+	if(this->depsExtraction.empty()) {
 		return true;
 	}
 	// Extract installed files to a given location
@@ -606,19 +606,20 @@ bool Package::extractInstallDepends()
 		std::unique_ptr < PackageCmd >
 		    pc(new PackageCmd(this->getWorld()->getWorkingDir()->c_str(), "rm"));
 		pc->addArg("-fr");
-		pc->addArg(this->depsExtraction);
+		pc->addArg(this->depsExtraction.c_str());
 		if(!pc->Run(this)) {
 			log(this,
-			    "Failed to remove %s (pre-install)", this->depsExtraction);
+			    "Failed to remove %s (pre-install)",
+			    this->depsExtraction.c_str());
 			return false;
 		}
 	}
 
 	// Create the directory
 	{
-		int res = mkdir(this->depsExtraction, 0700);
+		int res = mkdir(this->depsExtraction.c_str(), 0700);
 		if((res < 0) && (errno != EEXIST)) {
-			error(this->depsExtraction);
+			error(this->depsExtraction.c_str());
 			return false;
 		}
 	}
@@ -628,8 +629,9 @@ bool Package::extractInstallDepends()
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done,
-							  !this->depsExtractionDirectOnly))
+		if(!(*dIt)->
+		   getPackage()->extract_install(this->depsExtraction.c_str(), done,
+						 !this->depsExtractionDirectOnly))
 			return false;
 	}
 	delete done;

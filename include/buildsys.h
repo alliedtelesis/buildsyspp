@@ -1031,7 +1031,7 @@ namespace buildsys {
 		BuildDescription *build_description;
 		Lua *lua;
 		bool intercept;
-		char *depsExtraction;
+		std::string depsExtraction;
 		bool depsExtractionDirectOnly;
 		string_list installFiles;
 		bool visiting;
@@ -1093,7 +1093,7 @@ namespace buildsys {
 		    file_short(file_short), overlay(overlay), buildinfo_hash(""), ns(ns),
 		    bd(new BuildDir(this)), f(new Fetch()), Extract(new Extraction()),
 		    build_description(new BuildDescription()), lua(new Lua()),
-		    intercept(false), depsExtraction(NULL), depsExtractionDirectOnly(false),
+		    intercept(false), depsExtraction(""), depsExtractionDirectOnly(false),
 		    visiting(false), processing_queued(false), buildInfoPrepared(false),
 		    built(false), building(false), codeUpdated(false), was_built(false),
 		    no_fetch_from(false), hash_output(false),
@@ -1117,7 +1117,6 @@ namespace buildsys {
 			delete Extract;
 			delete build_description;
 			delete lua;
-			free(this->depsExtraction);
 			if(logFile) {
 				fclose(logFile);
 				logFile = NULL;
@@ -1192,7 +1191,7 @@ namespace buildsys {
 		 *  i.e. not anything they also depend on
 		 *  \param de relative path to extract dependencies to
 		 */
-		void setDepsExtract(char *de, bool directonly) {
+		void setDepsExtract(const std::string & de, bool directonly) {
 			this->depsExtraction = de;
 			this->depsExtractionDirectOnly = directonly;
 		};
