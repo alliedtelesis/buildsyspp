@@ -78,8 +78,7 @@ Package *NameSpace::findPackage(std::string name)
 	// Package not found, create it
 	{
 		// check that the dependency exists
-		char *luaFile = NULL;
-		char *relativeFName = NULL;
+		std::string lua_file("");
 		char *dependPath = strdup(name.c_str());
 		char *lastPart = strrchr(dependPath, '/');
 		bool found = false;
@@ -90,17 +89,14 @@ Package *NameSpace::findPackage(std::string name)
 			lastPart = strdup(lastPart + 1);
 		}
 
-		if(asprintf(&relativeFName, "package/%s/%s.lua", dependPath, lastPart) <= 0) {
-			throw CustomException("Error with asprintf");
-		}
-
+		std::string relative_fname = string_format("package/%s/%s.lua",
+							   dependPath, lastPart);
 		string_list::iterator iter = this->WORLD->overlaysStart();
 		string_list::iterator iterEnd = this->WORLD->overlaysEnd();
 		for(; iter != iterEnd; iter++) {
-			if(asprintf(&luaFile, "%s/%s", iter->c_str(), relativeFName) <= 0) {
-				throw CustomException("Error with asprintf");
-			}
-			FILE *f = fopen(luaFile, "r");
+			lua_file = string_format("%s/%s", iter->c_str(),
+						 relative_fname.c_str());
+			FILE *f = fopen(lua_file.c_str(), "r");
 			if(f != NULL) {
 				found = true;
 				overlay = *iter;
@@ -109,8 +105,6 @@ Package *NameSpace::findPackage(std::string name)
 			if(found) {
 				break;
 			}
-			free(luaFile);
-			luaFile = NULL;
 		}
 
 		if(!found) {
@@ -121,10 +115,8 @@ Package *NameSpace::findPackage(std::string name)
 		free(dependPath);
 		free(lastPart);
 
-		file = std::string(luaFile);
-		free(luaFile);
-		file_short = std::string(relativeFName);
-		free(relativeFName);
+		file = lua_file;
+		file_short = relative_fname;
 	}
 
 	Package *p = new Package(this, name, file_short, file, overlay);
