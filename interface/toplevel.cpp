@@ -276,8 +276,6 @@ int li_hashoutput(lua_State * L)
 
 int li_require(lua_State * L)
 {
-	bool success = false;
-
 	if(lua_gettop(L) != 1) {
 		throw CustomException("require() takes 1 argument");
 	}
@@ -294,16 +292,13 @@ int li_require(lua_State * L)
 	// Check whether the relative file path exists. If it does
 	// not exist then we use the original file path
 	struct stat buf;
-	if(stat(relative_fname.c_str(), &buf) == 0) {
-		P->getLua()->processFile(relative_fname.c_str());
-		P->buildDescription()->add(new RequireFileUnit(relative_fname.c_str(),
-							       fname.c_str()));
-		success = true;
-	}
-
-	if(!success) {
+	if(stat(relative_fname.c_str(), &buf) != 0) {
 		throw FileNotFoundException("require", fname.c_str());
 	}
+
+	P->getLua()->processFile(relative_fname.c_str());
+	P->buildDescription()->add(new RequireFileUnit(relative_fname.c_str(),
+						       fname.c_str()));
 
 	return 0;
 }
