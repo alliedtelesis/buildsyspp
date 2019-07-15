@@ -220,11 +220,8 @@ namespace buildsys {
 		/** Load and exexcute a lua file in this instance
 		 *  \param filename The name of the lua file to load and run
 		 */
-		void processFile(const char *filename) {
-
-			int res = luaL_dofile(state, filename);
-
-			if(res != 0) {
+		void processFile(const std::string & filename) {
+			if(luaL_dofile(state, filename.c_str()) != 0) {
 				throw CustomException(lua_tostring(state, -1));
 			}
 		}

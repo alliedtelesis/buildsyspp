@@ -296,7 +296,7 @@ int li_require(lua_State * L)
 		throw FileNotFoundException("require", fname.c_str());
 	}
 
-	P->getLua()->processFile(relative_fname.c_str());
+	P->getLua()->processFile(relative_fname);
 	P->buildDescription()->add(new RequireFileUnit(relative_fname.c_str(),
 						       fname.c_str()));
 
