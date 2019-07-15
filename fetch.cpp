@@ -266,18 +266,16 @@ std::string CopyFetch::HASH()
 
 std::string CopyFetch::relative_path()
 {
-	char *path = strdup(this->fetch_uri.c_str());
-	const char *dname = strrchr(path, '/');
-	if(dname) {
-		dname++;
+	auto position = this->fetch_uri.rfind("/");
+	auto path = std::string("");
+
+	if(position != std::string::npos) {
+		path = this->fetch_uri.substr(position + 1);
 	} else {
-		dname = path;
+		path = this->fetch_uri;
 	}
 
-	std::string ret = std::string(dname);
-
-	free(path);
-	return ret;
+	return path;
 }
 
 
