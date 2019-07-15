@@ -149,12 +149,13 @@ GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
 
 bool GitExtractionUnit::updateOrigin()
 {
-	char *location = strdup(this->uri.c_str());
-	char *source_dir = strdup(this->local.c_str());
-	std::string remote_url = git_remote(source_dir, "origin");
+	std::string location = this->uri;
+	std::string source_dir = this->local;
+	std::string remote_url = git_remote(source_dir.c_str(), "origin");
 
-	if(strcmp(remote_url.c_str(), location) != 0) {
-		std::unique_ptr < PackageCmd > pc(new PackageCmd(source_dir, "git"));
+	if(strcmp(remote_url.c_str(), location.c_str()) != 0) {
+		std::unique_ptr < PackageCmd >
+		    pc(new PackageCmd(source_dir.c_str(), "git"));
 		pc->addArg("remote");
 		// If the remote doesn't exist, add it
 		if(strcmp(remote_url.c_str(), "") == 0) {
@@ -163,13 +164,13 @@ bool GitExtractionUnit::updateOrigin()
 			pc->addArg("set-url");
 		}
 		pc->addArg("origin");
-		pc->addArg(location);
+		pc->addArg(location.c_str());
 		if(!pc->Run(this->P)) {
 			throw CustomException("Failed: git remote set-url origin");
 		}
 		// Forcibly fetch if the remote url has change,
 		// if the ref is origin the user wont get what they wanted otherwise
-		pc.reset(new PackageCmd(source_dir, "git"));
+		pc.reset(new PackageCmd(source_dir.c_str(), "git"));
 		pc->addArg("fetch");
 		pc->addArg("origin");
 		pc->addArg("--tags");
@@ -178,8 +179,6 @@ bool GitExtractionUnit::updateOrigin()
 		}
 	}
 
-	free(location);
-	free(source_dir);
 	return true;
 }
 
