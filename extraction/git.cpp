@@ -76,17 +76,19 @@ static std::string git_hash(const char *gdir)
 	return git_hash_ref(gdir, "HEAD");
 }
 
-static char *git_diff_hash(const char *gdir)
+static std::string git_diff_hash(const char *gdir)
 {
 	std::string cmd = string_format("cd %s && git diff HEAD | sha1sum", gdir);
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git diff | sha1sum failed");
 	}
-	char *Commit = (char *) calloc(41, sizeof(char));
-	fread(Commit, sizeof(char), 40, f);
+	char *delta_hash = (char *) calloc(41, sizeof(char));
+	fread(delta_hash, sizeof(char), 40, f);
 	pclose(f);
-	return Commit;
+	std::string ret(delta_hash);
+	free(delta_hash);
+	return ret;
 }
 
 static char *git_remote(const char *gdir, const char *remote)
@@ -129,10 +131,7 @@ bool GitDirExtractionUnit::isDirty()
 
 std::string GitDirExtractionUnit::dirtyHash()
 {
-	char *phash = git_diff_hash(this->localPath().c_str());
-	std::string ret(phash);
-	free(phash);
-	return ret;
+	return git_diff_hash(this->localPath().c_str());
 }
 
 GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
