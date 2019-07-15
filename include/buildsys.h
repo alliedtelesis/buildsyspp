@@ -54,6 +54,8 @@ extern "C" {
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/topological_sort.hpp>
 
+#include "string_format.tcc"
+
 using namespace boost;
 
 typedef boost::adjacency_list < boost::vecS, boost::vecS, boost::directedS > Graph;
@@ -173,10 +175,8 @@ namespace buildsys {
 		 *  \param err The error message
 		 */
 		DirException(const char *location, const char *err) {
-			char *em = NULL;
-			asprintf(&em, "Error with directory '%s': %s", location, err);
-			errmsg = std::string(em);
-			free(em);
+			errmsg = string_format("Error with directory '%s': %s", location,
+					       err);
 		} virtual std::string error_msg() {
 			return errmsg;
 		}
@@ -192,10 +192,7 @@ namespace buildsys {
 		 *  \param where The location where the error occurred
 		 */
 		FileNotFoundException(const char *file, const char *where) {
-			char *em = NULL;
-			asprintf(&em, "%s: File not found '%s'", where, file);
-			errmsg = std::string(em);
-			free(em);
+			errmsg = string_format("%s: File not found '%s'", where, file);
 		} virtual std::string error_msg() {
 			return errmsg;
 		}
@@ -1643,21 +1640,6 @@ namespace buildsys {
 	void hash_setup(void);
 	std::string hash_file(const std::string & fname);
 	void hash_shutdown(void);
-
-	/** @brief A C++ style replacement for C style sprintf/asprintf. Returns a formatted
-	 *         string based on the input format and arguments.
-	 *
-	 * @param format The format to print with.
-	 * @param args (variadic) The arguments to use with the format.
-	 * @return The formatted string.
-	 */
-	template < typename ... Args >
-	    std::string string_format(const std::string & format, Args ... args) {
-		size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1;	// Extra space for '\0'
-		std::unique_ptr < char[] > buf(new char[size]);
-		snprintf(buf.get(), size, format.c_str(), args ...);
-		return std::string(buf.get(), buf.get() + size - 1);	// We don't want the '\0' inside
-	}
 };
 
 using namespace buildsys;
