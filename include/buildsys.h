@@ -1142,7 +1142,8 @@ namespace buildsys {
 		//! Returns the build directory being used by this package
 		BuildDir *builddir();
 		//! Get the absolute fetch path for this package
-		char *absolute_fetch_path(const char *location, bool also_root = false);
+		std::string absolute_fetch_path(const char *location, bool also_root =
+						false);
 		//! Get the relative fetch path for this package
 		std::string relative_fetch_path(const char *location, bool also_root =
 						false);

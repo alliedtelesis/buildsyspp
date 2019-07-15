@@ -66,15 +66,11 @@ std::string Package::getFeature(const std::string & key)
 	}
 }
 
-char *Package::absolute_fetch_path(const char *location, bool also_root)
+std::string Package::absolute_fetch_path(const char *location, bool also_root)
 {
 	const char *cwd = this->getWorld()->getWorkingDir()->c_str();
-	char *src_path;
 	std::string src_path_tmp = this->relative_fetch_path(location);
-
-	asprintf(&src_path, "%s/%s", cwd, src_path_tmp.c_str());
-
-	return src_path;
+	return string_format("%s/%s", cwd, src_path_tmp.c_str());
 }
 
 std::string Package::relative_fetch_path(const char *location, bool also_root)

@@ -264,9 +264,8 @@ int li_bd_restore(lua_State * L)
 		char const *fn = strrchr(location, '/');
 		pc->addArg(fn != NULL ? fn + 1 : location);
 
-		char *tmp = P->absolute_fetch_path(location);
-		pc->addArg(tmp);
-		free(tmp);
+		std::string tmp = P->absolute_fetch_path(location);
+		pc->addArg(tmp.c_str());
 
 		P->addCommand(pc);
 	} else {

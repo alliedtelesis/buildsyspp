@@ -248,10 +248,9 @@ bool CopyFetch::fetch(BuildDir * d)
 	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
 	pc->addArg("-dpRuf");
-	char *l = P->absolute_fetch_path(location);
-	pc->addArg(l);
+	std::string l = P->absolute_fetch_path(location);
+	pc->addArg(l.c_str());
 	pc->addArg(".");
-	free(l);
 	if(!pc->Run(this->P))
 		throw CustomException("Failed to copy (recursively)");
 	delete pc;
