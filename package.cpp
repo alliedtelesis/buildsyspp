@@ -184,7 +184,7 @@ bool Package::process()
 
 	li_set_package(this->lua->luaState(), this);
 
-	this->lua->processFile(file.c_str());
+	this->lua->processFile(this->file.c_str());
 
 	return true;
 }
