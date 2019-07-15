@@ -91,7 +91,7 @@ static std::string git_diff_hash(const char *gdir)
 	return ret;
 }
 
-static char *git_remote(const char *gdir, const char *remote)
+static std::string git_remote(const char *gdir, const char *remote)
 {
 	std::string cmd = string_format("cd %s && git config --local --get remote.%s.url",
 					gdir, remote);
@@ -102,7 +102,9 @@ static char *git_remote(const char *gdir, const char *remote)
 	char *Remote = (char *) calloc(1025, sizeof(char));
 	fread(Remote, sizeof(char), 1024, f);
 	pclose(f);
-	return Remote;
+	std::string ret(Remote);
+	free(Remote);
+	return ret;
 }
 
 GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_dir)
@@ -149,13 +151,13 @@ bool GitExtractionUnit::updateOrigin()
 {
 	char *location = strdup(this->uri.c_str());
 	char *source_dir = strdup(this->local.c_str());
-	char *remote_url = git_remote(source_dir, "origin");
+	std::string remote_url = git_remote(source_dir, "origin");
 
-	if(strcmp(remote_url, location) != 0) {
+	if(strcmp(remote_url.c_str(), location) != 0) {
 		std::unique_ptr < PackageCmd > pc(new PackageCmd(source_dir, "git"));
 		pc->addArg("remote");
 		// If the remote doesn't exist, add it
-		if(strcmp(remote_url, "") == 0) {
+		if(strcmp(remote_url.c_str(), "") == 0) {
 			pc->addArg("add");
 		} else {
 			pc->addArg("set-url");
@@ -178,7 +180,6 @@ bool GitExtractionUnit::updateOrigin()
 
 	free(location);
 	free(source_dir);
-	free(remote_url);
 	return true;
 }
 
