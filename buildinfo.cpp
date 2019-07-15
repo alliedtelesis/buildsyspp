@@ -39,10 +39,10 @@ bool BuildDescription::add(BuildUnit * bu)
 	return true;
 }
 
-PackageFileUnit::PackageFileUnit(const char *fname, const char *fname_short)
+PackageFileUnit::PackageFileUnit(const std::string & fname, const std::string & fname_short)
 {
-	this->uri = std::string(fname_short);
-	this->hash = hash_file(std::string(fname));
+	this->uri = fname_short;
+	this->hash = hash_file(fname);
 }
 
 RequireFileUnit::RequireFileUnit(const std::string & fname, const std::string & fname_short)
