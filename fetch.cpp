@@ -28,16 +28,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* This is the full name of the file to be downloaded */
 std::string DownloadFetch::full_name()
 {
-	const char *fname = NULL;
+	auto fname = std::string("");
 
-	if(strlen(this->filename.c_str())) {
-		fname = this->filename.c_str();
+	if(this->filename.empty()) {
+		auto position = this->fetch_uri.rfind("/");
+		if(position != std::string::npos) {
+			fname = this->fetch_uri.substr(position + 1);
+		}
 	} else {
-		fname = strrchr(this->fetch_uri.c_str(), '/');
-		fname++;
+		fname = this->filename;
 	}
 
-	return std::string(fname);
+	return fname;
 }
 
 /* This is the final name, without any compressed extension */
