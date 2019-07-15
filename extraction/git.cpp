@@ -91,10 +91,10 @@ static std::string git_diff_hash(const char *gdir)
 	return ret;
 }
 
-static std::string git_remote(const char *gdir, const char *remote)
+static std::string git_remote(const std::string & gdir, const std::string & remote)
 {
 	std::string cmd = string_format("cd %s && git config --local --get remote.%s.url",
-					gdir, remote);
+					gdir.c_str(), remote.c_str());
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git config --local --get remote. .url failed");
@@ -151,7 +151,7 @@ bool GitExtractionUnit::updateOrigin()
 {
 	std::string location = this->uri;
 	std::string source_dir = this->local;
-	std::string remote_url = git_remote(source_dir.c_str(), "origin");
+	std::string remote_url = git_remote(source_dir, "origin");
 
 	if(strcmp(remote_url.c_str(), location.c_str()) != 0) {
 		std::unique_ptr < PackageCmd >
