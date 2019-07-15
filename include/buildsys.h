@@ -810,7 +810,7 @@ namespace buildsys {
 		std::string uri;	//!< URI of this package file
 		std::string hash;	//!< Hash of this package file
 	public:
-		RequireFileUnit(const char *file, const char *file_short);
+		RequireFileUnit(const std::string & fname, const std::string & fname_short);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    uri << " " << this->hash << std::endl;
