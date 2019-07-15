@@ -160,16 +160,17 @@ int li_bd_fetch(lua_State * L)
 			    CustomException
 			    ("fetch method = linkgit requires uri to be set");
 		}
-		char *l = P->relative_fetch_path(uri);
-		char *l2 = strrchr(l, '/');
+		std::string l = P->relative_fetch_path(uri);
+		char *l_copy = strdup(l.c_str());
+		char *l2 = strrchr(l_copy, '/');
 		if(l2[1] == '\0') {
 			l2[0] = '\0';
-			l2 = strrchr(l, '/');
+			l2 = strrchr(l_copy, '/');
 		}
 		l2++;
 		LinkGitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(uri, l2);
 		P->extraction()->add(lgdeu);
-		free(l);
+		free(l_copy);
 	} else if(strcmp(method, "link") == 0) {
 		if(uri == NULL) {
 			throw CustomException("fetch method = link requires uri to be set");
@@ -181,20 +182,18 @@ int li_bd_fetch(lua_State * L)
 			    CustomException
 			    ("fetch method = copyfile requires uri to be set");
 		}
-		char *file_path = P->relative_fetch_path(uri);
-		P->extraction()->add(new FileCopyExtractionUnit(file_path, uri));
-		free(file_path);
+		std::string file_path = P->relative_fetch_path(uri);
+		P->extraction()->add(new FileCopyExtractionUnit(file_path.c_str(), uri));
 	} else if(strcmp(method, "copygit") == 0) {
 		if(uri == NULL) {
 			throw
 			    CustomException
 			    ("fetch method = copygit requires uri to be set");
 		}
-		char *src_path = P->relative_fetch_path(uri);
+		std::string src_path = P->relative_fetch_path(uri);
 		CopyGitDirExtractionUnit *cgdeu =
-		    new CopyGitDirExtractionUnit(src_path, ".");
+		    new CopyGitDirExtractionUnit(src_path.c_str(), ".");
 		P->extraction()->add(cgdeu);
-		free(src_path);
 	} else if(strcmp(method, "copy") == 0) {
 		if(uri == NULL) {
 			throw CustomException("fetch method = copy requires uri to be set");
@@ -438,17 +437,16 @@ int li_bd_patch(lua_State * L)
 	while(lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 		{
-			char *uri = NULL;
 			if(lua_type(L, -1) != LUA_TSTRING)
 				throw
 				    CustomException
 				    ("patch() requires a table of strings as the third argument\n");
-			uri = P->relative_fetch_path(lua_tostring(L, -1));
+			std::string uri = P->relative_fetch_path(lua_tostring(L, -1));
 			PatchExtractionUnit *peu =
-			    new PatchExtractionUnit(patch_depth, patch_path.c_str(), uri,
+			    new PatchExtractionUnit(patch_depth, patch_path.c_str(),
+						    uri.c_str(),
 						    lua_tostring(L, -1));
 			P->extraction()->add(peu);
-			free(uri);
 		}
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);

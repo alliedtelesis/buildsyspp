@@ -191,20 +191,22 @@ bool LinkFetch::fetch(BuildDir * d)
 	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd *pc = new PackageCmd(d->getPath(), "ln");
 	pc->addArg("-sf");
-	char *l = P->relative_fetch_path(location);
-	pc->addArg(l);
+	std::string l = P->relative_fetch_path(location);
+	pc->addArg(l.c_str());
 	pc->addArg(".");
 	if(!pc->Run(this->P)) {
 		// An error occured, try remove the file, then relink
 		PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
 		rmpc->addArg("-fr");
-		char *l2 = strrchr(l, '/');
+		char *l_copy = strdup(l.c_str());
+		char *l2 = strrchr(l_copy, '/');
 		if(l2[1] == '\0') {
 			l2[0] = '\0';
-			l2 = strrchr(l, '/');
+			l2 = strrchr(l_copy, '/');
 		}
 		l2++;
 		rmpc->addArg(l2);
+		free(l_copy);
 		if(!rmpc->Run(this->P))
 			throw
 			    CustomException
@@ -215,7 +217,6 @@ bool LinkFetch::fetch(BuildDir * d)
 			    ("Failed to ln (symbolically), even after removing target first");
 		delete rmpc;
 	}
-	free(l);
 	delete pc;
 	free(location);
 	return true;
