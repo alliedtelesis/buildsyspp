@@ -45,15 +45,14 @@ std::string DownloadFetch::full_name()
 /* This is the final name, without any compressed extension */
 std::string DownloadFetch::final_name()
 {
-	std::string ret = this->full_name();
+	auto full_name = this->full_name();
+	auto ret = full_name;
 
-	if(decompress) {
-		char *fname = strdup(ret.c_str());
-		char *ext = strrchr(fname, '.');
-		if(ext != NULL)
-			ext[0] = '\0';
-		ret = std::string(fname);
-		free(fname);
+	if(this->decompress) {
+		auto position = full_name.rfind(".");
+		if(position != std::string::npos) {
+			ret = full_name.substr(0, position);
+		}
 	}
 
 	return ret;
