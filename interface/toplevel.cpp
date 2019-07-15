@@ -288,24 +288,23 @@ int li_require(lua_State * L)
 
 	Package *P = li_get_package(L);
 
-	char *fName = NULL;
-	asprintf(&fName, "%s.lua", lua_tostring(L, 1));
-	char *relativeFName = P->relative_fetch_path(fName, true);
+	std::string fname = string_format("%s.lua", lua_tostring(L, 1));
+	char *relativeFName = P->relative_fetch_path(fname.c_str(), true);
 
 	// Check whether the relative file path exists. If it does
 	// not exist then we use the original file path
 	struct stat buf;
 	if(stat(relativeFName, &buf) == 0) {
 		P->getLua()->processFile(relativeFName);
-		P->buildDescription()->add(new RequireFileUnit(relativeFName, fName));
+		P->buildDescription()->add(new RequireFileUnit(relativeFName,
+							       fname.c_str()));
 		success = true;
 	}
 
 	if(!success) {
-		throw FileNotFoundException("require", fName);
+		throw FileNotFoundException("require", fname.c_str());
 	}
 
-	free(fName);
 	free(relativeFName);
 	return 0;
 }
