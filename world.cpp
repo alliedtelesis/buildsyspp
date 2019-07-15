@@ -196,10 +196,11 @@ static bool process_packages()
 	return true;
 }
 
-bool World::basePackage(char *filename)
+bool World::basePackage(const std::string & filename)
 {
 	// Strip the directory from the base package name
-	const char *pname = basename(filename);
+	char *filename_copy = strdup(filename.c_str());
+	const char *pname = basename(filename_copy);
 
 	// Strip the '.lua' from end of the filename for the namespace name
 	char *nsname = strdup(pname);
@@ -208,8 +209,10 @@ bool World::basePackage(char *filename)
 		nsname[p_len - 4] = '\0';
 	}
 
-	this->p = new Package(this->findNameSpace(nsname), pname, filename, filename, "");
+	this->p = new Package(this->findNameSpace(nsname), pname,
+			      filename_copy, filename_copy, "");
 	free(nsname);
+	free(filename_copy);
 	this->p->setNS(this->p->getNS());
 
 	pq = new PackageQueue();

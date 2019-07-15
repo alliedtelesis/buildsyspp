@@ -148,12 +148,12 @@ int main(int argc, char *argv[])
 			a++;
 		}
 	}
-	char *target = NULL;
+	std::string target("");
 	int tn_len = strlen(argv[1]);
 	if(argv[1][tn_len - 4] != '.') {
-		asprintf(&target, "%s.lua", argv[1]);
+		target = string_format("%s.lua", argv[1]);
 	} else {
-		target = strdup(argv[1]);
+		target = std::string(argv[1]);
 	}
 
 	if(WORLD->noIgnoredFeatures()) {
@@ -164,14 +164,12 @@ int main(int argc, char *argv[])
 
 	if(!WORLD->basePackage(target)) {
 		error("Building: Failed");
-		free(target);
 		if(WORLD->areKeepGoing()) {
 			delete WORLD;
 			hash_shutdown();
 		}
 		exit(-1);
 	}
-	free(target);
 
 	if(WORLD->areParseOnly()) {
 		// Print all the feature/values

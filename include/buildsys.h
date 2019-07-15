@@ -1536,7 +1536,7 @@ namespace buildsys {
 		DLObject *findDLObject(std::string);
 
 		//! Start the processing and building steps with the given meta package
-		bool basePackage(char *filename);
+		bool basePackage(const std::string & filename);
 
 		//! Get the start iterator for the namespace list
 		std::list < NameSpace * >::iterator nameSpacesStart() {
