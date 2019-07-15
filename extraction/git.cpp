@@ -40,17 +40,18 @@ static bool directory_exists(const char *dir)
 	return false;
 }
 
-static bool refspec_is_commitid(std::string refspec)
+static bool refspec_is_commitid(const std::string & refspec)
 {
-	const char *refspec_str = refspec.c_str();
-	if(strlen(refspec_str) != 40) {
+	if(refspec.length() != 40) {
 		return false;
 	}
-	for(int i = 0; i < 40; i++) {
-		if(!isxdigit(refspec_str[i])) {
+
+	for(char const &c:refspec) {
+		if(!isxdigit(c)) {
 			return false;
 		}
 	}
+
 	return true;
 }
 
