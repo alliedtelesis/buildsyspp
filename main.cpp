@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	World *WORLD = new World(argv[0]);
+	World WORLD(argv[0]);
 	hash_setup();
 
 	// process arguments ...
@@ -102,38 +102,38 @@ int main(int argc, char *argv[])
 	bool foundDashDash = false;
 	while(a < argc && !foundDashDash) {
 		if(!strcmp(argv[a], "--clean")) {
-			WORLD->setCleaning();
+			WORLD.setCleaning();
 		} else if(!strcmp(argv[a], "--no-output-prefix")
 			  || !strcmp(argv[a], "--nop")) {
-			WORLD->clearOutputPrefix();
+			WORLD.clearOutputPrefix();
 		} else if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
-			WORLD->setFetchFrom(argv[a + 1]);
+			WORLD.setFetchFrom(argv[a + 1]);
 			a++;
 		} else if(!strcmp(argv[a], "--tarball-cache")) {
 			log("BuildSys", "Setting tarball cache to %s", argv[a + 1]);
-			WORLD->setTarballCache(argv[a + 1]);
+			WORLD.setTarballCache(argv[a + 1]);
 			a++;
 		} else if(!strcmp(argv[a], "--overlay")) {
-			WORLD->addOverlayPath(std::string(argv[a + 1]));
+			WORLD.addOverlayPath(std::string(argv[a + 1]));
 			a++;
 		} else if(!strcmp(argv[a], "--extract-only")) {
-			WORLD->setExtractOnly();
+			WORLD.setExtractOnly();
 		} else if(!strcmp(argv[a], "--build-info-ignore-fv")) {
-			WORLD->ignoreFeature(std::string(argv[a + 1]));
+			WORLD.ignoreFeature(std::string(argv[a + 1]));
 			a++;
 		} else if(!strcmp(argv[a], "--parse-only")) {
-			WORLD->setParseOnly();
+			WORLD.setParseOnly();
 		} else if(!strcmp(argv[a], "--keep-going")) {
-			WORLD->setKeepGoing();
+			WORLD.setKeepGoing();
 		} else if(!strcmp(argv[a], "--quietly")) {
 			quietly = true;
 		} else if(!strcmp(argv[a], "--parallel-packages") || !strcmp(argv[a], "-j")) {
-			WORLD->setThreadsLimit(atoi(argv[a + 1]));
+			WORLD.setThreadsLimit(atoi(argv[a + 1]));
 			a++;
 		} else if(!strcmp(argv[a], "--")) {
 			foundDashDash = true;
 		} else {
-			WORLD->forceBuild(argv[a]);
+			WORLD.forceBuild(argv[a]);
 		}
 		a++;
 	}
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	if(foundDashDash) {
 		// then we can preload the feature set
 		while(a < argc) {
-			if(!WORLD->setFeature(argv[a])) {
+			if(!WORLD.setFeature(argv[a])) {
 				error("setFeature: Failed");
 				exit(-1);
 			}
@@ -156,27 +156,26 @@ int main(int argc, char *argv[])
 		target = std::string(argv[1]);
 	}
 
-	if(WORLD->noIgnoredFeatures()) {
+	if(WORLD.noIgnoredFeatures()) {
 		// Implement old behaviour
-		WORLD->ignoreFeature("job-limit");
-		WORLD->ignoreFeature("load-limit");
+		WORLD.ignoreFeature("job-limit");
+		WORLD.ignoreFeature("load-limit");
 	}
 
-	if(!WORLD->basePackage(target)) {
+	if(!WORLD.basePackage(target)) {
 		error("Building: Failed");
-		if(WORLD->areKeepGoing()) {
-			delete WORLD;
+		if(WORLD.areKeepGoing()) {
 			hash_shutdown();
 		}
 		exit(-1);
 	}
 
-	if(WORLD->areParseOnly()) {
+	if(WORLD.areParseOnly()) {
 		// Print all the feature/values
-		WORLD->printFeatureValues();
+		WORLD.printFeatureValues();
 	}
 	// Write out the dependency graph
-	WORLD->output_graph();
+	WORLD.output_graph();
 
 	clock_gettime(CLOCK_REALTIME, &end);
 
@@ -188,7 +187,6 @@ int main(int argc, char *argv[])
 		    (end.tv_sec - start.tv_sec - 1),
 		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
 
-	delete WORLD;
 	hash_shutdown();
 
 	return 0;
