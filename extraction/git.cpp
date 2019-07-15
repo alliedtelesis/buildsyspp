@@ -25,11 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-static bool directory_exists(const char *dir)
+static bool directory_exists(const std::string & dir)
 {
 	struct stat info;
 
-	if(stat(dir, &info) != 0) {
+	if(stat(dir.c_str(), &info) != 0) {
 		/* Nothing here */
 		return false;
 	} else if(S_ISDIR(info.st_mode)) {
@@ -121,7 +121,7 @@ GitDirExtractionUnit::GitDirExtractionUnit()
 
 bool GitDirExtractionUnit::isDirty()
 {
-	if(!directory_exists(this->localPath().c_str())) {
+	if(!directory_exists(this->localPath())) {
 		/* If the source directory doesn't exist, then it can't be dirty */
 		return false;
 	}
@@ -186,19 +186,20 @@ bool GitExtractionUnit::updateOrigin()
 bool GitExtractionUnit::fetch(BuildDir * d)
 {
 	char *location = strdup(this->uri.c_str());
-	char *source_dir = strdup(this->local.c_str());
+	std::string source_dir = this->local;
 	const char *cwd = d->getWorld()->getWorkingDir()->c_str();
 
 	bool exists = directory_exists(source_dir);
 
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(exists ? source_dir : cwd, "git"));
+	std::unique_ptr < PackageCmd >
+	    pc(new PackageCmd(exists ? source_dir.c_str() : cwd, "git"));
 
 	if(exists) {
 		/* Update the origin */
 		this->updateOrigin();
 		/* Check if the commit is already present */
 		std::string cmd =
-		    "cd " + std::string(source_dir) + "; git cat-file -e " + this->refspec +
+		    "cd " + source_dir + "; git cat-file -e " + this->refspec +
 		    " 2>/dev/null";
 		if(system(cmd.c_str()) != 0) {
 			/* If not, fetch everything from origin */
@@ -213,7 +214,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		pc->addArg("clone");
 		pc->addArg("-n");
 		pc->addArg(location);
-		pc->addArg(source_dir);
+		pc->addArg(source_dir.c_str());
 		if(!pc->Run(this->P))
 			throw CustomException("Failed to git clone");
 	}
@@ -222,11 +223,11 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		// Don't touch it
 	} else {
 		std::string cmd =
-		    "cd " + std::string(source_dir) +
+		    "cd " + source_dir +
 		    "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
 		if(system(cmd.c_str()) == 0) {
-			std::string head_hash = git_hash_ref(source_dir, "HEAD");
-			std::string branch_hash = git_hash_ref(source_dir,
+			std::string head_hash = git_hash_ref(source_dir.c_str(), "HEAD");
+			std::string branch_hash = git_hash_ref(source_dir.c_str(),
 							       this->refspec.c_str());
 			if(strcmp(head_hash.c_str(), branch_hash.c_str())) {
 				throw CustomException("Asked to use branch: " +
@@ -235,7 +236,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 						      " is off somewhere else");
 			}
 		} else {
-			pc.reset(new PackageCmd(source_dir, "git"));
+			pc.reset(new PackageCmd(source_dir.c_str(), "git"));
 			// switch to refspec
 			pc->addArg("checkout");
 			pc->addArg("-q");
@@ -247,7 +248,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	}
 	bool res = true;
 
-	std::string hash = git_hash(source_dir);
+	std::string hash = git_hash(source_dir.c_str());
 
 	if(!this->hash.empty()) {
 		if(strcmp(this->hash.c_str(), hash.c_str()) != 0) {
@@ -260,7 +261,6 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		this->hash = hash;
 	}
 
-	free(source_dir);
 	free(location);
 
 	this->fetched = res;
