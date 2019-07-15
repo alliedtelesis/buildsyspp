@@ -544,12 +544,11 @@ namespace buildsys {
 	class ExtractionUnit:public HashableUnit {
 	protected:
 		std::string uri;	//!< URI of this unit
-		std::string * hash;	//!< Hash of this unit
+		std::string hash;	//!< Hash of this unit
 	public:
-		ExtractionUnit():uri(std::string()), hash(NULL) {
+		ExtractionUnit():uri(std::string()), hash(std::string()) {
 		};
 		virtual ~ ExtractionUnit() {
-			delete this->hash;
 		};
 		virtual bool print(std::ostream & out) = 0;
 		virtual std::string type() = 0;
@@ -558,7 +557,7 @@ namespace buildsys {
 			return this->uri;
 		};
 		virtual std::string HASH() {
-			return *this->hash;
+			return this->hash;
 		};
 	};
 

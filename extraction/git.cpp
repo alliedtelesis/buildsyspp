@@ -106,8 +106,7 @@ static char *git_remote(const char *gdir, const char *remote)
 GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_dir)
 {
 	this->uri = std::string(git_dir);
-	this->hash = new std::string();
-	*this->hash = git_hash(this->uri.c_str());
+	this->hash = git_hash(this->uri.c_str());
 	this->toDir = std::string(to_dir);
 }
 
@@ -250,16 +249,15 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 
 	std::string hash = git_hash(source_dir);
 
-	if(this->hash) {
-		if(strcmp(this->hash->c_str(), hash.c_str()) != 0) {
+	if(!this->hash.empty()) {
+		if(strcmp(this->hash.c_str(), hash.c_str()) != 0) {
 			log(this->P,
 			    "Hash mismatch for %s\n(committed to %s, providing %s)\n",
-			    this->uri.c_str(), this->hash->c_str(), hash.c_str());
+			    this->uri.c_str(), this->hash.c_str(), hash.c_str());
 			res = false;
 		}
 	} else {
-		this->hash = new std::string();
-		*this->hash = hash;
+		this->hash = hash;
 	}
 
 	free(source_dir);
@@ -273,20 +271,20 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 std::string GitExtractionUnit::HASH()
 {
 	if(refspec_is_commitid(this->refspec)) {
-		this->hash = new std::string(this->refspec);
+		this->hash = std::string(this->refspec);
 	} else {
 		std::string digest_name = string_format("%s#%s", this->uri.c_str(),
 							this->refspec.c_str());
 		/* Check if the package contains pre-computed hashes */
 		char *Hash = P->getFileHash(digest_name.c_str());
 		if(Hash) {
-			this->hash = new std::string(Hash);
+			this->hash = std::string(Hash);
 			free(Hash);
 		} else {
 			this->fetch(P->builddir());
 		}
 	}
-	return *this->hash;
+	return this->hash;
 }
 
 bool GitExtractionUnit::extract(Package * P, BuildDir * bd)

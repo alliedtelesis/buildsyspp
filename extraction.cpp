@@ -112,15 +112,14 @@ CompressedFileExtractionUnit::CompressedFileExtractionUnit(const char *fname)
 
 std::string CompressedFileExtractionUnit::HASH()
 {
-	if(this->hash == NULL) {
+	if(this->hash.empty()) {
 		if(this->fetch) {
-			this->hash = new std::string(this->fetch->HASH());
+			this->hash = std::string(this->fetch->HASH());
 		} else {
-			this->hash = new std::string();
-			*this->hash = hash_file(this->uri);
+			this->hash = hash_file(this->uri);
 		}
 	}
-	return *this->hash;
+	return this->hash;
 };
 
 
@@ -166,8 +165,7 @@ PatchExtractionUnit::PatchExtractionUnit(int level, const char *pp, const char *
 	this->uri = std::string(uri);
 	this->fname_short = std::string(fname_short);
 
-	this->hash = new std::string();
-	*this->hash = hash_file(this->uri);
+	this->hash = hash_file(this->uri);
 
 	this->level = level;
 	this->patch_path = strdup(pp);
@@ -208,8 +206,7 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname, const char *fn
 {
 	this->uri = std::string(fname);
 	this->fname_short = std::string(fname_short);
-	this->hash = new std::string();
-	*this->hash = hash_file(this->uri);
+	this->hash = hash_file(this->uri);
 }
 
 bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
@@ -239,15 +236,15 @@ FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(FetchUnit * fetched
 	this->fetched = fetched;
 	this->uri = fetched->relative_path();
 	this->fname_short = std::string(fname_short);
-	this->hash = NULL;
+	this->hash = std::string("");
 }
 
 std::string FetchedFileCopyExtractionUnit::HASH()
 {
-	if(this->hash == NULL) {
-		this->hash = new std::string(this->fetched->HASH());
+	if(this->hash.empty()) {
+		this->hash = std::string(this->fetched->HASH());
 	}
-	return *this->hash;
+	return this->hash;
 }
 
 bool FetchedFileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
