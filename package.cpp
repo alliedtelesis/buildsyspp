@@ -121,9 +121,9 @@ std::string Package::relative_fetch_path(const char *location, bool also_root)
 }
 
 
-char *Package::getFileHash(const char *filename)
+std::string Package::getFileHash(const std::string & filename)
 {
-	char *ret = NULL;
+	std::string ret("");
 	std::string hashes_file = this->relative_fetch_path("Digest");
 	FILE *hashes = fopen(hashes_file.c_str(), "r");
 	if(hashes != NULL) {
@@ -139,8 +139,8 @@ char *Package::getFileHash(const char *filename)
 					*term = '\0';
 				}
 			}
-			if(strcmp(buf, filename) == 0) {
-				ret = strdup(hash);
+			if(strcmp(buf, filename.c_str()) == 0) {
+				ret = std::string(hash);
 				break;
 			}
 		}

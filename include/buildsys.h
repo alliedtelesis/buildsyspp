@@ -1140,7 +1140,7 @@ namespace buildsys {
 		std::string relative_fetch_path(const char *location, bool also_root =
 						false);
 		//! Get the file hash for the given file (if known)
-		char *getFileHash(const char *filename);
+		std::string getFileHash(const std::string & filename);
 		//! Recreate the build directory
 		void resetBD();
 		//! Returns the extraction

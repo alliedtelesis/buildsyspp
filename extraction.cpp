@@ -173,8 +173,10 @@ PatchExtractionUnit::PatchExtractionUnit(int level, const char *pp, const char *
 
 bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr < PackageCmd > pc_dry(new PackageCmd(this->patch_path.c_str(), "patch"));
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(this->patch_path.c_str(), "patch"));
+	std::unique_ptr < PackageCmd >
+	    pc_dry(new PackageCmd(this->patch_path.c_str(), "patch"));
+	std::unique_ptr < PackageCmd >
+	    pc(new PackageCmd(this->patch_path.c_str(), "patch"));
 
 	pc_dry->addArgFmt("-p%i", this->level);
 	pc->addArgFmt("-p%i", this->level);

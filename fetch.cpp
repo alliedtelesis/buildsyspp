@@ -175,15 +175,14 @@ bool DownloadFetch::fetch(BuildDir * d)
 std::string DownloadFetch::HASH()
 {
 	/* Check if the package contains pre-computed hashes */
-	char *hash = P->getFileHash(this->final_name().c_str());
+	std::string hash = P->getFileHash(this->final_name());
 	/* Otherwise fetch and calculate the hash */
-	if(!hash) {
+	if(hash.empty()) {
 		log(P, "No hash for %s in package/%s/Digest", this->final_name().c_str(),
 		    P->getName().c_str());
 		throw CustomException("Missing hash " + P->getName());
 	}
-	this->hash = std::string(hash);
-	free(hash);
+	this->hash = hash;
 	return this->hash;
 }
 

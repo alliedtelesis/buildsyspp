@@ -276,12 +276,11 @@ std::string GitExtractionUnit::HASH()
 		std::string digest_name = string_format("%s#%s", this->uri.c_str(),
 							this->refspec.c_str());
 		/* Check if the package contains pre-computed hashes */
-		char *Hash = P->getFileHash(digest_name.c_str());
-		if(Hash) {
-			this->hash = std::string(Hash);
-			free(Hash);
-		} else {
+		std::string Hash = P->getFileHash(digest_name);
+		if(Hash.empty()) {
 			this->fetch(P->builddir());
+		} else {
+			this->hash = Hash;
 		}
 	}
 	return this->hash;
