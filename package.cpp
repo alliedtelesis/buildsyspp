@@ -399,7 +399,7 @@ BuildUnit *Package::buildInfo()
 	if(this->isHashingOutput()) {
 		std::string info_file = string_format("%s/.output.info",
 						      this->bd->getShortPath());
-		res = new OutputInfoFileUnit(info_file.c_str());
+		res = new OutputInfoFileUnit(info_file);
 	} else {
 		if(this->buildinfo_hash.compare("") == 0) {
 			log(this, "build.info (in %s) is empty", this->bd->getShortPath());
@@ -408,7 +408,7 @@ BuildUnit *Package::buildInfo()
 		}
 		std::string info_file = string_format("%s/.build.info",
 						      this->bd->getShortPath());
-		res = new BuildInfoFileUnit(info_file.c_str(), this->buildinfo_hash);
+		res = new BuildInfoFileUnit(info_file, this->buildinfo_hash);
 	}
 	return res;
 }

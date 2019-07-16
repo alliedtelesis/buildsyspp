@@ -51,21 +51,21 @@ RequireFileUnit::RequireFileUnit(const std::string & fname, const std::string & 
 	this->hash = hash_file(fname);
 }
 
-ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
+ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string & fname)
 {
-	this->uri = std::string(fname);
-	this->hash = hash_file(string_format("%s.new", fname));
+	this->uri = fname;
+	this->hash = hash_file(fname + ".new");
 }
 
-BuildInfoFileUnit::BuildInfoFileUnit(const char *fname, std::string hash)
+BuildInfoFileUnit::BuildInfoFileUnit(const std::string & fname, const std::string & hash)
 {
-	this->uri = std::string(fname);
+	this->uri = fname;
 	this->hash = hash;
 }
 
-OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
+OutputInfoFileUnit::OutputInfoFileUnit(const std::string & fname)
 {
-	this->uri = std::string(fname);
+	this->uri = fname;
 	this->hash = hash_file(this->uri);
 }
 

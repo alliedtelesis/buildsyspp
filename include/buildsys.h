@@ -808,7 +808,7 @@ namespace buildsys {
 		std::string uri;	//!< URI of this extraction info file
 		std::string hash;	//!< Hash of this extraction info file
 	public:
-		ExtractionInfoFileUnit(const char *file);
+		ExtractionInfoFileUnit(const std::string & fname);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    uri << " " << this->hash << std::endl;
@@ -825,7 +825,7 @@ namespace buildsys {
 		std::string uri;	//!< URI of this build info file
 		std::string hash;	//!< Hash of this build info file
 	public:
-		BuildInfoFileUnit(const char *file, std::string hash);
+		BuildInfoFileUnit(const std::string & fname, const std::string & hash);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    uri << " " << this->hash << std::endl;
@@ -842,7 +842,7 @@ namespace buildsys {
 		std::string uri;	//!< URI of this output info file
 		std::string hash;	//!< Hash of this output info file
 	public:
-		OutputInfoFileUnit(const char *file);
+		OutputInfoFileUnit(const std::string & fname);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    uri << " " << this->hash << std::endl;
