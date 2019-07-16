@@ -188,12 +188,11 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 {
 	std::string location = this->uri;
 	std::string source_dir = this->local;
-	const char *cwd = d->getWorld()->getWorkingDir().c_str();
+	std::string cwd = d->getWorld()->getWorkingDir();
 
 	bool exists = directory_exists(source_dir);
 
-	std::unique_ptr < PackageCmd >
-	    pc(new PackageCmd(exists ? source_dir.c_str() : cwd, "git"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(exists ? source_dir : cwd, "git"));
 
 	if(exists) {
 		/* Update the origin */
