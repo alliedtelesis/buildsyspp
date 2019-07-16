@@ -70,17 +70,11 @@ BuildDir::BuildDir(Package * P)
 
 void BuildDir::clean()
 {
-	std::string cmd = string_format("rm -fr %s", this->path.c_str());
-	std::system(cmd.c_str());
-
-	int res = mkdir(this->path.c_str(), 0700);
-	if(res < 0) {
-		// We should complain here
-	}
+	remove_all(this->path);
+	create_directories(this->path);
 }
 
 void BuildDir::cleanStaging()
 {
-	std::string cmd = string_format("rm -fr %s", this->staging.c_str());
-	std::system(cmd.c_str());
+	remove_all(this->staging);
 }

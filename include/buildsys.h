@@ -1620,6 +1620,7 @@ namespace buildsys {
 	void hash_shutdown(void);
 
 	void create_directories(const std::string & path);
+	void remove_all(const std::string & path);
 };
 
 using namespace buildsys;
