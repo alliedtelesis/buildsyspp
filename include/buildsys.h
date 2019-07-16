@@ -174,8 +174,9 @@ namespace buildsys {
 		 *  \param file the file that was not found
 		 *  \param where The location where the error occurred
 		 */
-		FileNotFoundException(const char *file, const char *where) {
-			errmsg = string_format("%s: File not found '%s'", where, file);
+		FileNotFoundException(const std::string & file, const std::string & where) {
+			errmsg = string_format("%s: File not found '%s'", where.c_str(),
+					       file.c_str());
 		} virtual std::string error_msg() {
 			return errmsg;
 		}

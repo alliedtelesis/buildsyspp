@@ -114,7 +114,7 @@ std::string Package::relative_fetch_path(const char *location, bool also_root)
 			}
 		}
 		if(!exists) {
-			throw FileNotFoundException(location, this->getName().c_str());
+			throw FileNotFoundException(location, this->getName());
 		}
 	}
 	return src_path;

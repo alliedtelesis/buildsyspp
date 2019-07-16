@@ -293,7 +293,7 @@ int li_require(lua_State * L)
 	// not exist then we use the original file path
 	struct stat buf;
 	if(stat(relative_fname.c_str(), &buf) != 0) {
-		throw FileNotFoundException("require", fname.c_str());
+		throw FileNotFoundException("require", fname);
 	}
 
 	P->getLua()->processFile(relative_fname);
