@@ -308,7 +308,7 @@ bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 
 	pc->addArg("-sfT");
 
-	if(this->uri[0] == '.') {
+	if(this->uri.at(0) == '.') {
 		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
 		pc->addArg(arg);
 	} else {
@@ -328,7 +328,7 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-dpRuf");
 
-	if(this->uri[0] == '.') {
+	if(this->uri.at(0) == '.') {
 		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
 		pc->addArg(arg);
 	} else {

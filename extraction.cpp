@@ -208,11 +208,11 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string & fname,
 
 bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	const char *path = this->uri.c_str();
+	std::string path = this->uri;
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
 	pc->addArg("-pRLuf");
 
-	if(path[0] == '/') {
+	if(path.at(0) == '/') {
 		pc->addArg(path);
 	} else {
 		std::string arg = P->getWorld()->getWorkingDir() + "/" + path;
