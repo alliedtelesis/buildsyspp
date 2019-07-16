@@ -608,13 +608,7 @@ bool Package::extractInstallDepends()
 	}
 
 	// Create the directory
-	{
-		int res = mkdir(this->depsExtraction.c_str(), 0700);
-		if((res < 0) && (errno != EEXIST)) {
-			error(this->depsExtraction.c_str());
-			return false;
-		}
-	}
+	create_directories(this->depsExtraction);
 
 	log(this, "Extracting installed files from dependencies ...");
 	std::list < std::string > *done = new std::list < std::string > ();

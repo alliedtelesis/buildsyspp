@@ -127,10 +127,8 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "tar"));
 
-	int res = mkdir("dl", 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw CustomException("Error: Creating download directory");
-	}
+	create_directories("dl");
+
 	pc->addArg("xf");
 	pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(), this->uri.c_str());
 
@@ -144,10 +142,7 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "unzip"));
 
-	int res = mkdir("dl", 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw CustomException("Error: Creating download directory");
-	}
+	create_directories("dl");
 
 	pc->addArg("-o");
 	pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(), this->uri.c_str());

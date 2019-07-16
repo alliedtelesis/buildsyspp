@@ -61,10 +61,7 @@ std::string DownloadFetch::final_name()
 
 bool DownloadFetch::fetch(BuildDir * d)
 {
-	int res = mkdir("dl", 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw CustomException("Error: Creating download directory");
-	}
+	create_directories("dl");
 
 	bool get = false;
 
