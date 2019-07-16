@@ -168,13 +168,13 @@ PatchExtractionUnit::PatchExtractionUnit(int level, const char *pp, const char *
 	this->hash = hash_file(this->uri);
 
 	this->level = level;
-	this->patch_path = strdup(pp);
+	this->patch_path = std::string(pp);
 }
 
 bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr < PackageCmd > pc_dry(new PackageCmd(this->patch_path, "patch"));
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(this->patch_path, "patch"));
+	std::unique_ptr < PackageCmd > pc_dry(new PackageCmd(this->patch_path.c_str(), "patch"));
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(this->patch_path.c_str(), "patch"));
 
 	pc_dry->addArgFmt("-p%i", this->level);
 	pc->addArgFmt("-p%i", this->level);

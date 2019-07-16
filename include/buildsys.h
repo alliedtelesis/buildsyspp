@@ -621,13 +621,12 @@ namespace buildsys {
 	class PatchExtractionUnit:public ExtractionUnit {
 	private:
 		int level;
-		char *patch_path;
+		std::string patch_path;
 		std::string fname_short;
 	public:
 		PatchExtractionUnit(int level, const char *patch_path,
 				    const char *patch_fname, const char *fname_short);
 		virtual ~ PatchExtractionUnit() {
-			free(patch_path);
 		};
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
