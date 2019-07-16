@@ -55,9 +55,10 @@ static bool refspec_is_commitid(const std::string & refspec)
 	return true;
 }
 
-static std::string git_hash_ref(const char *gdir, const char *refspec)
+static std::string git_hash_ref(const std::string & gdir, const std::string & refspec)
 {
-	std::string cmd = string_format("cd %s && git rev-parse %s", gdir, refspec);
+	std::string cmd = string_format("cd %s && git rev-parse %s", gdir.c_str(),
+					refspec.c_str());
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git rev-parse ref failed");
@@ -72,14 +73,14 @@ static std::string git_hash_ref(const char *gdir, const char *refspec)
 	return ret;
 }
 
-static std::string git_hash(const char *gdir)
+static std::string git_hash(const std::string & gdir)
 {
 	return git_hash_ref(gdir, "HEAD");
 }
 
-static std::string git_diff_hash(const char *gdir)
+static std::string git_diff_hash(const std::string & gdir)
 {
-	std::string cmd = string_format("cd %s && git diff HEAD | sha1sum", gdir);
+	std::string cmd = string_format("cd %s && git diff HEAD | sha1sum", gdir.c_str());
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git diff | sha1sum failed");
@@ -112,7 +113,7 @@ GitDirExtractionUnit::GitDirExtractionUnit(const std::string & git_dir,
 					   const std::string & to_dir)
 {
 	this->uri = git_dir;
-	this->hash = git_hash(this->uri.c_str());
+	this->hash = git_hash(this->uri);
 	this->toDir = to_dir;
 }
 
@@ -135,7 +136,7 @@ bool GitDirExtractionUnit::isDirty()
 
 std::string GitDirExtractionUnit::dirtyHash()
 {
-	return git_diff_hash(this->localPath().c_str());
+	return git_diff_hash(this->localPath());
 }
 
 GitExtractionUnit::GitExtractionUnit(const std::string & remote, const std::string & local,
@@ -226,9 +227,8 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		    "cd " + source_dir +
 		    "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
 		if(std::system(cmd.c_str()) == 0) {
-			std::string head_hash = git_hash_ref(source_dir.c_str(), "HEAD");
-			std::string branch_hash = git_hash_ref(source_dir.c_str(),
-							       this->refspec.c_str());
+			std::string head_hash = git_hash_ref(source_dir, "HEAD");
+			std::string branch_hash = git_hash_ref(source_dir, this->refspec);
 			if(strcmp(head_hash.c_str(), branch_hash.c_str())) {
 				throw CustomException("Asked to use branch: " +
 						      this->refspec + ", but " +
@@ -248,7 +248,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	}
 	bool res = true;
 
-	std::string hash = git_hash(source_dir.c_str());
+	std::string hash = git_hash(source_dir);
 
 	if(!this->hash.empty()) {
 		if(strcmp(this->hash.c_str(), hash.c_str()) != 0) {
