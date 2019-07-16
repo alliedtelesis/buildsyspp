@@ -243,3 +243,41 @@ bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 
 	return true;
 }
+
+FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(FetchUnit * fetched,
+							     const char *fname_short)
+{
+	this->fetched = fetched;
+	this->uri = fetched->relative_path();
+	this->fname_short = std::string(fname_short);
+	this->hash = NULL;
+}
+
+std::string FetchedFileCopyExtractionUnit::HASH()
+{
+	if(this->hash == NULL) {
+		this->hash = new std::string(this->fetched->HASH());
+	}
+	return *this->hash;
+}
+
+bool FetchedFileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
+{
+	const char *path = this->uri.c_str();
+	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
+	pc->addArg("-pRLuf");
+
+	if(path[0] == '/') {
+		pc->addArg(path);
+	} else {
+		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir()->c_str(), path);
+	}
+
+	pc->addArg(".");
+
+	if(!pc->Run(P)) {
+		throw CustomException("Failed to copy file");
+	}
+
+	return true;
+}

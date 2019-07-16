@@ -74,6 +74,7 @@ int li_bd_fetch(lua_State * L)
 	char *branch = NULL;
 	char *reponame = NULL;
 	bool listedonly = false;
+	char *copyto = NULL;
 
 	Package *P = li_get_package(L);
 
@@ -104,6 +105,8 @@ int li_bd_fetch(lua_State * L)
 				to = strdup(value);
 			} else if(strcmp(key, "listedonly") == 0) {
 				listedonly = (strcmp(value, "true") == 0);
+			} else if(strcmp(key, "copyto") == 0) {
+				copyto = strdup(value);
 			} else {
 				printf("Unknown key %s (%s)", key, value);
 			}
@@ -126,6 +129,9 @@ int li_bd_fetch(lua_State * L)
 			fname = std::string("");
 		}
 		f = new DownloadFetch(std::string(uri), decompress, fname, P);
+		if(copyto) {
+			P->extraction()->add(new FetchedFileCopyExtractionUnit(f, copyto));
+		}
 	} else if(strcmp(method, "git") == 0) {
 		if(uri == NULL) {
 			throw CustomException("fetch method = git requires uri to be set");

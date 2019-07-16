@@ -665,6 +665,25 @@ namespace buildsys {
 		virtual bool extract(Package * P, BuildDir * b);
 	};
 
+	//! A file copy of a fetched file as part of the extraction step
+	class FetchedFileCopyExtractionUnit:public ExtractionUnit {
+	private:
+		std::string fname_short;
+		FetchUnit *fetched;
+	public:
+		FetchedFileCopyExtractionUnit(FetchUnit * fetch, const char *fname_short);
+		virtual bool print(std::ostream & out) {
+			out << this->type() << " " << this->
+			    fname_short << " " << this->HASH() << std::endl;
+			return true;
+		}
+		virtual std::string type() {
+			return std::string("FetchedFileCopy");
+		}
+		virtual bool extract(Package * P, BuildDir * b);
+		virtual std::string HASH();
+	};
+
 	//! A git directory as part of the extraction step
 	class GitDirExtractionUnit:public ExtractionUnit {
 	protected:
