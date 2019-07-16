@@ -128,7 +128,7 @@ bool GitDirExtractionUnit::isDirty()
 
 	std::string cmd = string_format("cd %s && git diff --quiet HEAD",
 					this->localPath().c_str());
-	int res = system(cmd.c_str());
+	int res = std::system(cmd.c_str());
 	return (res != 0);
 }
 
@@ -201,7 +201,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		std::string cmd =
 		    "cd " + source_dir + "; git cat-file -e " + this->refspec +
 		    " 2>/dev/null";
-		if(system(cmd.c_str()) != 0) {
+		if(std::system(cmd.c_str()) != 0) {
 			/* If not, fetch everything from origin */
 			pc->addArg("fetch");
 			pc->addArg("origin");
@@ -225,7 +225,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		std::string cmd =
 		    "cd " + source_dir +
 		    "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
-		if(system(cmd.c_str()) == 0) {
+		if(std::system(cmd.c_str()) == 0) {
 			std::string head_hash = git_hash_ref(source_dir.c_str(), "HEAD");
 			std::string branch_hash = git_hash_ref(source_dir.c_str(),
 							       this->refspec.c_str());

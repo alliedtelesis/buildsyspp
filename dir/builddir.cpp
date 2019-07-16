@@ -66,15 +66,15 @@ BuildDir::BuildDir(Package * P)
 			subpart[tmp - pname] = '\0';
 			path = string_format("mkdir -p output/%s/staging/%s", gname,
 					     subpart);
-			system(path.c_str());
+			std::system(path.c_str());
 			path = string_format("mkdir -p output/%s/install/%s", gname,
 					     subpart);
-			system(path.c_str());
+			std::system(path.c_str());
 			free(subpart);
 		}
 	}
 	path = string_format("mkdir -p output/%s/%s", gname, pname);
-	res = system(path.c_str());
+	res = std::system(path.c_str());
 	path = string_format("%s/output/%s/%s/work", pwd, gname, pname);
 	res = mkdir(path.c_str(), 0700);
 	if((res < 0) && (errno != EEXIST)) {
@@ -126,7 +126,7 @@ BuildDir::BuildDir(Package * P)
 void BuildDir::clean()
 {
 	std::string cmd = string_format("rm -fr %s", this->path.c_str());
-	system(cmd.c_str());
+	std::system(cmd.c_str());
 
 	int res = mkdir(this->path.c_str(), 0700);
 	if(res < 0) {
@@ -137,5 +137,5 @@ void BuildDir::clean()
 void BuildDir::cleanStaging()
 {
 	std::string cmd = string_format("rm -fr %s", this->staging.c_str());
-	system(cmd.c_str());
+	std::system(cmd.c_str());
 }

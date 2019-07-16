@@ -65,7 +65,7 @@ bool Extraction::extractionRequired(Package * P, BuildDir * bd)
 	std::string cmd =
 	    string_format("cmp -s %s/.extraction.info.new %s/.extraction.info",
 			  bd->getPath(), bd->getPath());
-	int res = system(cmd.c_str());
+	int res = std::system(cmd.c_str());
 
 	// if there are changes,
 	if(res != 0 || P->isCodeUpdated()) {	// Extract our source code

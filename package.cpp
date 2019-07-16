@@ -368,7 +368,7 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 					P->getName().c_str(), hash, rfile);
 	std::string cmd = string_format("wget -q %s -O %s/%s%s", url.c_str(),
 					path, fname, fext);
-	int res = system(cmd.c_str());
+	int res = std::system(cmd.c_str());
 	if(res != 0) {
 		log(P, "Failed to get %s", rfile);
 		ret = true;
@@ -457,7 +457,7 @@ void Package::updateBuildInfo(bool updateOutputHash)
 		    string_format
 		    ("cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
 		     this->bd->getNewPath(), this->bd->getPath());
-		system(cmd.c_str());
+		std::system(cmd.c_str());
 	}
 }
 
@@ -534,7 +534,7 @@ bool Package::shouldBuild(bool locally)
 
 	std::string cmd = string_format("cmp -s %s/.build.info.new %s/.build.info",
 					this->bd->getPath(), this->bd->getPath());
-	int res = system(cmd.c_str());
+	int res = std::system(cmd.c_str());
 
 	// if there are changes,
 	if(res != 0 || ret) {
@@ -566,13 +566,13 @@ bool Package::prepareBuildDirs()
 		std::string cmd = string_format("rm -fr %s/output/%s/%s/new/install/*", pwd,
 						this->getNS()->getName().c_str(),
 						this->name.c_str());
-		system(cmd.c_str());
+		std::system(cmd.c_str());
 		cmd = string_format("rm -fr %s/output/%s/%s/new/staging/*", pwd,
 				    this->getNS()->getName().c_str(), this->name.c_str());
-		system(cmd.c_str());
+		std::system(cmd.c_str());
 		cmd = string_format("rm -fr %s/output/%s/%s/staging/*", pwd,
 				    this->getNS()->getName().c_str(), this->name.c_str());
-		system(cmd.c_str());
+		std::system(cmd.c_str());
 	}
 
 	std::list < std::string > *done = new std::list < std::string > ();

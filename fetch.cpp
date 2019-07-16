@@ -145,7 +145,7 @@ bool DownloadFetch::fetch(BuildDir * d)
 			} else if(strcmp(ext, ".gz") == 0) {
 				cmd = string_format("gunzip -d dl/%s", fullname.c_str());
 			}
-			system(cmd.c_str());
+			std::system(cmd.c_str());
 			free(filename);
 		}
 	}
