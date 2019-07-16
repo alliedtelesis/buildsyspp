@@ -1264,6 +1264,11 @@ namespace buildsys {
 		 */
 		void printLabel(std::ostream & out);
 
+		/** Get the value of a specific feature (for this package)
+		 *  lua: feature('magic-support')
+		 */
+		std::string getFeature(const std::string & key);
+
 		//! Return the lua instance being used
 		Lua *getLua() {
 			return this->lua;
@@ -1491,7 +1496,7 @@ namespace buildsys {
 		/** Get the value of a specific feature
 		 *  lua: feature('magic-support')
 		 */
-		std::string getFeature(std::string key);
+		std::string getFeature(const std::string & key);
 		/** Print all feature/values to the console
 		 */
 		void printFeatureValues();

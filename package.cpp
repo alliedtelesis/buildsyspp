@@ -57,6 +57,17 @@ FILE *Package::getLogFile()
 	return this->logFile;
 }
 
+std::string Package::getFeature(const std::string & key)
+{
+	/* Try the feature prefixed with our package name first */
+	try {
+		return this->getWorld()->getFeature(this->name + ":" + key);
+	}
+	catch(NoKeyException & E) {
+		return this->getWorld()->getFeature(key);
+	}
+}
+
 char *Package::absolute_fetch_path(const char *location, bool also_root)
 {
 	const char *cwd = this->getWorld()->getWorkingDir()->c_str();

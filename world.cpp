@@ -87,7 +87,7 @@ bool World::setFeature(char *kv)
 }
 
 
-std::string World::getFeature(std::string key)
+std::string World::getFeature(const std::string & key)
 {
 	if(features->find(key) != features->end()) {
 		return (*features)[key];

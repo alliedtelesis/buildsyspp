@@ -62,7 +62,7 @@ static int li_feature(lua_State * L)
 			throw CustomException("Argument to feature() must be a string");
 		const char *key = lua_tostring(L, 1);
 		try {
-			std::string value = P->getWorld()->getFeature(std::string(key));
+			std::string value = P->getFeature(std::string(key));
 			lua_pushstring(L, value.c_str());
 			P->buildDescription()->add(new
 						   FeatureValueUnit(P->getWorld(), key,
