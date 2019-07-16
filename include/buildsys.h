@@ -165,23 +165,6 @@ namespace buildsys {
 		}
 	};
 
-	/*! Error using/creating directory */
-	class DirException:public Exception {
-	private:
-		std::string errmsg;
-	public:
-		/** Create a directory exception
-		 *  \param location The directory path
-		 *  \param err The error message
-		 */
-		DirException(const char *location, const char *err) {
-			errmsg = string_format("Error with directory '%s': %s", location,
-					       err);
-		} virtual std::string error_msg() {
-			return errmsg;
-		}
-	};
-
 	/*! File not found */
 	class FileNotFoundException:public Exception {
 	private:
@@ -1635,6 +1618,8 @@ namespace buildsys {
 	void hash_setup(void);
 	std::string hash_file(const std::string & fname);
 	void hash_shutdown(void);
+
+	void create_directories(const std::string & path);
 };
 
 using namespace buildsys;

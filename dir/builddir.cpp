@@ -31,96 +31,41 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BuildDir::BuildDir(Package * P)
 {
-	char *gname = strdup(P->getNS()->getName().c_str());
-	char *pname = strdup(P->getName().c_str());
-	char *pwd = strdup(P->getWorld()->getWorkingDir().c_str());
+	std::string gname = P->getNS()->getName();
+	std::string pname = P->getName();
+	std::string pwd = P->getWorld()->getWorkingDir();
 	this->WORLD = P->getWorld();
 
-	int res = mkdir("output", 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw DirException("output", strerror(errno));
+	create_directories("output");
+	create_directories("output/" + gname);
+	create_directories("output/" + gname + "/staging");
+	create_directories("output/" + gname + "/install");
+
+	auto position = pname.rfind("/");
+	if(position != std::string::npos) {
+		std::string subpart = pname.substr(0, position);
+		create_directories("output/" + gname + "/staging/" + subpart);
+		create_directories("output/" + gname + "/install/" + subpart);
 	}
 
-	std::string path = string_format("output/%s", gname);
-	res = mkdir(path.c_str(), 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path.c_str(), strerror(errno));
-	}
+	create_directories("output/" + gname + "/" + pname);
 
-	path = string_format("output/%s/staging", gname);
-	res = mkdir(path.c_str(), 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path.c_str(), strerror(errno));
-	}
+	this->path = pwd + "/output/" + gname + "/" + pname + "/work";
+	create_directories(this->path);
 
-	path = string_format("output/%s/install", gname);
-	res = mkdir(path.c_str(), 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path.c_str(), strerror(errno));
-	}
+	this->rpath = "output/" + gname + "/" + pname + "/work";
 
-	{
-		const char *tmp = strrchr(pname, '/');
-		if(tmp != NULL) {
-			char *subpart = strdup(pname);
-			subpart[tmp - pname] = '\0';
-			path = string_format("mkdir -p output/%s/staging/%s", gname,
-					     subpart);
-			std::system(path.c_str());
-			path = string_format("mkdir -p output/%s/install/%s", gname,
-					     subpart);
-			std::system(path.c_str());
-			free(subpart);
-		}
-	}
-	path = string_format("mkdir -p output/%s/%s", gname, pname);
-	res = std::system(path.c_str());
-	path = string_format("%s/output/%s/%s/work", pwd, gname, pname);
-	res = mkdir(path.c_str(), 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path.c_str(), strerror(errno));
-	}
-	this->path = path;
-	path = string_format("output/%s/%s/work", gname, pname);
-	this->rpath = path;
-	path = string_format("%s/output/%s/%s/new", pwd, gname, pname);
-	res = mkdir(path.c_str(), 0700);
-	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path.c_str(), strerror(errno));
-	}
-	this->new_path = path;
-	path = string_format("%s/output/%s/%s/staging", pwd, gname, pname);
-	res = mkdir(path.c_str(), 0700);
-	if(res < 0) {
-		if(errno != EEXIST) {
-			throw DirException(path.c_str(), strerror(errno));
+	this->new_path = pwd + "/output/" + gname + "/" + pname + "/new";
+	create_directories(this->new_path);
 
-		}
-	}
-	this->staging = path;
+	this->staging = pwd + "/output/" + gname + "/" + pname + "/staging";
+	create_directories(this->staging);
 
-	path = string_format("%s/output/%s/%s/new/staging", pwd, gname, pname);
-	res = mkdir(path.c_str(), 0700);
-	if(res < 0) {
-		if(errno != EEXIST) {
-			throw DirException(path.c_str(), strerror(errno));
+	this->new_staging = pwd + "/output/" + gname + "/" + pname + "/new/staging";
+	create_directories(this->new_staging);
 
-		}
-	}
-	this->new_staging = path;
-	path = string_format("%s/output/%s/%s/new/install", pwd, gname, pname);
-	res = mkdir(path.c_str(), 0700);
-	if(res < 0) {
-		if(errno != EEXIST) {
-			throw DirException(path.c_str(), strerror(errno));
-
-		}
-	}
-	this->new_install = path;
-
-	free(gname);
-	free(pname);
-	free(pwd);
+	this->new_install = pwd + "/output/" + gname + "/" + pname + "/new/install";
+	create_directories(this->new_install);
 }
 
 void BuildDir::clean()
