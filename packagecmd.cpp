@@ -25,19 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-void PackageCmd::addArgFmt(const char *fmt, ...)
-{
-	char *message = NULL;
-	va_list args;
-	va_start(args, fmt);
-	vasprintf(&message, fmt, args);
-	va_end(args);
-
-	this->addArg(message);
-
-	free(message);
-}
-
 bool PackageCmd::Run(Package * P)
 {
 	if(this->skip)
@@ -65,7 +52,7 @@ bool PackageCmd::Run(Package * P)
 		}
 	}
 	bool res = true;
-	if(run(P, this->args[0], this->args, this->path, ne) != 0)
+	if(run(P, this->args[0], this->args, this->path.c_str(), ne) != 0)
 		res = false;
 
 	if(!res) {
@@ -83,7 +70,7 @@ bool PackageCmd::Run(Package * P)
 
 void PackageCmd::printCmd()
 {
-	printf("Path: %s\n", this->path);
+	printf("Path: %s\n", this->path.c_str());
 	for(size_t i = 0; i < this->arg_count; i++) {
 		printf("Arg[%zi] = '%s'\n", i, this->args[i]);
 	}
@@ -91,10 +78,6 @@ void PackageCmd::printCmd()
 
 PackageCmd::~PackageCmd()
 {
-	if(this->path)
-		free(this->path);
-	if(this->app)
-		free(this->app);
 	if(this->args) {
 		for(size_t i = 0; i < this->arg_count; i++) {
 			free(this->args[i]);

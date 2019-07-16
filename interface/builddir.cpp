@@ -49,7 +49,7 @@ static std::string relative_path(BuildDir * d, const char *dir, bool allowDL = f
 static void add_env(Package * P, PackageCmd * pc)
 {
 	std::string pn_env = string_format("BS_PACKAGE_NAME=%s", P->getName().c_str());
-	pc->addEnv(pn_env.c_str());
+	pc->addEnv(pn_env);
 }
 
 int li_bd_fetch(lua_State * L)
@@ -393,7 +393,7 @@ int li_bd_cmd(lua_State * L)
 				throw
 				    CustomException
 				    ("cmd() requires a table of strings as the fourth argument\n");
-			pc->addEnv(lua_tostring(L, -1));
+			pc->addEnv(std::string(lua_tostring(L, -1)));
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
 		}

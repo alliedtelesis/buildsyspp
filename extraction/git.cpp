@@ -310,10 +310,10 @@ bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc->addArg("-sfT");
 
 	if(this->uri[0] == '.') {
-		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(),
-			      this->uri.c_str());
+		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
+		pc->addArg(arg);
 	} else {
-		pc->addArg(this->uri.c_str());
+		pc->addArg(this->uri);
 	}
 	pc->addArg(this->toDir);
 
@@ -330,8 +330,8 @@ bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc->addArg("-dpRuf");
 
 	if(this->uri[0] == '.') {
-		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(),
-			      this->uri.c_str());
+		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
+		pc->addArg(arg);
 	} else {
 		pc->addArg(this->uri);
 	}

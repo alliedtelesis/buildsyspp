@@ -130,7 +130,7 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 	create_directories("dl");
 
 	pc->addArg("xf");
-	pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(), this->uri.c_str());
+	pc->addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
 
 	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
@@ -145,7 +145,7 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 	create_directories("dl");
 
 	pc->addArg("-o");
-	pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(), this->uri.c_str());
+	pc->addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
 
 	if(!pc->Run(P))
 		throw CustomException("Failed to extract file");
@@ -172,8 +172,8 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 	std::unique_ptr < PackageCmd >
 	    pc(new PackageCmd(this->patch_path.c_str(), "patch"));
 
-	pc_dry->addArgFmt("-p%i", this->level);
-	pc->addArgFmt("-p%i", this->level);
+	pc_dry->addArg("-p" + std::to_string(this->level));
+	pc->addArg("-p" + std::to_string(this->level));
 
 	pc_dry->addArg("-stN");
 	pc->addArg("-stN");
@@ -181,9 +181,9 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 	pc_dry->addArg("-i");
 	pc->addArg("-i");
 
-	const char *pwd = P->getWorld()->getWorkingDir().c_str();
-	pc_dry->addArgFmt("%s/%s", pwd, this->uri.c_str());
-	pc->addArgFmt("%s/%s", pwd, this->uri.c_str());
+	auto pwd = P->getWorld()->getWorkingDir();
+	pc_dry->addArg(pwd + "/" + this->uri);
+	pc->addArg(pwd + "/" + this->uri);
 
 	pc_dry->addArg("--dry-run");
 
@@ -215,7 +215,8 @@ bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 	if(path[0] == '/') {
 		pc->addArg(path);
 	} else {
-		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(), path);
+		std::string arg = P->getWorld()->getWorkingDir() + "/" + path;
+		pc->addArg(arg);
 	}
 
 	pc->addArg(".");
@@ -253,7 +254,7 @@ bool FetchedFileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 	if(path[0] == '/') {
 		pc->addArg(path);
 	} else {
-		pc->addArgFmt("%s/%s", P->getWorld()->getWorkingDir().c_str(), path);
+		pc->addArg(P->getWorld()->getWorkingDir() + "/" + path);
 	}
 
 	pc->addArg(".");

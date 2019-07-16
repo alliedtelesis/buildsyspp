@@ -328,8 +328,8 @@ namespace buildsys {
 	 */
 	class PackageCmd {
 	private:
-		char *path;
-		char *app;
+		std::string path;
+		std::string app;
 		char **args;
 		size_t arg_count;
 		char **envp;
@@ -340,20 +340,9 @@ namespace buildsys {
 		 *  \param path The path to run this command in
 		 *  \param app The program to invoke
 		 */
-		PackageCmd(const char *path, const char *app):path(strdup(path)),
-		    app(strdup(app)), args(NULL), arg_count(0), envp(NULL), envp_count(0),
+		PackageCmd(const std::string & path, const std::string & app):path(path),
+		    app(app), args(NULL), arg_count(0), envp(NULL), envp_count(0),
 		    skip(false) {
-			this->addArg(app);
-		};
-		PackageCmd(std::string const &path,
-			   const char *app):path(strdup(path.c_str())), app(strdup(app)),
-		    args(NULL), arg_count(0), envp(NULL), envp_count(0), skip(false) {
-			this->addArg(app);
-		};
-		PackageCmd(std::string const &path,
-			   std::string const &app):path(strdup(path.c_str())),
-		    app(strdup(app.c_str())), args(NULL), arg_count(0), envp(NULL),
-		    envp_count(0), skip(false) {
 			this->addArg(app);
 		};
 
@@ -367,32 +356,25 @@ namespace buildsys {
 		/** Add an argument to this command
 		 *  \param arg The argument to append to this command
 		 */
-		void addArg(const char *arg) {
+		void addArg(const std::string & arg) {
 			this->arg_count++;
 			this->args =
 			    (char **) realloc(this->args,
 					      sizeof(char *) * (this->arg_count + 1));
-			this->args[this->arg_count - 1] = strdup(arg);
+			this->args[this->arg_count - 1] = strdup(arg.c_str());
 			this->args[this->arg_count] = NULL;
 		}
-		void addArg(std::string const &arg) {
-			addArg(arg.c_str());
-		}
-		void addArgFmt(const char *fmt, ...);
 
 		/** Add an enviroment variable to this command
 		 *  \param env The enviroment variable to append to this command
 		 */
-		void addEnv(const char *env) {
+		void addEnv(const std::string & env) {
 			this->envp_count++;
 			this->envp =
 			    (char **) realloc(this->envp,
 					      sizeof(char *) * (this->envp_count + 1));
-			this->envp[this->envp_count - 1] = strdup(env);
+			this->envp[this->envp_count - 1] = strdup(env.c_str());
 			this->envp[this->envp_count] = NULL;
-		}
-		void addEnv(std::string const &env) {
-			addEnv(env.c_str());
 		}
 
 		/** Run this command

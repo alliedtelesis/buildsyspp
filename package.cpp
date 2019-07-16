@@ -231,13 +231,14 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 			return false;
 	}
 
-	const char *pwd = this->getWorld()->getWorkingDir().c_str();
-
 	if(this->bd != NULL) {
 		std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
 		pc->addArg("-rf");
-		pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2", pwd,
-			      this->getNS()->getName().c_str(), this->name.c_str());
+		auto pwd = this->getWorld()->getWorkingDir();
+		std::string arg =
+		    pwd + "/output/" + this->getNS()->getName() + "/staging/" + this->name +
+		    ".tar.bz2";
+		pc->addArg(arg);
 		pc->addArg("-p");
 		pc->addArg("p");
 
@@ -276,8 +277,7 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done,
 		}
 	}
 
-	const char *pwd = this->getWorld()->getWorkingDir().c_str();
-
+	auto pwd = this->getWorld()->getWorkingDir();
 	if(this->bd != NULL) {
 		if(!this->installFiles.empty()) {
 			std::list < std::string >::iterator it = this->installFiles.begin();
@@ -285,9 +285,10 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done,
 			for(; it != end; it++) {
 				std::unique_ptr < PackageCmd >
 				    pc(new PackageCmd(dir, "cp"));
-				pc->addArgFmt("%s/output/%s/install/%s", pwd,
-					      this->getNS()->getName().c_str(),
-					      (*it).c_str());
+				std::string arg =
+				    pwd + "/output/" + this->getNS()->getName() +
+				    "/install/" + *it;
+				pc->addArg(arg);
 				pc->addArg(*it);
 
 				if(!pc->Run(this)) {
@@ -299,8 +300,10 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done,
 		} else {
 			std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
 			pc->addArg("-rf");
-			pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd,
-				      this->getNS()->getName().c_str(), this->name.c_str());
+			std::string arg =
+			    pwd + "/output/" + this->getNS()->getName() + "/install/" +
+			    this->name + ".tar.bz2";
+			pc->addArg(arg);
 			pc->addArg("-p");
 			pc->addArg("p");
 			if(!pc->Run(this)) {
@@ -631,9 +634,10 @@ bool Package::packageNewStaging()
 	pc->addArg("-x");
 	pc->addArg("cpio");
 	pc->addArg("-wf");
-	pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2",
-		      this->getWorld()->getWorkingDir().c_str(),
-		      this->getNS()->getName().c_str(), this->name.c_str());
+	std::string arg =
+	    this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
+	    "/staging/" + this->name + ".tar.bz2";
+	pc->addArg(arg);
 	pc->addArg(".");
 
 	if(!pc->Run(this)) {
@@ -645,7 +649,7 @@ bool Package::packageNewStaging()
 
 bool Package::packageNewInstall()
 {
-	const char *pwd = this->getWorld()->getWorkingDir().c_str();
+	auto pwd = this->getWorld()->getWorkingDir();
 	if(!this->installFiles.empty()) {
 		std::list < std::string >::iterator it = this->installFiles.begin();
 		std::list < std::string >::iterator end = this->installFiles.end();
@@ -654,8 +658,9 @@ bool Package::packageNewInstall()
 			std::unique_ptr < PackageCmd >
 			    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
 			pc->addArg(*it);
-			pc->addArgFmt("%s/output/%s/install/%s", pwd,
-				      this->getNS()->getName().c_str(), (*it).c_str());
+			std::string arg =
+			    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
+			pc->addArg(arg);
 
 			if(!pc->Run(this)) {
 				log(this, "Failed to copy install file (%s) ",
@@ -669,8 +674,10 @@ bool Package::packageNewInstall()
 		pc->addArg("-x");
 		pc->addArg("cpio");
 		pc->addArg("-wf");
-		pc->addArgFmt("%s/output/%s/install/%s.tar.bz2", pwd,
-			      this->getNS()->getName().c_str(), this->name.c_str());
+		std::string arg =
+		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name +
+		    ".tar.bz2";
+		pc->addArg(arg);
 		pc->addArg(".");
 
 		if(!pc->Run(this)) {

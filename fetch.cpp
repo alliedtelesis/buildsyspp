@@ -112,8 +112,8 @@ bool DownloadFetch::fetch(BuildDir * d)
 							d->getWorld()->
 							tarballCache().c_str(),
 							fname.c_str());
-			pc->addArg(url.c_str());
-			pc->addArgFmt("-O%s", fullname.c_str());
+			pc->addArg(url);
+			pc->addArg("-O" + fullname);
 			localCacheHit = pc->Run(this->P);
 			delete pc;
 		}
@@ -121,7 +121,7 @@ bool DownloadFetch::fetch(BuildDir * d)
 		if(!localCacheHit) {
 			PackageCmd *pc = new PackageCmd("dl", "wget");
 			pc->addArg(this->fetch_uri.c_str());
-			pc->addArgFmt("-O%s", fullname.c_str());
+			pc->addArg("-O" + fullname);
 			if(!pc->Run(this->P))
 				throw CustomException("Failed to fetch file");
 			delete pc;
