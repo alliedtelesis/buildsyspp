@@ -1382,7 +1382,7 @@ namespace buildsys {
 		Internal_Graph *topo_graph;
 		std::string fetch_from;
 		std::string tarball_cache;
-		std::string * pwd;
+		std::string pwd;
 		string_list *ignoredFeatures;
 		bool failed;
 		bool cleaning;
@@ -1405,7 +1405,7 @@ namespace buildsys {
 		    threads_running(0), threads_limit(0), outputPrefix(true) {
 			overlays->push_back(std::string("."));
 			char *pwd = getcwd(NULL, 0);
-			this->pwd = new std::string(pwd);
+			this->pwd = std::string(pwd);
 			free(pwd);
 			pthread_mutex_init(&this->cond_lock, NULL);
 			pthread_cond_init(&this->cond, NULL);
@@ -1580,7 +1580,7 @@ namespace buildsys {
 		}
 
 		//! Get 'pwd'
-		std::string * getWorkingDir() {
+		const std::string & getWorkingDir() {
 			return this->pwd;
 		}
 

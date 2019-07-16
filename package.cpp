@@ -68,7 +68,7 @@ std::string Package::getFeature(const std::string & key)
 
 std::string Package::absolute_fetch_path(const char *location, bool also_root)
 {
-	const char *cwd = this->getWorld()->getWorkingDir()->c_str();
+	const char *cwd = this->getWorld()->getWorkingDir().c_str();
 	std::string src_path_tmp = this->relative_fetch_path(location);
 	return string_format("%s/%s", cwd, src_path_tmp.c_str());
 }
@@ -231,7 +231,7 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 			return false;
 	}
 
-	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir().c_str();
 
 	if(this->bd != NULL) {
 		std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
@@ -276,7 +276,7 @@ bool Package::extract_install(const char *dir, std::list < std::string > *done,
 		}
 	}
 
-	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir().c_str();
 
 	if(this->bd != NULL) {
 		if(!this->installFiles.empty()) {
@@ -508,7 +508,7 @@ bool Package::shouldBuild(bool locally)
 	if(!this->installFiles.empty())
 		return true;
 
-	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir().c_str();
 	// lets make sure the install file (still) exists
 	bool ret = false;
 
@@ -562,7 +562,7 @@ bool Package::prepareBuildDirs()
 	log(this, "Generating staging directory ...");
 
 	{			// Clean out the (new) staging/install directories
-		const char *pwd = this->getWorld()->getWorkingDir()->c_str();
+		const char *pwd = this->getWorld()->getWorkingDir().c_str();
 		std::string cmd = string_format("rm -fr %s/output/%s/%s/new/install/*", pwd,
 						this->getNS()->getName().c_str(),
 						this->name.c_str());
@@ -596,7 +596,7 @@ bool Package::extractInstallDepends()
 	log(this, "Removing old install files ...");
 	{
 		std::unique_ptr < PackageCmd >
-		    pc(new PackageCmd(this->getWorld()->getWorkingDir()->c_str(), "rm"));
+		    pc(new PackageCmd(this->getWorld()->getWorkingDir().c_str(), "rm"));
 		pc->addArg("-fr");
 		pc->addArg(this->depsExtraction.c_str());
 		if(!pc->Run(this)) {
@@ -638,7 +638,7 @@ bool Package::packageNewStaging()
 	pc->addArg("cpio");
 	pc->addArg("-wf");
 	pc->addArgFmt("%s/output/%s/staging/%s.tar.bz2",
-		      this->getWorld()->getWorkingDir()->c_str(),
+		      this->getWorld()->getWorkingDir().c_str(),
 		      this->getNS()->getName().c_str(), this->name.c_str());
 	pc->addArg(".");
 
@@ -651,7 +651,7 @@ bool Package::packageNewStaging()
 
 bool Package::packageNewInstall()
 {
-	const char *pwd = this->getWorld()->getWorkingDir()->c_str();
+	const char *pwd = this->getWorld()->getWorkingDir().c_str();
 	if(!this->installFiles.empty()) {
 		std::list < std::string >::iterator it = this->installFiles.begin();
 		std::list < std::string >::iterator end = this->installFiles.end();

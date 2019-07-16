@@ -96,7 +96,7 @@ bool DownloadFetch::fetch(BuildDir * d)
 
 	{
 		std::string fpath = string_format("%s/dl/%s",
-						  d->getWorld()->getWorkingDir()->c_str(),
+						  d->getWorld()->getWorkingDir().c_str(),
 						  fname.c_str());
 		FILE *f = fopen(fpath.c_str(), "r");
 		if(f == NULL) {
@@ -154,7 +154,7 @@ bool DownloadFetch::fetch(BuildDir * d)
 
 	if(this->hash.length() != 0) {
 		std::string fpath = string_format("%s/dl/%s",
-						  d->getWorld()->getWorkingDir()->c_str(),
+						  d->getWorld()->getWorkingDir().c_str(),
 						  this->final_name().c_str());
 		std::string hash = hash_file(fpath);
 

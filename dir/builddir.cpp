@@ -33,7 +33,7 @@ BuildDir::BuildDir(Package * P)
 {
 	char *gname = strdup(P->getNS()->getName().c_str());
 	char *pname = strdup(P->getName().c_str());
-	char *pwd = strdup(P->getWorld()->getWorkingDir()->c_str());
+	char *pwd = strdup(P->getWorld()->getWorkingDir().c_str());
 	this->WORLD = P->getWorld();
 
 	int res = mkdir("output", 0700);

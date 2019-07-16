@@ -343,7 +343,6 @@ World::~World()
 	delete this->overlays;
 	delete this->graph;
 	delete this->topo_graph;
-	delete this->pwd;
 	delete this->ignoredFeatures;
 	pthread_mutex_destroy(&this->cond_lock);
 	pthread_cond_destroy(&this->cond);
