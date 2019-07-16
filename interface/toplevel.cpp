@@ -60,13 +60,13 @@ static int li_feature(lua_State * L)
 	if(lua_gettop(L) == 1) {
 		if(lua_type(L, 1) != LUA_TSTRING)
 			throw CustomException("Argument to feature() must be a string");
-		const char *key = lua_tostring(L, 1);
+		std::string key(lua_tostring(L, 1));
 		try {
-			std::string value = P->getFeature(std::string(key));
+			std::string value = P->getFeature(key);
 			lua_pushstring(L, value.c_str());
 			P->buildDescription()->add(new
 						   FeatureValueUnit(P->getWorld(), key,
-								    value.c_str()));
+								    value));
 		}
 		catch(NoKeyException & E) {
 			lua_pushnil(L);

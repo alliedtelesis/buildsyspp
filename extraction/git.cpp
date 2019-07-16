@@ -108,11 +108,12 @@ static std::string git_remote(const std::string & gdir, const std::string & remo
 	return ret;
 }
 
-GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_dir)
+GitDirExtractionUnit::GitDirExtractionUnit(const std::string & git_dir,
+					   const std::string & to_dir)
 {
-	this->uri = std::string(git_dir);
+	this->uri = git_dir;
 	this->hash = git_hash(this->uri.c_str());
-	this->toDir = std::string(to_dir);
+	this->toDir = to_dir;
 }
 
 GitDirExtractionUnit::GitDirExtractionUnit()
@@ -137,12 +138,11 @@ std::string GitDirExtractionUnit::dirtyHash()
 	return git_diff_hash(this->localPath().c_str());
 }
 
-GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
+GitExtractionUnit::GitExtractionUnit(const std::string & remote, const std::string & local,
 				     std::string refspec, Package * P)
 {
-	this->uri = std::string(remote);
-	this->local = string_format("%s/source/%s", P->getWorld()->getWorkingDir().c_str(),
-				    local);
+	this->uri = remote;
+	this->local = P->getWorld()->getWorkingDir() + "/source/" + local;
 	this->refspec = refspec;
 	this->P = P;
 	this->fetched = false;

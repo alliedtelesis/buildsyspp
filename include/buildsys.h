@@ -563,7 +563,7 @@ namespace buildsys {
 	protected:
 		FetchUnit * fetch;
 	public:
-		CompressedFileExtractionUnit(const char *fName);
+		CompressedFileExtractionUnit(const std::string & fname);
 		CompressedFileExtractionUnit(FetchUnit * f);
 		virtual std::string HASH();
 		virtual bool print(std::ostream & out) {
@@ -577,7 +577,8 @@ namespace buildsys {
 	class TarExtractionUnit:public CompressedFileExtractionUnit {
 	public:
 		//! Create an extraction unit for a tar file
-		TarExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		TarExtractionUnit(const std::string &
+				  fname):CompressedFileExtractionUnit(fname) {
 		};
 		//! Create an extraction unit for tar file from a fetch unit
 	TarExtractionUnit(FetchUnit * f):CompressedFileExtractionUnit(f) {
@@ -591,7 +592,8 @@ namespace buildsys {
 	class ZipExtractionUnit:public CompressedFileExtractionUnit {
 	public:
 		//! Create an extraction unit for a tar file
-		ZipExtractionUnit(const char *fName):CompressedFileExtractionUnit(fName) {
+		ZipExtractionUnit(const std::string &
+				  fname):CompressedFileExtractionUnit(fname) {
 		};
 	ZipExtractionUnit(FetchUnit * f):CompressedFileExtractionUnit(f) {
 		};
@@ -608,8 +610,9 @@ namespace buildsys {
 		std::string patch_path;
 		std::string fname_short;
 	public:
-		PatchExtractionUnit(int level, const char *patch_path,
-				    const char *patch_fname, const char *fname_short);
+		PatchExtractionUnit(int level, const std::string & patch_path,
+				    const std::string & patch_fname,
+				    const std::string & fname_short);
 		virtual ~ PatchExtractionUnit() {
 		};
 		virtual bool print(std::ostream & out) {
@@ -629,7 +632,8 @@ namespace buildsys {
 	private:
 		std::string fname_short;
 	public:
-		FileCopyExtractionUnit(const char *file, const char *fname_short);
+		FileCopyExtractionUnit(const std::string & fname,
+				       const std::string & fname_short);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    fname_short << " " << this->HASH() << std::endl;
@@ -665,7 +669,8 @@ namespace buildsys {
 	protected:
 		std::string toDir;
 	public:
-		GitDirExtractionUnit(const char *git_dir, const char *toDir);
+		GitDirExtractionUnit(const std::string & git_dir,
+				     const std::string & to_dir);
 		GitDirExtractionUnit();
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
@@ -690,9 +695,9 @@ namespace buildsys {
 	//! A local linked-in git dir as part of an extraction step
 	class LinkGitDirExtractionUnit:public GitDirExtractionUnit {
 	public:
-		LinkGitDirExtractionUnit(const char *git_dir,
-					 const char *toDir):GitDirExtractionUnit(git_dir,
-										 toDir) {
+		LinkGitDirExtractionUnit(const std::string & git_dir,
+					 const std::string &
+					 to_dir):GitDirExtractionUnit(git_dir, to_dir) {
 		};
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {
@@ -703,9 +708,9 @@ namespace buildsys {
 	//! A local copied-in git dir as part of an extraction step
 	class CopyGitDirExtractionUnit:public GitDirExtractionUnit {
 	public:
-		CopyGitDirExtractionUnit(const char *git_dir,
-					 const char *toDir):GitDirExtractionUnit(git_dir,
-										 toDir) {
+		CopyGitDirExtractionUnit(const std::string & git_dir,
+					 const std::string &
+					 to_dir):GitDirExtractionUnit(git_dir, to_dir) {
 		};
 		virtual bool extract(Package * P, BuildDir * bd);
 		virtual std::string modeName() {
@@ -720,7 +725,7 @@ namespace buildsys {
 		std::string local;
 		bool updateOrigin();
 	public:
-		GitExtractionUnit(const char *remote, const char *local,
+		GitExtractionUnit(const std::string & remote, const std::string & local,
 				  std::string refspec, Package * P);
 		virtual bool fetch(BuildDir * d);
 		virtual bool extract(Package * P, BuildDir * bd);
@@ -743,9 +748,9 @@ namespace buildsys {
 		std::string value;
 		World *WORLD;
 	public:
-		FeatureValueUnit(World * WORLD, const char *feature,
-				 const char *value):feature(std::string(feature)),
-		    value(std::string(value)), WORLD(WORLD) {
+		FeatureValueUnit(World * WORLD, const std::string & feature,
+				 const std::string & value):feature(feature),
+		    value(value), WORLD(WORLD) {
 		};
 		virtual bool print(std::ostream & out);
 		virtual std::string type() {
@@ -758,7 +763,7 @@ namespace buildsys {
 	private:
 		std::string feature;
 	public:
-		FeatureNilUnit(const char *feature):feature(std::string(feature)) {
+		FeatureNilUnit(const std::string & feature):feature(feature) {
 		};
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->feature << std::endl;
