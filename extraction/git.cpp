@@ -185,7 +185,7 @@ bool GitExtractionUnit::updateOrigin()
 
 bool GitExtractionUnit::fetch(BuildDir * d)
 {
-	char *location = strdup(this->uri.c_str());
+	std::string location = this->uri;
 	std::string source_dir = this->local;
 	const char *cwd = d->getWorld()->getWorkingDir().c_str();
 
@@ -213,7 +213,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	} else {
 		pc->addArg("clone");
 		pc->addArg("-n");
-		pc->addArg(location);
+		pc->addArg(location.c_str());
 		pc->addArg(source_dir.c_str());
 		if(!pc->Run(this->P))
 			throw CustomException("Failed to git clone");
@@ -260,8 +260,6 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	} else {
 		this->hash = hash;
 	}
-
-	free(location);
 
 	this->fetched = res;
 
