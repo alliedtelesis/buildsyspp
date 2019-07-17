@@ -288,11 +288,11 @@ bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 		}
 	}
 	// copy to work dir
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
-	pc->addArg("-dpRuf");
-	pc->addArg(this->localPath());
-	pc->addArg(".");
-	if(!pc->Run(P))
+	PackageCmd pc(bd->getPath(), "cp");
+	pc.addArg("-dpRuf");
+	pc.addArg(this->localPath());
+	pc.addArg(".");
+	if(!pc.Run(P))
 		throw CustomException("Failed to checkout");
 
 	return true;
@@ -300,19 +300,19 @@ bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 
 bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "ln"));
+	PackageCmd pc(bd->getPath(), "ln");
 
-	pc->addArg("-sfT");
+	pc.addArg("-sfT");
 
 	if(this->uri.at(0) == '.') {
 		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
-		pc->addArg(arg);
+		pc.addArg(arg);
 	} else {
-		pc->addArg(this->uri);
+		pc.addArg(this->uri);
 	}
-	pc->addArg(this->toDir);
+	pc.addArg(this->toDir);
 
-	if(!pc->Run(P)) {
+	if(!pc.Run(P)) {
 		throw CustomException("Operation failed");
 	}
 
@@ -321,18 +321,18 @@ bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 
 bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
-	pc->addArg("-dpRuf");
+	PackageCmd pc(bd->getPath(), "cp");
+	pc.addArg("-dpRuf");
 
 	if(this->uri.at(0) == '.') {
 		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
-		pc->addArg(arg);
+		pc.addArg(arg);
 	} else {
-		pc->addArg(this->uri);
+		pc.addArg(this->uri);
 	}
-	pc->addArg(this->toDir);
+	pc.addArg(this->toDir);
 
-	if(!pc->Run(P)) {
+	if(!pc.Run(P)) {
 		throw CustomException("Operation failed");
 	}
 
