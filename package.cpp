@@ -73,21 +73,20 @@ std::string Package::absolute_fetch_path(const char *location, bool also_root)
 	return string_format("%s/%s", cwd, src_path_tmp.c_str());
 }
 
-std::string Package::relative_fetch_path(const char *location, bool also_root)
+std::string Package::relative_fetch_path(const std::string & location, bool also_root)
 {
 	std::string src_path("");
 
-	if(location[0] == '/' || !strncmp(location, "dl/", 3)) {
-		src_path = std::string(location);
+	if(location.at(0) == '/' || location.find("dl/") == 0) {
+		src_path = location;
 	} else {
 		string_list::iterator iter = this->getWorld()->overlaysStart();
 		string_list::iterator end = this->getWorld()->overlaysEnd();
 		bool exists(false);
 
-		if(location[0] == '.') {
+		if(location.at(0) == '.') {
 			for(; iter != end; iter++) {
-				src_path = string_format("%s/%s", (*iter).c_str(),
-							 location);
+				src_path = *iter + "/" + location;
 				if(filesystem::exists(src_path)) {
 					exists = true;
 					break;
@@ -95,16 +94,14 @@ std::string Package::relative_fetch_path(const char *location, bool also_root)
 			}
 		} else {
 			for(; iter != end; iter++) {
-				src_path = string_format("%s/package/%s/%s",
-							 (*iter).c_str(),
-							 this->getName().c_str(), location);
+				src_path =
+				    *iter + "/package/" + this->getName() + "/" + location;
 				if(filesystem::exists(src_path)) {
 					exists = true;
 					break;
 				}
 				if(also_root) {
-					src_path = string_format("%s/%s", (*iter).c_str(),
-								 location);
+					src_path = *iter + "/" + location;
 					if(filesystem::exists(src_path)) {
 						exists = true;
 						break;
@@ -113,7 +110,7 @@ std::string Package::relative_fetch_path(const char *location, bool also_root)
 			}
 		}
 		if(!exists) {
-			throw FileNotFoundException(location, this->getName());
+			throw FileNotFoundException(location.c_str(), this->getName());
 		}
 	}
 	return src_path;

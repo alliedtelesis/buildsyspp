@@ -1109,8 +1109,8 @@ namespace buildsys {
 		std::string absolute_fetch_path(const char *location, bool also_root =
 						false);
 		//! Get the relative fetch path for this package
-		std::string relative_fetch_path(const char *location, bool also_root =
-						false);
+		std::string relative_fetch_path(const std::string & location,
+						bool also_root = false);
 		//! Get the file hash for the given file (if known)
 		std::string getFileHash(const std::string & filename);
 		//! Recreate the build directory
