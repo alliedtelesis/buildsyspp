@@ -349,6 +349,8 @@ namespace buildsys {
 
 		~PackageCmd();
 
+		PackageCmd & operator=(PackageCmd && other);
+
 		//! Mark a command to allow skiping its execution
 		void skipCommand(void) {
 			this->skip = true;

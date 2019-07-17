@@ -154,27 +154,25 @@ bool GitExtractionUnit::updateOrigin()
 	std::string remote_url = git_remote(source_dir, "origin");
 
 	if(strcmp(remote_url.c_str(), location.c_str()) != 0) {
-		std::unique_ptr < PackageCmd >
-		    pc(new PackageCmd(source_dir.c_str(), "git"));
-		pc->addArg("remote");
+		PackageCmd pc(source_dir.c_str(), "git");
+		pc.addArg("remote");
 		// If the remote doesn't exist, add it
 		if(strcmp(remote_url.c_str(), "") == 0) {
-			pc->addArg("add");
+			pc.addArg("add");
 		} else {
-			pc->addArg("set-url");
+			pc.addArg("set-url");
 		}
-		pc->addArg("origin");
-		pc->addArg(location.c_str());
-		if(!pc->Run(this->P)) {
+		pc.addArg("origin");
+		pc.addArg(location.c_str());
+		if(!pc.Run(this->P)) {
 			throw CustomException("Failed: git remote set-url origin");
 		}
-		// Forcibly fetch if the remote url has change,
-		// if the ref is origin the user wont get what they wanted otherwise
-		pc.reset(new PackageCmd(source_dir.c_str(), "git"));
-		pc->addArg("fetch");
-		pc->addArg("origin");
-		pc->addArg("--tags");
-		if(!pc->Run(this->P)) {
+
+		pc = PackageCmd(source_dir.c_str(), "git");
+		pc.addArg("fetch");
+		pc.addArg("origin");
+		pc.addArg("--tags");
+		if(!pc.Run(this->P)) {
 			throw CustomException("Failed: git fetch origin --tags");
 		}
 	}
@@ -190,7 +188,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 
 	bool exists = directory_exists(source_dir);
 
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(exists ? source_dir : cwd, "git"));
+	PackageCmd pc(exists ? source_dir : cwd, "git");
 
 	if(exists) {
 		/* Update the origin */
@@ -201,19 +199,19 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		    " 2>/dev/null";
 		if(std::system(cmd.c_str()) != 0) {
 			/* If not, fetch everything from origin */
-			pc->addArg("fetch");
-			pc->addArg("origin");
-			pc->addArg("--tags");
-			if(!pc->Run(this->P)) {
+			pc.addArg("fetch");
+			pc.addArg("origin");
+			pc.addArg("--tags");
+			if(!pc.Run(this->P)) {
 				throw CustomException("Failed: git fetch origin --tags");
 			}
 		}
 	} else {
-		pc->addArg("clone");
-		pc->addArg("-n");
-		pc->addArg(location.c_str());
-		pc->addArg(source_dir.c_str());
-		if(!pc->Run(this->P))
+		pc.addArg("clone");
+		pc.addArg("-n");
+		pc.addArg(location.c_str());
+		pc.addArg(source_dir.c_str());
+		if(!pc.Run(this->P))
 			throw CustomException("Failed to git clone");
 	}
 
@@ -233,13 +231,13 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 						      " is off somewhere else");
 			}
 		} else {
-			pc.reset(new PackageCmd(source_dir.c_str(), "git"));
+			pc = PackageCmd(source_dir.c_str(), "git");
 			// switch to refspec
-			pc->addArg("checkout");
-			pc->addArg("-q");
-			pc->addArg("--detach");
-			pc->addArg(this->refspec.c_str());
-			if(!pc->Run(this->P))
+			pc.addArg("checkout");
+			pc.addArg("-q");
+			pc.addArg("--detach");
+			pc.addArg(this->refspec.c_str());
+			if(!pc.Run(this->P))
 				throw CustomException("Failed to checkout");
 		}
 	}

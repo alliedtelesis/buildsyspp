@@ -91,3 +91,38 @@ PackageCmd::~PackageCmd()
 		free(this->envp);
 	}
 }
+
+PackageCmd & PackageCmd::operator=(PackageCmd && other)
+{
+
+	if(this != &other) {
+		if(this->args) {
+			for(size_t i = 0; i < this->arg_count; i++) {
+				free(this->args[i]);
+			}
+			free(this->args);
+		}
+		if(this->envp) {
+			for(size_t i = 0; i < this->envp_count; i++) {
+				free(this->envp[i]);
+			}
+			free(this->envp);
+		}
+
+		this->path = other.path;
+		this->app = other.app;
+		this->skip = other.skip;
+
+		this->args = other.args;
+		this->arg_count = other.arg_count;
+		other.args = nullptr;
+		other.arg_count = 0;
+
+		this->envp = other.envp;
+		this->envp_count = other.envp_count;
+		other.envp = nullptr;
+		other.envp_count = 0;
+	}
+
+	return *this;
+}
