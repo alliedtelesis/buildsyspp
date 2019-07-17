@@ -125,14 +125,14 @@ std::string CompressedFileExtractionUnit::HASH()
 
 bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "tar"));
+	PackageCmd pc(bd->getPath(), "tar");
 
 	filesystem::create_directories("dl");
 
-	pc->addArg("xf");
-	pc->addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
+	pc.addArg("xf");
+	pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
 
-	if(!pc->Run(P))
+	if(!pc.Run(P))
 		throw CustomException("Failed to extract file");
 
 	return true;
@@ -140,14 +140,14 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 
 bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "unzip"));
+	PackageCmd pc(bd->getPath(), "unzip");
 
 	filesystem::create_directories("dl");
 
-	pc->addArg("-o");
-	pc->addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
+	pc.addArg("-o");
+	pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
 
-	if(!pc->Run(P))
+	if(!pc.Run(P))
 		throw CustomException("Failed to extract file");
 
 	return true;
@@ -167,32 +167,30 @@ PatchExtractionUnit::PatchExtractionUnit(int level, const std::string & patch_pa
 
 bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	std::unique_ptr < PackageCmd >
-	    pc_dry(new PackageCmd(this->patch_path.c_str(), "patch"));
-	std::unique_ptr < PackageCmd >
-	    pc(new PackageCmd(this->patch_path.c_str(), "patch"));
+	PackageCmd pc_dry(this->patch_path.c_str(), "patch");
+	PackageCmd pc(this->patch_path.c_str(), "patch");
 
-	pc_dry->addArg("-p" + std::to_string(this->level));
-	pc->addArg("-p" + std::to_string(this->level));
+	pc_dry.addArg("-p" + std::to_string(this->level));
+	pc.addArg("-p" + std::to_string(this->level));
 
-	pc_dry->addArg("-stN");
-	pc->addArg("-stN");
+	pc_dry.addArg("-stN");
+	pc.addArg("-stN");
 
-	pc_dry->addArg("-i");
-	pc->addArg("-i");
+	pc_dry.addArg("-i");
+	pc.addArg("-i");
 
 	auto pwd = P->getWorld()->getWorkingDir();
-	pc_dry->addArg(pwd + "/" + this->uri);
-	pc->addArg(pwd + "/" + this->uri);
+	pc_dry.addArg(pwd + "/" + this->uri);
+	pc.addArg(pwd + "/" + this->uri);
 
-	pc_dry->addArg("--dry-run");
+	pc_dry.addArg("--dry-run");
 
-	if(!pc_dry->Run(P)) {
+	if(!pc_dry.Run(P)) {
 		log(P->getName().c_str(), "Patch file: %s", this->uri.c_str());
 		throw CustomException("Will fail to patch");
 	}
 
-	if(!pc->Run(P))
+	if(!pc.Run(P))
 		throw CustomException("Truely failed to patch");
 
 	return true;
@@ -209,19 +207,19 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string & fname,
 bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::string path = this->uri;
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
-	pc->addArg("-pRLuf");
+	PackageCmd pc(bd->getPath(), "cp");
+	pc.addArg("-pRLuf");
 
 	if(path.at(0) == '/') {
-		pc->addArg(path);
+		pc.addArg(path);
 	} else {
 		std::string arg = P->getWorld()->getWorkingDir() + "/" + path;
-		pc->addArg(arg);
+		pc.addArg(arg);
 	}
 
-	pc->addArg(".");
+	pc.addArg(".");
 
-	if(!pc->Run(P)) {
+	if(!pc.Run(P)) {
 		throw CustomException("Failed to copy file");
 	}
 
@@ -248,18 +246,18 @@ std::string FetchedFileCopyExtractionUnit::HASH()
 bool FetchedFileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	const char *path = this->uri.c_str();
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "cp"));
-	pc->addArg("-pRLuf");
+	PackageCmd pc(bd->getPath(), "cp");
+	pc.addArg("-pRLuf");
 
 	if(path[0] == '/') {
-		pc->addArg(path);
+		pc.addArg(path);
 	} else {
-		pc->addArg(P->getWorld()->getWorkingDir() + "/" + path);
+		pc.addArg(P->getWorld()->getWorkingDir() + "/" + path);
 	}
 
-	pc->addArg(".");
+	pc.addArg(".");
 
-	if(!pc->Run(P)) {
+	if(!pc.Run(P)) {
 		throw CustomException("Failed to copy file");
 	}
 
