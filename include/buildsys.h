@@ -1017,10 +1017,11 @@ namespace buildsys {
 		void updateBuildInfoHashExisting();
 	protected:
 		//! Extract the new staging directory this package created in the given path
-		bool extract_staging(const char *dir, std::list < std::string > *done);
+		bool extract_staging(const std::string & dir,
+				     std::list < std::string > *done);
 		//! Extract the new install directory this package created in the given path
-		bool extract_install(const char *dir, std::list < std::string > *done,
-				     bool includeChildren);
+		bool extract_install(const std::string & dir,
+				     std::list < std::string > *done, bool includeChildren);
 		//! prepare the (new) build.info file
 		void prepareBuildInfo();
 		//! update the build.info file

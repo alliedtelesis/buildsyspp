@@ -206,7 +206,7 @@ bool Package::checkForDependencyLoops()
 	return true;
 }
 
-bool Package::extract_staging(const char *dir, std::list < std::string > *done)
+bool Package::extract_staging(const std::string & dir, std::list < std::string > *done)
 {
 	{
 		std::list < std::string >::iterator dIt = done->begin();
@@ -248,7 +248,7 @@ bool Package::extract_staging(const char *dir, std::list < std::string > *done)
 	return true;
 }
 
-bool Package::extract_install(const char *dir, std::list < std::string > *done,
+bool Package::extract_install(const std::string & dir, std::list < std::string > *done,
 			      bool includeChildren)
 {
 	{
@@ -577,7 +577,7 @@ bool Package::prepareBuildDirs()
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_staging(staging_dir.c_str(), done))
+		if(!(*dIt)->getPackage()->extract_staging(staging_dir, done))
 			return false;
 	}
 	log(this, "Done (%d)", done->size());
@@ -613,9 +613,8 @@ bool Package::extractInstallDepends()
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->
-		   getPackage()->extract_install(this->depsExtraction.c_str(), done,
-						 !this->depsExtractionDirectOnly))
+		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done,
+							  !this->depsExtractionDirectOnly))
 			return false;
 	}
 	delete done;
