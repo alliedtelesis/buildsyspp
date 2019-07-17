@@ -227,17 +227,17 @@ bool Package::extract_staging(const std::string & dir, std::list < std::string >
 	}
 
 	if(this->bd != NULL) {
-		std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
-		pc->addArg("-rf");
+		PackageCmd pc(dir, "pax");
+		pc.addArg("-rf");
 		auto pwd = this->getWorld()->getWorkingDir();
 		std::string arg =
 		    pwd + "/output/" + this->getNS()->getName() + "/staging/" + this->name +
 		    ".tar.bz2";
-		pc->addArg(arg);
-		pc->addArg("-p");
-		pc->addArg("p");
+		pc.addArg(arg);
+		pc.addArg("-p");
+		pc.addArg("p");
 
-		if(!pc->Run(this)) {
+		if(!pc.Run(this)) {
 			log(this, "Failed to extract staging_dir");
 			return false;
 		}
@@ -278,30 +278,29 @@ bool Package::extract_install(const std::string & dir, std::list < std::string >
 			std::list < std::string >::iterator it = this->installFiles.begin();
 			std::list < std::string >::iterator end = this->installFiles.end();
 			for(; it != end; it++) {
-				std::unique_ptr < PackageCmd >
-				    pc(new PackageCmd(dir, "cp"));
+				PackageCmd pc(dir, "cp");
 				std::string arg =
 				    pwd + "/output/" + this->getNS()->getName() +
 				    "/install/" + *it;
-				pc->addArg(arg);
-				pc->addArg(*it);
+				pc.addArg(arg);
+				pc.addArg(*it);
 
-				if(!pc->Run(this)) {
+				if(!pc.Run(this)) {
 					log(this, "Failed to copy %s (for install)\n",
 					    (*it).c_str());
 					return false;
 				}
 			}
 		} else {
-			std::unique_ptr < PackageCmd > pc(new PackageCmd(dir, "pax"));
-			pc->addArg("-rf");
+			PackageCmd pc(dir, "pax");
+			pc.addArg("-rf");
 			std::string arg =
 			    pwd + "/output/" + this->getNS()->getName() + "/install/" +
 			    this->name + ".tar.bz2";
-			pc->addArg(arg);
-			pc->addArg("-p");
-			pc->addArg("p");
-			if(!pc->Run(this)) {
+			pc.addArg(arg);
+			pc.addArg("-p");
+			pc.addArg("p");
+			if(!pc.Run(this)) {
 				log(this, "Failed to extract install_dir\n");
 				return false;
 			}
@@ -593,11 +592,10 @@ bool Package::extractInstallDepends()
 	// Extract installed files to a given location
 	log(this, "Removing old install files ...");
 	{
-		std::unique_ptr < PackageCmd >
-		    pc(new PackageCmd(this->getWorld()->getWorkingDir().c_str(), "rm"));
-		pc->addArg("-fr");
-		pc->addArg(this->depsExtraction.c_str());
-		if(!pc->Run(this)) {
+		PackageCmd pc(this->getWorld()->getWorkingDir().c_str(), "rm");
+		pc.addArg("-fr");
+		pc.addArg(this->depsExtraction.c_str());
+		if(!pc.Run(this)) {
 			log(this,
 			    "Failed to remove %s (pre-install)",
 			    this->depsExtraction.c_str());
@@ -624,17 +622,17 @@ bool Package::extractInstallDepends()
 
 bool Package::packageNewStaging()
 {
-	std::unique_ptr < PackageCmd > pc(new PackageCmd(this->bd->getNewStaging(), "pax"));
-	pc->addArg("-x");
-	pc->addArg("cpio");
-	pc->addArg("-wf");
+	PackageCmd pc(this->bd->getNewStaging(), "pax");
+	pc.addArg("-x");
+	pc.addArg("cpio");
+	pc.addArg("-wf");
 	std::string arg =
 	    this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
 	    "/staging/" + this->name + ".tar.bz2";
-	pc->addArg(arg);
-	pc->addArg(".");
+	pc.addArg(arg);
+	pc.addArg(".");
 
-	if(!pc->Run(this)) {
+	if(!pc.Run(this)) {
 		log(this, "Failed to compress staging directory");
 		return false;
 	}
@@ -649,32 +647,30 @@ bool Package::packageNewInstall()
 		std::list < std::string >::iterator end = this->installFiles.end();
 		for(; it != end; it++) {
 			log(this, ("Copying " + *it + " to install folder").c_str());
-			std::unique_ptr < PackageCmd >
-			    pc(new PackageCmd(this->bd->getNewInstall(), "cp"));
-			pc->addArg(*it);
+			PackageCmd pc(this->bd->getNewInstall(), "cp");
+			pc.addArg(*it);
 			std::string arg =
 			    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
-			pc->addArg(arg);
+			pc.addArg(arg);
 
-			if(!pc->Run(this)) {
+			if(!pc.Run(this)) {
 				log(this, "Failed to copy install file (%s) ",
 				    (*it).c_str());
 				return false;
 			}
 		}
 	} else {
-		std::unique_ptr < PackageCmd >
-		    pc(new PackageCmd(this->bd->getNewInstall(), "pax"));
-		pc->addArg("-x");
-		pc->addArg("cpio");
-		pc->addArg("-wf");
+		PackageCmd pc(this->bd->getNewInstall(), "pax");
+		pc.addArg("-x");
+		pc.addArg("cpio");
+		pc.addArg("-wf");
 		std::string arg =
 		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name +
 		    ".tar.bz2";
-		pc->addArg(arg);
-		pc->addArg(".");
+		pc.addArg(arg);
+		pc.addArg(".");
 
-		if(!pc->Run(this)) {
+		if(!pc.Run(this)) {
 			log(this, "Failed to compress install directory");
 			return false;
 		}
