@@ -107,24 +107,22 @@ bool DownloadFetch::fetch(BuildDir * d)
 		bool localCacheHit = false;
 		//Attempt to get file from local tarball cache if one is configured.
 		if(d->getWorld()->haveTarballCache()) {
-			PackageCmd *pc = new PackageCmd("dl", "wget");
+			PackageCmd pc("dl", "wget");
 			std::string url = string_format("%s/%s",
 							d->getWorld()->
 							tarballCache().c_str(),
 							fname.c_str());
-			pc->addArg(url);
-			pc->addArg("-O" + fullname);
-			localCacheHit = pc->Run(this->P);
-			delete pc;
+			pc.addArg(url);
+			pc.addArg("-O" + fullname);
+			localCacheHit = pc.Run(this->P);
 		}
 		//If we didn't get the file from the local cache, look upstream.
 		if(!localCacheHit) {
-			PackageCmd *pc = new PackageCmd("dl", "wget");
-			pc->addArg(this->fetch_uri.c_str());
-			pc->addArg("-O" + fullname);
-			if(!pc->Run(this->P))
+			PackageCmd pc("dl", "wget");
+			pc.addArg(this->fetch_uri.c_str());
+			pc.addArg("-O" + fullname);
+			if(!pc.Run(this->P))
 				throw CustomException("Failed to fetch file");
-			delete pc;
 		}
 		if(decompress) {
 			// We want to run a command on this file
@@ -186,15 +184,15 @@ std::string DownloadFetch::HASH()
 bool LinkFetch::fetch(BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
-	PackageCmd *pc = new PackageCmd(d->getPath(), "ln");
-	pc->addArg("-sf");
+	PackageCmd pc(d->getPath(), "ln");
+	pc.addArg("-sf");
 	std::string l = P->relative_fetch_path(location);
-	pc->addArg(l.c_str());
-	pc->addArg(".");
-	if(!pc->Run(this->P)) {
+	pc.addArg(l.c_str());
+	pc.addArg(".");
+	if(!pc.Run(this->P)) {
 		// An error occured, try remove the file, then relink
-		PackageCmd *rmpc = new PackageCmd(d->getPath(), "rm");
-		rmpc->addArg("-fr");
+		PackageCmd rmpc(d->getPath(), "rm");
+		rmpc.addArg("-fr");
 		char *l_copy = strdup(l.c_str());
 		char *l2 = strrchr(l_copy, '/');
 		if(l2[1] == '\0') {
@@ -202,19 +200,17 @@ bool LinkFetch::fetch(BuildDir * d)
 			l2 = strrchr(l_copy, '/');
 		}
 		l2++;
-		rmpc->addArg(l2);
+		rmpc.addArg(l2);
 		free(l_copy);
-		if(!rmpc->Run(this->P))
+		if(!rmpc.Run(this->P))
 			throw
 			    CustomException
 			    ("Failed to ln (symbolically), could not remove target first");
-		if(!pc->Run(this->P))
+		if(!pc.Run(this->P))
 			throw
 			    CustomException
 			    ("Failed to ln (symbolically), even after removing target first");
-		delete rmpc;
 	}
-	delete pc;
 	free(location);
 	return true;
 }
@@ -241,14 +237,13 @@ std::string LinkFetch::relative_path()
 bool CopyFetch::fetch(BuildDir * d)
 {
 	char *location = strdup(this->fetch_uri.c_str());
-	PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
-	pc->addArg("-dpRuf");
+	PackageCmd pc(d->getPath(), "cp");
+	pc.addArg("-dpRuf");
 	std::string l = P->absolute_fetch_path(location);
-	pc->addArg(l.c_str());
-	pc->addArg(".");
-	if(!pc->Run(this->P))
+	pc.addArg(l.c_str());
+	pc.addArg(".");
+	if(!pc.Run(this->P))
 		throw CustomException("Failed to copy (recursively)");
-	delete pc;
 	log(P, "Copied data in, considering code updated");
 	P->setCodeUpdated();
 	free(location);
