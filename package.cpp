@@ -461,13 +461,13 @@ void Package::updateBuildInfo(bool updateOutputHash)
 bool Package::fetchFrom()
 {
 	bool ret = false;
-	char *staging_dir = strdup(this->getNS()->getStagingDir().c_str());
-	char *install_dir = strdup(this->getNS()->getInstallDir().c_str());
+	std::string staging_dir = this->getNS()->getStagingDir();
+	std::string install_dir = this->getNS()->getInstallDir();
 	const char *files[4][4] = {
-		{ "usable", staging_dir, this->name.c_str(), ".tar.bz2.ff" },
-		{ "staging.tar.bz2", staging_dir, this->name.c_str(), ".tar.bz2" },
-		{ "install.tar.bz2", install_dir, this->name.c_str(), ".tar.bz2" },
-		{ "output.info", this->bd->getPath(), ".output", ".info" }
+		{"usable", staging_dir.c_str(), this->name.c_str(), ".tar.bz2.ff"},
+		{"staging.tar.bz2", staging_dir.c_str(), this->name.c_str(), ".tar.bz2"},
+		{"install.tar.bz2", install_dir.c_str(), this->name.c_str(), ".tar.bz2"},
+		{"output.info", this->bd->getPath(), ".output", ".info"}
 	};
 	log(this, "FF URL: %s/%s/%s/%s", this->getWorld()->fetchFrom().c_str(),
 	    this->getNS()->getName().c_str(), this->name.c_str(),
@@ -491,8 +491,7 @@ bool Package::fetchFrom()
 
 		this->updateBuildInfo(false);
 	}
-	free(staging_dir);
-	free(install_dir);
+
 	return ret;
 }
 

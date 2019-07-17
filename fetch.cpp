@@ -183,10 +183,9 @@ std::string DownloadFetch::HASH()
 
 bool LinkFetch::fetch(BuildDir * d)
 {
-	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd pc(d->getPath(), "ln");
 	pc.addArg("-sf");
-	std::string l = P->relative_fetch_path(location);
+	std::string l = P->relative_fetch_path(this->fetch_uri);
 	pc.addArg(l.c_str());
 	pc.addArg(".");
 	if(!pc.Run(this->P)) {
@@ -211,7 +210,6 @@ bool LinkFetch::fetch(BuildDir * d)
 			    CustomException
 			    ("Failed to ln (symbolically), even after removing target first");
 	}
-	free(location);
 	return true;
 }
 
@@ -236,17 +234,15 @@ std::string LinkFetch::relative_path()
 
 bool CopyFetch::fetch(BuildDir * d)
 {
-	char *location = strdup(this->fetch_uri.c_str());
 	PackageCmd pc(d->getPath(), "cp");
 	pc.addArg("-dpRuf");
-	std::string l = P->absolute_fetch_path(location);
+	std::string l = P->absolute_fetch_path(this->fetch_uri);
 	pc.addArg(l.c_str());
 	pc.addArg(".");
 	if(!pc.Run(this->P))
 		throw CustomException("Failed to copy (recursively)");
 	log(P, "Copied data in, considering code updated");
 	P->setCodeUpdated();
-	free(location);
 	return true;
 }
 
