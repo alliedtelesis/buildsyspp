@@ -41,136 +41,82 @@ BuildDir::BuildDir(Package * P)
 		throw DirException("output", strerror(errno));
 	}
 
-	char *path = NULL;
-	if(asprintf(&path, "output/%s", gname) == -1) {
-		fprintf(stderr, "output/global-name path: %s\n", strerror(errno));
-	}
-	res = mkdir(path, 0700);
+	std::string path = string_format("output/%s", gname);
+	res = mkdir(path.c_str(), 0700);
 	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path, strerror(errno));
+		throw DirException(path.c_str(), strerror(errno));
 	}
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "output/%s/staging", gname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/staging path: %s\n",
-			strerror(errno));
-	}
-	res = mkdir(path, 0700);
+
+	path = string_format("output/%s/staging", gname);
+	res = mkdir(path.c_str(), 0700);
 	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path, strerror(errno));
+		throw DirException(path.c_str(), strerror(errno));
 	}
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "output/%s/install", gname) == -1) {
-		fprintf(stderr, "Failed creating output/global-name/install path: %s\n",
-			strerror(errno));
-	}
-	res = mkdir(path, 0700);
+
+	path = string_format("output/%s/install", gname);
+	res = mkdir(path.c_str(), 0700);
 	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path, strerror(errno));
+		throw DirException(path.c_str(), strerror(errno));
 	}
-	free(path);
+
 	{
 		const char *tmp = strrchr(pname, '/');
 		if(tmp != NULL) {
 			char *subpart = strdup(pname);
 			subpart[tmp - pname] = '\0';
-			asprintf(&path, "mkdir -p output/%s/staging/%s", gname, subpart);
-			system(path);
-			free(path);
-			path = NULL;
-			asprintf(&path, "mkdir -p output/%s/install/%s", gname, subpart);
-			system(path);
-			free(path);
-			path = NULL;
+			path = string_format("mkdir -p output/%s/staging/%s", gname,
+					     subpart);
+			system(path.c_str());
+			path = string_format("mkdir -p output/%s/install/%s", gname,
+					     subpart);
+			system(path.c_str());
 			free(subpart);
 		}
 	}
-	path = NULL;
-	if(asprintf(&path, "mkdir -p output/%s/%s", gname, pname) == -1) {
-		fprintf(stderr,
-			"Failed creating output/global-name/package-name path: %s\n",
-			strerror(errno));
-	}
-	res = system(path);
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "%s/output/%s/%s/work", pwd, gname, pname) == -1) {
-		fprintf(stderr,
-			"Failed creating output/global-name/package-name/work path: %s\n",
-			strerror(errno));
-	}
-	res = mkdir(path, 0700);
+	path = string_format("mkdir -p output/%s/%s", gname, pname);
+	res = system(path.c_str());
+	path = string_format("%s/output/%s/%s/work", pwd, gname, pname);
+	res = mkdir(path.c_str(), 0700);
 	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path, strerror(errno));
+		throw DirException(path.c_str(), strerror(errno));
 	}
-	this->path = std::string(path);
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "output/%s/%s/work", gname, pname) == -1) {
-		fprintf(stderr,
-			"Failed creating output/global-name/package-name/work path: %s\n",
-			strerror(errno));
-	}
-	this->rpath = std::string(path);
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "%s/output/%s/%s/new", pwd, gname, pname) == -1) {
-		fprintf(stderr,
-			"Failed creating output/global-name/package-name/new path: %s\n",
-			strerror(errno));
-	}
-	res = mkdir(path, 0700);
+	this->path = path;
+	path = string_format("output/%s/%s/work", gname, pname);
+	this->rpath = path;
+	path = string_format("%s/output/%s/%s/new", pwd, gname, pname);
+	res = mkdir(path.c_str(), 0700);
 	if((res < 0) && (errno != EEXIST)) {
-		throw DirException(path, strerror(errno));
+		throw DirException(path.c_str(), strerror(errno));
 	}
-	this->new_path = std::string(path);
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "%s/output/%s/%s/staging", pwd, gname, pname) == -1) {
-		fprintf(stderr,
-			"Failed creating output/global-name/package-name/staging path: %s\n",
-			strerror(errno));
-	}
-	res = mkdir(path, 0700);
+	this->new_path = path;
+	path = string_format("%s/output/%s/%s/staging", pwd, gname, pname);
+	res = mkdir(path.c_str(), 0700);
 	if(res < 0) {
 		if(errno != EEXIST) {
-			throw DirException(path, strerror(errno));
+			throw DirException(path.c_str(), strerror(errno));
 
 		}
 	}
-	this->staging = std::string(path);
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "%s/output/%s/%s/new/staging", pwd, gname, pname) == -1) {
-		fprintf(stderr,
-			"Failed creating output/global-name/package-name/new/staging path: %s\n",
-			strerror(errno));
-	}
-	res = mkdir(path, 0700);
+	this->staging = path;
+
+	path = string_format("%s/output/%s/%s/new/staging", pwd, gname, pname);
+	res = mkdir(path.c_str(), 0700);
 	if(res < 0) {
 		if(errno != EEXIST) {
-			throw DirException(path, strerror(errno));
+			throw DirException(path.c_str(), strerror(errno));
 
 		}
 	}
-	this->new_staging = std::string(path);
-	free(path);
-	path = NULL;
-	if(asprintf(&path, "%s/output/%s/%s/new/install", pwd, gname, pname) == -1) {
-		fprintf(stderr,
-			"Failed creating output/global-name/package-name/new/install path: %s\n",
-			strerror(errno));
-	}
-	res = mkdir(path, 0700);
+	this->new_staging = path;
+	path = string_format("%s/output/%s/%s/new/install", pwd, gname, pname);
+	res = mkdir(path.c_str(), 0700);
 	if(res < 0) {
 		if(errno != EEXIST) {
-			throw DirException(path, strerror(errno));
+			throw DirException(path.c_str(), strerror(errno));
 
 		}
 	}
-	this->new_install = std::string(path);
-	free(path);
+	this->new_install = path;
 
 	free(gname);
 	free(pname);
@@ -179,10 +125,9 @@ BuildDir::BuildDir(Package * P)
 
 void BuildDir::clean()
 {
-	char *cmd = NULL;
-	asprintf(&cmd, "rm -fr %s", this->path.c_str());
-	system(cmd);
-	free(cmd);
+	std::string cmd = string_format("rm -fr %s", this->path.c_str());
+	system(cmd.c_str());
+
 	int res = mkdir(this->path.c_str(), 0700);
 	if(res < 0) {
 		// We should complain here
@@ -191,8 +136,6 @@ void BuildDir::clean()
 
 void BuildDir::cleanStaging()
 {
-	char *cmd = NULL;
-	asprintf(&cmd, "rm -fr %s", this->staging.c_str());
-	system(cmd);
-	free(cmd);
+	std::string cmd = string_format("rm -fr %s", this->staging.c_str());
+	system(cmd.c_str());
 }
