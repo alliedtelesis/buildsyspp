@@ -154,18 +154,17 @@ bool DownloadFetch::fetch(BuildDir * d)
 	bool ret = true;
 
 	if(this->hash.length() != 0) {
-		char *fpath = NULL;
-		asprintf(&fpath, "%s/dl/%s", d->getWorld()->getWorkingDir()->c_str(),
-			 this->final_name().c_str());
-		char *hash = hash_file(fpath);
-		free(fpath);
-		if(strcmp(this->hash.c_str(), hash) != 0) {
+		std::string fpath = string_format("%s/dl/%s",
+						  d->getWorld()->getWorkingDir()->c_str(),
+						  this->final_name().c_str());
+		std::string hash = hash_file(fpath);
+
+		if(strcmp(this->hash.c_str(), hash.c_str()) != 0) {
 			log(this->P,
 			    "Hash mismatched for %s\n(committed to %s, providing %s)",
-			    this->final_name().c_str(), this->hash.c_str(), hash);
+			    this->final_name().c_str(), this->hash.c_str(), hash.c_str());
 			ret = false;
 		}
-		free(hash);
 	}
 
 	dlobj->unlock();

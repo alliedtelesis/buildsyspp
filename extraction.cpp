@@ -126,9 +126,8 @@ std::string CompressedFileExtractionUnit::HASH()
 		if(this->fetch) {
 			this->hash = new std::string(this->fetch->HASH());
 		} else {
-			char *Hash = hash_file(this->uri.c_str());
-			this->hash = new std::string(Hash);
-			free(Hash);
+			this->hash = new std::string();
+			*this->hash = hash_file(this->uri);
 		}
 	}
 	return *this->hash;
@@ -176,9 +175,10 @@ PatchExtractionUnit::PatchExtractionUnit(int level, const char *pp, const char *
 {
 	this->uri = std::string(uri);
 	this->fname_short = std::string(fname_short);
-	char *Hash = hash_file(uri);
-	this->hash = new std::string(Hash);
-	free(Hash);
+
+	this->hash = new std::string();
+	*this->hash = hash_file(this->uri);
+
 	this->level = level;
 	this->patch_path = strdup(pp);
 }
@@ -218,9 +218,8 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const char *fname, const char *fn
 {
 	this->uri = std::string(fname);
 	this->fname_short = std::string(fname_short);
-	char *Hash = hash_file(fname);
-	this->hash = new std::string(Hash);
-	free(Hash);
+	this->hash = new std::string();
+	*this->hash = hash_file(this->uri);
 }
 
 bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)

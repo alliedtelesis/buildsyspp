@@ -37,7 +37,7 @@ void buildsys::hash_shutdown()
 	EVP_cleanup();
 }
 
-char *buildsys::hash_file(const char *fname)
+std::string buildsys::hash_file(const std::string & fname)
 {
 	EVP_MD_CTX *mdctx;
 	const EVP_MD *md;
@@ -51,9 +51,9 @@ char *buildsys::hash_file(const char *fname)
 	mdctx = EVP_MD_CTX_create();
 	EVP_DigestInit_ex(mdctx, md, NULL);
 
-	FILE *f = fopen(fname, "rb");
+	FILE *f = fopen(fname.c_str(), "rb");
 	if(!f) {
-		fprintf(stderr, "Failed opening: %s\n", fname);
+		fprintf(stderr, "Failed opening: %s\n", fname.c_str());
 		return NULL;
 	}
 	while(!feof(f)) {
@@ -70,5 +70,8 @@ char *buildsys::hash_file(const char *fname)
 		sprintf(&str_res[i * 2], "%02x", md_value[i]);
 	}
 
-	return str_res;
+	std::string res = std::string(str_res);
+	free(str_res);
+
+	return res;
 }

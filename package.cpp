@@ -390,27 +390,18 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 void Package::updateBuildInfoHashExisting()
 {
 	// populate the build.info hash
-	char *build_info_file = NULL;
-	asprintf(&build_info_file, "%s/.build.info", this->bd->getPath());
-	char *hash = hash_file(build_info_file);
-	if(hash != NULL) {
-		this->buildinfo_hash = std::string(hash);
-	}
-	log(this, "Hash: %s", hash);
-	free(hash);
-	free(build_info_file);
+	std::string build_info_file = string_format("%s/.build.info", this->bd->getPath());
+	this->buildinfo_hash = hash_file(build_info_file);
+	log(this, "Hash: %s", this->buildinfo_hash.c_str());
 }
 
 void Package::updateBuildInfoHash()
 {
 	// populate the build.info hash
-	char *build_info_file = NULL;
-	asprintf(&build_info_file, "%s/.build.info.new", this->bd->getPath());
-	char *hash = hash_file(build_info_file);
-	this->buildinfo_hash = std::string(hash);
-	log(this, "Hash: %s", hash);
-	free(hash);
-	free(build_info_file);
+	std::string build_info_file = string_format("%s/.build.info.new",
+						    this->bd->getPath());
+	this->buildinfo_hash = hash_file(build_info_file);
+	log(this, "Hash: %s", this->buildinfo_hash.c_str());
 }
 
 BuildUnit *Package::buildInfo()

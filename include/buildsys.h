@@ -1640,7 +1640,7 @@ namespace buildsys {
 		char *newenvp[]);
 
 	void hash_setup(void);
-	char *hash_file(const char *fname);
+	std::string hash_file(const std::string & fname);
 	void hash_shutdown(void);
 
 	/** @brief A C++ style replacement for C style sprintf/asprintf. Returns a formatted

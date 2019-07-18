@@ -42,28 +42,19 @@ bool BuildDescription::add(BuildUnit * bu)
 PackageFileUnit::PackageFileUnit(const char *fname, const char *fname_short)
 {
 	this->uri = std::string(fname_short);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
-	free(Hash);
+	this->hash = hash_file(std::string(fname));
 }
 
 RequireFileUnit::RequireFileUnit(const char *fname, const char *fname_short)
 {
 	this->uri = std::string(fname_short);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
-	free(Hash);
+	this->hash = hash_file(std::string(fname));
 }
 
 ExtractionInfoFileUnit::ExtractionInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *new_fname = NULL;
-	asprintf(&new_fname, "%s.new", fname);
-	char *Hash = hash_file(new_fname);
-	this->hash = std::string(Hash);
-	free(Hash);
-	free(new_fname);
+	this->hash = hash_file(string_format("%s.new", fname));
 }
 
 BuildInfoFileUnit::BuildInfoFileUnit(const char *fname, std::string hash)
@@ -75,9 +66,7 @@ BuildInfoFileUnit::BuildInfoFileUnit(const char *fname, std::string hash)
 OutputInfoFileUnit::OutputInfoFileUnit(const char *fname)
 {
 	this->uri = std::string(fname);
-	char *Hash = hash_file(fname);
-	this->hash = std::string(Hash);
-	free(Hash);
+	this->hash = hash_file(this->uri);
 }
 
 bool FeatureValueUnit::print(std::ostream & out)
