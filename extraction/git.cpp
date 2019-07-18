@@ -54,20 +54,24 @@ static bool refspec_is_commitid(std::string refspec)
 	return true;
 }
 
-static char *git_hash_ref(const char *gdir, const char *refspec)
+static std::string git_hash_ref(const char *gdir, const char *refspec)
 {
 	std::string cmd = string_format("cd %s && git rev-parse %s", gdir, refspec);
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git rev-parse ref failed");
 	}
-	char *Commit = (char *) calloc(41, sizeof(char));
-	fread(Commit, sizeof(char), 40, f);
+	char *commit = (char *) calloc(41, sizeof(char));
+	fread(commit, sizeof(char), 40, f);
 	pclose(f);
-	return Commit;
+
+	std::string ret = std::string(commit);
+	free(commit);
+
+	return ret;
 }
 
-static char *git_hash(const char *gdir)
+static std::string git_hash(const char *gdir)
 {
 	return git_hash_ref(gdir, "HEAD");
 }
@@ -102,9 +106,8 @@ static char *git_remote(const char *gdir, const char *remote)
 GitDirExtractionUnit::GitDirExtractionUnit(const char *git_dir, const char *to_dir)
 {
 	this->uri = std::string(git_dir);
-	char *Hash = git_hash(git_dir);
-	this->hash = new std::string(Hash);
-	free(Hash);
+	this->hash = new std::string();
+	*this->hash = git_hash(this->uri.c_str());
 	this->toDir = std::string(to_dir);
 }
 
@@ -223,16 +226,15 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		    "cd " + std::string(source_dir) +
 		    "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
 		if(system(cmd.c_str()) == 0) {
-			char *head_hash = git_hash_ref(source_dir, "HEAD");
-			char *branch_hash = git_hash_ref(source_dir, this->refspec.c_str());
-			if(strcmp(head_hash, branch_hash)) {
+			std::string head_hash = git_hash_ref(source_dir, "HEAD");
+			std::string branch_hash = git_hash_ref(source_dir,
+							       this->refspec.c_str());
+			if(strcmp(head_hash.c_str(), branch_hash.c_str())) {
 				throw CustomException("Asked to use branch: " +
 						      this->refspec + ", but " +
 						      source_dir +
 						      " is off somewhere else");
 			}
-			free(head_hash);
-			free(branch_hash);
 		} else {
 			pc.reset(new PackageCmd(source_dir, "git"));
 			// switch to refspec
@@ -246,20 +248,19 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	}
 	bool res = true;
 
-	char *Hash = git_hash(source_dir);
+	std::string hash = git_hash(source_dir);
 
 	if(this->hash) {
-		if(strcmp(this->hash->c_str(), Hash) != 0) {
+		if(strcmp(this->hash->c_str(), hash.c_str()) != 0) {
 			log(this->P,
 			    "Hash mismatch for %s\n(committed to %s, providing %s)\n",
-			    this->uri.c_str(), this->hash->c_str(), Hash);
+			    this->uri.c_str(), this->hash->c_str(), hash.c_str());
 			res = false;
 		}
 	} else {
-		this->hash = new std::string(Hash);
+		this->hash = new std::string();
+		*this->hash = hash;
 	}
-
-	free(Hash);
 
 	free(source_dir);
 	free(location);
