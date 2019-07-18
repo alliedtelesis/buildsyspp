@@ -56,18 +56,14 @@ static bool refspec_is_commitid(std::string refspec)
 
 static char *git_hash_ref(const char *gdir, const char *refspec)
 {
-	char *cmd = NULL;
-	if(asprintf(&cmd, "cd %s && git rev-parse %s", gdir, refspec) < 0) {
-		throw MemoryException();
-	}
-	FILE *f = popen(cmd, "r");
+	std::string cmd = string_format("cd %s && git rev-parse %s", gdir, refspec);
+	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git rev-parse ref failed");
 	}
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	pclose(f);
-	free(cmd);
 	return Commit;
 }
 
@@ -78,36 +74,28 @@ static char *git_hash(const char *gdir)
 
 static char *git_diff_hash(const char *gdir)
 {
-	char *cmd = NULL;
-	if(asprintf(&cmd, "cd %s && git diff HEAD | sha1sum", gdir) < 0) {
-		throw MemoryException();
-	}
-	FILE *f = popen(cmd, "r");
+	std::string cmd = string_format("cd %s && git diff HEAD | sha1sum", gdir);
+	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git diff | sha1sum failed");
 	}
 	char *Commit = (char *) calloc(41, sizeof(char));
 	fread(Commit, sizeof(char), 40, f);
 	pclose(f);
-	free(cmd);
 	return Commit;
 }
 
 static char *git_remote(const char *gdir, const char *remote)
 {
-	char *cmd = NULL;
-	if(asprintf(&cmd, "cd %s && git config --local --get remote.%s.url", gdir, remote) <
-	   0) {
-		throw MemoryException();
-	}
-	FILE *f = popen(cmd, "r");
+	std::string cmd = string_format("cd %s && git config --local --get remote.%s.url",
+					gdir, remote);
+	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git config --local --get remote. .url failed");
 	}
 	char *Remote = (char *) calloc(1025, sizeof(char));
 	fread(Remote, sizeof(char), 1024, f);
 	pclose(f);
-	free(cmd);
 	return Remote;
 }
 
@@ -130,10 +118,10 @@ bool GitDirExtractionUnit::isDirty()
 		/* If the source directory doesn't exist, then it can't be dirty */
 		return false;
 	}
-	char *cmd = NULL;
-	asprintf(&cmd, "cd %s && git diff --quiet HEAD", this->localPath().c_str());
-	int res = system(cmd);
-	free(cmd);
+
+	std::string cmd = string_format("cd %s && git diff --quiet HEAD",
+					this->localPath().c_str());
+	int res = system(cmd.c_str());
 	return (res != 0);
 }
 
@@ -149,16 +137,10 @@ GitExtractionUnit::GitExtractionUnit(const char *remote, const char *local,
 				     std::string refspec, Package * P)
 {
 	this->uri = std::string(remote);
-
-	char *source_dir = NULL;
-	asprintf(&source_dir, "%s/source/%s", P->getWorld()->getWorkingDir()->c_str(),
-		 local);
-	this->local = std::string(source_dir);
-	free(source_dir);
-
+	this->local = string_format("%s/source/%s", P->getWorld()->getWorkingDir()->c_str(),
+				    local);
 	this->refspec = refspec;
 	this->P = P;
-
 	this->fetched = false;
 }
 
@@ -292,11 +274,10 @@ std::string GitExtractionUnit::HASH()
 	if(refspec_is_commitid(this->refspec)) {
 		this->hash = new std::string(this->refspec);
 	} else {
-		char *digest_name = NULL;
-		asprintf(&digest_name, "%s#%s", this->uri.c_str(), this->refspec.c_str());
+		std::string digest_name = string_format("%s#%s", this->uri.c_str(),
+							this->refspec.c_str());
 		/* Check if the package contains pre-computed hashes */
-		char *Hash = P->getFileHash(digest_name);
-		free(digest_name);
+		char *Hash = P->getFileHash(digest_name.c_str());
 		if(Hash) {
 			this->hash = new std::string(Hash);
 			free(Hash);
