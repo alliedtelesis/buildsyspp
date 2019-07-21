@@ -82,14 +82,13 @@ std::string Package::relative_fetch_path(const char *location, bool also_root)
 	} else {
 		string_list::iterator iter = this->getWorld()->overlaysStart();
 		string_list::iterator end = this->getWorld()->overlaysEnd();
-		struct stat buf;
 		bool exists(false);
 
 		if(location[0] == '.') {
 			for(; iter != end; iter++) {
 				src_path = string_format("%s/%s", (*iter).c_str(),
 							 location);
-				if(stat(src_path.c_str(), &buf) == 0) {
+				if(filesystem::exists(src_path)) {
 					exists = true;
 					break;
 				}
@@ -99,14 +98,14 @@ std::string Package::relative_fetch_path(const char *location, bool also_root)
 				src_path = string_format("%s/package/%s/%s",
 							 (*iter).c_str(),
 							 this->getName().c_str(), location);
-				if(stat(src_path.c_str(), &buf) == 0) {
+				if(filesystem::exists(src_path)) {
 					exists = true;
 					break;
 				}
 				if(also_root) {
 					src_path = string_format("%s/%s", (*iter).c_str(),
 								 location);
-					if(stat(src_path.c_str(), &buf) == 0) {
+					if(filesystem::exists(src_path)) {
 						exists = true;
 						break;
 					}

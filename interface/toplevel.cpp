@@ -291,8 +291,7 @@ int li_require(lua_State * L)
 
 	// Check whether the relative file path exists. If it does
 	// not exist then we use the original file path
-	struct stat buf;
-	if(stat(relative_fname.c_str(), &buf) != 0) {
+	if(!filesystem::exists(relative_fname)) {
 		throw FileNotFoundException("require", fname);
 	}
 

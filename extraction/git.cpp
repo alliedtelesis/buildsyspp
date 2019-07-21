@@ -27,12 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static bool directory_exists(const std::string & dir)
 {
-	struct stat info;
-
-	if(stat(dir.c_str(), &info) != 0) {
+	if(!filesystem::exists(dir)) {
 		/* Nothing here */
 		return false;
-	} else if(S_ISDIR(info.st_mode)) {
+	} else if(buildsys::filesystem::is_directory(dir)) {
 		/* Actually a directory */
 		return true;
 	}

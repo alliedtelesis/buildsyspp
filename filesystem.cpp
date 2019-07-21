@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <buildsys.h>
+#include <sys/stat.h>
 
 namespace buildsys {
 	namespace filesystem {
@@ -46,6 +47,17 @@ namespace buildsys {
 			if(ret != 0) {
 				throw CustomException("Failed to remove directories");
 			}
+		}
+		bool exists(const std::string & path) {
+			struct stat buf;
+			return (stat(path.c_str(), &buf) == 0);
+		}
+		bool is_directory(const std::string & path) {
+			struct stat buf;
+			if(stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode)) {
+				return true;
+			}
+			return false;
 		}
 	}
 }
