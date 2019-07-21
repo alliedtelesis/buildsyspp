@@ -127,7 +127,7 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "tar"));
 
-	create_directories("dl");
+	filesystem::create_directories("dl");
 
 	pc->addArg("xf");
 	pc->addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
@@ -142,7 +142,7 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 {
 	std::unique_ptr < PackageCmd > pc(new PackageCmd(bd->getPath(), "unzip"));
 
-	create_directories("dl");
+	filesystem::create_directories("dl");
 
 	pc->addArg("-o");
 	pc->addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);

@@ -61,7 +61,7 @@ std::string DownloadFetch::final_name()
 
 bool DownloadFetch::fetch(BuildDir * d)
 {
-	create_directories("dl");
+	filesystem::create_directories("dl");
 
 	bool get = false;
 

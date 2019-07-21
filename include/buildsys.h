@@ -55,6 +55,7 @@ extern "C" {
 #include <boost/graph/topological_sort.hpp>
 
 #include "string_format.tcc"
+#include "filesystem.h"
 
 using namespace boost;
 
@@ -1606,9 +1607,6 @@ namespace buildsys {
 	void hash_setup(void);
 	std::string hash_file(const std::string & fname);
 	void hash_shutdown(void);
-
-	void create_directories(const std::string & path);
-	void remove_all(const std::string & path);
 };
 
 using namespace buildsys;

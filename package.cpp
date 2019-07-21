@@ -611,7 +611,7 @@ bool Package::extractInstallDepends()
 	}
 
 	// Create the directory
-	create_directories(this->depsExtraction);
+	filesystem::create_directories(this->depsExtraction);
 
 	log(this, "Extracting installed files from dependencies ...");
 	std::list < std::string > *done = new std::list < std::string > ();

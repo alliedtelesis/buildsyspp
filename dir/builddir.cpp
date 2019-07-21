@@ -36,45 +36,45 @@ BuildDir::BuildDir(Package * P)
 	std::string pwd = P->getWorld()->getWorkingDir();
 	this->WORLD = P->getWorld();
 
-	create_directories("output");
-	create_directories("output/" + gname);
-	create_directories("output/" + gname + "/staging");
-	create_directories("output/" + gname + "/install");
+	filesystem::create_directories("output");
+	filesystem::create_directories("output/" + gname);
+	filesystem::create_directories("output/" + gname + "/staging");
+	filesystem::create_directories("output/" + gname + "/install");
 
 	auto position = pname.rfind("/");
 	if(position != std::string::npos) {
 		std::string subpart = pname.substr(0, position);
-		create_directories("output/" + gname + "/staging/" + subpart);
-		create_directories("output/" + gname + "/install/" + subpart);
+		filesystem::create_directories("output/" + gname + "/staging/" + subpart);
+		filesystem::create_directories("output/" + gname + "/install/" + subpart);
 	}
 
-	create_directories("output/" + gname + "/" + pname);
+	filesystem::create_directories("output/" + gname + "/" + pname);
 
 	this->path = pwd + "/output/" + gname + "/" + pname + "/work";
-	create_directories(this->path);
+	filesystem::create_directories(this->path);
 
 	this->rpath = "output/" + gname + "/" + pname + "/work";
 
 	this->new_path = pwd + "/output/" + gname + "/" + pname + "/new";
-	create_directories(this->new_path);
+	filesystem::create_directories(this->new_path);
 
 	this->staging = pwd + "/output/" + gname + "/" + pname + "/staging";
-	create_directories(this->staging);
+	filesystem::create_directories(this->staging);
 
 	this->new_staging = pwd + "/output/" + gname + "/" + pname + "/new/staging";
-	create_directories(this->new_staging);
+	filesystem::create_directories(this->new_staging);
 
 	this->new_install = pwd + "/output/" + gname + "/" + pname + "/new/install";
-	create_directories(this->new_install);
+	filesystem::create_directories(this->new_install);
 }
 
 void BuildDir::clean()
 {
-	remove_all(this->path);
-	create_directories(this->path);
+	filesystem::remove_all(this->path);
+	filesystem::create_directories(this->path);
 }
 
 void BuildDir::cleanStaging()
 {
-	remove_all(this->staging);
+	filesystem::remove_all(this->staging);
 }
