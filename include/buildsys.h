@@ -637,7 +637,8 @@ namespace buildsys {
 		std::string fname_short;
 		FetchUnit *fetched;
 	public:
-		FetchedFileCopyExtractionUnit(FetchUnit * fetch, const char *fname_short);
+		FetchedFileCopyExtractionUnit(FetchUnit * fetch,
+					      const std::string & fname_short);
 		virtual bool print(std::ostream & out) {
 			out << this->type() << " " << this->
 			    fname_short << " " << this->HASH() << std::endl;

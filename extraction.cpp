@@ -227,11 +227,12 @@ bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 }
 
 FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(FetchUnit * fetched,
-							     const char *fname_short)
+							     const std::string &
+							     fname_short)
 {
 	this->fetched = fetched;
 	this->uri = fetched->relative_path();
-	this->fname_short = std::string(fname_short);
+	this->fname_short = fname_short;
 	this->hash = std::string("");
 }
 
@@ -245,14 +246,13 @@ std::string FetchedFileCopyExtractionUnit::HASH()
 
 bool FetchedFileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 {
-	const char *path = this->uri.c_str();
 	PackageCmd pc(bd->getPath(), "cp");
 	pc.addArg("-pRLuf");
 
-	if(path[0] == '/') {
-		pc.addArg(path);
+	if(boost::algorithm::starts_with(this->uri, "/")) {
+		pc.addArg(this->uri);
 	} else {
-		pc.addArg(P->getWorld()->getWorkingDir() + "/" + path);
+		pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
 	}
 
 	pc.addArg(".");
