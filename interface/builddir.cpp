@@ -71,14 +71,14 @@ int li_bd_fetch(lua_State * L)
 		throw CustomException("fetch() expects a table as the first argument");
 
 	char *uri = NULL;
-	char *to = NULL;
-	char *method = NULL;
-	char *filename = NULL;
+	std::string to("");
+	std::string method("");
+	std::string filename("");
 	bool decompress = false;
-	char *branch = NULL;
+	std::string branch("");
 	char *reponame = NULL;
 	bool listedonly = false;
-	char *copyto = NULL;
+	std::string copyto("");
 
 	Package *P = li_get_package(L);
 
@@ -96,21 +96,21 @@ int li_bd_fetch(lua_State * L)
 			if(key == "uri") {
 				uri = strdup(value.c_str());
 			} else if(key == "method") {
-				method = strdup(value.c_str());
+				method = value;
 			} else if(key == "filename") {
-				filename = strdup(value.c_str());
+				filename = value;
 			} else if(key == "decompress") {
 				decompress = (value == "true");
 			} else if(key == "branch") {
-				branch = strdup(value.c_str());
+				branch = value;
 			} else if(key == "reponame") {
 				reponame = strdup(value.c_str());
 			} else if(key == "to") {
-				to = strdup(value.c_str());
+				to = value;
 			} else if(key == "listedonly") {
 				listedonly = (value == "true");
 			} else if(key == "copyto") {
-				copyto = strdup(value.c_str());
+				copyto = value;
 			} else {
 				log(P, "Unknown key %s (%s)", key.c_str(), value.c_str());
 			}
@@ -121,22 +121,16 @@ int li_bd_fetch(lua_State * L)
 
 	/* Create fetch object here */
 	FetchUnit *f = NULL;
-	if(strcmp(method, "dl") == 0) {
+	if(method == "dl") {
 		if(uri == NULL) {
 			throw CustomException("fetch method = dl requires uri to be set");
 		}
 
-		std::string fname;
-		if(filename) {
-			fname = std::string(filename);
-		} else {
-			fname = std::string("");
-		}
-		f = new DownloadFetch(std::string(uri), decompress, fname, P);
-		if(copyto) {
+		f = new DownloadFetch(std::string(uri), decompress, filename, P);
+		if(!copyto.empty()) {
 			P->extraction()->add(new FetchedFileCopyExtractionUnit(f, copyto));
 		}
-	} else if(strcmp(method, "git") == 0) {
+	} else if(method == "git") {
 		if(uri == NULL) {
 			throw CustomException("fetch method = git requires uri to be set");
 		}
@@ -154,13 +148,13 @@ int li_bd_fetch(lua_State * L)
 			}
 			reponame = l2;
 		}
-		if(branch == NULL) {
+		if(branch.empty()) {
 			// Default to master
-			branch = strdup("origin/master");
+			branch = std::string("origin/master");
 		}
 		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch, P);
 		P->extraction()->add(geu);
-	} else if(strcmp(method, "linkgit") == 0) {
+	} else if(method == "linkgit") {
 		if(uri == NULL) {
 			throw
 			    CustomException
@@ -177,12 +171,12 @@ int li_bd_fetch(lua_State * L)
 		LinkGitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(uri, l2);
 		P->extraction()->add(lgdeu);
 		free(l_copy);
-	} else if(strcmp(method, "link") == 0) {
+	} else if(method == "link") {
 		if(uri == NULL) {
 			throw CustomException("fetch method = link requires uri to be set");
 		}
 		f = new LinkFetch(std::string(uri), P);
-	} else if(strcmp(method, "copyfile") == 0) {
+	} else if(method == "copyfile") {
 		if(uri == NULL) {
 			throw
 			    CustomException
@@ -190,7 +184,7 @@ int li_bd_fetch(lua_State * L)
 		}
 		std::string file_path = P->relative_fetch_path(uri);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path.c_str(), uri));
-	} else if(strcmp(method, "copygit") == 0) {
+	} else if(method == "copygit") {
 		if(uri == NULL) {
 			throw
 			    CustomException
@@ -200,12 +194,12 @@ int li_bd_fetch(lua_State * L)
 		CopyGitDirExtractionUnit *cgdeu =
 		    new CopyGitDirExtractionUnit(src_path.c_str(), ".");
 		P->extraction()->add(cgdeu);
-	} else if(strcmp(method, "copy") == 0) {
+	} else if(method == "copy") {
 		if(uri == NULL) {
 			throw CustomException("fetch method = copy requires uri to be set");
 		}
 		f = new CopyFetch(std::string(uri), P);
-	} else if(strcmp(method, "deps") == 0) {
+	} else if(method == "deps") {
 		std::string path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
 		P->setDepsExtract(path, listedonly);
@@ -228,11 +222,7 @@ int li_bd_fetch(lua_State * L)
 	}
 
 	free(uri);
-	free(method);
-	free(filename);
-	free(branch);
 	free(reponame);
-	free(to);
 
 	return 1;
 }
