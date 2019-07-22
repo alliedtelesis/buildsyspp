@@ -70,13 +70,13 @@ int li_bd_fetch(lua_State * L)
 	if(!lua_istable(L, 2))
 		throw CustomException("fetch() expects a table as the first argument");
 
-	char *uri = NULL;
+	std::string uri("");
 	std::string to("");
 	std::string method("");
 	std::string filename("");
 	bool decompress = false;
 	std::string branch("");
-	char *reponame = NULL;
+	std::string reponame("");
 	bool listedonly = false;
 	std::string copyto("");
 
@@ -94,7 +94,7 @@ int li_bd_fetch(lua_State * L)
 			std::string key(lua_tostring(L, -1));
 			std::string value(lua_tostring(L, -2));
 			if(key == "uri") {
-				uri = strdup(value.c_str());
+				uri = value;
 			} else if(key == "method") {
 				method = value;
 			} else if(key == "filename") {
@@ -104,7 +104,7 @@ int li_bd_fetch(lua_State * L)
 			} else if(key == "branch") {
 				branch = value;
 			} else if(key == "reponame") {
-				reponame = strdup(value.c_str());
+				reponame = value;
 			} else if(key == "to") {
 				to = value;
 			} else if(key == "listedonly") {
@@ -122,31 +122,37 @@ int li_bd_fetch(lua_State * L)
 	/* Create fetch object here */
 	FetchUnit *f = NULL;
 	if(method == "dl") {
-		if(uri == NULL) {
+		if(uri.empty()) {
 			throw CustomException("fetch method = dl requires uri to be set");
 		}
 
-		f = new DownloadFetch(std::string(uri), decompress, filename, P);
+		f = new DownloadFetch(uri, decompress, filename, P);
 		if(!copyto.empty()) {
 			P->extraction()->add(new FetchedFileCopyExtractionUnit(f, copyto));
 		}
 	} else if(method == "git") {
-		if(uri == NULL) {
+		if(uri.empty()) {
 			throw CustomException("fetch method = git requires uri to be set");
 		}
 
-		if(reponame == NULL) {
-			char *l2 = strrchr(uri, '/');
-			if(l2[1] == '\0') {
-				l2[0] = '\0';
-				l2 = strrchr(uri, '/');
+		if(reponame.empty()) {
+			auto last_slash = uri.rfind("/");
+			if(last_slash == std::string::npos) {
+				throw
+				    CustomException
+				    ("fetch method = git failure parsing uri");
 			}
-			l2++;
-			char *dotgit = strstr(l2, ".git");
-			if(dotgit) {
-				dotgit[0] = '\0';
+
+			if(last_slash == uri.length() - 1) {
+				auto second_last_slash = uri.rfind("/", last_slash - 1);
+				reponame = uri.substr(second_last_slash + 1, last_slash);
+			} else {
+				reponame = uri.substr(last_slash + 1, std::string::npos);
 			}
-			reponame = l2;
+
+			if(boost::algorithm::ends_with(reponame, ".git")) {
+				reponame.resize(reponame.length() - 4);
+			}
 		}
 		if(branch.empty()) {
 			// Default to master
@@ -155,7 +161,7 @@ int li_bd_fetch(lua_State * L)
 		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch, P);
 		P->extraction()->add(geu);
 	} else if(method == "linkgit") {
-		if(uri == NULL) {
+		if(uri.empty()) {
 			throw
 			    CustomException
 			    ("fetch method = linkgit requires uri to be set");
@@ -172,12 +178,12 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(lgdeu);
 		free(l_copy);
 	} else if(method == "link") {
-		if(uri == NULL) {
+		if(uri.empty()) {
 			throw CustomException("fetch method = link requires uri to be set");
 		}
 		f = new LinkFetch(std::string(uri), P);
 	} else if(method == "copyfile") {
-		if(uri == NULL) {
+		if(uri.empty()) {
 			throw
 			    CustomException
 			    ("fetch method = copyfile requires uri to be set");
@@ -185,7 +191,7 @@ int li_bd_fetch(lua_State * L)
 		std::string file_path = P->relative_fetch_path(uri);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path.c_str(), uri));
 	} else if(method == "copygit") {
-		if(uri == NULL) {
+		if(uri.empty()) {
 			throw
 			    CustomException
 			    ("fetch method = copygit requires uri to be set");
@@ -195,7 +201,7 @@ int li_bd_fetch(lua_State * L)
 		    new CopyGitDirExtractionUnit(src_path.c_str(), ".");
 		P->extraction()->add(cgdeu);
 	} else if(method == "copy") {
-		if(uri == NULL) {
+		if(uri.empty()) {
 			throw CustomException("fetch method = copy requires uri to be set");
 		}
 		f = new CopyFetch(std::string(uri), P);
@@ -220,9 +226,6 @@ int li_bd_fetch(lua_State * L)
 		CREATE_TABLE(L, f);
 		f->lua_table(L);
 	}
-
-	free(uri);
-	free(reponame);
 
 	return 1;
 }
