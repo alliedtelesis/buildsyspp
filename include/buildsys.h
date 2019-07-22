@@ -273,28 +273,28 @@ namespace buildsys {
 		~BuildDir() {
 		};
 		//! Return the full path to this directory
-		const char *getPath() {
-			return this->path.c_str();
+		const std::string & getPath() {
+			return this->path;
 		};
 		//! Get the short version (relative only) of the working directory
-		const char *getShortPath() {
-			return this->rpath.c_str();
+		const std::string & getShortPath() {
+			return this->rpath;
 		};
 		//! Return the full path to the staging directory
-		const char *getStaging() {
-			return this->staging.c_str();
+		const std::string & getStaging() {
+			return this->staging;
 		};
 		//! Return the full path to the new directory
-		const char *getNewPath() {
-			return this->new_path.c_str();
+		const std::string & getNewPath() {
+			return this->new_path;
 		};
 		//! Return the full path to the new staging directory
-		const char *getNewStaging() {
-			return this->new_staging.c_str();
+		const std::string & getNewStaging() {
+			return this->new_staging;
 		};
 		//! Return the full path to the new install directory
-		const char *getNewInstall() {
-			return this->new_install.c_str();
+		const std::string & getNewInstall() {
+			return this->new_install;
 		};
 		//! Get the world this builddir is part of
 		World *getWorld() {

@@ -49,7 +49,7 @@ void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 
 	if(bd) {
 		// Create the new extraction info file
-		std::string fname = string_format("%s/.extraction.info.new", bd->getPath());
+		std::string fname = bd->getPath() + "/.extraction.info.new";
 		std::ofstream exInfo(fname.c_str());
 		this->print(exInfo);
 		exInfo.close();
@@ -64,7 +64,7 @@ bool Extraction::extractionRequired(Package * P, BuildDir * bd)
 
 	std::string cmd =
 	    string_format("cmp -s %s/.extraction.info.new %s/.extraction.info",
-			  bd->getPath(), bd->getPath());
+			  bd->getPath().c_str(), bd->getPath().c_str());
 	int res = std::system(cmd.c_str());
 
 	// if there are changes,
@@ -84,8 +84,8 @@ bool Extraction::extract(Package * P, BuildDir * bd)
 	}
 
 	// mv the file into the regular place
-	std::string oldfname = string_format("%s/.extraction.info.new", bd->getPath());
-	std::string newfname = string_format("%s/.extraction.info", bd->getPath());
+	std::string oldfname = bd->getPath() + "/.extraction.info.new";
+	std::string newfname = bd->getPath() + "/.extraction.info";
 	rename(oldfname.c_str(), newfname.c_str());
 
 	return true;
@@ -93,7 +93,7 @@ bool Extraction::extract(Package * P, BuildDir * bd)
 
 ExtractionInfoFileUnit *Extraction::extractionInfo(Package * P, BuildDir * bd)
 {
-	std::string fname = string_format("%s/.extraction.info", bd->getShortPath());
+	std::string fname = bd->getShortPath() + "/.extraction.info";
 	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(fname);
 	return ret;
 }

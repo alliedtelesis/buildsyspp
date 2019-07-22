@@ -48,8 +48,7 @@ BuildDir *Package::builddir()
 FILE *Package::getLogFile()
 {
 	if(this->logFile == NULL) {
-		std::string fname = string_format("%s/build.log",
-						  this->builddir()->getPath());
+		std::string fname = this->builddir()->getPath() + "/build.log";
 		this->logFile = fopen(fname.c_str(), "w");
 	}
 	return this->logFile;
@@ -376,7 +375,7 @@ static bool ff_file(Package * P, const char *hash, const char *rfile, const char
 void Package::updateBuildInfoHashExisting()
 {
 	// populate the build.info hash
-	std::string build_info_file = string_format("%s/.build.info", this->bd->getPath());
+	std::string build_info_file = this->bd->getPath() + "/.build.info";
 	this->buildinfo_hash = hash_file(build_info_file);
 	log(this, "Hash: %s", this->buildinfo_hash.c_str());
 }
@@ -384,8 +383,7 @@ void Package::updateBuildInfoHashExisting()
 void Package::updateBuildInfoHash()
 {
 	// populate the build.info hash
-	std::string build_info_file = string_format("%s/.build.info.new",
-						    this->bd->getPath());
+	std::string build_info_file = this->bd->getPath() + "/.build.info.new";
 	this->buildinfo_hash = hash_file(build_info_file);
 	log(this, "Hash: %s", this->buildinfo_hash.c_str());
 }
@@ -394,17 +392,16 @@ BuildUnit *Package::buildInfo()
 {
 	BuildUnit *res;
 	if(this->isHashingOutput()) {
-		std::string info_file = string_format("%s/.output.info",
-						      this->bd->getShortPath());
+		std::string info_file = this->bd->getShortPath() + "/.output.info";
 		res = new OutputInfoFileUnit(info_file);
 	} else {
 		if(this->buildinfo_hash.compare("") == 0) {
-			log(this, "build.info (in %s) is empty", this->bd->getShortPath());
+			log(this, "build.info (in %s) is empty",
+			    this->bd->getShortPath().c_str());
 			log(this, "You probably need to build this package");
 			return NULL;
 		}
-		std::string info_file = string_format("%s/.build.info",
-						      this->bd->getShortPath());
+		std::string info_file = this->bd->getShortPath() + "/.build.info";
 		res = new BuildInfoFileUnit(info_file, this->buildinfo_hash);
 	}
 	return res;
@@ -432,8 +429,7 @@ void Package::prepareBuildInfo()
 	}
 
 	// Create the new build info file
-	std::string buildInfoFname = string_format("%s/.build.info.new",
-						   this->bd->getPath());
+	std::string buildInfoFname = this->bd->getPath() + "/.build.info.new";
 	std::ofstream buildInfo(buildInfoFname.c_str());
 	this->build_description->print(buildInfo);
 	buildInfo.close();
@@ -444,8 +440,8 @@ void Package::prepareBuildInfo()
 void Package::updateBuildInfo(bool updateOutputHash)
 {
 	// mv the build info file into the regular place
-	std::string oldfname = string_format("%s/.build.info.new", this->bd->getPath());
-	std::string newfname = string_format("%s/.build.info", this->bd->getPath());
+	std::string oldfname = this->bd->getPath() + "/.build.info.new";
+	std::string newfname = this->bd->getPath() + "/.build.info";
 	rename(oldfname.c_str(), newfname.c_str());
 
 	if(updateOutputHash && this->isHashingOutput()) {
@@ -453,7 +449,7 @@ void Package::updateBuildInfo(bool updateOutputHash)
 		std::string cmd =
 		    string_format
 		    ("cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
-		     this->bd->getNewPath(), this->bd->getPath());
+		     this->bd->getNewPath().c_str(), this->bd->getPath().c_str());
 		std::system(cmd.c_str());
 	}
 }
@@ -467,7 +463,7 @@ bool Package::fetchFrom()
 		{"usable", staging_dir.c_str(), this->name.c_str(), ".tar.bz2.ff"},
 		{"staging.tar.bz2", staging_dir.c_str(), this->name.c_str(), ".tar.bz2"},
 		{"install.tar.bz2", install_dir.c_str(), this->name.c_str(), ".tar.bz2"},
-		{"output.info", this->bd->getPath(), ".output", ".info"}
+		{"output.info", this->bd->getPath().c_str(), ".output", ".info"}
 	};
 	log(this, "FF URL: %s/%s/%s/%s", this->getWorld()->fetchFrom().c_str(),
 	    this->getNS()->getName().c_str(), this->name.c_str(),
@@ -529,7 +525,8 @@ bool Package::shouldBuild(bool locally)
 	}
 
 	std::string cmd = string_format("cmp -s %s/.build.info.new %s/.build.info",
-					this->bd->getPath(), this->bd->getPath());
+					this->bd->getPath().c_str(),
+					this->bd->getPath().c_str());
 	int res = std::system(cmd.c_str());
 
 	// if there are changes,

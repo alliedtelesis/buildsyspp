@@ -34,7 +34,7 @@ static std::string absolute_path(BuildDir * d, const std::string & dir, bool all
 	   (allowDL && boost::algorithm::starts_with(dir, "dl/"))) {
 		path = dir;
 	} else {
-		path = std::string(d->getPath()) + "/" + dir;
+		path = d->getPath() + "/" + dir;
 	}
 	return path;
 }
@@ -47,7 +47,7 @@ static std::string relative_path(BuildDir * d, const std::string & dir, bool all
 	   (allowDL && boost::algorithm::starts_with(dir, "dl/"))) {
 		path = dir;
 	} else {
-		path = std::string(d->getShortPath()) + "/" + dir;
+		path = d->getShortPath() + "/" + dir;
 	}
 	return path;
 }
