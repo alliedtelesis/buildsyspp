@@ -26,23 +26,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <buildsys.h>
 #include "luainterface.h"
 
-static std::string absolute_path(BuildDir * d, const char *dir, bool allowDL = false)
+static std::string absolute_path(BuildDir * d, const std::string & dir, bool allowDL =
+				 false)
 {
 	std::string path("");
-	if(dir[0] == '/' || (allowDL && !strncmp(dir, "dl/", 3)))
-		path = string_format("%s", dir);
-	else
-		path = string_format("%s/%s", d->getPath(), dir);
+	if(boost::algorithm::starts_with(dir, "/") ||
+	   (allowDL && boost::algorithm::starts_with(dir, "dl/"))) {
+		path = dir;
+	} else {
+		path = std::string(d->getPath()) + "/" + dir;
+	}
 	return path;
 }
 
-static std::string relative_path(BuildDir * d, const char *dir, bool allowDL = false)
+static std::string relative_path(BuildDir * d, const std::string & dir, bool allowDL =
+				 false)
 {
 	std::string path("");
-	if(dir[0] == '/' || (allowDL && !strncmp(dir, "dl/", 3)))
-		path = string_format("%s", dir);
-	else
-		path = string_format("%s/%s", d->getShortPath(), dir);
+	if(boost::algorithm::starts_with(dir, "/") ||
+	   (allowDL && boost::algorithm::starts_with(dir, "dl/"))) {
+		path = dir;
+	} else {
+		path = std::string(d->getShortPath()) + "/" + dir;
+	}
 	return path;
 }
 

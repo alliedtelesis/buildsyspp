@@ -53,6 +53,7 @@ extern "C" {
 #include <boost/property_map/property_map.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/topological_sort.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "string_format.tcc"
 #include "filesystem.h"
