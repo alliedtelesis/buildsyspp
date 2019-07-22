@@ -354,19 +354,17 @@ void Package::setBuilding()
 	pthread_mutex_unlock(&this->lock);
 }
 
-static bool ff_file(Package * P, const char *hash, const char *rfile, const char *path,
-		    const char *fname, const char *fext)
+static bool ff_file(Package * P, const std::string & hash,
+		    const std::string & rfile, const std::string & path,
+		    const std::string & fname, const std::string & fext)
 {
 	bool ret = false;
-	std::string url = string_format("%s/%s/%s/%s/%s",
-					P->getWorld()->fetchFrom().c_str(),
-					P->getNS()->getName().c_str(),
-					P->getName().c_str(), hash, rfile);
-	std::string cmd = string_format("wget -q %s -O %s/%s%s", url.c_str(),
-					path, fname, fext);
+	std::string url = P->getWorld()->fetchFrom() + "/" +
+	    P->getNS()->getName() + "/" + P->getName() + "/" + hash + "/" + rfile;
+	std::string cmd = "wget -q " + url + " -O " + path + "/" + fname + fext;
 	int res = std::system(cmd.c_str());
 	if(res != 0) {
-		log(P, "Failed to get %s", rfile);
+		log(P, "Failed to get %s", rfile.c_str());
 		ret = true;
 	}
 	return ret;
@@ -476,7 +474,7 @@ bool Package::fetchFrom()
 
 	for(int i = 0; !ret && i < count; i++) {
 		ret =
-		    ff_file(this, this->buildinfo_hash.c_str(), files[i][0], files[i][1],
+		    ff_file(this, this->buildinfo_hash, files[i][0], files[i][1],
 			    files[i][2], files[i][3]);
 	}
 
