@@ -457,25 +457,27 @@ bool Package::fetchFrom()
 	bool ret = false;
 	std::string staging_dir = this->getNS()->getStagingDir();
 	std::string install_dir = this->getNS()->getInstallDir();
-	const char *files[4][4] = {
-		{"usable", staging_dir.c_str(), this->name.c_str(), ".tar.bz2.ff"},
-		{"staging.tar.bz2", staging_dir.c_str(), this->name.c_str(), ".tar.bz2"},
-		{"install.tar.bz2", install_dir.c_str(), this->name.c_str(), ".tar.bz2"},
-		{"output.info", this->bd->getPath().c_str(), ".output", ".info"}
+	std::vector < std::array < std::string, 4 >> files = {
+		{"usable", staging_dir, this->name, ".tar.bz2.ff"},
+		{"staging.tar.bz2", staging_dir, this->name, ".tar.bz2"},
+		{"install.tar.bz2", install_dir, this->name, ".tar.bz2"},
+		{"output.info", this->bd->getPath(), ".output", ".info"},
 	};
+
 	log(this, "FF URL: %s/%s/%s/%s", this->getWorld()->fetchFrom().c_str(),
 	    this->getNS()->getName().c_str(), this->name.c_str(),
 	    this->buildinfo_hash.c_str());
 
-	int count = 3;
-	if(this->isHashingOutput()) {
-		count = 4;
+	if(!this->isHashingOutput()) {
+		files.pop_back();
 	}
 
-	for(int i = 0; !ret && i < count; i++) {
-		ret =
-		    ff_file(this, this->buildinfo_hash, files[i][0], files[i][1],
-			    files[i][2], files[i][3]);
+	for(auto & element:files) {
+		ret = ff_file(this, this->buildinfo_hash, element.at(0), element.at(1),
+			      element.at(2), element.at(3));
+		if(ret) {
+			break;
+		}
 	}
 
 	if(ret) {
