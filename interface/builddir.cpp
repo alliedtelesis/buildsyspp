@@ -90,29 +90,29 @@ int li_bd_fetch(lua_State * L)
 
 	while(lua_next(L, -2)) {
 		lua_pushvalue(L, -2);
-		const char *key = lua_tostring(L, -1);
-		const char *value = lua_tostring(L, -2);
-		if(key && value) {
-			if(strcmp(key, "uri") == 0) {
-				uri = strdup(value);
-			} else if(strcmp(key, "method") == 0) {
-				method = strdup(value);
-			} else if(strcmp(key, "filename") == 0) {
-				filename = strdup(value);
-			} else if(strcmp(key, "decompress") == 0) {
-				decompress = (strcmp(value, "true") == 0);
-			} else if(strcmp(key, "branch") == 0) {
-				branch = strdup(value);
-			} else if(strcmp(key, "reponame") == 0) {
-				reponame = strdup(value);
-			} else if(strcmp(key, "to") == 0) {
-				to = strdup(value);
-			} else if(strcmp(key, "listedonly") == 0) {
-				listedonly = (strcmp(value, "true") == 0);
-			} else if(strcmp(key, "copyto") == 0) {
-				copyto = strdup(value);
+		if(lua_isstring(L, -1) && lua_isstring(L, -2)) {
+			std::string key(lua_tostring(L, -1));
+			std::string value(lua_tostring(L, -2));
+			if(key == "uri") {
+				uri = strdup(value.c_str());
+			} else if(key == "method") {
+				method = strdup(value.c_str());
+			} else if(key == "filename") {
+				filename = strdup(value.c_str());
+			} else if(key == "decompress") {
+				decompress = (value == "true");
+			} else if(key == "branch") {
+				branch = strdup(value.c_str());
+			} else if(key == "reponame") {
+				reponame = strdup(value.c_str());
+			} else if(key == "to") {
+				to = strdup(value.c_str());
+			} else if(key == "listedonly") {
+				listedonly = (value == "true");
+			} else if(key == "copyto") {
+				copyto = strdup(value.c_str());
 			} else {
-				printf("Unknown key %s (%s)", key, value);
+				log(P, "Unknown key %s (%s)", key.c_str(), value.c_str());
 			}
 		}
 		lua_pop(L, 2);
