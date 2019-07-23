@@ -43,7 +43,7 @@ static int li_name(lua_State * L)
 	}
 	if(lua_type(L, 1) != LUA_TSTRING)
 		throw CustomException("Argument to name() must be a string");
-	const char *value = lua_tostring(L, 1);
+	std::string value(lua_tostring(L, 1));
 
 	P->setNS(P->getWorld()->findNameSpace(value));
 
@@ -82,15 +82,14 @@ static int li_feature(lua_State * L)
 		throw
 		    CustomException
 		    ("Third argument to feature() must be boolean, if present");
-	const char *key = lua_tostring(L, 1);
-	const char *value = lua_tostring(L, 2);
+	std::string key(lua_tostring(L, 1));
+	std::string value(lua_tostring(L, 2));
 
 	if(lua_gettop(L) == 3) {
-		P->getWorld()->setFeature(std::string(key), std::string(value),
-					  lua_toboolean(L, -3));
+		P->getWorld()->setFeature(key, value, lua_toboolean(L, -3));
 	}
 
-	P->getWorld()->setFeature(std::string(key), std::string(value));
+	P->getWorld()->setFeature(key, value);
 	return 0;
 }
 
@@ -138,14 +137,14 @@ int li_keepstaging(lua_State * L)
 	return 0;
 }
 
-static void depend(Package * P, NameSpace * ns, bool locally, const char *name)
+static void depend(Package * P, NameSpace * ns, bool locally, const std::string & name)
 {
 	Package *p = NULL;
 	// create the Package
 	if(ns) {
-		p = ns->findPackage(std::string(name));
+		p = ns->findPackage(name);
 	} else {
-		p = P->getNS()->findPackage(std::string(name));
+		p = P->getNS()->findPackage(name);
 	}
 	if(p == NULL) {
 		throw CustomException("Failed to create or find Package");
@@ -173,7 +172,7 @@ int li_depend(lua_State * L)
 			}
 			ns = P->getWorld()->findNameSpace(std::string(lua_tostring(L, 2)));
 		}
-		depend(P, ns, false, lua_tostring(L, 1));
+		depend(P, ns, false, std::string(lua_tostring(L, 1)));
 	} else if(lua_istable(L, 1)) {
 		std::list < std::string > package_names;
 		bool locally = false;
@@ -185,8 +184,8 @@ int li_depend(lua_State * L)
 				    CustomException
 				    ("depend() requires a table with strings as keys\n");
 			}
-			const char *key = lua_tostring(L, -2);
-			if(strcmp(key, "package") == 0 || strcmp(key, "packages") == 0) {
+			std::string key(lua_tostring(L, -2));
+			if(key == "package" || key == "packages") {
 				if(lua_type(L, -1) == LUA_TSTRING) {
 					package_names.push_back(std::string(lua_tostring
 									    (L, -1)));
@@ -208,7 +207,7 @@ int li_depend(lua_State * L)
 					    CustomException
 					    ("depend() requires a single package name or table of package names\n");
 				}
-			} else if(strcmp(key, "namespace") == 0) {
+			} else if(key == "namespace") {
 				if(lua_type(L, -1) != LUA_TSTRING) {
 					throw
 					    CustomException
@@ -217,12 +216,12 @@ int li_depend(lua_State * L)
 				ns = P->
 				    getWorld()->findNameSpace(std::
 							      string(lua_tostring(L, -1)));
-			} else if(strcmp(key, "locally") == 0) {
+			} else if(key == "locally") {
 				if(lua_type(L, -1) == LUA_TBOOLEAN) {
 					locally = lua_toboolean(L, -1);
 				} else if(lua_type(L, -1) == LUA_TSTRING) {
-					const char *value = lua_tostring(L, -1);
-					if(strcmp(value, "true") == 0) {
+					std::string value(lua_tostring(L, -1));
+					if(value == "true") {
 						locally = true;
 					}
 				}
@@ -231,7 +230,7 @@ int li_depend(lua_State * L)
 			lua_pop(L, 1);
 		}
 		for(auto iter = package_names.begin(); iter != package_names.end(); iter++) {
-			depend(P, ns, locally, (*iter).c_str());
+			depend(P, ns, locally, (*iter));
 		}
 	} else {
 		throw CustomException("depend() takes a string or a table of strings");
