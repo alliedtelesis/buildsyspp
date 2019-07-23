@@ -549,22 +549,24 @@ bool Package::shouldBuild(bool locally)
 
 bool Package::prepareBuildDirs()
 {
-	std::string staging_dir = string_format("output/%s/%s/staging",
-						this->getNS()->getName().c_str(),
-						this->name.c_str());
+	std::string staging_dir = "output/" + this->getNS()->getName() + "/" +
+	    this->name + "/staging";
 	log(this, "Generating staging directory ...");
 
 	{			// Clean out the (new) staging/install directories
-		const char *pwd = this->getWorld()->getWorkingDir().c_str();
-		std::string cmd = string_format("rm -fr %s/output/%s/%s/new/install/*", pwd,
-						this->getNS()->getName().c_str(),
-						this->name.c_str());
+		std::string pwd = this->getWorld()->getWorkingDir();
+
+		std::string cmd = "rm -fr " + pwd +
+		    "/output/" + this->getNS()->getName() + "/" + this->name +
+		    "/new/install/*";
 		std::system(cmd.c_str());
-		cmd = string_format("rm -fr %s/output/%s/%s/new/staging/*", pwd,
-				    this->getNS()->getName().c_str(), this->name.c_str());
+
+		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() +
+		    "/" + this->name + "/new/staging/*";
 		std::system(cmd.c_str());
-		cmd = string_format("rm -fr %s/output/%s/%s/staging/*", pwd,
-				    this->getNS()->getName().c_str(), this->name.c_str());
+
+		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() +
+		    "/" + this->name + "/staging/*";
 		std::system(cmd.c_str());
 	}
 
