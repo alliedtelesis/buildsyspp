@@ -1352,33 +1352,30 @@ namespace buildsys {
 		string_list *forcedDeps;
 		std::list < NameSpace * >*namespaces;
 		std::list < DLObject * >*dlobjects;
-		Package *p;
+		Package *p{nullptr};
 		string_list *overlays;
-		Internal_Graph *graph;
-		Internal_Graph *topo_graph;
+		Internal_Graph *graph{nullptr};
+		Internal_Graph *topo_graph{nullptr};
 		std::string fetch_from;
 		std::string tarball_cache;
 		std::string pwd;
 		string_list *ignoredFeatures;
-		bool failed;
-		bool cleaning;
-		bool extractOnly;
-		bool parseOnly;
-		bool keepGoing;
+		bool failed{false};
+		bool cleaning{false};
+		bool extractOnly{false};
+		bool parseOnly{false};
+		bool keepGoing{false};
 		pthread_mutex_t cond_lock;
 		pthread_cond_t cond;
-		int threads_running;
-		int threads_limit;
-		bool outputPrefix;
+		int threads_running{0};
+		int threads_limit{0};
+		bool outputPrefix{true};
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
 		    forcedDeps(new string_list()),
 		    namespaces(new std::list < NameSpace * >()),
 		    dlobjects(new std::list < DLObject * >()),
-		    overlays(new string_list()), graph(NULL),
-		    ignoredFeatures(new string_list()), failed(false), cleaning(false),
-		    extractOnly(false), parseOnly(false), keepGoing(false),
-		    threads_running(0), threads_limit(0), outputPrefix(true) {
+		    overlays(new string_list()), ignoredFeatures(new string_list()) {
 			overlays->push_back(std::string("."));
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = std::string(pwd);
