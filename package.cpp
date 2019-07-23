@@ -500,13 +500,12 @@ bool Package::shouldBuild(bool locally)
 	if(!this->installFiles.empty())
 		return true;
 
-	const char *pwd = this->getWorld()->getWorkingDir().c_str();
 	// lets make sure the install file (still) exists
 	bool ret = false;
 
-	std::string fname = string_format("%s/output/%s/install/%s.tar.bz2", pwd,
-					  this->getNS()->getName().c_str(),
-					  this->name.c_str());
+	std::string fname = this->getWorld()->getWorkingDir() + "/output/" +
+	    this->getNS()->getName() + "/install/" + this->name + ".tar.bz2";
+
 	FILE *f = fopen(fname.c_str(), "r");
 	if(f == NULL) {
 		ret = true;
@@ -515,8 +514,9 @@ bool Package::shouldBuild(bool locally)
 	}
 
 	// Now lets check that the staging file (still) exists
-	fname = string_format("%s/output/%s/staging/%s.tar.bz2", pwd,
-			      this->getNS()->getName().c_str(), this->name.c_str());
+	fname = this->getWorld()->getWorkingDir() + "/output/" +
+	    this->getNS()->getName() + "/staging/" + this->name + ".tar.bz2";
+
 	f = fopen(fname.c_str(), "r");
 	if(f == NULL) {
 		ret = true;
