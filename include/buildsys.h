@@ -1177,8 +1177,8 @@ namespace buildsys {
 		 *  and just installs this specific file
 		 *  \param i the file to install
 		 */
-		void setInstallFile(const char *i) {
-			this->installFiles.push_back(std::string(i));
+		void setInstallFile(const std::string & i) {
+			this->installFiles.push_back(i);
 		};
 		//! Mark this package as queued for processing (returns false if already marked)
 		bool setProcessingQueued() {

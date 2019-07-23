@@ -465,8 +465,7 @@ int li_bd_installfile(lua_State * L)
 		    CustomException("installfile() expects a string as the only argument");
 
 	Package *P = li_get_package(L);
-
-	P->setInstallFile(lua_tostring(L, 2));
+	P->setInstallFile(std::string(lua_tostring(L, 2)));
 
 	return 0;
 }
