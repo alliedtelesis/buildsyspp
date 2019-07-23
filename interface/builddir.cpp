@@ -248,30 +248,31 @@ int li_bd_restore(lua_State * L)
 
 	CHECK_ARGUMENT_TYPE("restore", 1, BuildDir, d);
 
-	char *location = strdup(lua_tostring(L, 2));
-	const char *method = lua_tostring(L, 3);
+	std::string location(lua_tostring(L, 2));
+	std::string method(lua_tostring(L, 3));
 
 	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
 		return 0;
 	}
 
-	if(strcmp(method, "copyfile") == 0) {
+	if(method == "copyfile") {
 		PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
 
 		pc->addArg("-pRLuf");
 
-		char const *fn = strrchr(location, '/');
-		pc->addArg(fn != NULL ? fn + 1 : location);
+		auto position = location.rfind("/");
+		if(position != std::string::npos) {
+			pc->addArg(location.substr(position + 1));
+		} else {
+			pc->addArg(location);
+		}
 
-		std::string tmp = P->absolute_fetch_path(location);
-		pc->addArg(tmp.c_str());
+		pc->addArg(P->absolute_fetch_path(location));
 
 		P->addCommand(pc);
 	} else {
 		throw CustomException("Unsupported restore method");
 	}
-
-	free(location);
 
 	return 0;
 }
@@ -326,15 +327,15 @@ int li_bd_extract(lua_State * L)
 		return 0;
 	}
 
-	const char *fName = lua_tostring(L, 2);
+	std::string fName(lua_tostring(L, 2));
 	std::string realFName = relative_path(d, fName, true);
 
 	ExtractionUnit *eu = NULL;
-	if(strstr(fName, ".zip") != NULL) {
-		eu = new ZipExtractionUnit(realFName.c_str());
+	if(fName.find(".zip") != std::string::npos) {
+		eu = new ZipExtractionUnit(realFName);
 	} else {
 		// The catch all for tar compressed files
-		eu = new TarExtractionUnit(realFName.c_str());
+		eu = new TarExtractionUnit(realFName);
 	}
 	P->extraction()->add(eu);
 
@@ -368,9 +369,9 @@ int li_bd_cmd(lua_State * L)
 	Package *P = li_get_package(L);
 
 	std::string dir = relative_path(d, lua_tostring(L, 2));
-	const char *app = lua_tostring(L, 3);
+	std::string app(lua_tostring(L, 3));
 
-	PackageCmd *pc = new PackageCmd(dir.c_str(), app);
+	PackageCmd *pc = new PackageCmd(dir, app);
 
 	lua_pushnil(L);		/* first key */
 	while(lua_next(L, 4) != 0) {
