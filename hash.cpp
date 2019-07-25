@@ -54,7 +54,7 @@ std::string buildsys::hash_file(const std::string & fname)
 	FILE *f = fopen(fname.c_str(), "rb");
 	if(!f) {
 		fprintf(stderr, "Failed opening: %s\n", fname.c_str());
-		return NULL;
+		return std::string("");
 	}
 	while(!feof(f)) {
 		size_t red = fread(buff, 1, BUFLEN, f);
