@@ -35,10 +35,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace buildsys {
 	namespace filesystem {
 		void create_directories(const std::string & path) {
-			auto cmd = string_format("mkdir -p %s", path.c_str());
-			auto ret = std::system(cmd.c_str());
-			if(ret != 0) {
-				throw CustomException("Failed to create directories");
+			if (!exists(path)) {
+				auto cmd = string_format("mkdir -p %s", path.c_str());
+				auto ret = std::system(cmd.c_str());
+				if(ret != 0) {
+				    throw CustomException("Failed to create directories");
+				}
 			}
 		}
 		void remove_all(const std::string & path) {
