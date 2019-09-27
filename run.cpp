@@ -60,20 +60,12 @@ static bool pipe_data(int fd, Package * P)
 	return true;
 }
 
-struct params {
-	Package *P;
-	int fd;
-};
-
-static void *pipe_data_thread(void *t)
+static void pipe_data_thread(Package *P, int fd)
 {
-	struct params *p = (struct params *) t;
-	while(pipe_data(p->fd, p->P)) {
+	while(pipe_data(fd, P)) {
 		// do nothing
 	}
-	close(p->fd);
-	free(p);
-	return NULL;
+	close(fd);
 }
 
 int buildsys::run(Package * P, char *program, char *argv[], const char *path,
@@ -86,16 +78,13 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 	int fds[2];
 	if(P->getWorld()->areOutputPrefix()) {
 		int res = pipe(fds);
-		struct params *p = (struct params *) malloc(sizeof(struct params));
-		pthread_t tid;
 
 		if(res != 0) {
 			log(P, "pipe() failed: %s", strerror(errno));
 		}
-		p->fd = fds[0];
-		p->P = P;
-		pthread_create(&tid, NULL, pipe_data_thread, p);
-		pthread_detach(tid);
+
+		std::thread thr (pipe_data_thread, P, fds[0]);
+		thr.detach ();
 	}
 	// call the program ...
 	int pid = fork();
