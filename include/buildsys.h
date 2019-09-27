@@ -23,6 +23,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#include <condition_variable>
 #include <iostream>
 #include <map>
 #include <list>
@@ -1286,56 +1287,48 @@ namespace buildsys {
 	class PackageQueue {
 	private:
 		std::list < Package * >queue;
-		pthread_mutex_t lock;
-		pthread_cond_t cond;
+		mutable std::mutex lock;
+		mutable std::condition_variable cond;
 		int started;
 		int finished;
 	public:
-		PackageQueue():lock(PTHREAD_MUTEX_INITIALIZER),
-		    cond(PTHREAD_COND_INITIALIZER), started(0), finished(0) {
+		PackageQueue():started(0), finished(0) {
 		};
 		~PackageQueue() {
 		};
 		void start() {
-			pthread_mutex_lock(&this->lock);
+			std::unique_lock<std::mutex> lk (this->lock);
 			this->started++;
-			pthread_mutex_unlock(&this->lock);
 		}
 		void finish() {
-			pthread_mutex_lock(&this->lock);
+			std::unique_lock<std::mutex> lk (this->lock);
 			this->finished++;
-			pthread_cond_broadcast(&this->cond);
-			pthread_mutex_unlock(&this->lock);
+			this->cond.notify_all ();
 		}
 		void push(Package * p) {
-			pthread_mutex_lock(&this->lock);
+			std::unique_lock<std::mutex> lk (this->lock);
 			queue.push_back(p);
-			pthread_mutex_unlock(&this->lock);
 		}
 		Package *pop() {
-			pthread_mutex_lock(&this->lock);
+			std::unique_lock<std::mutex> lk (this->lock);
 			Package *p = NULL;
 			if(!this->queue.empty()) {
 				p = this->queue.front();
 				this->queue.pop_front();
 			}
-			pthread_mutex_unlock(&this->lock);
 			return p;
 		}
 		bool done() {
-			pthread_mutex_lock(&this->lock);
-			bool res = (this->started == this->finished) && this->queue.empty();
-			pthread_mutex_unlock(&this->lock);
-			return res;
+			std::unique_lock<std::mutex> lk (this->lock);
+			return (this->started == this->finished) && this->queue.empty();
 		}
 		void wait() {
-			pthread_mutex_lock(&this->lock);
+			std::unique_lock<std::mutex> lk (this->lock);
 			if(this->started != this->finished) {
 				if(this->queue.empty()) {
-					pthread_cond_wait(&this->cond, &this->lock);
+					this->cond.wait (lk);
 				}
 			}
-			pthread_mutex_unlock(&this->lock);
 		}
 	};
 
