@@ -108,9 +108,8 @@ void World::printFeatureValues()
 static pthread_mutex_t t_cond_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t t_cond = PTHREAD_COND_INITIALIZER;
 
-static void *build_thread(void *t)
+static void build_thread(Package *p)
 {
-	Package *p = (Package *) t;
 	World *w = p->getNS()->getWorld();
 
 	log(p, "Build Thread");
@@ -146,16 +145,12 @@ static void *build_thread(void *t)
 
 	log((p->getNS()->getName() + "," + p->getName()).c_str(),
 	    "Finished (%i others running)", w->threadsRunning());
-
-	return NULL;
 }
 
 PackageQueue *pq = NULL;
 
-static void *process_package(void *t)
+static void process_package(Package *p)
 {
-	Package *p = (Package *) t;
-
 	try {
 		if(!p->process()) {
 			log(p, "Processing failed");
@@ -177,8 +172,6 @@ static void *process_package(void *t)
 	}
 
 	pq->finish();
-
-	return NULL;
 }
 
 static bool process_packages()
@@ -186,10 +179,10 @@ static bool process_packages()
 	while(!pq->done()) {
 		Package *toProcess = pq->pop();
 		if(toProcess != NULL) {
-			pthread_t tid;
 			pq->start();
-			pthread_create(&tid, NULL, process_package, toProcess);
-			pthread_detach(tid);
+
+			std::thread thr (process_package, toProcess);
+			thr.detach ();
 		}
 		pq->wait();
 	}
@@ -241,11 +234,10 @@ bool World::basePackage(const std::string & filename)
 			toBuild = this->topo_graph->topoNext();
 		}
 		if(toBuild != NULL) {
-			pthread_t tid;
 			pthread_mutex_unlock(&this->cond_lock);
 			pthread_mutex_lock(&t_cond_lock);
-			pthread_create(&tid, NULL, build_thread, toBuild);
-			pthread_detach(tid);
+			std::thread thr (build_thread, toBuild);
+			thr.detach ();
 			pthread_cond_wait(&t_cond, &t_cond_lock);
 			pthread_mutex_unlock(&t_cond_lock);
 		} else {
