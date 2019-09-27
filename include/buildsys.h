@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 #include <list>
 #include <memory>
+#include <mutex>
 
 extern "C" {
 #include <lua.h>
@@ -937,13 +938,12 @@ namespace buildsys {
 	private:
 		std::string name;
 		std::list < Package * >packages;
-		pthread_mutex_t lock;
+		mutable std::mutex lock;
 		void _addPackage(Package * p);
 		void _removePackage(Package * p);
 		World *WORLD;
 	public:
 		NameSpace(World * W, std::string name):name(name), WORLD(W) {
-			pthread_mutex_init(&this->lock, NULL);
 		};
 		~NameSpace();
 		std::string getName() {

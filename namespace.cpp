@@ -65,12 +65,12 @@ Package *NameSpace::findPackage(std::string name)
 	std::string file_short;
 	std::string overlay;
 
-	pthread_mutex_lock(&this->lock);
+	std::unique_lock<std::mutex> lk (this->lock);
+
 	std::list < Package * >::iterator iter = this->packagesStart();
 	std::list < Package * >::iterator iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++) {
 		if((*iter)->getName().compare(name) == 0) {
-			pthread_mutex_unlock(&this->lock);
 			return (*iter);
 		}
 	}
@@ -122,8 +122,6 @@ Package *NameSpace::findPackage(std::string name)
 	Package *p = new Package(this, name, file_short, file, overlay);
 	this->_addPackage(p);
 
-	pthread_mutex_unlock(&this->lock);
-
 	return p;
 }
 
@@ -136,9 +134,8 @@ void NameSpace::_addPackage(Package * p)
 
 void NameSpace::addPackage(Package * p)
 {
-	pthread_mutex_lock(&this->lock);
+	std::unique_lock<std::mutex> lk (this->lock);
 	this->_addPackage(p);
-	pthread_mutex_unlock(&this->lock);
 }
 
 void NameSpace::_removePackage(Package * p)
@@ -148,9 +145,8 @@ void NameSpace::_removePackage(Package * p)
 
 void NameSpace::removePackage(Package * p)
 {
-	pthread_mutex_lock(&this->lock);
+	std::unique_lock<std::mutex> lk (this->lock);
 	this->_removePackage(p);
-	pthread_mutex_unlock(&this->lock);
 }
 
 World *NameSpace::getWorld()
