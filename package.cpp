@@ -329,31 +329,6 @@ bool Package::canBuild()
 	return true;
 }
 
-bool Package::isBuilt()
-{
-	bool ret = false;
-	pthread_mutex_lock(&this->lock);
-	ret = this->built;
-	pthread_mutex_unlock(&this->lock);
-	return ret;
-}
-
-bool Package::isBuilding()
-{
-	bool ret = false;
-	pthread_mutex_lock(&this->lock);
-	ret = this->building;
-	pthread_mutex_unlock(&this->lock);
-	return ret;
-}
-
-void Package::setBuilding()
-{
-	pthread_mutex_lock(&this->lock);
-	this->building = true;
-	pthread_mutex_unlock(&this->lock);
-}
-
 static bool ff_file(Package * P, const std::string & hash,
 		    const std::string & rfile, const std::string & path,
 		    const std::string & fname, const std::string & fext)
@@ -689,7 +664,7 @@ bool Package::build(bool locally)
 	struct timespec start, end;
 
 	// Already build, pretend to successfully build
-	if((locally && this->wasBuilt()) || (!locally && this->isBuilt())) {
+	if((locally && this->was_built) || (!locally && this->isBuilt())) {
 		return true;
 	}
 
@@ -705,11 +680,9 @@ bool Package::build(bool locally)
 	if((this->getWorld()->forcedMode() && !this->getWorld()->isForced(this->name))) {
 		// Set the build.info hash based on what is currently present
 		this->updateBuildInfoHashExisting();
-		pthread_mutex_lock(&this->lock);
 		log(this, "Building suppressed");
 		// Just pretend we are built
 		this->built = true;
-		pthread_mutex_unlock(&this->lock);
 		this->getWorld()->packageFinished(this);
 		return true;
 	}
@@ -723,11 +696,9 @@ bool Package::build(bool locally)
 	bool sb = this->shouldBuild(locally);
 
 	if(!sb) {
-		pthread_mutex_lock(&this->lock);
 		log(this, "Not required");
 		// Already built
 		this->built = true;
-		pthread_mutex_unlock(&this->lock);
 		this->getWorld()->packageFinished(this);
 		return true;
 	}
@@ -797,11 +768,13 @@ bool Package::build(bool locally)
 	this->run_secs = (end.tv_sec - start.tv_sec);
 
 	log(this, "Built in %d seconds", this->run_secs);
-	pthread_mutex_lock(&this->lock);
+
+	std::unique_lock<std::mutex> lk (this->lock);
 	this->building = false;
 	this->built = true;
 	this->was_built = true;
-	pthread_mutex_unlock(&this->lock);
+	lk.unlock ();
+
 	this->getWorld()->packageFinished(this);
 
 	return true;

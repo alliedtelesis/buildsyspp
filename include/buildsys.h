@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <list>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 extern "C" {
 #include <lua.h>
@@ -1005,14 +1006,14 @@ namespace buildsys {
 		bool visiting;
 		bool processing_queued;
 		bool buildInfoPrepared;
-		bool built;
-		bool building;
+		std::atomic<bool> built{false};
+		std::atomic<bool> building{false};
+		std::atomic<bool> was_built{false};
 		bool codeUpdated;
-		bool was_built;
 		bool no_fetch_from;
 		bool hash_output;
 		bool suppress_remove_staging;
-		pthread_mutex_t lock;
+		mutable std::mutex lock;
 		time_t run_secs;
 		FILE *logFile;
 		//! Set the buildinfo file hash from the new .build.info.new file
@@ -1064,10 +1065,8 @@ namespace buildsys {
 		    build_description(new BuildDescription()), lua(new Lua()),
 		    intercept(false), depsExtraction(""), depsExtractionDirectOnly(false),
 		    visiting(false), processing_queued(false), buildInfoPrepared(false),
-		    built(false), building(false), codeUpdated(false), was_built(false),
-		    no_fetch_from(false), hash_output(false),
+		    codeUpdated(false), no_fetch_from(false), hash_output(false),
 		    suppress_remove_staging(false), run_secs(0), logFile(NULL) {
-			pthread_mutex_init(&this->lock, NULL);
 		};
 		~Package() {
 			while(!this->depends.empty()) {
@@ -1182,10 +1181,9 @@ namespace buildsys {
 		};
 		//! Mark this package as queued for processing (returns false if already marked)
 		bool setProcessingQueued() {
-			pthread_mutex_lock(&this->lock);
+			std::unique_lock<std::mutex> lk (this->lock);
 			bool res = !this->processing_queued;
 			this->processing_queued = true;
-			pthread_mutex_unlock(&this->lock);
 			return res;
 		}
 		//! Set to prevent the staging directory from being removed at the end of the build
@@ -1209,12 +1207,8 @@ namespace buildsys {
 		/** Is this package already built ?
 		 *  \return true if this package has already been built during this invocation of buildsys
 		 */
-		bool isBuilt();
-		/** Was this package actually built ?
-		 *  \return true iff this package's build commands were actually run
-		 */
-		bool wasBuilt() {
-			return this->was_built;
+		bool isBuilt() {
+			return this->built;
 		}
 		//! Disable fetch-from for this package
 		void disableFetchFrom() {
@@ -1239,9 +1233,13 @@ namespace buildsys {
 		//! Build this package
 		bool build(bool locally = false);
 		//! Has building of this package already started ?
-		bool isBuilding();
+		bool isBuilding() {
+			return this->building;
+		}
 		//! Tell this package it is now building
-		void setBuilding();
+		void setBuilding() {
+			this->building = true;
+		}
 
 		//! Get the start iterator for the dependencies list
 		std::list < PackageDepend * >::iterator dependsStart();
