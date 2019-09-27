@@ -55,20 +55,16 @@ static bool refspec_is_commitid(const std::string & refspec)
 
 static std::string git_hash_ref(const std::string & gdir, const std::string & refspec)
 {
-	std::string cmd = string_format("cd %s && git rev-parse %s", gdir.c_str(),
-					refspec.c_str());
+	std::string cmd = "cd " + gdir + " && git rev-parse " + refspec;
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git rev-parse ref failed");
 	}
-	char *commit = (char *) calloc(41, sizeof(char));
+	char commit[41] = {};
 	fread(commit, sizeof(char), 40, f);
 	pclose(f);
 
-	std::string ret = std::string(commit);
-	free(commit);
-
-	return ret;
+	return std::string(commit);
 }
 
 static std::string git_hash(const std::string & gdir)
@@ -78,33 +74,30 @@ static std::string git_hash(const std::string & gdir)
 
 static std::string git_diff_hash(const std::string & gdir)
 {
-	std::string cmd = string_format("cd %s && git diff HEAD | sha1sum", gdir.c_str());
+	std::string cmd = "cd " + gdir + " && git diff HEAD | sha1sum";
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git diff | sha1sum failed");
 	}
-	char *delta_hash = (char *) calloc(41, sizeof(char));
+	char delta_hash[41] = {};
 	fread(delta_hash, sizeof(char), 40, f);
 	pclose(f);
-	std::string ret(delta_hash);
-	free(delta_hash);
-	return ret;
+
+	return std::string(delta_hash);
 }
 
 static std::string git_remote(const std::string & gdir, const std::string & remote)
 {
-	std::string cmd = string_format("cd %s && git config --local --get remote.%s.url",
-					gdir.c_str(), remote.c_str());
+	std::string cmd = "cd " + gdir + " && git config --local --get remote." + remote + ".url";
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git config --local --get remote. .url failed");
 	}
-	char *Remote = (char *) calloc(1025, sizeof(char));
-	fread(Remote, sizeof(char), 1024, f);
+	char output[1025] = {};
+	fread(output, sizeof(char), 1024, f);
 	pclose(f);
-	std::string ret(Remote);
-	free(Remote);
-	return ret;
+
+	return std::string(output);
 }
 
 GitDirExtractionUnit::GitDirExtractionUnit(const std::string & git_dir,
