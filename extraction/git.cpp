@@ -153,11 +153,11 @@ bool GitExtractionUnit::updateOrigin()
 	std::string source_dir = this->local;
 	std::string remote_url = git_remote(source_dir, "origin");
 
-	if(strcmp(remote_url.c_str(), location.c_str()) != 0) {
+	if(remote_url != location) {
 		PackageCmd pc(source_dir.c_str(), "git");
 		pc.addArg("remote");
 		// If the remote doesn't exist, add it
-		if(strcmp(remote_url.c_str(), "") == 0) {
+		if(remote_url == "") {
 			pc.addArg("add");
 		} else {
 			pc.addArg("set-url");
@@ -224,7 +224,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		if(std::system(cmd.c_str()) == 0) {
 			std::string head_hash = git_hash_ref(source_dir, "HEAD");
 			std::string branch_hash = git_hash_ref(source_dir, this->refspec);
-			if(strcmp(head_hash.c_str(), branch_hash.c_str())) {
+			if(head_hash != branch_hash) {
 				throw CustomException("Asked to use branch: " +
 						      this->refspec + ", but " +
 						      source_dir +
@@ -246,7 +246,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	std::string hash = git_hash(source_dir);
 
 	if(!this->hash.empty()) {
-		if(strcmp(this->hash.c_str(), hash.c_str()) != 0) {
+		if(this->hash != hash) {
 			log(this->P,
 			    "Hash mismatch for %s\n(committed to %s, providing %s)\n",
 			    this->uri.c_str(), this->hash.c_str(), hash.c_str());
