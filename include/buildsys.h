@@ -399,11 +399,11 @@ namespace buildsys {
 	private:
 		std::string filename;
 		std::string hash;
-		pthread_mutex_t dl_lock;
+		mutable std::mutex lock;
 	public:
-		DLObject(std::string filename):filename(filename),
-		    dl_lock(PTHREAD_MUTEX_INITIALIZER) {
-		} std::string fileName() {
+		DLObject(std::string filename):filename(filename) {
+		}
+		std::string fileName() {
 			return this->filename;
 		}
 		std::string HASH() {
@@ -412,11 +412,8 @@ namespace buildsys {
 		void setHASH(std::string hash) {
 			this->hash = hash;
 		}
-		void lock() {
-			pthread_mutex_lock(&this->dl_lock);
-		}
-		void unlock() {
-			pthread_mutex_unlock(&this->dl_lock);
+		std::mutex &getLock() {
+			return this->lock;
 		}
 	};
 

@@ -77,7 +77,8 @@ bool DownloadFetch::fetch(BuildDir * d)
 		return false;
 	}
 
-	dlobj->lock();
+	std::unique_lock<std::mutex> lk (dlobj->getLock ());
+
 	if(this->hash.length() != 0) {
 		if(dlobj->HASH().length() != 0) {
 			if(dlobj->HASH().compare(this->hash) != 0) {
@@ -85,7 +86,6 @@ bool DownloadFetch::fetch(BuildDir * d)
 				    "Another package has already downloaded %s with hash %s (but we need %s)\n",
 				    fullname.c_str(), dlobj->HASH().c_str(),
 				    this->hash.c_str());
-				dlobj->unlock();
 				return false;
 			}
 		}
@@ -160,8 +160,6 @@ bool DownloadFetch::fetch(BuildDir * d)
 			ret = false;
 		}
 	}
-
-	dlobj->unlock();
 
 	return ret;
 }
