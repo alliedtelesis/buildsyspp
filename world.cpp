@@ -105,36 +105,19 @@ void World::printFeatureValues()
 	std::cout << "----END FEATURE VALUES----" << std::endl;
 }
 
-static pthread_mutex_t t_cond_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t t_cond = PTHREAD_COND_INITIALIZER;
-
 static void build_thread(Package *p)
 {
 	World *w = p->getNS()->getWorld();
 
 	log(p, "Build Thread");
 	log((p->getNS()->getName() + "," + p->getName()).c_str(),
-	    "Building (%i others running)", w->threadsRunning());
-
-	w->threadStarted();
-
-	bool skip = false;
+	    "Building (%i others running)", w->threadsRunning() - 1);
 
 	try {
-		if(p->isBuilding()) {
-			skip = true;
-		}
-		if(!skip)
-			p->setBuilding();
-		pthread_mutex_lock(&t_cond_lock);
-		pthread_cond_broadcast(&t_cond);
-		pthread_mutex_unlock(&t_cond_lock);
-		if(!skip) {
-			if(!p->build()) {
-				w->setFailed();
-				log((p->getNS()->getName() + "," + p->getName()).c_str(),
-				    "Building failed");
-			}
+		if(!p->build()) {
+			w->setFailed();
+			log((p->getNS()->getName() + "," + p->getName()).c_str(),
+			    "Building failed");
 		}
 	}
 	catch(Exception & E) {
@@ -231,12 +214,16 @@ bool World::basePackage(const std::string & filename)
 			toBuild = this->topo_graph->topoNext();
 		}
 		if(toBuild != NULL) {
+			// If this package is already building then skip it.
+			if (toBuild->isBuilding()) {
+				continue;
+			}
+
+			toBuild->setBuilding();
 			pthread_mutex_unlock(&this->cond_lock);
-			pthread_mutex_lock(&t_cond_lock);
+			this->threadStarted();
 			std::thread thr (build_thread, toBuild);
 			thr.detach ();
-			pthread_cond_wait(&t_cond, &t_cond_lock);
-			pthread_mutex_unlock(&t_cond_lock);
 		} else {
 			pthread_cond_wait(&this->cond, &this->cond_lock);
 			pthread_mutex_unlock(&this->cond_lock);
