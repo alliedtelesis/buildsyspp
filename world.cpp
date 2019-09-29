@@ -147,9 +147,7 @@ static void build_thread(Package *p)
 	    "Finished (%i others running)", w->threadsRunning());
 }
 
-PackageQueue *pq = NULL;
-
-static void process_package(Package *p)
+static void process_package(Package *p, PackageQueue &pq)
 {
 	try {
 		if(!p->process()) {
@@ -167,26 +165,28 @@ static void process_package(Package *p)
 	for(; iter != end; iter++) {
 		Package *dp = (*iter)->getPackage();
 		if(dp->setProcessingQueued()) {
-			pq->push(dp);
+			pq.push(dp);
 		}
 	}
 
-	pq->finish();
+	pq.finish();
 }
 
-static bool process_packages()
+static void process_packages(Package *p)
 {
-	while(!pq->done()) {
-		Package *toProcess = pq->pop();
-		if(toProcess != NULL) {
-			pq->start();
+	PackageQueue pq;
+	pq.push(p);
 
-			std::thread thr (process_package, toProcess);
+	while(!pq.done()) {
+		Package *toProcess = pq.pop();
+		if(toProcess != NULL) {
+			pq.start();
+
+			std::thread thr (process_package, toProcess, std::ref(pq));
 			thr.detach ();
 		}
-		pq->wait();
+		pq.wait();
 	}
-	return true;
 }
 
 bool World::basePackage(const std::string & filename)
@@ -208,10 +208,7 @@ bool World::basePackage(const std::string & filename)
 	free(filename_copy);
 	this->p->setNS(this->p->getNS());
 
-	pq = new PackageQueue();
-	pq->push(this->p);
-	process_packages();
-	delete pq;
+	process_packages(this->p);
 
 	// Check for dependency loops
 	if(!this->p->checkForDependencyLoops()) {
