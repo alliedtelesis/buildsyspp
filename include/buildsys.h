@@ -1370,6 +1370,9 @@ namespace buildsys {
 		int threads_running{0};
 		int threads_limit{0};
 		bool outputPrefix{true};
+
+		pthread_mutex_t dlobjects_lock;
+		DLObject *_findDLObject(std::string);
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
 		    forcedDeps(new string_list()),
@@ -1382,6 +1385,7 @@ namespace buildsys {
 			free(pwd);
 			pthread_mutex_init(&this->cond_lock, NULL);
 			pthread_cond_init(&this->cond, NULL);
+			pthread_mutex_init(&this->dlobjects_lock, NULL);
 		};
 
 		~World();
@@ -1499,7 +1503,14 @@ namespace buildsys {
 		}
 
 		//! Find (or create) a DLObject for a given full file name
-		DLObject *findDLObject(std::string);
+		DLObject *findDLObject(std::string fname)
+		{
+			DLObject *dlo = NULL;
+			pthread_mutex_lock (&this->dlobjects_lock);
+			dlo = this->_findDLObject(fname);
+			pthread_mutex_unlock (&this->dlobjects_lock);
+			return dlo;
+		}
 
 		//! Start the processing and building steps with the given meta package
 		bool basePackage(const std::string & filename);

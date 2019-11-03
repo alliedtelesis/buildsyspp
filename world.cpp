@@ -309,7 +309,7 @@ bool World::isIgnoredFeature(std::string feature)
 	return false;
 }
 
-DLObject *World::findDLObject(std::string fname)
+DLObject *World::_findDLObject(std::string fname)
 {
 	std::list < DLObject * >::iterator iter = this->dlobjects->begin();
 	std::list < DLObject * >::iterator iterEnd = this->dlobjects->end();
