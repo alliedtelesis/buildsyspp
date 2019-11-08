@@ -208,7 +208,7 @@ bool World::basePackage(const std::string & filename)
 
 	this->topo_graph->topological();
 	while(!this->isFailed() && !this->p->isBuilt()) {
-		pthread_mutex_lock(&this->cond_lock);
+		std::unique_lock<std::mutex> lk (this->cond_lock);
 		Package *toBuild = NULL;
 		if(this->threads_limit == 0 || this->threads_running < this->threads_limit) {
 			toBuild = this->topo_graph->topoNext();
@@ -220,23 +220,19 @@ bool World::basePackage(const std::string & filename)
 			}
 
 			toBuild->setBuilding();
-			pthread_mutex_unlock(&this->cond_lock);
 			this->threadStarted();
 			std::thread thr (build_thread, toBuild);
 			thr.detach ();
 		} else {
-			pthread_cond_wait(&this->cond, &this->cond_lock);
-			pthread_mutex_unlock(&this->cond_lock);
+			this->cond.wait (lk);
 		}
 	}
 	if(this->areKeepGoing()) {
-		pthread_mutex_lock(&this->cond_lock);
+		std::unique_lock<std::mutex> lk (this->cond_lock);
 		while(!this->p->isBuilt() && this->threads_running > 0) {
-			pthread_cond_wait(&this->cond, &this->cond_lock);
-			pthread_mutex_unlock(&this->cond_lock);
-			pthread_mutex_lock(&this->cond_lock);
+			this->cond.wait (lk);
+			lk.lock();
 		}
-		pthread_mutex_unlock(&this->cond_lock);
 	}
 	return !this->failed;
 }
@@ -266,11 +262,10 @@ bool World::populateForcedList(PackageCmd * pc)
 
 bool World::packageFinished(Package * p)
 {
-	pthread_mutex_lock(&this->cond_lock);
+	std::unique_lock<std::mutex> lk (this->cond_lock);
 	this->topo_graph->deleteNode(p);
 	this->topo_graph->topological();
-	pthread_cond_broadcast(&this->cond);
-	pthread_mutex_unlock(&this->cond_lock);
+	this->cond.notify_all ();
 	return true;
 }
 
@@ -320,6 +315,4 @@ World::~World()
 	delete this->graph;
 	delete this->topo_graph;
 	delete this->ignoredFeatures;
-	pthread_mutex_destroy(&this->cond_lock);
-	pthread_cond_destroy(&this->cond);
 }

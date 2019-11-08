@@ -1354,13 +1354,13 @@ namespace buildsys {
 		bool extractOnly{false};
 		bool parseOnly{false};
 		bool keepGoing{false};
-		pthread_mutex_t cond_lock;
-		pthread_cond_t cond;
-		int threads_running{0};
+		mutable std::mutex cond_lock;
+		mutable std::condition_variable cond;
+		std::atomic<int> threads_running{0};
 		int threads_limit{0};
 		bool outputPrefix{true};
 
-		pthread_mutex_t dlobjects_lock;
+		mutable std::mutex dlobjects_lock;
 		DLObject *_findDLObject(std::string);
 	public:
 		World(char *bsapp):bsapp(std::string(bsapp)), features(new key_value()),
@@ -1372,9 +1372,6 @@ namespace buildsys {
 			char *pwd = getcwd(NULL, 0);
 			this->pwd = std::string(pwd);
 			free(pwd);
-			pthread_mutex_init(&this->cond_lock, NULL);
-			pthread_cond_init(&this->cond, NULL);
-			pthread_mutex_init(&this->dlobjects_lock, NULL);
 		};
 
 		~World();
@@ -1495,9 +1492,8 @@ namespace buildsys {
 		DLObject *findDLObject(std::string fname)
 		{
 			DLObject *dlo = NULL;
-			pthread_mutex_lock (&this->dlobjects_lock);
+			std::unique_lock<std::mutex> lk (this->dlobjects_lock);
 			dlo = this->_findDLObject(fname);
-			pthread_mutex_unlock (&this->dlobjects_lock);
 			return dlo;
 		}
 
@@ -1567,23 +1563,17 @@ namespace buildsys {
 		string_list::iterator overlaysEnd();
 		//! A thread has started
 		void threadStarted() {
-			pthread_mutex_lock(&this->cond_lock);
 			this->threads_running++;
-			pthread_mutex_unlock(&this->cond_lock);
 		}
 		//! A thread has finished
 		void threadEnded() {
-			pthread_mutex_lock(&this->cond_lock);
+			std::unique_lock<std::mutex> lk (this->cond_lock);
 			this->threads_running--;
-			pthread_cond_broadcast(&this->cond);
-			pthread_mutex_unlock(&this->cond_lock);
+			this->cond.notify_all ();
 		};
 		//! How many threads are currently running ?
 		int threadsRunning() {
-			pthread_mutex_lock(&this->cond_lock);
-			int res = this->threads_running;
-			pthread_mutex_unlock(&this->cond_lock);
-			return res;
+			return this->threads_running;
 		};
 		//! Adjust the thread limit
 		void setThreadsLimit(int tl) {
