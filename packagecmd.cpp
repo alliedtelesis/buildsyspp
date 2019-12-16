@@ -30,99 +30,35 @@ bool PackageCmd::Run(Package * P)
 	if(this->skip)
 		return true;
 
-	char **ne = NULL;
-	size_t ne_cnt = 0;
-	if(this->envp != NULL) {
+	std::vector < std::string > ne;
+	if(this->envp.size() > 0) {
 		// collect the current enviroment
-		ne = (char **) calloc(1, sizeof(char *));
 		size_t e = 0;
-		while(environ[e] != NULL) {
-			ne_cnt++;
-			ne = (char **) realloc(ne, sizeof(char *) * (ne_cnt + 1));
-			ne[ne_cnt - 1] = strdup(environ[e]);
-			ne[ne_cnt] = NULL;
+		while(environ[e] != nullptr) {
+			ne.push_back(environ[e]);
 			e++;
 		}
 		// append any new enviroment to it
-		for(e = 0; e < this->envp_count; e++) {
-			ne_cnt++;
-			ne = (char **) realloc(ne, sizeof(char *) * (ne_cnt + 1));
-			ne[ne_cnt - 1] = strdup(this->envp[e]);
-			ne[ne_cnt] = NULL;
+		for(auto & env:this->envp) {
+			ne.push_back(env);
 		}
 	}
+
 	bool res = true;
-	if(run(P, this->args[0], this->args, this->path.c_str(), ne) != 0)
+	if(run(P, this->args[0], this->args, this->path, ne) != 0)
 		res = false;
 
 	if(!res) {
 		this->printCmd();
 	}
 
-	if(ne != NULL) {
-		for(int i = 0; ne[i] != NULL; i++) {
-			free(ne[i]);
-		}
-		free(ne);
-	}
 	return res;
 }
 
 void PackageCmd::printCmd()
 {
 	printf("Path: %s\n", this->path.c_str());
-	for(size_t i = 0; i < this->arg_count; i++) {
-		printf("Arg[%zi] = '%s'\n", i, this->args[i]);
+	for(size_t i = 0; i < this->args.size(); i++) {
+		printf("Arg[%zi] = '%s'\n", i, this->args[i].c_str());
 	}
-}
-
-PackageCmd::~PackageCmd()
-{
-	if(this->args) {
-		for(size_t i = 0; i < this->arg_count; i++) {
-			free(this->args[i]);
-		}
-		free(this->args);
-	}
-	if(this->envp) {
-		for(size_t i = 0; i < this->envp_count; i++) {
-			free(this->envp[i]);
-		}
-		free(this->envp);
-	}
-}
-
-PackageCmd & PackageCmd::operator=(PackageCmd && other)
-{
-
-	if(this != &other) {
-		if(this->args) {
-			for(size_t i = 0; i < this->arg_count; i++) {
-				free(this->args[i]);
-			}
-			free(this->args);
-		}
-		if(this->envp) {
-			for(size_t i = 0; i < this->envp_count; i++) {
-				free(this->envp[i]);
-			}
-			free(this->envp);
-		}
-
-		this->path = other.path;
-		this->app = other.app;
-		this->skip = other.skip;
-
-		this->args = other.args;
-		this->arg_count = other.arg_count;
-		other.args = nullptr;
-		other.arg_count = 0;
-
-		this->envp = other.envp;
-		this->envp_count = other.envp_count;
-		other.envp = nullptr;
-		other.envp_count = 0;
-	}
-
-	return *this;
 }

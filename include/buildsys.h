@@ -336,25 +336,18 @@ namespace buildsys {
 	private:
 		std::string path;
 		std::string app;
-		char **args;
-		size_t arg_count;
-		char **envp;
-		size_t envp_count;
-		bool skip;
+		std::vector < std::string > args;
+		std::vector < std::string > envp;
+		bool skip{false};
 	public:
 		/** Create a Package Command
 		 *  \param path The path to run this command in
 		 *  \param app The program to invoke
 		 */
 		PackageCmd(const std::string & path, const std::string & app):path(path),
-		    app(app), args(NULL), arg_count(0), envp(NULL), envp_count(0),
-		    skip(false) {
+		    app(app) {
 			this->addArg(app);
 		};
-
-		~PackageCmd();
-
-		PackageCmd & operator=(PackageCmd && other);
 
 		//! Mark a command to allow skiping its execution
 		void skipCommand(void) {
@@ -365,24 +358,14 @@ namespace buildsys {
 		 *  \param arg The argument to append to this command
 		 */
 		void addArg(const std::string & arg) {
-			this->arg_count++;
-			this->args =
-			    (char **) realloc(this->args,
-					      sizeof(char *) * (this->arg_count + 1));
-			this->args[this->arg_count - 1] = strdup(arg.c_str());
-			this->args[this->arg_count] = NULL;
+			this->args.push_back(arg);
 		}
 
 		/** Add an enviroment variable to this command
 		 *  \param env The enviroment variable to append to this command
 		 */
 		void addEnv(const std::string & env) {
-			this->envp_count++;
-			this->envp =
-			    (char **) realloc(this->envp,
-					      sizeof(char *) * (this->envp_count + 1));
-			this->envp[this->envp_count - 1] = strdup(env.c_str());
-			this->envp[this->envp_count] = NULL;
+			this->envp.push_back(env);
 		}
 
 		/** Run this command
@@ -1593,8 +1576,8 @@ namespace buildsys {
 	void log(const char *package, const char *fmt, ...);
 	void log(Package * P, const char *fmt, ...);
 	void program_output(Package * P, const char *mesg);
-	int run(Package * P, char *program, char *argv[], const char *path,
-		char *newenvp[]);
+	int run(Package * P, const std::string &program, const std::vector<std::string> &argv,
+			const std::string &path, const std::vector<std::string> &newenvp);
 
 	void hash_setup(void);
 	std::string hash_file(const std::string & fname);

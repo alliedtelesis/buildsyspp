@@ -68,8 +68,25 @@ static void pipe_data_thread(Package *P, int fd)
 	close(fd);
 }
 
-int buildsys::run(Package * P, char *program, char *argv[], const char *path,
-		  char *newenvp[])
+static void exec_process(const std::string& program, const std::vector<std::string>& args = {},
+						const std::vector<std::string>& env  = {}) {
+	using namespace std::placeholders;
+
+	std::vector < const char * > pargs(args.size());
+	std::vector < const char * > penv(env.size());
+
+	std::transform(args.begin(), args.end(), pargs.begin(), std::bind(&std::string::data, _1));
+	pargs.push_back(nullptr);
+
+	std::transform(env.begin(), env.end(), penv.begin(), std::bind(&std::string::data, _1));
+	penv.push_back(nullptr);
+
+	execvpe(program.c_str(), (char *const *) pargs.data(), (char *const *) penv.data());
+}
+
+int buildsys::run(Package * P, const std::string & program,
+		  const std::vector < std::string > &argv, const std::string & path,
+		  const std::vector < std::string > &newenvp)
 {
 #ifdef LOG_COMMANDS
 	log(P, "Running %s", program);
@@ -98,15 +115,12 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 			dup2(fds[1], STDERR_FILENO);
 			close(fds[1]);
 		}
-		if(chdir(path) != 0) {
-			log(P, "chdir '%s' failed", path);
+		if(chdir(path.c_str()) != 0) {
+			log(P, "chdir '%s' failed", path.c_str());
 			exit(-1);
 		}
-		if(newenvp != NULL)
-			execvpe(program, argv, newenvp);
-		else
-			execvp(program, argv);
-		log(P, "Failed Running %s", program);
+		exec_process(program, argv, newenvp);
+		log(P, "Failed Running %s", program.c_str());
 		exit(-1);
 	} else {
 		if(P->getWorld()->areOutputPrefix()) {
@@ -117,7 +131,7 @@ int buildsys::run(Package * P, char *program, char *argv[], const char *path,
 		// check return status ...
 		if(WEXITSTATUS(status) < 0) {
 			log(P, "Error Running %s (path = %s, return code = %i)",
-			    program, path, status);
+			    program.c_str(), path.c_str(), status);
 		}
 		return WEXITSTATUS(status);
 	}
