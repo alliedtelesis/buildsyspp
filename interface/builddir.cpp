@@ -23,11 +23,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include <buildsys.h>
 #include "luainterface.h"
+#include <buildsys.h>
 
-static std::string absolute_path(BuildDir * d, const std::string & dir, bool allowDL =
-				 false)
+static std::string absolute_path(BuildDir *d, const std::string &dir, bool allowDL = false)
 {
 	std::string path("");
 	if(boost::algorithm::starts_with(dir, "/") ||
@@ -39,8 +38,7 @@ static std::string absolute_path(BuildDir * d, const std::string & dir, bool all
 	return path;
 }
 
-static std::string relative_path(BuildDir * d, const std::string & dir, bool allowDL =
-				 false)
+static std::string relative_path(BuildDir *d, const std::string &dir, bool allowDL = false)
 {
 	std::string path("");
 	if(boost::algorithm::starts_with(dir, "/") ||
@@ -52,13 +50,13 @@ static std::string relative_path(BuildDir * d, const std::string & dir, bool all
 	return path;
 }
 
-static void add_env(Package * P, PackageCmd * pc)
+static void add_env(Package *P, PackageCmd *pc)
 {
 	std::string pn_env = string_format("BS_PACKAGE_NAME=%s", P->getName().c_str());
 	pc->addEnv(pn_env);
 }
 
-int li_bd_fetch(lua_State * L)
+int li_bd_fetch(lua_State *L)
 {
 	/* the first argument is the table, and is implicit */
 	int argc = lua_gettop(L);
@@ -138,9 +136,7 @@ int li_bd_fetch(lua_State * L)
 		if(reponame.empty()) {
 			auto last_slash = uri.rfind("/");
 			if(last_slash == std::string::npos) {
-				throw
-				    CustomException
-				    ("fetch method = git failure parsing uri");
+				throw CustomException("fetch method = git failure parsing uri");
 			}
 
 			if(last_slash == uri.length() - 1) {
@@ -162,9 +158,7 @@ int li_bd_fetch(lua_State * L)
 		P->extraction()->add(geu);
 	} else if(method == "linkgit") {
 		if(uri.empty()) {
-			throw
-			    CustomException
-			    ("fetch method = linkgit requires uri to be set");
+			throw CustomException("fetch method = linkgit requires uri to be set");
 		}
 		std::string l = P->relative_fetch_path(uri);
 		char *l_copy = strdup(l.c_str());
@@ -184,17 +178,13 @@ int li_bd_fetch(lua_State * L)
 		f = new LinkFetch(std::string(uri), P);
 	} else if(method == "copyfile") {
 		if(uri.empty()) {
-			throw
-			    CustomException
-			    ("fetch method = copyfile requires uri to be set");
+			throw CustomException("fetch method = copyfile requires uri to be set");
 		}
 		std::string file_path = P->relative_fetch_path(uri);
 		P->extraction()->add(new FileCopyExtractionUnit(file_path.c_str(), uri));
 	} else if(method == "copygit") {
 		if(uri.empty()) {
-			throw
-			    CustomException
-			    ("fetch method = copygit requires uri to be set");
+			throw CustomException("fetch method = copygit requires uri to be set");
 		}
 		std::string src_path = P->relative_fetch_path(uri);
 		CopyGitDirExtractionUnit *cgdeu =
@@ -230,7 +220,7 @@ int li_bd_fetch(lua_State * L)
 	return 1;
 }
 
-int li_bd_restore(lua_State * L)
+int li_bd_restore(lua_State *L)
 {
 	/* the first argument is the table, and is implicit */
 	int argc = lua_gettop(L);
@@ -277,7 +267,7 @@ int li_bd_restore(lua_State * L)
 	return 0;
 }
 
-int li_bd_extract_table(lua_State * L)
+int li_bd_extract_table(lua_State *L)
 {
 	if(lua_gettop(L) != 2)
 		throw CustomException("extract() requires exactly 1 argument");
@@ -300,7 +290,7 @@ int li_bd_extract_table(lua_State * L)
 	return 0;
 }
 
-int li_bd_extract(lua_State * L)
+int li_bd_extract(lua_State *L)
 {
 	if(lua_gettop(L) != 2)
 		throw CustomException("extract() requires exactly 1 argument");
@@ -342,7 +332,7 @@ int li_bd_extract(lua_State * L)
 	return 0;
 }
 
-int li_bd_cmd(lua_State * L)
+int li_bd_cmd(lua_State *L)
 {
 	int argc = lua_gettop(L);
 	if(argc < 4)
@@ -356,13 +346,10 @@ int li_bd_cmd(lua_State * L)
 	if(!lua_isstring(L, 3))
 		throw CustomException("cmd() expects a string as the second argument");
 	if(!lua_istable(L, 4))
-		throw
-		    CustomException
-		    ("cmd() expects a table of strings as the third argument");
+		throw CustomException("cmd() expects a table of strings as the third argument");
 	if(argc == 5 && !lua_istable(L, 5))
-		throw
-		    CustomException
-		    ("cmd() expects a table of strings as the fourth argument, if present");
+		throw CustomException(
+		    "cmd() expects a table of strings as the fourth argument, if present");
 
 	CHECK_ARGUMENT_TYPE("cmd", 1, BuildDir, d);
 
@@ -373,26 +360,24 @@ int li_bd_cmd(lua_State * L)
 
 	PackageCmd *pc = new PackageCmd(dir, app);
 
-	lua_pushnil(L);		/* first key */
+	lua_pushnil(L); /* first key */
 	while(lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 		if(lua_type(L, -1) != LUA_TSTRING)
-			throw
-			    CustomException
-			    ("cmd() requires a table of strings as the third argument\n");
+			throw CustomException(
+			    "cmd() requires a table of strings as the third argument\n");
 		pc->addArg(lua_tostring(L, -1));
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);
 	}
 
 	if(argc == 5) {
-		lua_pushnil(L);	/* first key */
+		lua_pushnil(L); /* first key */
 		while(lua_next(L, 5) != 0) {
 			/* uses 'key' (at index -2) and 'value' (at index -1) */
 			if(lua_type(L, -1) != LUA_TSTRING)
-				throw
-				    CustomException
-				    ("cmd() requires a table of strings as the fourth argument\n");
+				throw CustomException(
+				    "cmd() requires a table of strings as the fourth argument\n");
 			pc->addEnv(std::string(lua_tostring(L, -1)));
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
@@ -405,7 +390,7 @@ int li_bd_cmd(lua_State * L)
 	return 0;
 }
 
-int li_bd_patch(lua_State * L)
+int li_bd_patch(lua_State *L)
 {
 	if(lua_gettop(L) != 4)
 		throw CustomException("patch() requires exactly 3 arguments");
@@ -416,9 +401,7 @@ int li_bd_patch(lua_State * L)
 	if(!lua_isnumber(L, 3))
 		throw CustomException("patch() expects a number as the second argument");
 	if(!lua_istable(L, 4))
-		throw
-		    CustomException
-		    ("patch() expects a table of strings as the third argument");
+		throw CustomException("patch() expects a table of strings as the third argument");
 
 	Package *P = li_get_package(L);
 
@@ -432,19 +415,16 @@ int li_bd_patch(lua_State * L)
 
 	int patch_depth = lua_tonumber(L, 3);
 
-	lua_pushnil(L);		/* first key */
+	lua_pushnil(L); /* first key */
 	while(lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 		{
 			if(lua_type(L, -1) != LUA_TSTRING)
-				throw
-				    CustomException
-				    ("patch() requires a table of strings as the third argument\n");
+				throw CustomException(
+				    "patch() requires a table of strings as the third argument\n");
 			std::string uri = P->relative_fetch_path(lua_tostring(L, -1));
-			PatchExtractionUnit *peu =
-			    new PatchExtractionUnit(patch_depth, patch_path.c_str(),
-						    uri.c_str(),
-						    lua_tostring(L, -1));
+			PatchExtractionUnit *peu = new PatchExtractionUnit(
+			    patch_depth, patch_path.c_str(), uri.c_str(), lua_tostring(L, -1));
 			P->extraction()->add(peu);
 		}
 		/* removes 'value'; keeps 'key' for next iteration */
@@ -454,15 +434,14 @@ int li_bd_patch(lua_State * L)
 	return 0;
 }
 
-int li_bd_installfile(lua_State * L)
+int li_bd_installfile(lua_State *L)
 {
 	if(lua_gettop(L) != 2)
 		throw CustomException("installfile() requires exactly 1 argument");
 	if(!lua_istable(L, 1))
 		throw CustomException("installfile() must be called using : not .");
 	if(!lua_isstring(L, 2))
-		throw
-		    CustomException("installfile() expects a string as the only argument");
+		throw CustomException("installfile() expects a string as the only argument");
 
 	Package *P = li_get_package(L);
 	P->setInstallFile(std::string(lua_tostring(L, 2)));

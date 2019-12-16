@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -25,12 +25,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-bool PackageCmd::Run(Package * P)
+bool PackageCmd::Run(Package *P)
 {
 	if(this->skip)
 		return true;
 
-	std::vector < std::string > ne;
+	std::vector<std::string> ne;
 	if(this->envp.size() > 0) {
 		// collect the current enviroment
 		size_t e = 0;
@@ -39,7 +39,7 @@ bool PackageCmd::Run(Package * P)
 			e++;
 		}
 		// append any new enviroment to it
-		for(auto & env:this->envp) {
+		for(auto &env : this->envp) {
 			ne.push_back(env);
 		}
 	}

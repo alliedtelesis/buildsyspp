@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2016 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -37,7 +37,7 @@ void buildsys::hash_shutdown()
 	EVP_cleanup();
 }
 
-std::string buildsys::hash_file(const std::string & fname)
+std::string buildsys::hash_file(const std::string &fname)
 {
 	EVP_MD_CTX *mdctx;
 	const EVP_MD *md;

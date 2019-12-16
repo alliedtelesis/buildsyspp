@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -23,15 +23,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include <buildsys.h>
 #include "interface/luainterface.h"
+#include <buildsys.h>
 
-std::list < PackageDepend * >::iterator Package::dependsStart()
+std::list<PackageDepend *>::iterator Package::dependsStart()
 {
 	return this->depends.begin();
 }
 
-std::list < PackageDepend * >::iterator Package::dependsEnd()
+std::list<PackageDepend *>::iterator Package::dependsEnd()
 {
 	return this->depends.end();
 }
@@ -54,24 +54,22 @@ FILE *Package::getLogFile()
 	return this->logFile;
 }
 
-std::string Package::getFeature(const std::string & key)
+std::string Package::getFeature(const std::string &key)
 {
 	/* Try the feature prefixed with our package name first */
 	try {
 		return this->getWorld()->getFeature(this->name + ":" + key);
-	}
-	catch(NoKeyException & E) {
+	} catch(NoKeyException &E) {
 		return this->getWorld()->getFeature(key);
 	}
 }
 
-std::string Package::absolute_fetch_path(const std::string & location, bool also_root)
+std::string Package::absolute_fetch_path(const std::string &location, bool also_root)
 {
-	return this->getWorld()->getWorkingDir() + "/" +
-	    this->relative_fetch_path(location);
+	return this->getWorld()->getWorkingDir() + "/" + this->relative_fetch_path(location);
 }
 
-std::string Package::relative_fetch_path(const std::string & location, bool also_root)
+std::string Package::relative_fetch_path(const std::string &location, bool also_root)
 {
 	std::string src_path("");
 
@@ -92,8 +90,7 @@ std::string Package::relative_fetch_path(const std::string & location, bool also
 			}
 		} else {
 			for(; iter != end; iter++) {
-				src_path =
-				    *iter + "/package/" + this->getName() + "/" + location;
+				src_path = *iter + "/package/" + this->getName() + "/" + location;
 				if(filesystem::exists(src_path)) {
 					exists = true;
 					break;
@@ -114,8 +111,7 @@ std::string Package::relative_fetch_path(const std::string & location, bool also
 	return src_path;
 }
 
-
-std::string Package::getFileHash(const std::string & filename)
+std::string Package::getFileHash(const std::string &filename)
 {
 	std::string ret("");
 	std::string hashes_file = this->relative_fetch_path("Digest");
@@ -151,7 +147,7 @@ void Package::resetBD()
 	}
 }
 
-void Package::printLabel(std::ostream & out)
+void Package::printLabel(std::ostream &out)
 {
 	out << "[label=\"";
 
@@ -205,11 +201,11 @@ bool Package::checkForDependencyLoops()
 	return true;
 }
 
-bool Package::extract_staging(const std::string & dir, std::list < std::string > *done)
+bool Package::extract_staging(const std::string &dir, std::list<std::string> *done)
 {
 	{
-		std::list < std::string >::iterator dIt = done->begin();
-		std::list < std::string >::iterator dEnd = done->end();
+		std::list<std::string>::iterator dIt = done->begin();
+		std::list<std::string>::iterator dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
 			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
@@ -229,9 +225,8 @@ bool Package::extract_staging(const std::string & dir, std::list < std::string >
 		PackageCmd pc(dir, "pax");
 		pc.addArg("-rf");
 		auto pwd = this->getWorld()->getWorkingDir();
-		std::string arg =
-		    pwd + "/output/" + this->getNS()->getName() + "/staging/" + this->name +
-		    ".tar.bz2";
+		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/staging/" +
+		                  this->name + ".tar.bz2";
 		pc.addArg(arg);
 		pc.addArg("-p");
 		pc.addArg("p");
@@ -247,12 +242,12 @@ bool Package::extract_staging(const std::string & dir, std::list < std::string >
 	return true;
 }
 
-bool Package::extract_install(const std::string & dir, std::list < std::string > *done,
-			      bool includeChildren)
+bool Package::extract_install(const std::string &dir, std::list<std::string> *done,
+                              bool includeChildren)
 {
 	{
-		std::list < std::string >::iterator dIt = done->begin();
-		std::list < std::string >::iterator dEnd = done->end();
+		std::list<std::string>::iterator dIt = done->begin();
+		std::list<std::string>::iterator dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
 			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
@@ -265,8 +260,7 @@ bool Package::extract_install(const std::string & dir, std::list < std::string >
 
 	if(includeChildren && !this->intercept) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->
-			   getPackage()->extract_install(dir, done, includeChildren))
+			if(!(*dIt)->getPackage()->extract_install(dir, done, includeChildren))
 				return false;
 		}
 	}
@@ -274,28 +268,25 @@ bool Package::extract_install(const std::string & dir, std::list < std::string >
 	auto pwd = this->getWorld()->getWorkingDir();
 	if(this->bd != NULL) {
 		if(!this->installFiles.empty()) {
-			std::list < std::string >::iterator it = this->installFiles.begin();
-			std::list < std::string >::iterator end = this->installFiles.end();
+			std::list<std::string>::iterator it = this->installFiles.begin();
+			std::list<std::string>::iterator end = this->installFiles.end();
 			for(; it != end; it++) {
 				PackageCmd pc(dir, "cp");
 				std::string arg =
-				    pwd + "/output/" + this->getNS()->getName() +
-				    "/install/" + *it;
+				    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
 				pc.addArg(arg);
 				pc.addArg(*it);
 
 				if(!pc.Run(this)) {
-					log(this, "Failed to copy %s (for install)\n",
-					    (*it).c_str());
+					log(this, "Failed to copy %s (for install)\n", (*it).c_str());
 					return false;
 				}
 			}
 		} else {
 			PackageCmd pc(dir, "pax");
 			pc.addArg("-rf");
-			std::string arg =
-			    pwd + "/output/" + this->getNS()->getName() + "/install/" +
-			    this->name + ".tar.bz2";
+			std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
+			                  this->name + ".tar.bz2";
 			pc.addArg(arg);
 			pc.addArg("-p");
 			pc.addArg("p");
@@ -329,13 +320,13 @@ bool Package::canBuild()
 	return true;
 }
 
-static bool ff_file(Package * P, const std::string & hash,
-		    const std::string & rfile, const std::string & path,
-		    const std::string & fname, const std::string & fext)
+static bool ff_file(Package *P, const std::string &hash, const std::string &rfile,
+                    const std::string &path, const std::string &fname,
+                    const std::string &fext)
 {
 	bool ret = false;
-	std::string url = P->getWorld()->fetchFrom() + "/" +
-	    P->getNS()->getName() + "/" + P->getName() + "/" + hash + "/" + rfile;
+	std::string url = P->getWorld()->fetchFrom() + "/" + P->getNS()->getName() + "/" +
+	                  P->getName() + "/" + hash + "/" + rfile;
 	std::string cmd = "wget -q " + url + " -O " + path + "/" + fname + fext;
 	int res = std::system(cmd.c_str());
 	if(res != 0) {
@@ -369,8 +360,7 @@ BuildUnit *Package::buildInfo()
 		res = new OutputInfoFileUnit(info_file);
 	} else {
 		if(this->buildinfo_hash.compare("") == 0) {
-			log(this, "build.info (in %s) is empty",
-			    this->bd->getShortPath().c_str());
+			log(this, "build.info (in %s) is empty", this->bd->getShortPath().c_str());
 			log(this, "You probably need to build this package");
 			return NULL;
 		}
@@ -419,10 +409,9 @@ void Package::updateBuildInfo(bool updateOutputHash)
 
 	if(updateOutputHash && this->isHashingOutput()) {
 		// Hash the entire new path
-		std::string cmd =
-		    string_format
-		    ("cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
-		     this->bd->getNewPath().c_str(), this->bd->getPath().c_str());
+		std::string cmd = string_format(
+		    "cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
+		    this->bd->getNewPath().c_str(), this->bd->getPath().c_str());
 		std::system(cmd.c_str());
 	}
 }
@@ -432,24 +421,23 @@ bool Package::fetchFrom()
 	bool ret = false;
 	std::string staging_dir = this->getNS()->getStagingDir();
 	std::string install_dir = this->getNS()->getInstallDir();
-	std::vector < std::array < std::string, 4 >> files = {
-		{"usable", staging_dir, this->name, ".tar.bz2.ff"},
-		{"staging.tar.bz2", staging_dir, this->name, ".tar.bz2"},
-		{"install.tar.bz2", install_dir, this->name, ".tar.bz2"},
-		{"output.info", this->bd->getPath(), ".output", ".info"},
+	std::vector<std::array<std::string, 4>> files = {
+	    {"usable", staging_dir, this->name, ".tar.bz2.ff"},
+	    {"staging.tar.bz2", staging_dir, this->name, ".tar.bz2"},
+	    {"install.tar.bz2", install_dir, this->name, ".tar.bz2"},
+	    {"output.info", this->bd->getPath(), ".output", ".info"},
 	};
 
 	log(this, "FF URL: %s/%s/%s/%s", this->getWorld()->fetchFrom().c_str(),
-	    this->getNS()->getName().c_str(), this->name.c_str(),
-	    this->buildinfo_hash.c_str());
+	    this->getNS()->getName().c_str(), this->name.c_str(), this->buildinfo_hash.c_str());
 
 	if(!this->isHashingOutput()) {
 		files.pop_back();
 	}
 
-	for(auto & element:files) {
+	for(auto &element : files) {
 		ret = ff_file(this, this->buildinfo_hash, element.at(0), element.at(1),
-			      element.at(2), element.at(3));
+		              element.at(2), element.at(3));
 		if(ret) {
 			break;
 		}
@@ -479,7 +467,7 @@ bool Package::shouldBuild(bool locally)
 	bool ret = false;
 
 	std::string fname = this->getWorld()->getWorkingDir() + "/output/" +
-	    this->getNS()->getName() + "/install/" + this->name + ".tar.bz2";
+	                    this->getNS()->getName() + "/install/" + this->name + ".tar.bz2";
 
 	FILE *f = fopen(fname.c_str(), "r");
 	if(f == NULL) {
@@ -489,8 +477,8 @@ bool Package::shouldBuild(bool locally)
 	}
 
 	// Now lets check that the staging file (still) exists
-	fname = this->getWorld()->getWorkingDir() + "/output/" +
-	    this->getNS()->getName() + "/staging/" + this->name + ".tar.bz2";
+	fname = this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
+	        "/staging/" + this->name + ".tar.bz2";
 
 	f = fopen(fname.c_str(), "r");
 	if(f == NULL) {
@@ -499,9 +487,9 @@ bool Package::shouldBuild(bool locally)
 		fclose(f);
 	}
 
-	std::string cmd = string_format("cmp -s %s/.build.info.new %s/.build.info",
-					this->bd->getPath().c_str(),
-					this->bd->getPath().c_str());
+	std::string cmd =
+	    string_format("cmp -s %s/.build.info.new %s/.build.info",
+	                  this->bd->getPath().c_str(), this->bd->getPath().c_str());
 	int res = std::system(cmd.c_str());
 
 	// if there are changes,
@@ -524,28 +512,27 @@ bool Package::shouldBuild(bool locally)
 
 bool Package::prepareBuildDirs()
 {
-	std::string staging_dir = "output/" + this->getNS()->getName() + "/" +
-	    this->name + "/staging";
+	std::string staging_dir =
+	    "output/" + this->getNS()->getName() + "/" + this->name + "/staging";
 	log(this, "Generating staging directory ...");
 
-	{			// Clean out the (new) staging/install directories
+	{ // Clean out the (new) staging/install directories
 		std::string pwd = this->getWorld()->getWorkingDir();
 
-		std::string cmd = "rm -fr " + pwd +
-		    "/output/" + this->getNS()->getName() + "/" + this->name +
-		    "/new/install/*";
+		std::string cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() + "/" +
+		                  this->name + "/new/install/*";
 		std::system(cmd.c_str());
 
-		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() +
-		    "/" + this->name + "/new/staging/*";
+		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
+		      "/new/staging/*";
 		std::system(cmd.c_str());
 
-		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() +
-		    "/" + this->name + "/staging/*";
+		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
+		      "/staging/*";
 		std::system(cmd.c_str());
 	}
 
-	std::list < std::string > *done = new std::list < std::string > ();
+	std::list<std::string> *done = new std::list<std::string>();
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
@@ -569,9 +556,7 @@ bool Package::extractInstallDepends()
 		pc.addArg("-fr");
 		pc.addArg(this->depsExtraction.c_str());
 		if(!pc.Run(this)) {
-			log(this,
-			    "Failed to remove %s (pre-install)",
-			    this->depsExtraction.c_str());
+			log(this, "Failed to remove %s (pre-install)", this->depsExtraction.c_str());
 			return false;
 		}
 	}
@@ -580,12 +565,12 @@ bool Package::extractInstallDepends()
 	filesystem::create_directories(this->depsExtraction);
 
 	log(this, "Extracting installed files from dependencies ...");
-	std::list < std::string > *done = new std::list < std::string > ();
+	std::list<std::string> *done = new std::list<std::string>();
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
 		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done,
-							  !this->depsExtractionDirectOnly))
+		                                          !this->depsExtractionDirectOnly))
 			return false;
 	}
 	delete done;
@@ -599,9 +584,8 @@ bool Package::packageNewStaging()
 	pc.addArg("-x");
 	pc.addArg("cpio");
 	pc.addArg("-wf");
-	std::string arg =
-	    this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
-	    "/staging/" + this->name + ".tar.bz2";
+	std::string arg = this->getWorld()->getWorkingDir() + "/output/" +
+	                  this->getNS()->getName() + "/staging/" + this->name + ".tar.bz2";
 	pc.addArg(arg);
 	pc.addArg(".");
 
@@ -616,8 +600,8 @@ bool Package::packageNewInstall()
 {
 	auto pwd = this->getWorld()->getWorkingDir();
 	if(!this->installFiles.empty()) {
-		std::list < std::string >::iterator it = this->installFiles.begin();
-		std::list < std::string >::iterator end = this->installFiles.end();
+		std::list<std::string>::iterator it = this->installFiles.begin();
+		std::list<std::string>::iterator end = this->installFiles.end();
 		for(; it != end; it++) {
 			log(this, ("Copying " + *it + " to install folder").c_str());
 			PackageCmd pc(this->bd->getNewInstall(), "cp");
@@ -627,8 +611,7 @@ bool Package::packageNewInstall()
 			pc.addArg(arg);
 
 			if(!pc.Run(this)) {
-				log(this, "Failed to copy install file (%s) ",
-				    (*it).c_str());
+				log(this, "Failed to copy install file (%s) ", (*it).c_str());
 				return false;
 			}
 		}
@@ -637,9 +620,8 @@ bool Package::packageNewInstall()
 		pc.addArg("-x");
 		pc.addArg("cpio");
 		pc.addArg("-wf");
-		std::string arg =
-		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name +
-		    ".tar.bz2";
+		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
+		                  this->name + ".tar.bz2";
 		pc.addArg(arg);
 		pc.addArg(".");
 
@@ -707,8 +689,7 @@ bool Package::build(bool locally)
 	dIt = this->dependsStart();
 	for(; dIt != dEnds; dIt++) {
 		if((*dIt)->getLocally()) {
-			log((*dIt)->getPackage(), "Build triggered by %s",
-			    this->getName().c_str());
+			log((*dIt)->getPackage(), "Build triggered by %s", this->getName().c_str());
 			if(!(*dIt)->getPackage()->build(true))
 				return false;
 		}
@@ -739,8 +720,8 @@ bool Package::build(bool locally)
 		return false;
 	}
 
-	std::list < PackageCmd * >::iterator cIt = this->commands.begin();
-	std::list < PackageCmd * >::iterator cEnd = this->commands.end();
+	std::list<PackageCmd *>::iterator cIt = this->commands.begin();
+	std::list<PackageCmd *>::iterator cEnd = this->commands.end();
 
 	log(this, "Running Commands");
 	for(; cIt != cEnd; cIt++) {
@@ -769,11 +750,11 @@ bool Package::build(bool locally)
 
 	log(this, "Built in %d seconds", this->run_secs);
 
-	std::unique_lock<std::mutex> lk (this->lock);
+	std::unique_lock<std::mutex> lk(this->lock);
 	this->building = false;
 	this->built = true;
 	this->was_built = true;
-	lk.unlock ();
+	lk.unlock();
 
 	this->getWorld()->packageFinished(this);
 

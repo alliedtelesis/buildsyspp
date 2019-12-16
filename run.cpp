@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-static bool pipe_data(int fd, Package * P)
+static bool pipe_data(int fd, Package *P)
 {
 	if(!P)
 		return false;
@@ -36,7 +36,7 @@ static bool pipe_data(int fd, Package * P)
 
 	while(1) {
 		cdata = (char *) realloc(cdata, recvd + 2);
-		ssize_t res = read(fd, (void *) ((unsigned long) cdata + recvd), 1);	// Yum Yum Yum
+		ssize_t res = read(fd, (void *) ((unsigned long) cdata + recvd), 1); // Yum Yum Yum
 		if(res <= 0) {
 			if(recvd == 0) {
 				free(cdata);
@@ -68,14 +68,17 @@ static void pipe_data_thread(Package *P, int fd)
 	close(fd);
 }
 
-static void exec_process(const std::string& program, const std::vector<std::string>& args = {},
-						const std::vector<std::string>& env  = {}) {
+static void exec_process(const std::string &program,
+                         const std::vector<std::string> &args = {},
+                         const std::vector<std::string> &env = {})
+{
 	using namespace std::placeholders;
 
-	std::vector < const char * > pargs(args.size());
-	std::vector < const char * > penv(env.size());
+	std::vector<const char *> pargs(args.size());
+	std::vector<const char *> penv(env.size());
 
-	std::transform(args.begin(), args.end(), pargs.begin(), std::bind(&std::string::data, _1));
+	std::transform(args.begin(), args.end(), pargs.begin(),
+	               std::bind(&std::string::data, _1));
 	pargs.push_back(nullptr);
 
 	std::transform(env.begin(), env.end(), penv.begin(), std::bind(&std::string::data, _1));
@@ -84,9 +87,9 @@ static void exec_process(const std::string& program, const std::vector<std::stri
 	execvpe(program.c_str(), (char *const *) pargs.data(), (char *const *) penv.data());
 }
 
-int buildsys::run(Package * P, const std::string & program,
-		  const std::vector < std::string > &argv, const std::string & path,
-		  const std::vector < std::string > &newenvp)
+int buildsys::run(Package *P, const std::string &program,
+                  const std::vector<std::string> &argv, const std::string &path,
+                  const std::vector<std::string> &newenvp)
 {
 #ifdef LOG_COMMANDS
 	log(P, "Running %s", program);
@@ -100,15 +103,15 @@ int buildsys::run(Package * P, const std::string & program,
 			log(P, "pipe() failed: %s", strerror(errno));
 		}
 
-		std::thread thr (pipe_data_thread, P, fds[0]);
-		thr.detach ();
+		std::thread thr(pipe_data_thread, P, fds[0]);
+		thr.detach();
 	}
 	// call the program ...
 	int pid = fork();
-	if(pid < 0) {		// something bad happened ...
+	if(pid < 0) { // something bad happened ...
 		log(P, "fork() failed: %s", strerror(errno));
 		exit(-1);
-	} else if(pid == 0) {	// child process
+	} else if(pid == 0) { // child process
 		if(P->getWorld()->areOutputPrefix()) {
 			close(fds[0]);
 			dup2(fds[1], STDOUT_FILENO);
@@ -130,8 +133,8 @@ int buildsys::run(Package * P, const std::string & program,
 		waitpid(pid, &status, 0);
 		// check return status ...
 		if(WEXITSTATUS(status) < 0) {
-			log(P, "Error Running %s (path = %s, return code = %i)",
-			    program.c_str(), path.c_str(), status);
+			log(P, "Error Running %s (path = %s, return code = %i)", program.c_str(),
+			    path.c_str(), status);
 		}
 		return WEXITSTATUS(status);
 	}

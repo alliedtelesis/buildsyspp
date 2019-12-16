@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -37,8 +37,8 @@ string_list::iterator World::overlaysEnd()
 
 NameSpace *World::findNameSpace(std::string name)
 {
-	std::list < NameSpace * >::iterator iter = this->nameSpacesStart();
-	std::list < NameSpace * >::iterator iterEnd = this->nameSpacesEnd();
+	std::list<NameSpace *>::iterator iter = this->nameSpacesStart();
+	std::list<NameSpace *>::iterator iterEnd = this->nameSpacesEnd();
 	for(; iter != iterEnd; iter++) {
 		if((*iter)->getName().compare(name) == 0)
 			return (*iter);
@@ -59,7 +59,7 @@ bool World::setFeature(std::string key, std::string value, bool override)
 		}
 		return true;
 	}
-	features->insert(std::pair < std::string, std::string > (key, value));
+	features->insert(std::pair<std::string, std::string>(key, value));
 	return true;
 }
 
@@ -86,8 +86,7 @@ bool World::setFeature(char *kv)
 	return true;
 }
 
-
-std::string World::getFeature(const std::string & key)
+std::string World::getFeature(const std::string &key)
 {
 	if(features->find(key) != features->end()) {
 		return (*features)[key];
@@ -116,11 +115,9 @@ static void build_thread(Package *p)
 	try {
 		if(!p->build()) {
 			w->setFailed();
-			log((p->getNS()->getName() + "," + p->getName()).c_str(),
-			    "Building failed");
+			log((p->getNS()->getName() + "," + p->getName()).c_str(), "Building failed");
 		}
-	}
-	catch(Exception & E) {
+	} catch(Exception &E) {
 		error(E.error_msg().c_str());
 		throw E;
 	}
@@ -136,8 +133,7 @@ static void process_package(Package *p, PackageQueue &pq)
 		if(!p->process()) {
 			log(p, "Processing failed");
 		}
-	}
-	catch(Exception & E) {
+	} catch(Exception &E) {
 		log(p, E.error_msg().c_str());
 		throw E;
 	}
@@ -165,14 +161,14 @@ static void process_packages(Package *p)
 		if(toProcess != NULL) {
 			pq.start();
 
-			std::thread thr (process_package, toProcess, std::ref(pq));
-			thr.detach ();
+			std::thread thr(process_package, toProcess, std::ref(pq));
+			thr.detach();
 		}
 		pq.wait();
 	}
 }
 
-bool World::basePackage(const std::string & filename)
+bool World::basePackage(const std::string &filename)
 {
 	// Strip the directory from the base package name
 	char *filename_copy = strdup(filename.c_str());
@@ -185,8 +181,8 @@ bool World::basePackage(const std::string & filename)
 		nsname[p_len - 4] = '\0';
 	}
 
-	this->p = new Package(this->findNameSpace(nsname), pname,
-			      filename_copy, filename_copy, "");
+	this->p =
+	    new Package(this->findNameSpace(nsname), pname, filename_copy, filename_copy, "");
 	free(nsname);
 	free(filename_copy);
 	this->p->setNS(this->p->getNS());
@@ -208,29 +204,29 @@ bool World::basePackage(const std::string & filename)
 
 	this->topo_graph->topological();
 	while(!this->isFailed() && !this->p->isBuilt()) {
-		std::unique_lock<std::mutex> lk (this->cond_lock);
+		std::unique_lock<std::mutex> lk(this->cond_lock);
 		Package *toBuild = NULL;
 		if(this->threads_limit == 0 || this->threads_running < this->threads_limit) {
 			toBuild = this->topo_graph->topoNext();
 		}
 		if(toBuild != NULL) {
 			// If this package is already building then skip it.
-			if (toBuild->isBuilding()) {
+			if(toBuild->isBuilding()) {
 				continue;
 			}
 
 			toBuild->setBuilding();
 			this->threadStarted();
-			std::thread thr (build_thread, toBuild);
-			thr.detach ();
+			std::thread thr(build_thread, toBuild);
+			thr.detach();
 		} else {
-			this->cond.wait (lk);
+			this->cond.wait(lk);
 		}
 	}
 	if(this->areKeepGoing()) {
-		std::unique_lock<std::mutex> lk (this->cond_lock);
+		std::unique_lock<std::mutex> lk(this->cond_lock);
 		while(!this->p->isBuilt() && this->threads_running > 0) {
-			this->cond.wait (lk);
+			this->cond.wait(lk);
 			lk.lock();
 		}
 	}
@@ -249,7 +245,7 @@ bool World::isForced(std::string name)
 	return false;
 }
 
-bool World::populateForcedList(PackageCmd * pc)
+bool World::populateForcedList(PackageCmd *pc)
 {
 	string_list::iterator fIt = this->forcedDeps->begin();
 	string_list::iterator fEnd = this->forcedDeps->end();
@@ -260,12 +256,12 @@ bool World::populateForcedList(PackageCmd * pc)
 	return false;
 }
 
-bool World::packageFinished(Package * p)
+bool World::packageFinished(Package *p)
 {
-	std::unique_lock<std::mutex> lk (this->cond_lock);
+	std::unique_lock<std::mutex> lk(this->cond_lock);
 	this->topo_graph->deleteNode(p);
 	this->topo_graph->topological();
-	this->cond.notify_all ();
+	this->cond.notify_all();
 	return true;
 }
 
@@ -282,8 +278,8 @@ bool World::isIgnoredFeature(std::string feature)
 
 DLObject *World::_findDLObject(std::string fname)
 {
-	std::list < DLObject * >::iterator iter = this->dlobjects->begin();
-	std::list < DLObject * >::iterator iterEnd = this->dlobjects->end();
+	std::list<DLObject *>::iterator iter = this->dlobjects->begin();
+	std::list<DLObject *>::iterator iterEnd = this->dlobjects->end();
 	for(; iter != iterEnd; iter++) {
 		if((*iter)->fileName().compare(fname) == 0)
 			return (*iter);

@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -23,11 +23,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#include "luainterface.h"
 #include <buildsys.h>
 #include <sys/stat.h>
-#include "luainterface.h"
 
-static int li_name(lua_State * L)
+static int li_name(lua_State *L)
 {
 	if(lua_gettop(L) < 0 || lua_gettop(L) > 1) {
 		throw CustomException("name() takes 1 or no argument(s)");
@@ -50,7 +50,7 @@ static int li_name(lua_State * L)
 	return 0;
 }
 
-static int li_feature(lua_State * L)
+static int li_feature(lua_State *L)
 {
 	if(lua_gettop(L) < 1 || lua_gettop(L) > 3) {
 		throw CustomException("feature() takes 1 to 3 arguments");
@@ -64,11 +64,8 @@ static int li_feature(lua_State * L)
 		try {
 			std::string value = P->getFeature(key);
 			lua_pushstring(L, value.c_str());
-			P->buildDescription()->add(new
-						   FeatureValueUnit(P->getWorld(), key,
-								    value));
-		}
-		catch(NoKeyException & E) {
+			P->buildDescription()->add(new FeatureValueUnit(P->getWorld(), key, value));
+		} catch(NoKeyException &E) {
 			lua_pushnil(L);
 			P->buildDescription()->add(new FeatureNilUnit(key));
 		}
@@ -79,9 +76,7 @@ static int li_feature(lua_State * L)
 	if(lua_type(L, 2) != LUA_TSTRING)
 		throw CustomException("Second argument to feature() must be a string");
 	if(lua_gettop(L) == 3 && lua_type(L, 3) != LUA_TBOOLEAN)
-		throw
-		    CustomException
-		    ("Third argument to feature() must be boolean, if present");
+		throw CustomException("Third argument to feature() must be boolean, if present");
 	std::string key(lua_tostring(L, 1));
 	std::string value(lua_tostring(L, 2));
 
@@ -93,8 +88,7 @@ static int li_feature(lua_State * L)
 	return 0;
 }
 
-
-int li_builddir(lua_State * L)
+int li_builddir(lua_State *L)
 {
 	int args = lua_gettop(L);
 	if(args > 1) {
@@ -119,7 +113,7 @@ int li_builddir(lua_State * L)
 	return 1;
 }
 
-int li_intercept(lua_State * L)
+int li_intercept(lua_State *L)
 {
 	Package *P = li_get_package(L);
 
@@ -128,7 +122,7 @@ int li_intercept(lua_State * L)
 	return 0;
 }
 
-int li_keepstaging(lua_State * L)
+int li_keepstaging(lua_State *L)
 {
 	Package *P = li_get_package(L);
 
@@ -137,7 +131,7 @@ int li_keepstaging(lua_State * L)
 	return 0;
 }
 
-static void depend(Package * P, NameSpace * ns, bool locally, const std::string & name)
+static void depend(Package *P, NameSpace *ns, bool locally, const std::string &name)
 {
 	Package *p = NULL;
 	// create the Package
@@ -153,7 +147,7 @@ static void depend(Package * P, NameSpace * ns, bool locally, const std::string 
 	P->depend(new PackageDepend(p, locally));
 }
 
-int li_depend(lua_State * L)
+int li_depend(lua_State *L)
 {
 	if(!(lua_gettop(L) == 1 || lua_gettop(L) == 2)) {
 		throw CustomException("depend() takes 1 argument or 2 arguments");
@@ -166,56 +160,44 @@ int li_depend(lua_State * L)
 	if(lua_type(L, 1) == LUA_TSTRING) {
 		if(lua_gettop(L) == 2) {
 			if(lua_type(L, 2) != LUA_TSTRING) {
-				throw
-				    CustomException
-				    ("depend() takes a string as the second argument");
+				throw CustomException("depend() takes a string as the second argument");
 			}
 			ns = P->getWorld()->findNameSpace(std::string(lua_tostring(L, 2)));
 		}
 		depend(P, ns, false, std::string(lua_tostring(L, 1)));
 	} else if(lua_istable(L, 1)) {
-		std::list < std::string > package_names;
+		std::list<std::string> package_names;
 		bool locally = false;
-		lua_pushnil(L);	/* first key */
+		lua_pushnil(L); /* first key */
 		while(lua_next(L, 1) != 0) {
 			/* uses 'key' (at index -2) and 'value' (at index -1) */
 			if(lua_type(L, -2) != LUA_TSTRING) {
-				throw
-				    CustomException
-				    ("depend() requires a table with strings as keys\n");
+				throw CustomException("depend() requires a table with strings as keys\n");
 			}
 			std::string key(lua_tostring(L, -2));
 			if(key == "package" || key == "packages") {
 				if(lua_type(L, -1) == LUA_TSTRING) {
-					package_names.push_back(std::string(lua_tostring
-									    (L, -1)));
+					package_names.push_back(std::string(lua_tostring(L, -1)));
 				} else if(lua_istable(L, -1)) {
 					lua_pushnil(L);
 					while(lua_next(L, -2) != 0) {
 						if(lua_type(L, -1) != LUA_TSTRING) {
-							throw
-							    CustomException
-							    ("depend() requires a single package name or table of package names\n");
+							throw CustomException("depend() requires a single package "
+							                      "name or table of package names\n");
 						}
-						package_names.push_back(std::string
-									(lua_tostring
-									 (L, -1)));
+						package_names.push_back(std::string(lua_tostring(L, -1)));
 						lua_pop(L, 1);
 					}
 				} else {
-					throw
-					    CustomException
-					    ("depend() requires a single package name or table of package names\n");
+					throw CustomException("depend() requires a single package name or "
+					                      "table of package names\n");
 				}
 			} else if(key == "namespace") {
 				if(lua_type(L, -1) != LUA_TSTRING) {
-					throw
-					    CustomException
-					    ("depend() requires a string for the namespace name\n");
+					throw CustomException(
+					    "depend() requires a string for the namespace name\n");
 				}
-				ns = P->
-				    getWorld()->findNameSpace(std::
-							      string(lua_tostring(L, -1)));
+				ns = P->getWorld()->findNameSpace(std::string(lua_tostring(L, -1)));
 			} else if(key == "locally") {
 				if(lua_type(L, -1) == LUA_TBOOLEAN) {
 					locally = lua_toboolean(L, -1);
@@ -239,7 +221,7 @@ int li_depend(lua_State * L)
 	return 0;
 }
 
-int li_buildlocally(lua_State * L)
+int li_buildlocally(lua_State *L)
 {
 	if(lua_gettop(L) != 0) {
 		throw CustomException("buildlocally() takes no arguments");
@@ -254,8 +236,7 @@ int li_buildlocally(lua_State * L)
 	return 0;
 }
 
-
-int li_hashoutput(lua_State * L)
+int li_hashoutput(lua_State *L)
 {
 	if(lua_gettop(L) != 0) {
 		throw CustomException("buildlocally() takes no arguments");
@@ -273,7 +254,7 @@ int li_hashoutput(lua_State * L)
 	return 0;
 }
 
-int li_require(lua_State * L)
+int li_require(lua_State *L)
 {
 	if(lua_gettop(L) != 1) {
 		throw CustomException("require() takes 1 argument");
@@ -300,7 +281,7 @@ int li_require(lua_State * L)
 	return 0;
 }
 
-bool buildsys::interfaceSetup(Lua * lua)
+bool buildsys::interfaceSetup(Lua *lua)
 {
 	lua->registerFunc("builddir", li_builddir);
 	lua->registerFunc("depend", li_depend);

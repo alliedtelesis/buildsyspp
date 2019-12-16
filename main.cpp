@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -40,7 +40,7 @@ void buildsys::log(const char *package, const char *fmt, ...)
 	free(message);
 }
 
-void buildsys::log(Package * P, const char *fmt, ...)
+void buildsys::log(Package *P, const char *fmt, ...)
 {
 	char *message = NULL;
 	va_list args;
@@ -49,7 +49,7 @@ void buildsys::log(Package * P, const char *fmt, ...)
 	va_end(args);
 
 	fprintf(quietly ? P->getLogFile() : stderr, "%s,%s: %s\n",
-		P->getNS()->getName().c_str(), P->getName().c_str(), message);
+	        P->getNS()->getName().c_str(), P->getName().c_str(), message);
 	free(message);
 }
 
@@ -63,18 +63,17 @@ static inline const char *get_color(const char *mesg)
 	return NULL;
 }
 
-void buildsys::program_output(Package * P, const char *mesg)
+void buildsys::program_output(Package *P, const char *mesg)
 {
 	static int isATTY = isatty(fileno(stdout));
 	const char *color;
 
 	if(!quietly && isATTY && ((color = get_color(mesg)) != NULL))
-		fprintf(stdout, "%s,%s: %s%s%s\n",
-			P->getNS()->getName().c_str(), P->getName().c_str(), color, mesg,
-			COLOR_RESET);
+		fprintf(stdout, "%s,%s: %s%s%s\n", P->getNS()->getName().c_str(),
+		        P->getName().c_str(), color, mesg, COLOR_RESET);
 	else
 		fprintf(quietly ? P->getLogFile() : stdout, "%s,%s: %s\n",
-			P->getNS()->getName().c_str(), P->getName().c_str(), mesg);
+		        P->getNS()->getName().c_str(), P->getName().c_str(), mesg);
 }
 
 int main(int argc, char *argv[])
@@ -103,8 +102,7 @@ int main(int argc, char *argv[])
 	while(a < argc && !foundDashDash) {
 		if(!strcmp(argv[a], "--clean")) {
 			WORLD.setCleaning();
-		} else if(!strcmp(argv[a], "--no-output-prefix")
-			  || !strcmp(argv[a], "--nop")) {
+		} else if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop")) {
 			WORLD.clearOutputPrefix();
 		} else if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
 			WORLD.setFetchFrom(argv[a + 1]);
@@ -180,11 +178,10 @@ int main(int argc, char *argv[])
 	clock_gettime(CLOCK_REALTIME, &end);
 
 	if(end.tv_nsec >= start.tv_nsec)
-		log(argv[1], "Total time: %ds and %dms",
-		    (end.tv_sec - start.tv_sec), (end.tv_nsec - start.tv_nsec) / 1000000);
+		log(argv[1], "Total time: %ds and %dms", (end.tv_sec - start.tv_sec),
+		    (end.tv_nsec - start.tv_nsec) / 1000000);
 	else
-		log(argv[1], "Total time: %ds and %dms",
-		    (end.tv_sec - start.tv_sec - 1),
+		log(argv[1], "Total time: %ds and %dms", (end.tv_sec - start.tv_sec - 1),
 		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
 
 	hash_shutdown();

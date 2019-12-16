@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2015 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -34,12 +34,12 @@ NameSpace::~NameSpace()
 	}
 }
 
-std::list < Package * >::iterator NameSpace::packagesStart()
+std::list<Package *>::iterator NameSpace::packagesStart()
 {
 	return this->packages.begin();
 }
 
-std::list < Package * >::iterator NameSpace::packagesEnd()
+std::list<Package *>::iterator NameSpace::packagesEnd()
 {
 	return this->packages.end();
 }
@@ -58,17 +58,16 @@ std::string NameSpace::getInstallDir()
 	return res.str();
 }
 
-
 Package *NameSpace::findPackage(std::string name)
 {
 	std::string file;
 	std::string file_short;
 	std::string overlay;
 
-	std::unique_lock<std::mutex> lk (this->lock);
+	std::unique_lock<std::mutex> lk(this->lock);
 
-	std::list < Package * >::iterator iter = this->packagesStart();
-	std::list < Package * >::iterator iterEnd = this->packagesEnd();
+	std::list<Package *>::iterator iter = this->packagesStart();
+	std::list<Package *>::iterator iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++) {
 		if((*iter)->getName().compare(name) == 0) {
 			return (*iter);
@@ -89,13 +88,12 @@ Package *NameSpace::findPackage(std::string name)
 			lastPart = strdup(lastPart + 1);
 		}
 
-		std::string relative_fname = string_format("package/%s/%s.lua",
-							   dependPath, lastPart);
+		std::string relative_fname =
+		    string_format("package/%s/%s.lua", dependPath, lastPart);
 		string_list::iterator iter = this->WORLD->overlaysStart();
 		string_list::iterator iterEnd = this->WORLD->overlaysEnd();
 		for(; iter != iterEnd; iter++) {
-			lua_file = string_format("%s/%s", iter->c_str(),
-						 relative_fname.c_str());
+			lua_file = string_format("%s/%s", iter->c_str(), relative_fname.c_str());
 			FILE *f = fopen(lua_file.c_str(), "r");
 			if(f != NULL) {
 				found = true;
@@ -111,7 +109,6 @@ Package *NameSpace::findPackage(std::string name)
 			throw CustomException("Package not found: " + name);
 		}
 
-
 		free(dependPath);
 		free(lastPart);
 
@@ -125,27 +122,27 @@ Package *NameSpace::findPackage(std::string name)
 	return p;
 }
 
-void NameSpace::_addPackage(Package * p)
+void NameSpace::_addPackage(Package *p)
 {
 	this->packages.push_back(p);
 	if(p->getNS() != this)
 		p->setNS(this);
 };
 
-void NameSpace::addPackage(Package * p)
+void NameSpace::addPackage(Package *p)
 {
-	std::unique_lock<std::mutex> lk (this->lock);
+	std::unique_lock<std::mutex> lk(this->lock);
 	this->_addPackage(p);
 }
 
-void NameSpace::_removePackage(Package * p)
+void NameSpace::_removePackage(Package *p)
 {
 	this->packages.remove(p);
 }
 
-void NameSpace::removePackage(Package * p)
+void NameSpace::removePackage(Package *p)
 {
-	std::unique_lock<std::mutex> lk (this->lock);
+	std::unique_lock<std::mutex> lk(this->lock);
 	this->_removePackage(p);
 }
 

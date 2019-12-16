@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2019 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -32,29 +32,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <buildsys.h>
 #include <sys/stat.h>
 
-namespace buildsys {
-	namespace filesystem {
-		void create_directories(const std::string & path) {
-			if (!exists(path)) {
+namespace buildsys
+{
+	namespace filesystem
+	{
+		void create_directories(const std::string &path)
+		{
+			if(!exists(path)) {
 				auto cmd = string_format("mkdir -p %s", path.c_str());
 				auto ret = std::system(cmd.c_str());
 				if(ret != 0) {
-				    throw CustomException("Failed to create directories");
+					throw CustomException("Failed to create directories");
 				}
 			}
 		}
-		void remove_all(const std::string & path) {
+		void remove_all(const std::string &path)
+		{
 			auto cmd = string_format("rm -fr %s", path.c_str());
 			auto ret = std::system(cmd.c_str());
 			if(ret != 0) {
 				throw CustomException("Failed to remove directories");
 			}
 		}
-		bool exists(const std::string & path) {
+		bool exists(const std::string &path)
+		{
 			struct stat buf;
 			return (stat(path.c_str(), &buf) == 0);
 		}
-		bool is_directory(const std::string & path) {
+		bool is_directory(const std::string &path)
+		{
 			struct stat buf;
 			if(stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode)) {
 				return true;

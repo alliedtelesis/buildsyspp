@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2019 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-bool BuildDescription::add(BuildUnit * bu)
+bool BuildDescription::add(BuildUnit *bu)
 {
 	BuildUnit **t = this->BUs;
 	this->BU_count++;
@@ -39,41 +39,40 @@ bool BuildDescription::add(BuildUnit * bu)
 	return true;
 }
 
-PackageFileUnit::PackageFileUnit(const std::string & fname, const std::string & fname_short)
+PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &fname_short)
 {
 	this->uri = fname_short;
 	this->hash = hash_file(fname);
 }
 
-RequireFileUnit::RequireFileUnit(const std::string & fname, const std::string & fname_short)
+RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &fname_short)
 {
 	this->uri = fname_short;
 	this->hash = hash_file(fname);
 }
 
-ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string & fname)
+ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string &fname)
 {
 	this->uri = fname;
 	this->hash = hash_file(fname + ".new");
 }
 
-BuildInfoFileUnit::BuildInfoFileUnit(const std::string & fname, const std::string & hash)
+BuildInfoFileUnit::BuildInfoFileUnit(const std::string &fname, const std::string &hash)
 {
 	this->uri = fname;
 	this->hash = hash;
 }
 
-OutputInfoFileUnit::OutputInfoFileUnit(const std::string & fname)
+OutputInfoFileUnit::OutputInfoFileUnit(const std::string &fname)
 {
 	this->uri = fname;
 	this->hash = hash_file(this->uri);
 }
 
-bool FeatureValueUnit::print(std::ostream & out)
+bool FeatureValueUnit::print(std::ostream &out)
 {
 	if(!this->WORLD->isIgnoredFeature(this->feature)) {
-		out << this->type() << " " << this->
-		    feature << " " << this->value << std::endl;
+		out << this->type() << " " << this->feature << " " << this->value << std::endl;
 	}
 	return true;
 }

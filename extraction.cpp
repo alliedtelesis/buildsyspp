@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2013 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -25,12 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-bool Extraction::add(ExtractionUnit * eu)
+bool Extraction::add(ExtractionUnit *eu)
 {
 	ExtractionUnit **t = this->EUs;
 	this->EU_count++;
-	this->EUs =
-	    (ExtractionUnit **) realloc(t, sizeof(ExtractionUnit *) * this->EU_count);
+	this->EUs = (ExtractionUnit **) realloc(t, sizeof(ExtractionUnit *) * this->EU_count);
 	if(this->EUs == NULL) {
 		this->EUs = t;
 		this->EU_count--;
@@ -40,7 +39,7 @@ bool Extraction::add(ExtractionUnit * eu)
 	return true;
 }
 
-void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
+void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
 {
 	if(this->extracted) {
 		log(P, "Already extracted");
@@ -56,26 +55,25 @@ void Extraction::prepareNewExtractInfo(Package * P, BuildDir * bd)
 	}
 }
 
-bool Extraction::extractionRequired(Package * P, BuildDir * bd)
+bool Extraction::extractionRequired(Package *P, BuildDir *bd)
 {
 	if(this->extracted) {
 		return false;
 	}
 
-	std::string cmd =
-	    string_format("cmp -s %s/.extraction.info.new %s/.extraction.info",
-			  bd->getPath().c_str(), bd->getPath().c_str());
+	std::string cmd = string_format("cmp -s %s/.extraction.info.new %s/.extraction.info",
+	                                bd->getPath().c_str(), bd->getPath().c_str());
 	int res = std::system(cmd.c_str());
 
 	// if there are changes,
-	if(res != 0 || P->isCodeUpdated()) {	// Extract our source code
+	if(res != 0 || P->isCodeUpdated()) { // Extract our source code
 		return true;
 	}
 
 	return false;
 }
 
-bool Extraction::extract(Package * P, BuildDir * bd)
+bool Extraction::extract(Package *P, BuildDir *bd)
 {
 	log(P, "Extracting sources and patching");
 	for(size_t i = 0; i < this->EU_count; i++) {
@@ -91,20 +89,20 @@ bool Extraction::extract(Package * P, BuildDir * bd)
 	return true;
 };
 
-ExtractionInfoFileUnit *Extraction::extractionInfo(Package * P, BuildDir * bd)
+ExtractionInfoFileUnit *Extraction::extractionInfo(Package *P, BuildDir *bd)
 {
 	std::string fname = bd->getShortPath() + "/.extraction.info";
 	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(fname);
 	return ret;
 }
 
-CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit * f)
+CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit *f)
 {
 	this->fetch = f;
 	this->uri = f->relative_path();
 }
 
-CompressedFileExtractionUnit::CompressedFileExtractionUnit(const std::string & fname)
+CompressedFileExtractionUnit::CompressedFileExtractionUnit(const std::string &fname)
 {
 	this->fetch = NULL;
 	this->uri = fname;
@@ -122,8 +120,7 @@ std::string CompressedFileExtractionUnit::HASH()
 	return this->hash;
 };
 
-
-bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
+bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	PackageCmd pc(bd->getPath(), "tar");
 
@@ -138,7 +135,7 @@ bool TarExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
+bool ZipExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	PackageCmd pc(bd->getPath(), "unzip");
 
@@ -153,10 +150,9 @@ bool ZipExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-
-PatchExtractionUnit::PatchExtractionUnit(int level, const std::string & patch_path,
-					 const std::string & patch_fname,
-					 const std::string & fname_short)
+PatchExtractionUnit::PatchExtractionUnit(int level, const std::string &patch_path,
+                                         const std::string &patch_fname,
+                                         const std::string &fname_short)
 {
 	this->uri = patch_fname;
 	this->fname_short = fname_short;
@@ -165,7 +161,7 @@ PatchExtractionUnit::PatchExtractionUnit(int level, const std::string & patch_pa
 	this->patch_path = patch_path;
 }
 
-bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
+bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	PackageCmd pc_dry(this->patch_path.c_str(), "patch");
 	PackageCmd pc(this->patch_path.c_str(), "patch");
@@ -196,15 +192,15 @@ bool PatchExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string & fname,
-					       const std::string & fname_short)
+FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string &fname,
+                                               const std::string &fname_short)
 {
 	this->uri = fname;
 	this->fname_short = fname_short;
 	this->hash = hash_file(this->uri);
 }
 
-bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
+bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	std::string path = this->uri;
 	PackageCmd pc(bd->getPath(), "cp");
@@ -226,9 +222,8 @@ bool FileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(FetchUnit * fetched,
-							     const std::string &
-							     fname_short)
+FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(FetchUnit *fetched,
+                                                             const std::string &fname_short)
 {
 	this->fetched = fetched;
 	this->uri = fetched->relative_path();
@@ -244,7 +239,7 @@ std::string FetchedFileCopyExtractionUnit::HASH()
 	return this->hash;
 }
 
-bool FetchedFileCopyExtractionUnit::extract(Package * P, BuildDir * bd)
+bool FetchedFileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	PackageCmd pc(bd->getPath(), "cp");
 	pc.addArg("-pRLuf");

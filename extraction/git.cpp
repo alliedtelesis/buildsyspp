@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2019 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <buildsys.h>
 
-static bool directory_exists(const std::string & dir)
+static bool directory_exists(const std::string &dir)
 {
 	if(!filesystem::exists(dir)) {
 		/* Nothing here */
@@ -38,13 +38,13 @@ static bool directory_exists(const std::string & dir)
 	return false;
 }
 
-static bool refspec_is_commitid(const std::string & refspec)
+static bool refspec_is_commitid(const std::string &refspec)
 {
 	if(refspec.length() != 40) {
 		return false;
 	}
 
-	for(char const &c:refspec) {
+	for(char const &c : refspec) {
 		if(!isxdigit(c)) {
 			return false;
 		}
@@ -53,7 +53,7 @@ static bool refspec_is_commitid(const std::string & refspec)
 	return true;
 }
 
-static std::string git_hash_ref(const std::string & gdir, const std::string & refspec)
+static std::string git_hash_ref(const std::string &gdir, const std::string &refspec)
 {
 	std::string cmd = "cd " + gdir + " && git rev-parse " + refspec;
 	FILE *f = popen(cmd.c_str(), "r");
@@ -67,12 +67,12 @@ static std::string git_hash_ref(const std::string & gdir, const std::string & re
 	return std::string(commit);
 }
 
-static std::string git_hash(const std::string & gdir)
+static std::string git_hash(const std::string &gdir)
 {
 	return git_hash_ref(gdir, "HEAD");
 }
 
-static std::string git_diff_hash(const std::string & gdir)
+static std::string git_diff_hash(const std::string &gdir)
 {
 	std::string cmd = "cd " + gdir + " && git diff HEAD | sha1sum";
 	FILE *f = popen(cmd.c_str(), "r");
@@ -86,9 +86,10 @@ static std::string git_diff_hash(const std::string & gdir)
 	return std::string(delta_hash);
 }
 
-static std::string git_remote(const std::string & gdir, const std::string & remote)
+static std::string git_remote(const std::string &gdir, const std::string &remote)
 {
-	std::string cmd = "cd " + gdir + " && git config --local --get remote." + remote + ".url";
+	std::string cmd =
+	    "cd " + gdir + " && git config --local --get remote." + remote + ".url";
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == NULL) {
 		throw CustomException("git config --local --get remote. .url failed");
@@ -100,8 +101,8 @@ static std::string git_remote(const std::string & gdir, const std::string & remo
 	return std::string(output);
 }
 
-GitDirExtractionUnit::GitDirExtractionUnit(const std::string & git_dir,
-					   const std::string & to_dir)
+GitDirExtractionUnit::GitDirExtractionUnit(const std::string &git_dir,
+                                           const std::string &to_dir)
 {
 	this->uri = git_dir;
 	this->hash = git_hash(this->uri);
@@ -119,8 +120,8 @@ bool GitDirExtractionUnit::isDirty()
 		return false;
 	}
 
-	std::string cmd = string_format("cd %s && git diff --quiet HEAD",
-					this->localPath().c_str());
+	std::string cmd =
+	    string_format("cd %s && git diff --quiet HEAD", this->localPath().c_str());
 	int res = std::system(cmd.c_str());
 	return (res != 0);
 }
@@ -130,8 +131,8 @@ std::string GitDirExtractionUnit::dirtyHash()
 	return git_diff_hash(this->localPath());
 }
 
-GitExtractionUnit::GitExtractionUnit(const std::string & remote, const std::string & local,
-				     std::string refspec, Package * P)
+GitExtractionUnit::GitExtractionUnit(const std::string &remote, const std::string &local,
+                                     std::string refspec, Package *P)
 {
 	this->uri = remote;
 	this->local = P->getWorld()->getWorkingDir() + "/source/" + local;
@@ -173,7 +174,7 @@ bool GitExtractionUnit::updateOrigin()
 	return true;
 }
 
-bool GitExtractionUnit::fetch(BuildDir * d)
+bool GitExtractionUnit::fetch(BuildDir *d)
 {
 	std::string location = this->uri;
 	std::string source_dir = this->local;
@@ -188,8 +189,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 		this->updateOrigin();
 		/* Check if the commit is already present */
 		std::string cmd =
-		    "cd " + source_dir + "; git cat-file -e " + this->refspec +
-		    " 2>/dev/null";
+		    "cd " + source_dir + "; git cat-file -e " + this->refspec + " 2>/dev/null";
 		if(std::system(cmd.c_str()) != 0) {
 			/* If not, fetch everything from origin */
 			pc.addArg("fetch");
@@ -211,17 +211,14 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 	if(this->refspec.compare("HEAD") == 0) {
 		// Don't touch it
 	} else {
-		std::string cmd =
-		    "cd " + source_dir +
-		    "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
+		std::string cmd = "cd " + source_dir +
+		                  "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
 		if(std::system(cmd.c_str()) == 0) {
 			std::string head_hash = git_hash_ref(source_dir, "HEAD");
 			std::string branch_hash = git_hash_ref(source_dir, this->refspec);
 			if(head_hash != branch_hash) {
-				throw CustomException("Asked to use branch: " +
-						      this->refspec + ", but " +
-						      source_dir +
-						      " is off somewhere else");
+				throw CustomException("Asked to use branch: " + this->refspec + ", but " +
+				                      source_dir + " is off somewhere else");
 			}
 		} else {
 			pc = PackageCmd(source_dir.c_str(), "git");
@@ -240,8 +237,7 @@ bool GitExtractionUnit::fetch(BuildDir * d)
 
 	if(!this->hash.empty()) {
 		if(this->hash != hash) {
-			log(this->P,
-			    "Hash mismatch for %s\n(committed to %s, providing %s)\n",
+			log(this->P, "Hash mismatch for %s\n(committed to %s, providing %s)\n",
 			    this->uri.c_str(), this->hash.c_str(), hash.c_str());
 			res = false;
 		}
@@ -259,8 +255,8 @@ std::string GitExtractionUnit::HASH()
 	if(refspec_is_commitid(this->refspec)) {
 		this->hash = std::string(this->refspec);
 	} else {
-		std::string digest_name = string_format("%s#%s", this->uri.c_str(),
-							this->refspec.c_str());
+		std::string digest_name =
+		    string_format("%s#%s", this->uri.c_str(), this->refspec.c_str());
 		/* Check if the package contains pre-computed hashes */
 		std::string Hash = P->getFileHash(digest_name);
 		if(Hash.empty()) {
@@ -272,7 +268,7 @@ std::string GitExtractionUnit::HASH()
 	return this->hash;
 }
 
-bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
+bool GitExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	// make sure it has been fetched
 	if(!this->fetched) {
@@ -291,7 +287,7 @@ bool GitExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
+bool LinkGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	PackageCmd pc(bd->getPath(), "ln");
 
@@ -312,7 +308,7 @@ bool LinkGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
 	return true;
 }
 
-bool CopyGitDirExtractionUnit::extract(Package * P, BuildDir * bd)
+bool CopyGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 {
 	PackageCmd pc(bd->getPath(), "cp");
 	pc.addArg("-dpRuf");

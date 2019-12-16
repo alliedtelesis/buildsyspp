@@ -23,10 +23,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include <buildsys.h>
 #include "luainterface.h"
+#include <buildsys.h>
 
-int li_fu_path(lua_State * L)
+int li_fu_path(lua_State *L)
 {
 	if(!lua_istable(L, 1))
 		throw CustomException("fetch() must be called using : not .");

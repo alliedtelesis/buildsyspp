@@ -1,6 +1,6 @@
 /******************************************************************************
  Copyright 2016 Allied Telesis Labs Ltd. All rights reserved.
- 
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
@@ -58,8 +58,7 @@ std::string DownloadFetch::final_name()
 	return ret;
 }
 
-
-bool DownloadFetch::fetch(BuildDir * d)
+bool DownloadFetch::fetch(BuildDir *d)
 {
 	filesystem::create_directories("dl");
 
@@ -77,24 +76,22 @@ bool DownloadFetch::fetch(BuildDir * d)
 		return false;
 	}
 
-	std::unique_lock<std::mutex> lk (dlobj->getLock ());
+	std::unique_lock<std::mutex> lk(dlobj->getLock());
 
 	if(this->hash.length() != 0) {
 		if(dlobj->HASH().length() != 0) {
 			if(dlobj->HASH().compare(this->hash) != 0) {
-				log(this->P,
-				    "Another package has already downloaded %s with hash %s (but we need %s)\n",
-				    fullname.c_str(), dlobj->HASH().c_str(),
-				    this->hash.c_str());
+				log(this->P, "Another package has already downloaded %s with hash %s (but "
+				             "we need %s)\n",
+				    fullname.c_str(), dlobj->HASH().c_str(), this->hash.c_str());
 				return false;
 			}
 		}
 	}
 
 	{
-		std::string fpath = string_format("%s/dl/%s",
-						  d->getWorld()->getWorkingDir().c_str(),
-						  fname.c_str());
+		std::string fpath = string_format(
+		    "%s/dl/%s", d->getWorld()->getWorkingDir().c_str(), fname.c_str());
 		FILE *f = fopen(fpath.c_str(), "r");
 		if(f == NULL) {
 			get = true;
@@ -105,18 +102,16 @@ bool DownloadFetch::fetch(BuildDir * d)
 
 	if(get) {
 		bool localCacheHit = false;
-		//Attempt to get file from local tarball cache if one is configured.
+		// Attempt to get file from local tarball cache if one is configured.
 		if(d->getWorld()->haveTarballCache()) {
 			PackageCmd pc("dl", "wget");
-			std::string url = string_format("%s/%s",
-							d->getWorld()->
-							tarballCache().c_str(),
-							fname.c_str());
+			std::string url = string_format("%s/%s", d->getWorld()->tarballCache().c_str(),
+			                                fname.c_str());
 			pc.addArg(url);
 			pc.addArg("-O" + fullname);
 			localCacheHit = pc.Run(this->P);
 		}
-		//If we didn't get the file from the local cache, look upstream.
+		// If we didn't get the file from the local cache, look upstream.
 		if(!localCacheHit) {
 			PackageCmd pc("dl", "wget");
 			pc.addArg(this->fetch_uri.c_str());
@@ -148,14 +143,12 @@ bool DownloadFetch::fetch(BuildDir * d)
 	bool ret = true;
 
 	if(this->hash.length() != 0) {
-		std::string fpath = string_format("%s/dl/%s",
-						  d->getWorld()->getWorkingDir().c_str(),
-						  this->final_name().c_str());
+		std::string fpath = string_format(
+		    "%s/dl/%s", d->getWorld()->getWorkingDir().c_str(), this->final_name().c_str());
 		std::string hash = hash_file(fpath);
 
 		if(strcmp(this->hash.c_str(), hash.c_str()) != 0) {
-			log(this->P,
-			    "Hash mismatched for %s\n(committed to %s, providing %s)",
+			log(this->P, "Hash mismatched for %s\n(committed to %s, providing %s)",
 			    this->final_name().c_str(), this->hash.c_str(), hash.c_str());
 			ret = false;
 		}
@@ -163,7 +156,6 @@ bool DownloadFetch::fetch(BuildDir * d)
 
 	return ret;
 }
-
 
 std::string DownloadFetch::HASH()
 {
@@ -179,7 +171,7 @@ std::string DownloadFetch::HASH()
 	return this->hash;
 }
 
-bool LinkFetch::fetch(BuildDir * d)
+bool LinkFetch::fetch(BuildDir *d)
 {
 	PackageCmd pc(d->getPath(), "ln");
 	pc.addArg("-sf");
@@ -200,13 +192,11 @@ bool LinkFetch::fetch(BuildDir * d)
 		rmpc.addArg(l2);
 		free(l_copy);
 		if(!rmpc.Run(this->P))
-			throw
-			    CustomException
-			    ("Failed to ln (symbolically), could not remove target first");
+			throw CustomException(
+			    "Failed to ln (symbolically), could not remove target first");
 		if(!pc.Run(this->P))
-			throw
-			    CustomException
-			    ("Failed to ln (symbolically), even after removing target first");
+			throw CustomException(
+			    "Failed to ln (symbolically), even after removing target first");
 	}
 	return true;
 }
@@ -230,7 +220,7 @@ std::string LinkFetch::relative_path()
 	return path;
 }
 
-bool CopyFetch::fetch(BuildDir * d)
+bool CopyFetch::fetch(BuildDir *d)
 {
 	PackageCmd pc(d->getPath(), "cp");
 	pc.addArg("-dpRuf");
@@ -263,8 +253,7 @@ std::string CopyFetch::relative_path()
 	return path;
 }
 
-
-bool Fetch::add(FetchUnit * fu)
+bool Fetch::add(FetchUnit *fu)
 {
 	FetchUnit **t = this->FUs;
 	this->FU_count++;

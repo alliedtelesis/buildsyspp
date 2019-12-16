@@ -1,0 +1,18 @@
+---
+AccessModifierOffset: '-4'
+AllowShortBlocksOnASingleLine: 'false'
+AllowShortCaseLabelsOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: 'false'
+AlwaysBreakAfterReturnType: None
+BreakBeforeBraces: Linux
+ColumnLimit: '92'
+IndentCaseLabels: 'false'
+IndentWidth: '4'
+SpaceAfterCStyleCast: 'true'
+SpaceBeforeParens: Never
+Standard: Cpp11
+UseTab: ForIndentation
+TabWidth: '4'
+NamespaceIndentation: All
+...
+
