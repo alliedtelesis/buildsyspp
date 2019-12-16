@@ -67,5 +67,5 @@ namespace buildsys
 			}
 			return false;
 		}
-	}
-}
+	} // namespace filesystem
+} // namespace buildsys

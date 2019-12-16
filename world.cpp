@@ -127,7 +127,7 @@ static void build_thread(Package *p)
 	    "Finished (%i others running)", w->threadsRunning());
 }
 
-static void process_package(Package *p, PackageQueue &pq)
+static void process_package(Package *p, PackageQueue *pq)
 {
 	try {
 		if(!p->process()) {
@@ -144,11 +144,11 @@ static void process_package(Package *p, PackageQueue &pq)
 	for(; iter != end; iter++) {
 		Package *dp = (*iter)->getPackage();
 		if(dp->setProcessingQueued()) {
-			pq.push(dp);
+			pq->push(dp);
 		}
 	}
 
-	pq.finish();
+	pq->finish();
 }
 
 static void process_packages(Package *p)
@@ -161,7 +161,7 @@ static void process_packages(Package *p)
 		if(toProcess != NULL) {
 			pq.start();
 
-			std::thread thr(process_package, toProcess, std::ref(pq));
+			std::thread thr(process_package, toProcess, &pq);
 			thr.detach();
 		}
 		pq.wait();

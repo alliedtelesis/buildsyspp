@@ -37,7 +37,9 @@ public:
 	//! Construct a property writer
 	/** \param _name the mapping from vertices/edges to objects
 	  */
-	graphnode_property_writer(Name _name) : names(_name){};
+	explicit graphnode_property_writer(Name _name) : names(_name)
+	{
+	}
 	//! The outputting function
 	/** Gets the given vertex or edge label
 	  * \param out The stream to write the data to

@@ -33,7 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
+#include <vector>
 
 extern "C" {
 #include <lauxlib.h>
@@ -148,7 +150,9 @@ namespace buildsys
 		/** Construct an exception with a specific error message
 		 *  \param err The erorr message
 		 */
-		CustomException(std::string err) : errmsg(err){};
+		explicit CustomException(std::string err) : errmsg(err)
+		{
+		}
 		virtual std::string error_msg()
 		{
 			return errmsg;
@@ -268,8 +272,12 @@ namespace buildsys
 	private:
 	public:
 		//! Create a directory
-		Dir(){};
-		virtual ~Dir(){};
+		Dir()
+		{
+		}
+		virtual ~Dir()
+		{
+		}
 		//! Set this as a Dir for lua
 		static void lua_table_r(lua_State *L)
 		{
@@ -303,8 +311,10 @@ namespace buildsys
 		/** Create a build directory
 		 *  \param P The package this directory is for
 		 */
-		BuildDir(Package *P);
-		~BuildDir(){};
+		explicit BuildDir(Package *P);
+		~BuildDir()
+		{
+		}
 		//! Return the full path to this directory
 		const std::string &getPath()
 		{
@@ -431,7 +441,7 @@ namespace buildsys
 		mutable std::mutex lock;
 
 	public:
-		DLObject(std::string filename) : filename(filename)
+		explicit DLObject(std::string filename) : filename(filename)
 		{
 		}
 		std::string fileName()
@@ -458,7 +468,9 @@ namespace buildsys
 	class HashableUnit
 	{
 	public:
-		HashableUnit(){};
+		HashableUnit()
+		{
+		}
 		virtual std::string HASH() = 0;
 	};
 
@@ -473,9 +485,15 @@ namespace buildsys
 		bool fetched;
 
 	public:
-		FetchUnit(std::string uri, Package *P) : fetch_uri(uri), P(P){};
-		FetchUnit(){};
-		virtual ~FetchUnit(){};
+		FetchUnit(std::string uri, Package *P) : fetch_uri(uri), P(P)
+		{
+		}
+		FetchUnit()
+		{
+		}
+		virtual ~FetchUnit()
+		{
+		}
 		virtual bool fetch(BuildDir *d) = 0;
 		virtual bool force_updated()
 		{
@@ -506,7 +524,9 @@ namespace buildsys
 
 	public:
 		DownloadFetch(std::string uri, bool decompress, std::string filename, Package *P)
-		    : FetchUnit(uri, P), decompress(decompress), filename(filename){};
+		    : FetchUnit(uri, P), decompress(decompress), filename(filename)
+		{
+		}
 		virtual bool fetch(BuildDir *d);
 		virtual std::string HASH();
 		virtual std::string relative_path()
@@ -520,7 +540,9 @@ namespace buildsys
 	class LinkFetch : public FetchUnit
 	{
 	public:
-		LinkFetch(std::string uri, Package *P) : FetchUnit(uri, P){};
+		LinkFetch(std::string uri, Package *P) : FetchUnit(uri, P)
+		{
+		}
 		virtual bool fetch(BuildDir *d);
 		virtual bool force_updated()
 		{
@@ -535,7 +557,9 @@ namespace buildsys
 	class CopyFetch : public FetchUnit
 	{
 	public:
-		CopyFetch(std::string uri, Package *P) : FetchUnit(uri, P){};
+		CopyFetch(std::string uri, Package *P) : FetchUnit(uri, P)
+		{
+		}
 		virtual bool fetch(BuildDir *d);
 		virtual bool force_updated()
 		{
@@ -554,8 +578,12 @@ namespace buildsys
 		std::string uri;  //!< URI of this unit
 		std::string hash; //!< Hash of this unit
 	public:
-		ExtractionUnit() : uri(std::string()), hash(std::string()){};
-		virtual ~ExtractionUnit(){};
+		ExtractionUnit() : uri(std::string()), hash(std::string())
+		{
+		}
+		virtual ~ExtractionUnit()
+		{
+		}
 		virtual bool print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 		virtual bool extract(Package *P, BuildDir *b) = 0;
@@ -575,8 +603,12 @@ namespace buildsys
 	class BuildUnit
 	{
 	public:
-		BuildUnit(){};
-		virtual ~BuildUnit(){};
+		BuildUnit()
+		{
+		}
+		virtual ~BuildUnit()
+		{
+		}
 		virtual bool print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 	};
@@ -588,8 +620,8 @@ namespace buildsys
 		FetchUnit *fetch;
 
 	public:
-		CompressedFileExtractionUnit(const std::string &fname);
-		CompressedFileExtractionUnit(FetchUnit *f);
+		explicit CompressedFileExtractionUnit(const std::string &fname);
+		explicit CompressedFileExtractionUnit(FetchUnit *f);
 		virtual std::string HASH();
 		virtual bool print(std::ostream &out)
 		{
@@ -603,9 +635,14 @@ namespace buildsys
 	{
 	public:
 		//! Create an extraction unit for a tar file
-		TarExtractionUnit(const std::string &fname) : CompressedFileExtractionUnit(fname){};
+		explicit TarExtractionUnit(const std::string &fname)
+		    : CompressedFileExtractionUnit(fname)
+		{
+		}
 		//! Create an extraction unit for tar file from a fetch unit
-		TarExtractionUnit(FetchUnit *f) : CompressedFileExtractionUnit(f){};
+		explicit TarExtractionUnit(FetchUnit *f) : CompressedFileExtractionUnit(f)
+		{
+		}
 		virtual std::string type()
 		{
 			return std::string("TarFile");
@@ -617,8 +654,13 @@ namespace buildsys
 	{
 	public:
 		//! Create an extraction unit for a tar file
-		ZipExtractionUnit(const std::string &fname) : CompressedFileExtractionUnit(fname){};
-		ZipExtractionUnit(FetchUnit *f) : CompressedFileExtractionUnit(f){};
+		explicit ZipExtractionUnit(const std::string &fname)
+		    : CompressedFileExtractionUnit(fname)
+		{
+		}
+		explicit ZipExtractionUnit(FetchUnit *f) : CompressedFileExtractionUnit(f)
+		{
+		}
 		virtual std::string type()
 		{
 			return std::string("ZipFile");
@@ -637,7 +679,9 @@ namespace buildsys
 	public:
 		PatchExtractionUnit(int level, const std::string &patch_path,
 		                    const std::string &patch_fname, const std::string &fname_short);
-		virtual ~PatchExtractionUnit(){};
+		virtual ~PatchExtractionUnit()
+		{
+		}
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->level << " " << this->patch_path << " "
@@ -730,7 +774,9 @@ namespace buildsys
 	{
 	public:
 		LinkGitDirExtractionUnit(const std::string &git_dir, const std::string &to_dir)
-		    : GitDirExtractionUnit(git_dir, to_dir){};
+		    : GitDirExtractionUnit(git_dir, to_dir)
+		{
+		}
 		virtual bool extract(Package *P, BuildDir *bd);
 		virtual std::string modeName()
 		{
@@ -743,7 +789,9 @@ namespace buildsys
 	{
 	public:
 		CopyGitDirExtractionUnit(const std::string &git_dir, const std::string &to_dir)
-		    : GitDirExtractionUnit(git_dir, to_dir){};
+		    : GitDirExtractionUnit(git_dir, to_dir)
+		{
+		}
 		virtual bool extract(Package *P, BuildDir *bd);
 		virtual std::string modeName()
 		{
@@ -789,7 +837,9 @@ namespace buildsys
 
 	public:
 		FeatureValueUnit(World *WORLD, const std::string &feature, const std::string &value)
-		    : feature(feature), value(value), WORLD(WORLD){};
+		    : feature(feature), value(value), WORLD(WORLD)
+		{
+		}
 		virtual bool print(std::ostream &out);
 		virtual std::string type()
 		{
@@ -804,7 +854,9 @@ namespace buildsys
 		std::string feature;
 
 	public:
-		FeatureNilUnit(const std::string &feature) : feature(feature){};
+		explicit FeatureNilUnit(const std::string &feature) : feature(feature)
+		{
+		}
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->feature << std::endl;
@@ -861,7 +913,7 @@ namespace buildsys
 		std::string uri;  //!< URI of this extraction info file
 		std::string hash; //!< Hash of this extraction info file
 	public:
-		ExtractionInfoFileUnit(const std::string &fname);
+		explicit ExtractionInfoFileUnit(const std::string &fname);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
@@ -899,7 +951,7 @@ namespace buildsys
 		std::string uri;  //!< URI of this output info file
 		std::string hash; //!< Hash of this output info file
 	public:
-		OutputInfoFileUnit(const std::string &fname);
+		explicit OutputInfoFileUnit(const std::string &fname);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
@@ -922,7 +974,9 @@ namespace buildsys
 		size_t FU_count;
 
 	public:
-		Fetch() : FUs(NULL), FU_count(0){};
+		Fetch() : FUs(NULL), FU_count(0)
+		{
+		}
 		~Fetch()
 		{
 			for(size_t i = 0; i < this->FU_count; i++) {
@@ -953,7 +1007,9 @@ namespace buildsys
 		bool extracted;
 
 	public:
-		Extraction() : EUs(NULL), EU_count(0), extracted(false){};
+		Extraction() : EUs(NULL), EU_count(0), extracted(false)
+		{
+		}
 		~Extraction()
 		{
 			for(size_t i = 0; i < this->EU_count; i++) {
@@ -986,7 +1042,9 @@ namespace buildsys
 		size_t BU_count;
 
 	public:
-		BuildDescription() : BUs(NULL), BU_count(0){};
+		BuildDescription() : BUs(NULL), BU_count(0)
+		{
+		}
 		~BuildDescription()
 		{
 			for(size_t i = 0; i < this->BU_count; i++) {
@@ -1017,7 +1075,9 @@ namespace buildsys
 		World *WORLD;
 
 	public:
-		NameSpace(World *W, std::string name) : name(name), WORLD(W){};
+		NameSpace(World *W, std::string name) : name(name), WORLD(W)
+		{
+		}
 		~NameSpace();
 		std::string getName()
 		{
@@ -1044,8 +1104,12 @@ namespace buildsys
 
 	public:
 		//! Create a package dependency
-		PackageDepend(Package *p, bool locally) : p(p), locally(locally){};
-		~PackageDepend(){};
+		PackageDepend(Package *p, bool locally) : p(p), locally(locally)
+		{
+		}
+		~PackageDepend()
+		{
+		}
 		//! Get the package
 		Package *getPackage()
 		{
@@ -1144,8 +1208,9 @@ namespace buildsys
 		      lua(new Lua()), intercept(false), depsExtraction(""),
 		      depsExtractionDirectOnly(false), visiting(false), processing_queued(false),
 		      buildInfoPrepared(false), codeUpdated(false), no_fetch_from(false),
-		      hash_output(false), suppress_remove_staging(false), run_secs(0),
-		      logFile(NULL){};
+		      hash_output(false), suppress_remove_staging(false), run_secs(0), logFile(NULL)
+		{
+		}
 		~Package()
 		{
 			while(!this->depends.empty()) {
@@ -1382,7 +1447,7 @@ namespace buildsys
 
 	public:
 		//! Create an Internal_Graph
-		Internal_Graph(World *W);
+		explicit Internal_Graph(World *W);
 		~Internal_Graph();
 		//! Output the graph to dependencies.dot
 		void output();
@@ -1404,8 +1469,12 @@ namespace buildsys
 		int finished;
 
 	public:
-		PackageQueue() : started(0), finished(0){};
-		~PackageQueue(){};
+		PackageQueue() : started(0), finished(0)
+		{
+		}
+		~PackageQueue()
+		{
+		}
 		void start()
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
@@ -1480,7 +1549,7 @@ namespace buildsys
 		DLObject *_findDLObject(std::string);
 
 	public:
-		World(char *bsapp)
+		explicit World(char *bsapp)
 		    : bsapp(std::string(bsapp)), features(new key_value()),
 		      forcedDeps(new string_list()), namespaces(new std::list<NameSpace *>()),
 		      dlobjects(new std::list<DLObject *>()), overlays(new string_list()),
@@ -1739,7 +1808,7 @@ namespace buildsys
 		{
 			if(this->graph != NULL) {
 				graph->output();
-			};
+			}
 			return true;
 		};
 		//! populate the arguments list with out forced build list
@@ -1755,7 +1824,7 @@ namespace buildsys
 	void hash_setup(void);
 	std::string hash_file(const std::string &fname);
 	void hash_shutdown(void);
-};
+}; // namespace buildsys
 
 using namespace buildsys;
 
