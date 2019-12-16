@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * available.
  */
 
-#include <buildsys.h>
+#include "include/buildsys.h"
 #include <sys/stat.h>
 
 namespace buildsys

@@ -23,8 +23,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include "luainterface.h"
-#include <buildsys.h>
+#include "include/buildsys.h"
+#include "interface/luainterface.h"
 
 static std::string absolute_path(BuildDir *d, const std::string &dir, bool allowDL = false)
 {

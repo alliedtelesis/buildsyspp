@@ -23,7 +23,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include <buildsys.h>
+#include "include/buildsys.h"
 
 //! Used to print out the names of packages in the dependency graph
 /** Allows a package to print any information it likes for its label

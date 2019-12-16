@@ -23,8 +23,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include <buildsys.h>
-#include <color.h>
+#include "include/buildsys.h"
+#include "include/color.h"
 
 static bool quietly = false;
 

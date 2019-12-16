@@ -23,6 +23,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#ifndef INCLUDE_BUILDSYS_H_
+#define INCLUDE_BUILDSYS_H_
+
 #include <atomic>
 #include <condition_variable>
 #include <iostream>
@@ -59,8 +62,8 @@ extern "C" {
 #include <boost/property_map/property_map.hpp>
 #include <boost/utility.hpp>
 
-#include "filesystem.h"
-#include "string_format.tcc"
+#include "include/filesystem.h"
+#include "include/string_format.tcc"
 
 using namespace boost;
 
@@ -1755,3 +1758,5 @@ namespace buildsys
 };
 
 using namespace buildsys;
+
+#endif // INCLUDE_BUILDSYS_H_

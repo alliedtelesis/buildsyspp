@@ -23,8 +23,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include "luainterface.h"
-#include <buildsys.h>
+#include "include/buildsys.h"
+#include "interface/luainterface.h"
 #include <sys/stat.h>
 
 static int li_name(lua_State *L)
