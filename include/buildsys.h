@@ -1805,7 +1805,7 @@ namespace buildsys
 	bool interfaceSetup(Lua *lua);
 	void log(const char *package, const char *fmt, ...);
 	void log(Package *P, const char *fmt, ...);
-	void program_output(Package *P, const char *mesg);
+	void program_output(Package *P, const std::string &mesg);
 	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
 	        const std::string &path, const std::vector<std::string> &newenvp);
 

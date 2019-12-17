@@ -25,46 +25,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-static bool pipe_data(int fd, Package *P)
+static void pipe_data(int fd, Package *P)
 {
-	if(!P)
-		return false;
+	if(!P) {
+		return;
+	}
 
 	// get the data until there is a breakchar ...
-	char *cdata = NULL;
-	size_t recvd = 0;
+	std::string recv_buf;
+	char recv_byte;
 
 	while(1) {
-		cdata = (char *) realloc(cdata, recvd + 2);
-		ssize_t res = read(fd, (void *) ((unsigned long) cdata + recvd), 1); // Yum Yum Yum
+		ssize_t res = read(fd, reinterpret_cast<void *>(&recv_byte), 1);
 		if(res <= 0) {
-			if(recvd == 0) {
-				free(cdata);
-				return false;
+			if(recv_buf.size()) {
+				program_output(P, recv_buf);
 			}
 			break;
 		} else {
-			recvd++;
-			if(cdata[recvd - 1] == '\n') {
-				cdata[recvd - 1] = '\0';
-				break;
+			if(recv_byte == '\n') {
+				recv_buf.push_back('\0');
+				// Print the line, clear the string and start again
+				program_output(P, recv_buf);
+				recv_buf.clear();
+			} else {
+				recv_buf.push_back(recv_byte);
 			}
 		}
 	}
-	if(cdata != NULL) {
-		if(recvd != 0) {
-			program_output(P, cdata);
-		}
-		free(cdata);
-	}
-	return true;
 }
 
 static void pipe_data_thread(Package *P, int fd)
 {
-	while(pipe_data(fd, P)) {
-		// do nothing
-	}
+	pipe_data(fd, P);
 	close(fd);
 }
 

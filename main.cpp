@@ -63,17 +63,17 @@ static inline const char *get_color(const char *mesg)
 	return NULL;
 }
 
-void buildsys::program_output(Package *P, const char *mesg)
+void buildsys::program_output(Package *P, const std::string &mesg)
 {
 	static int isATTY = isatty(fileno(stdout));
 	const char *color;
 
-	if(!quietly && isATTY && ((color = get_color(mesg)) != NULL))
+	if(!quietly && isATTY && ((color = get_color(mesg.c_str())) != NULL))
 		fprintf(stdout, "%s,%s: %s%s%s\n", P->getNS()->getName().c_str(),
-		        P->getName().c_str(), color, mesg, COLOR_RESET);
+		        P->getName().c_str(), color, mesg.c_str(), COLOR_RESET);
 	else
 		fprintf(quietly ? P->getLogFile() : stdout, "%s,%s: %s\n",
-		        P->getNS()->getName().c_str(), P->getName().c_str(), mesg);
+		        P->getNS()->getName().c_str(), P->getName().c_str(), mesg.c_str());
 }
 
 int main(int argc, char *argv[])
