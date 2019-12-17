@@ -65,13 +65,12 @@ std::string buildsys::hash_file(const std::string &fname)
 	EVP_DigestFinal_ex(mdctx, md_value, &md_len);
 	EVP_MD_CTX_destroy(mdctx);
 
-	char *str_res = (char *) calloc(1, (md_len * 2) + 1);
+	std::stringstream ss;
+
 	for(unsigned int i = 0; i < md_len; i++) {
-		sprintf(&str_res[i * 2], "%02x", md_value[i]);
+		ss << std::hex << std::setfill('0') << std::setw(2)
+		   << static_cast<int>(md_value[i]);
 	}
 
-	std::string res = std::string(str_res);
-	free(str_res);
-
-	return res;
+	return ss.str();
 }
