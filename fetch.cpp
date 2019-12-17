@@ -253,16 +253,7 @@ std::string CopyFetch::relative_path()
 	return path;
 }
 
-bool Fetch::add(FetchUnit *fu)
+void Fetch::add(FetchUnit *fu)
 {
-	FetchUnit **t = this->FUs;
-	this->FU_count++;
-	this->FUs = (FetchUnit **) realloc(t, sizeof(FetchUnit *) * this->FU_count);
-	if(this->FUs == NULL) {
-		this->FUs = t;
-		this->FU_count--;
-		return false;
-	}
-	this->FUs[this->FU_count - 1] = fu;
-	return true;
+	this->FUs.push_back(fu);
 }

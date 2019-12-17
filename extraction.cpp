@@ -25,18 +25,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-bool Extraction::add(ExtractionUnit *eu)
+void Extraction::add(ExtractionUnit *eu)
 {
-	ExtractionUnit **t = this->EUs;
-	this->EU_count++;
-	this->EUs = (ExtractionUnit **) realloc(t, sizeof(ExtractionUnit *) * this->EU_count);
-	if(this->EUs == NULL) {
-		this->EUs = t;
-		this->EU_count--;
-		return false;
-	}
-	this->EUs[this->EU_count - 1] = eu;
-	return true;
+	this->EUs.push_back(eu);
 }
 
 void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
@@ -76,9 +67,10 @@ bool Extraction::extractionRequired(Package *P, BuildDir *bd)
 bool Extraction::extract(Package *P, BuildDir *bd)
 {
 	log(P, "Extracting sources and patching");
-	for(size_t i = 0; i < this->EU_count; i++) {
-		if(!EUs[i]->extract(P, bd))
+	for(auto unit : this->EUs) {
+		if(!unit->extract(P, bd)) {
 			return false;
+		}
 	}
 
 	// mv the file into the regular place

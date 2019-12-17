@@ -970,25 +970,20 @@ namespace buildsys
 	class Fetch
 	{
 	private:
-		FetchUnit **FUs;
-		size_t FU_count;
+		std::vector<FetchUnit *> FUs;
 
 	public:
-		Fetch() : FUs(NULL), FU_count(0)
-		{
-		}
 		~Fetch()
 		{
-			for(size_t i = 0; i < this->FU_count; i++) {
-				delete this->FUs[i];
+			for(auto unit : this->FUs) {
+				delete unit;
 			}
-			free(this->FUs);
 		}
-		bool add(FetchUnit *fu);
+		void add(FetchUnit *fu);
 		bool fetch(BuildDir *d)
 		{
-			for(size_t i = 0; i < this->FU_count; i++) {
-				if(!FUs[i]->fetch(d))
+			for(auto unit : this->FUs) {
+				if(!unit->fetch(d))
 					return false;
 			}
 			return true;
@@ -1002,27 +997,23 @@ namespace buildsys
 	class Extraction
 	{
 	private:
-		ExtractionUnit **EUs;
-		size_t EU_count;
-		bool extracted;
+		std::vector<ExtractionUnit *> EUs;
+		bool extracted{false};
 
 	public:
-		Extraction() : EUs(NULL), EU_count(0), extracted(false)
-		{
-		}
 		~Extraction()
 		{
-			for(size_t i = 0; i < this->EU_count; i++) {
-				delete this->EUs[i];
+			for(auto unit : this->EUs) {
+				delete unit;
 			}
-			free(this->EUs);
 		}
-		bool add(ExtractionUnit *eu);
+		void add(ExtractionUnit *eu);
 		bool print(std::ostream &out)
 		{
-			for(size_t i = 0; i < this->EU_count; i++) {
-				if(!EUs[i]->print(out))
+			for(auto unit : this->EUs) {
+				if(!unit->print(out)) {
 					return false;
+				}
 			}
 			return true;
 		}
@@ -1038,27 +1029,24 @@ namespace buildsys
 	class BuildDescription
 	{
 	private:
-		BuildUnit **BUs;
-		size_t BU_count;
+		std::vector<BuildUnit *> BUs;
 
 	public:
-		BuildDescription() : BUs(NULL), BU_count(0)
-		{
-		}
 		~BuildDescription()
 		{
-			for(size_t i = 0; i < this->BU_count; i++) {
-				delete this->BUs[i];
+			for(auto unit : this->BUs) {
+				delete unit;
 			}
-			free(this->BUs);
 		};
-		bool add(BuildUnit *bu);
+		void add(BuildUnit *bu);
 		bool print(std::ostream &out)
 		{
-			for(size_t i = 0; i < this->BU_count; i++) {
-				if(!BUs[i]->print(out))
+			for(auto unit : this->BUs) {
+				if(!unit->print(out)) {
 					return false;
+				}
 			}
+
 			return true;
 		}
 	};

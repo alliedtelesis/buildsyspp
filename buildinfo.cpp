@@ -25,18 +25,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-bool BuildDescription::add(BuildUnit *bu)
+void BuildDescription::add(BuildUnit *bu)
 {
-	BuildUnit **t = this->BUs;
-	this->BU_count++;
-	this->BUs = (BuildUnit **) realloc(t, sizeof(BuildUnit *) * this->BU_count);
-	if(this->BUs == NULL) {
-		this->BUs = t;
-		this->BU_count--;
-		return false;
-	}
-	this->BUs[this->BU_count - 1] = bu;
-	return true;
+	this->BUs.push_back(bu);
 }
 
 PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &fname_short)
