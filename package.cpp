@@ -222,14 +222,12 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 	}
 
 	if(this->bd != nullptr) {
-		PackageCmd pc(dir, "pax");
-		pc.addArg("-rf");
+		PackageCmd pc(dir, "tar");
+		pc.addArg("-xzf");
 		auto pwd = this->getWorld()->getWorkingDir();
 		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/staging/" +
-		                  this->name + ".cpio";
+		                  this->name + ".tar.gz";
 		pc.addArg(arg);
-		pc.addArg("-p");
-		pc.addArg("p");
 
 		if(!pc.Run(this)) {
 			log(this, "Failed to extract staging_dir");
@@ -283,13 +281,11 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 				}
 			}
 		} else {
-			PackageCmd pc(dir, "pax");
-			pc.addArg("-rf");
+			PackageCmd pc(dir, "tar");
+			pc.addArg("-xzf");
 			std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
-			                  this->name + ".cpio";
+			                  this->name + ".tar.gz";
 			pc.addArg(arg);
-			pc.addArg("-p");
-			pc.addArg("p");
 			if(!pc.Run(this)) {
 				log(this, "Failed to extract install_dir\n");
 				return false;
@@ -422,9 +418,9 @@ bool Package::fetchFrom()
 	std::string staging_dir = this->getNS()->getStagingDir();
 	std::string install_dir = this->getNS()->getInstallDir();
 	std::vector<std::array<std::string, 4>> files = {
-	    {"usable", staging_dir, this->name, ".cpio.ff"},
-	    {"staging.cpio", staging_dir, this->name, ".cpio"},
-	    {"install.cpio", install_dir, this->name, ".cpio"},
+	    {"usable", staging_dir, this->name, ".tar.gz.ff"},
+	    {"staging.tar.gz", staging_dir, this->name, ".tar.gz"},
+	    {"install.tar.gz", install_dir, this->name, ".tar.gz"},
 	    {"output.info", this->bd->getPath(), ".output", ".info"},
 	};
 
@@ -467,7 +463,7 @@ bool Package::shouldBuild(bool locally)
 	bool ret = false;
 
 	std::string fname = this->getWorld()->getWorkingDir() + "/output/" +
-	                    this->getNS()->getName() + "/install/" + this->name + ".cpio";
+	                    this->getNS()->getName() + "/install/" + this->name + ".tar.gz";
 
 	if(!filesystem::exists(fname)) {
 		ret = true;
@@ -475,7 +471,7 @@ bool Package::shouldBuild(bool locally)
 
 	// Now lets check that the staging file (still) exists
 	fname = this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
-	        "/staging/" + this->name + ".cpio";
+	        "/staging/" + this->name + ".tar.gz";
 
 	if(!filesystem::exists(fname)) {
 		ret = true;
@@ -574,12 +570,10 @@ bool Package::extractInstallDepends()
 
 bool Package::packageNewStaging()
 {
-	PackageCmd pc(this->bd->getNewStaging(), "pax");
-	pc.addArg("-x");
-	pc.addArg("cpio");
-	pc.addArg("-wf");
+	PackageCmd pc(this->bd->getNewStaging(), "tar");
+	pc.addArg("-czf");
 	std::string arg = this->getWorld()->getWorkingDir() + "/output/" +
-	                  this->getNS()->getName() + "/staging/" + this->name + ".cpio";
+	                  this->getNS()->getName() + "/staging/" + this->name + ".tar.gz";
 	pc.addArg(arg);
 	pc.addArg(".");
 
@@ -610,12 +604,10 @@ bool Package::packageNewInstall()
 			}
 		}
 	} else {
-		PackageCmd pc(this->bd->getNewInstall(), "pax");
-		pc.addArg("-x");
-		pc.addArg("cpio");
-		pc.addArg("-wf");
+		PackageCmd pc(this->bd->getNewInstall(), "tar");
+		pc.addArg("-czf");
 		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
-		                  this->name + ".cpio";
+		                  this->name + ".tar.gz";
 		pc.addArg(arg);
 		pc.addArg(".");
 
