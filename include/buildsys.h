@@ -67,8 +67,6 @@ extern "C" {
 #include "include/filesystem.h"
 #include "include/string_format.tcc"
 
-using namespace boost;
-
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 typedef boost::graph_traits<Graph>::edge_descriptor Edge;

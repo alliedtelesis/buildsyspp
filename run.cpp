@@ -65,7 +65,7 @@ static void exec_process(const std::string &program,
                          const std::vector<std::string> &args = {},
                          const std::vector<std::string> &env = {})
 {
-	using namespace std::placeholders;
+	using std::placeholders::_1;
 
 	std::vector<const char *> pargs(args.size());
 	std::vector<const char *> penv(env.size());
