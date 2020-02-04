@@ -321,7 +321,7 @@ namespace buildsys
 			return this->path;
 		};
 		//! Get the short version (relative only) of the working directory
-		const std::string &getShortPath()
+		const std::string &getShortPath() const
 		{
 			return this->rpath;
 		};

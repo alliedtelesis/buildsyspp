@@ -38,7 +38,7 @@ static std::string absolute_path(BuildDir *d, const std::string &dir, bool allow
 	return path;
 }
 
-static std::string relative_path(BuildDir *d, const std::string &dir, bool allowDL = false)
+static std::string relative_path(const BuildDir *d, const std::string &dir, bool allowDL = false)
 {
 	std::string path("");
 	if(boost::algorithm::starts_with(dir, "/") ||
@@ -306,7 +306,7 @@ int li_bd_extract(lua_State *L)
 	lua_gettable(L, 1);
 	if(!lua_islightuserdata(L, -1))
 		throw CustomException("extract() must be called using : not .");
-	BuildDir *d = (BuildDir *) lua_topointer(L, -1);
+	const BuildDir *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1));
 	lua_pop(L, 1);
 
 	Package *P = li_get_package(L);
