@@ -63,25 +63,17 @@ bool World::setFeature(std::string key, std::string value, bool override)
 	return true;
 }
 
-bool World::setFeature(char *kv)
+bool World::setFeature(std::string kv)
 {
-	char *eq = strchr(kv, '=');
-	if(eq == NULL) {
+	auto pos = kv.find('=');
+	if (pos == std::string::npos) {
 		error("Features must be described as feature=value\n");
 		return false;
 	}
-	char *temp = (char *) calloc(1, (eq - kv) + 1);
-	if(temp == NULL)
-		return false;
-	strncpy(temp, kv, (eq - kv));
-	std::string key(temp);
-	free(temp);
-	eq++;
-	temp = strdup(eq);
-	if(temp == NULL)
-		return false;
-	std::string value(temp);
-	free(temp);
+
+	std::string key = kv.substr(0, pos);
+	std::string value = kv.substr(pos + 1);
+
 	this->setFeature(key, value, true);
 	return true;
 }

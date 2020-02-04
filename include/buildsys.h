@@ -1662,7 +1662,7 @@ namespace buildsys
 		/** Set a feature using a key=value string
 		 *  This is used to handle the command line input of feature/value settings
 		 */
-		bool setFeature(char *kv);
+		bool setFeature(std::string kv);
 		/** Get the value of a specific feature
 		 *  lua: feature('magic-support')
 		 */
