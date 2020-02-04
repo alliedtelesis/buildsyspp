@@ -81,8 +81,9 @@ bool DownloadFetch::fetch(BuildDir *d)
 	if(this->hash.length() != 0) {
 		if(dlobj->HASH().length() != 0) {
 			if(dlobj->HASH().compare(this->hash) != 0) {
-				log(this->P, "Another package has already downloaded %s with hash %s (but "
-				             "we need %s)\n",
+				log(this->P,
+				    "Another package has already downloaded %s with hash %s (but "
+				    "we need %s)\n",
 				    fullname.c_str(), dlobj->HASH().c_str(), this->hash.c_str());
 				return false;
 			}

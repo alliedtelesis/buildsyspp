@@ -38,7 +38,8 @@ static std::string absolute_path(BuildDir *d, const std::string &dir, bool allow
 	return path;
 }
 
-static std::string relative_path(const BuildDir *d, const std::string &dir, bool allowDL = false)
+static std::string relative_path(const BuildDir *d, const std::string &dir,
+                                 bool allowDL = false)
 {
 	std::string path("");
 	if(boost::algorithm::starts_with(dir, "/") ||

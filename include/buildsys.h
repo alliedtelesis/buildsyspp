@@ -1308,7 +1308,7 @@ namespace buildsys
 		};
 		//! Add a command to run during the build stage
 		/** \param pc The comamnd to run
-		  */
+		 */
 		void addCommand(PackageCmd *pc)
 		{
 			this->commands.push_back(pc);

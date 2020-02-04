@@ -66,7 +66,7 @@ bool World::setFeature(std::string key, std::string value, bool override)
 bool World::setFeature(std::string kv)
 {
 	auto pos = kv.find('=');
-	if (pos == std::string::npos) {
+	if(pos == std::string::npos) {
 		error("Features must be described as feature=value\n");
 		return false;
 	}
