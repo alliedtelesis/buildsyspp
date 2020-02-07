@@ -226,7 +226,7 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 		pc.addArg("-rf");
 		auto pwd = this->getWorld()->getWorkingDir();
 		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/staging/" +
-		                  this->name + ".tar.bz2";
+		                  this->name + ".cpio";
 		pc.addArg(arg);
 		pc.addArg("-p");
 		pc.addArg("p");
@@ -286,7 +286,7 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 			PackageCmd pc(dir, "pax");
 			pc.addArg("-rf");
 			std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
-			                  this->name + ".tar.bz2";
+			                  this->name + ".cpio";
 			pc.addArg(arg);
 			pc.addArg("-p");
 			pc.addArg("p");
@@ -422,9 +422,9 @@ bool Package::fetchFrom()
 	std::string staging_dir = this->getNS()->getStagingDir();
 	std::string install_dir = this->getNS()->getInstallDir();
 	std::vector<std::array<std::string, 4>> files = {
-	    {"usable", staging_dir, this->name, ".tar.bz2.ff"},
-	    {"staging.tar.bz2", staging_dir, this->name, ".tar.bz2"},
-	    {"install.tar.bz2", install_dir, this->name, ".tar.bz2"},
+	    {"usable", staging_dir, this->name, ".cpio.ff"},
+	    {"staging.cpio", staging_dir, this->name, ".cpio"},
+	    {"install.cpio", install_dir, this->name, ".cpio"},
 	    {"output.info", this->bd->getPath(), ".output", ".info"},
 	};
 
@@ -467,7 +467,7 @@ bool Package::shouldBuild(bool locally)
 	bool ret = false;
 
 	std::string fname = this->getWorld()->getWorkingDir() + "/output/" +
-	                    this->getNS()->getName() + "/install/" + this->name + ".tar.bz2";
+	                    this->getNS()->getName() + "/install/" + this->name + ".cpio";
 
 	FILE *f = fopen(fname.c_str(), "r");
 	if(f == NULL) {
@@ -478,7 +478,7 @@ bool Package::shouldBuild(bool locally)
 
 	// Now lets check that the staging file (still) exists
 	fname = this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
-	        "/staging/" + this->name + ".tar.bz2";
+	        "/staging/" + this->name + ".cpio";
 
 	f = fopen(fname.c_str(), "r");
 	if(f == NULL) {
@@ -585,7 +585,7 @@ bool Package::packageNewStaging()
 	pc.addArg("cpio");
 	pc.addArg("-wf");
 	std::string arg = this->getWorld()->getWorkingDir() + "/output/" +
-	                  this->getNS()->getName() + "/staging/" + this->name + ".tar.bz2";
+	                  this->getNS()->getName() + "/staging/" + this->name + ".cpio";
 	pc.addArg(arg);
 	pc.addArg(".");
 
@@ -621,7 +621,7 @@ bool Package::packageNewInstall()
 		pc.addArg("cpio");
 		pc.addArg("-wf");
 		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
-		                  this->name + ".tar.bz2";
+		                  this->name + ".cpio";
 		pc.addArg(arg);
 		pc.addArg(".");
 
