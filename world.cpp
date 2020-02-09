@@ -111,7 +111,7 @@ static void build_thread(Package *p)
 		}
 	} catch(Exception &E) {
 		error(E.error_msg().c_str());
-		throw E;
+		throw;
 	}
 	w->threadEnded();
 
@@ -127,7 +127,7 @@ static void process_package(Package *p, PackageQueue *pq)
 		}
 	} catch(Exception &E) {
 		log(p, E.error_msg().c_str());
-		throw E;
+		throw;
 	}
 
 	auto iter = p->dependsStart();

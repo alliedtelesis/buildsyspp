@@ -131,6 +131,7 @@ namespace buildsys
 	class Exception
 	{
 	public:
+		virtual ~Exception() = default;
 		//! Return the error message for this exception
 		virtual std::string error_msg()
 		{
@@ -467,9 +468,8 @@ namespace buildsys
 	class HashableUnit
 	{
 	public:
-		HashableUnit()
-		{
-		}
+		HashableUnit() = default;
+		virtual ~HashableUnit() = default;
 		virtual std::string HASH() = 0;
 	};
 
