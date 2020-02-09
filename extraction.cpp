@@ -64,24 +64,24 @@ bool Extraction::extractionRequired(Package *P, BuildDir *bd)
 	return false;
 }
 
-bool Extraction::extract(Package *P, BuildDir *bd)
+bool Extraction::extract(Package *P)
 {
 	log(P, "Extracting sources and patching");
 	for(auto unit : this->EUs) {
-		if(!unit->extract(P, bd)) {
+		if(!unit->extract(P)) {
 			return false;
 		}
 	}
 
 	// mv the file into the regular place
-	std::string oldfname = bd->getPath() + "/.extraction.info.new";
-	std::string newfname = bd->getPath() + "/.extraction.info";
+	std::string oldfname = P->builddir()->getPath() + "/.extraction.info.new";
+	std::string newfname = P->builddir()->getPath() + "/.extraction.info";
 	rename(oldfname.c_str(), newfname.c_str());
 
 	return true;
 };
 
-ExtractionInfoFileUnit *Extraction::extractionInfo(Package *P, BuildDir *bd)
+ExtractionInfoFileUnit *Extraction::extractionInfo(BuildDir *bd)
 {
 	std::string fname = bd->getShortPath() + "/.extraction.info";
 	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(fname);
@@ -112,9 +112,9 @@ std::string CompressedFileExtractionUnit::HASH()
 	return this->hash;
 };
 
-bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
+bool TarExtractionUnit::extract(Package *P)
 {
-	PackageCmd pc(bd->getPath(), "tar");
+	PackageCmd pc(P->builddir()->getPath(), "tar");
 
 	filesystem::create_directories("dl");
 
@@ -127,9 +127,9 @@ bool TarExtractionUnit::extract(Package *P, BuildDir *bd)
 	return true;
 }
 
-bool ZipExtractionUnit::extract(Package *P, BuildDir *bd)
+bool ZipExtractionUnit::extract(Package *P)
 {
-	PackageCmd pc(bd->getPath(), "unzip");
+	PackageCmd pc(P->builddir()->getPath(), "unzip");
 
 	filesystem::create_directories("dl");
 
@@ -153,7 +153,7 @@ PatchExtractionUnit::PatchExtractionUnit(int level, const std::string &patch_pat
 	this->patch_path = patch_path;
 }
 
-bool PatchExtractionUnit::extract(Package *P, BuildDir *bd)
+bool PatchExtractionUnit::extract(Package *P)
 {
 	PackageCmd pc_dry(this->patch_path.c_str(), "patch");
 	PackageCmd pc(this->patch_path.c_str(), "patch");
@@ -192,10 +192,10 @@ FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string &fname,
 	this->hash = hash_file(this->uri);
 }
 
-bool FileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
+bool FileCopyExtractionUnit::extract(Package *P)
 {
 	std::string path = this->uri;
-	PackageCmd pc(bd->getPath(), "cp");
+	PackageCmd pc(P->builddir()->getPath(), "cp");
 	pc.addArg("-pRLuf");
 
 	if(path.at(0) == '/') {
@@ -231,9 +231,9 @@ std::string FetchedFileCopyExtractionUnit::HASH()
 	return this->hash;
 }
 
-bool FetchedFileCopyExtractionUnit::extract(Package *P, BuildDir *bd)
+bool FetchedFileCopyExtractionUnit::extract(Package *P)
 {
-	PackageCmd pc(bd->getPath(), "cp");
+	PackageCmd pc(P->builddir()->getPath(), "cp");
 	pc.addArg("-pRLuf");
 
 	if(boost::algorithm::starts_with(this->uri, "/")) {

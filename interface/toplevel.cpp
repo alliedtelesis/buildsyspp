@@ -34,7 +34,7 @@ static int li_name(lua_State *L)
 	}
 	int args = lua_gettop(L);
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	if(args == 0) {
 		std::string value = P->getNS()->getName();
@@ -55,7 +55,7 @@ static int li_feature(lua_State *L)
 	if(lua_gettop(L) < 1 || lua_gettop(L) > 3) {
 		throw CustomException("feature() takes 1 to 3 arguments");
 	}
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	if(lua_gettop(L) == 1) {
 		if(lua_type(L, 1) != LUA_TSTRING)
@@ -95,7 +95,7 @@ int li_builddir(lua_State *L)
 		throw CustomException("builddir() takes 1 or no arguments");
 	}
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	// create a table, since this is actually an object
 	CREATE_TABLE(L, P->builddir());
@@ -113,18 +113,18 @@ int li_builddir(lua_State *L)
 	return 1;
 }
 
-int li_intercept(lua_State *L)
+int li_intercept(lua_State *) // NOLINT
 {
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	P->setIntercept();
 
 	return 0;
 }
 
-int li_keepstaging(lua_State *L)
+int li_keepstaging(lua_State *) // NOLINT
 {
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	P->setSuppressRemoveStaging();
 
@@ -155,7 +155,7 @@ int li_depend(lua_State *L)
 
 	NameSpace *ns = NULL;
 	// get the current package
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	if(lua_type(L, 1) == LUA_TSTRING) {
 		if(lua_gettop(L) == 2) {
@@ -227,7 +227,7 @@ int li_buildlocally(lua_State *L)
 		throw CustomException("buildlocally() takes no arguments");
 	}
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	// Do not try and download the final result for this package
 	// probably because it breaks something else that builds later
@@ -242,7 +242,7 @@ int li_hashoutput(lua_State *L)
 		throw CustomException("buildlocally() takes no arguments");
 	}
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	// Instead of depender using build.info hash
 	// create an output.info and get them to hash that
@@ -264,7 +264,7 @@ int li_require(lua_State *L)
 		throw CustomException("Argument to require() must be a string");
 	}
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	std::string fname = string_format("%s.lua", lua_tostring(L, 1));
 	std::string relative_fname = P->relative_fetch_path(fname, true);

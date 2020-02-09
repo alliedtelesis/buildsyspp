@@ -64,7 +64,7 @@ std::string Package::getFeature(const std::string &key)
 	}
 }
 
-std::string Package::absolute_fetch_path(const std::string &location, bool also_root)
+std::string Package::absolute_fetch_path(const std::string &location)
 {
 	return this->getWorld()->getWorkingDir() + "/" + this->relative_fetch_path(location);
 }
@@ -119,7 +119,7 @@ std::string Package::getFileHash(const std::string &filename)
 	if(hashes != NULL) {
 		char buf[1024];
 		memset(buf, 0, 1024);
-		while(fgets(buf, sizeof(buf), hashes) > 0) {
+		while(fgets(buf, sizeof(buf), hashes) != nullptr) {
 			char *hash = strchr(buf, ' ');
 			if(hash != NULL) {
 				*hash = '\0';
@@ -170,7 +170,7 @@ bool Package::process()
 		exit(-1);
 	}
 
-	li_set_package(this->lua->luaState(), this);
+	li_set_package(this);
 
 	this->lua->processFile(this->file);
 
@@ -376,7 +376,7 @@ void Package::prepareBuildInfo()
 		return;
 	}
 	// Add the extraction info file
-	this->build_description->add(this->Extract->extractionInfo(this, this->bd));
+	this->build_description->add(this->Extract->extractionInfo(this->bd));
 
 	// Add each of our dependencies build info files
 	auto dIt = this->dependsStart();
@@ -705,7 +705,7 @@ bool Package::build(bool locally)
 
 	if(this->Extract->extractionRequired(this, this->bd)) {
 		log(this, "Extracting ...");
-		if(!this->Extract->extract(this, this->bd)) {
+		if(!this->Extract->extract(this)) {
 			return false;
 		}
 	}

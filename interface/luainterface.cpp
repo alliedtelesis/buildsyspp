@@ -28,12 +28,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static thread_local Package *__current_package = NULL;
 
-void li_set_package(lua_State *L, Package *p)
+void li_set_package(Package *p)
 {
 	__current_package = p;
 }
 
-Package *li_get_package(lua_State *L)
+Package *li_get_package(void)
 {
 	return __current_package;
 }

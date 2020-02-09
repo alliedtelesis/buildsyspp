@@ -268,16 +268,16 @@ std::string GitExtractionUnit::HASH()
 	return this->hash;
 }
 
-bool GitExtractionUnit::extract(Package *P, BuildDir *bd)
+bool GitExtractionUnit::extract(Package *P)
 {
 	// make sure it has been fetched
 	if(!this->fetched) {
-		if(!this->fetch(bd)) {
+		if(!this->fetch(P->builddir())) {
 			return false;
 		}
 	}
 	// copy to work dir
-	PackageCmd pc(bd->getPath(), "cp");
+	PackageCmd pc(P->builddir()->getPath(), "cp");
 	pc.addArg("-dpRuf");
 	pc.addArg(this->localPath());
 	pc.addArg(".");
@@ -287,9 +287,9 @@ bool GitExtractionUnit::extract(Package *P, BuildDir *bd)
 	return true;
 }
 
-bool LinkGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
+bool LinkGitDirExtractionUnit::extract(Package *P)
 {
-	PackageCmd pc(bd->getPath(), "ln");
+	PackageCmd pc(P->builddir()->getPath(), "ln");
 
 	pc.addArg("-sfT");
 
@@ -308,9 +308,9 @@ bool LinkGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
 	return true;
 }
 
-bool CopyGitDirExtractionUnit::extract(Package *P, BuildDir *bd)
+bool CopyGitDirExtractionUnit::extract(Package *P)
 {
-	PackageCmd pc(bd->getPath(), "cp");
+	PackageCmd pc(P->builddir()->getPath(), "cp");
 	pc.addArg("-dpRuf");
 
 	if(this->uri.at(0) == '.') {

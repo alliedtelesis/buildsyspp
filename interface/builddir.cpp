@@ -79,7 +79,7 @@ int li_bd_fetch(lua_State *L)
 	bool listedonly = false;
 	std::string copyto("");
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	CHECK_ARGUMENT_TYPE("fetch_table", 1, BuildDir, d);
 
@@ -235,7 +235,7 @@ int li_bd_restore(lua_State *L)
 	if(!lua_isstring(L, 3))
 		throw CustomException("restore() expects a string as the second argument");
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	CHECK_ARGUMENT_TYPE("restore", 1, BuildDir, d);
 
@@ -275,7 +275,7 @@ int li_bd_extract_table(lua_State *L)
 	if(!lua_istable(L, 1))
 		throw CustomException("extract() must be called using : not .");
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	CHECK_ARGUMENT_TYPE("extract", 2, FetchUnit, f);
 
@@ -310,7 +310,7 @@ int li_bd_extract(lua_State *L)
 	const BuildDir *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1));
 	lua_pop(L, 1);
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	log(P, "Using deprecated extract API");
 
@@ -354,7 +354,7 @@ int li_bd_cmd(lua_State *L)
 
 	CHECK_ARGUMENT_TYPE("cmd", 1, BuildDir, d);
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	std::string dir = relative_path(d, lua_tostring(L, 2));
 	std::string app(lua_tostring(L, 3));
@@ -404,7 +404,7 @@ int li_bd_patch(lua_State *L)
 	if(!lua_istable(L, 4))
 		throw CustomException("patch() expects a table of strings as the third argument");
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 
 	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
 		return true;
@@ -444,7 +444,7 @@ int li_bd_installfile(lua_State *L)
 	if(!lua_isstring(L, 2))
 		throw CustomException("installfile() expects a string as the only argument");
 
-	Package *P = li_get_package(L);
+	Package *P = li_get_package();
 	P->setInstallFile(std::string(lua_tostring(L, 2)));
 
 	return 0;

@@ -584,7 +584,7 @@ namespace buildsys
 		}
 		virtual bool print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
-		virtual bool extract(Package *P, BuildDir *b) = 0;
+		virtual bool extract(Package *P) = 0;
 		virtual std::string URI()
 		{
 			return this->uri;
@@ -645,7 +645,7 @@ namespace buildsys
 		{
 			return std::string("TarFile");
 		}
-		virtual bool extract(Package *P, BuildDir *b);
+		virtual bool extract(Package *P);
 	};
 
 	class ZipExtractionUnit : public CompressedFileExtractionUnit
@@ -663,7 +663,7 @@ namespace buildsys
 		{
 			return std::string("ZipFile");
 		}
-		virtual bool extract(Package *P, BuildDir *b);
+		virtual bool extract(Package *P);
 	};
 
 	//! A patch file as part of the extraction step
@@ -690,7 +690,7 @@ namespace buildsys
 		{
 			return std::string("PatchFile");
 		}
-		virtual bool extract(Package *P, BuildDir *b);
+		virtual bool extract(Package *P);
 	};
 
 	//! A file copy as part of the extraction step
@@ -711,7 +711,7 @@ namespace buildsys
 		{
 			return std::string("FileCopy");
 		}
-		virtual bool extract(Package *P, BuildDir *b);
+		virtual bool extract(Package *P);
 	};
 
 	//! A file copy of a fetched file as part of the extraction step
@@ -733,7 +733,7 @@ namespace buildsys
 		{
 			return std::string("FetchedFileCopy");
 		}
-		virtual bool extract(Package *P, BuildDir *b);
+		virtual bool extract(Package *P);
 		virtual std::string HASH();
 	};
 
@@ -757,7 +757,7 @@ namespace buildsys
 		{
 			return std::string("GitDir");
 		}
-		virtual bool extract(Package *P, BuildDir *b) = 0;
+		virtual bool extract(Package *P) = 0;
 		virtual bool isDirty();
 		virtual std::string dirtyHash();
 		virtual std::string localPath()
@@ -775,7 +775,7 @@ namespace buildsys
 		    : GitDirExtractionUnit(git_dir, to_dir)
 		{
 		}
-		virtual bool extract(Package *P, BuildDir *bd);
+		virtual bool extract(Package *P);
 		virtual std::string modeName()
 		{
 			return "link";
@@ -790,7 +790,7 @@ namespace buildsys
 		    : GitDirExtractionUnit(git_dir, to_dir)
 		{
 		}
-		virtual bool extract(Package *P, BuildDir *bd);
+		virtual bool extract(Package *P);
 		virtual std::string modeName()
 		{
 			return "copy";
@@ -809,7 +809,7 @@ namespace buildsys
 		GitExtractionUnit(const std::string &remote, const std::string &local,
 		                  std::string refspec, Package *P);
 		virtual bool fetch(BuildDir *d);
-		virtual bool extract(Package *P, BuildDir *bd);
+		virtual bool extract(Package *P);
 		virtual std::string modeName()
 		{
 			return "fetch";
@@ -1015,10 +1015,10 @@ namespace buildsys
 			}
 			return true;
 		}
-		bool extract(Package *P, BuildDir *bd);
+		bool extract(Package *P);
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
 		bool extractionRequired(Package *P, BuildDir *bd);
-		ExtractionInfoFileUnit *extractionInfo(Package *P, BuildDir *bd);
+		ExtractionInfoFileUnit *extractionInfo(BuildDir *bd);
 	};
 
 	/** A build description
@@ -1243,8 +1243,7 @@ namespace buildsys
 		//! Returns the build directory being used by this package
 		BuildDir *builddir();
 		//! Get the absolute fetch path for this package
-		std::string absolute_fetch_path(const std::string &location,
-		                                bool also_root = false);
+		std::string absolute_fetch_path(const std::string &location);
 		//! Get the relative fetch path for this package
 		std::string relative_fetch_path(const std::string &location,
 		                                bool also_root = false);
