@@ -77,7 +77,8 @@ static void exec_process(const std::string &program,
 	std::transform(env.begin(), env.end(), penv.begin(), std::bind(&std::string::data, _1));
 	penv.push_back(nullptr);
 
-	execvpe(program.c_str(), (char *const *) pargs.data(), (char *const *) penv.data());
+	execvpe(program.c_str(), const_cast<char *const *>(pargs.data()),
+	        const_cast<char *const *>(penv.data()));
 }
 
 int buildsys::run(Package *P, const std::string &program,

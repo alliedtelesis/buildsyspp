@@ -79,7 +79,7 @@ bool Extraction::extract(Package *P)
 	rename(oldfname.c_str(), newfname.c_str());
 
 	return true;
-};
+}
 
 ExtractionInfoFileUnit *Extraction::extractionInfo(BuildDir *bd)
 {
@@ -104,13 +104,13 @@ std::string CompressedFileExtractionUnit::HASH()
 {
 	if(this->hash.empty()) {
 		if(this->fetch) {
-			this->hash = std::string(this->fetch->HASH());
+			this->hash = this->fetch->HASH();
 		} else {
 			this->hash = hash_file(this->uri);
 		}
 	}
 	return this->hash;
-};
+}
 
 bool TarExtractionUnit::extract(Package *P)
 {
@@ -226,7 +226,7 @@ FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(
 std::string FetchedFileCopyExtractionUnit::HASH()
 {
 	if(this->hash.empty()) {
-		this->hash = std::string(this->fetched->HASH());
+		this->hash = this->fetched->HASH();
 	}
 	return this->hash;
 }

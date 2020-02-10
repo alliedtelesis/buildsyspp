@@ -127,7 +127,7 @@ void NameSpace::_addPackage(Package *p)
 	this->packages.push_back(p);
 	if(p->getNS() != this)
 		p->setNS(this);
-};
+}
 
 void NameSpace::addPackage(Package *p)
 {

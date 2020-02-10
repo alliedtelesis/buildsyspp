@@ -176,7 +176,7 @@ int li_bd_fetch(lua_State *L)
 		if(uri.empty()) {
 			throw CustomException("fetch method = link requires uri to be set");
 		}
-		f = new LinkFetch(std::string(uri), P);
+		f = new LinkFetch(uri, P);
 	} else if(method == "copyfile") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = copyfile requires uri to be set");
@@ -195,7 +195,7 @@ int li_bd_fetch(lua_State *L)
 		if(uri.empty()) {
 			throw CustomException("fetch method = copy requires uri to be set");
 		}
-		f = new CopyFetch(std::string(uri), P);
+		f = new CopyFetch(uri, P);
 	} else if(method == "deps") {
 		std::string path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
@@ -414,7 +414,7 @@ int li_bd_patch(lua_State *L)
 
 	std::string patch_path = relative_path(d, lua_tostring(L, 2), true);
 
-	int patch_depth = lua_tonumber(L, 3);
+	int patch_depth = static_cast<int>(lua_tonumber(L, 3));
 
 	lua_pushnil(L); /* first key */
 	while(lua_next(L, 4) != 0) {

@@ -253,7 +253,7 @@ bool GitExtractionUnit::fetch(BuildDir *d)
 std::string GitExtractionUnit::HASH()
 {
 	if(refspec_is_commitid(this->refspec)) {
-		this->hash = std::string(this->refspec);
+		this->hash = this->refspec;
 	} else {
 		std::string digest_name =
 		    string_format("%s#%s", this->uri.c_str(), this->refspec.c_str());

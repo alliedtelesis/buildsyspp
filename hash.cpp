@@ -41,7 +41,7 @@ std::string buildsys::hash_file(const std::string &fname)
 {
 	EVP_MD_CTX *mdctx;
 	const EVP_MD *md;
-	int BUFLEN = 4096;
+	const int BUFLEN = 4096;
 	char buff[BUFLEN];
 	unsigned char md_value[EVP_MAX_MD_SIZE];
 	unsigned int md_len;

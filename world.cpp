@@ -168,7 +168,7 @@ bool World::basePackage(const std::string &filename)
 
 	// Strip the '.lua' from end of the filename for the namespace name
 	char *nsname = strdup(pname);
-	int p_len = strlen(pname);
+	size_t p_len = strlen(pname);
 	if(nsname[p_len - 4] == '.') {
 		nsname[p_len - 4] = '\0';
 	}

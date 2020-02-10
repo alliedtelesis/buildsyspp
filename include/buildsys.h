@@ -41,7 +41,7 @@ extern "C" {
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
-};
+}
 
 #include <errno.h>
 #include <stdio.h>
@@ -117,7 +117,7 @@ int li_bd_patch(lua_State *L);
 int li_bd_restore(lua_State *L);
 
 int li_fu_path(lua_State *L);
-};
+}
 
 namespace buildsys
 {
@@ -1813,7 +1813,7 @@ namespace buildsys
 	void hash_setup(void);
 	std::string hash_file(const std::string &fname);
 	void hash_shutdown(void);
-}; // namespace buildsys
+} // namespace buildsys
 
 using namespace buildsys;
 
