@@ -34,11 +34,11 @@ test:
 	$(MAKE) -C test
 
 indent:
-	find -name \*.cpp -exec clang-format -i -style=file {} \;
-	clang-format -i -style=file include/buildsys.h
+	find -name \*.cpp -not -path "*test/*" -exec clang-format -i -style=file {} \;
+	find -name \*.h -not -path "*test/*" -exec clang-format -i -style=file {} \;
 
 cpplint:
-	find -name \*.cpp -exec cpplint {} \;
-	cpplint include/buildsys.h
+	find -name \*.cpp -not -path "*test/*" -exec cpplint {} \;
+	find -name \*.h -not -path "*test/*" -exec cpplint {} \;
 
 .PHONY: test
