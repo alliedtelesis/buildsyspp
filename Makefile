@@ -8,7 +8,7 @@ LUAVERSION := $(shell pkg-config --exists lua && echo lua || (pkg-config --exist
 ifeq ($(LUAVERSION),none)
 $(error Can't find lua, please install and/or check that pkg-config knows about it)
 endif
-WARNFLAGS	:= -Werror -Wall -Wextra
+WARNFLAGS	:= -Werror -Wall -Wextra -Wshadow
 BASEFLAGS	:= $(WARNFLAGS) -ggdb2 -pthread $(shell pkg-config --cflags $(LUAVERSION)) $(USER_DEFINES)
 CXXFLAGS	:= -std=c++11 $(BASEFLAGS)
 CFLAGS		:= -std=c99 $(BASEFLAGS)

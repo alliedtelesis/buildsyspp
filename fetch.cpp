@@ -45,13 +45,13 @@ std::string DownloadFetch::full_name()
 /* This is the final name, without any compressed extension */
 std::string DownloadFetch::final_name()
 {
-	auto full_name = this->full_name();
-	auto ret = full_name;
+	auto fullname = this->full_name();
+	auto ret = fullname;
 
 	if(this->decompress) {
-		auto position = full_name.rfind(".");
+		auto position = fullname.rfind(".");
 		if(position != std::string::npos) {
-			ret = full_name.substr(0, position);
+			ret = fullname.substr(0, position);
 		}
 	}
 
@@ -123,8 +123,8 @@ bool DownloadFetch::fetch(BuildDir *d)
 		if(decompress) {
 			// We want to run a command on this file
 			std::string cmd = std::string();
-			char *filename = strdup(fname.c_str());
-			char *ext = strrchr(filename, '.');
+			char *_filename = strdup(fname.c_str());
+			char *ext = strrchr(_filename, '.');
 			if(ext == NULL) {
 				log(P->getName().c_str(),
 				    "Could not guess decompression based on extension: %s\n",
@@ -137,7 +137,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 				cmd = string_format("gunzip -d dl/%s", fullname.c_str());
 			}
 			std::system(cmd.c_str());
-			free(filename);
+			free(_filename);
 		}
 	}
 
@@ -146,11 +146,11 @@ bool DownloadFetch::fetch(BuildDir *d)
 	if(this->hash.length() != 0) {
 		std::string fpath = string_format(
 		    "%s/dl/%s", d->getWorld()->getWorkingDir().c_str(), this->final_name().c_str());
-		std::string hash = hash_file(fpath);
+		std::string _hash = hash_file(fpath);
 
-		if(strcmp(this->hash.c_str(), hash.c_str()) != 0) {
+		if(strcmp(this->hash.c_str(), _hash.c_str()) != 0) {
 			log(this->P, "Hash mismatched for %s\n(committed to %s, providing %s)",
-			    this->final_name().c_str(), this->hash.c_str(), hash.c_str());
+			    this->final_name().c_str(), this->hash.c_str(), _hash.c_str());
 			ret = false;
 		}
 	}
@@ -161,14 +161,14 @@ bool DownloadFetch::fetch(BuildDir *d)
 std::string DownloadFetch::HASH()
 {
 	/* Check if the package contains pre-computed hashes */
-	std::string hash = P->getFileHash(this->final_name());
+	std::string _hash = P->getFileHash(this->final_name());
 	/* Otherwise fetch and calculate the hash */
-	if(hash.empty()) {
+	if(_hash.empty()) {
 		log(P, "No hash for %s in package/%s/Digest", this->final_name().c_str(),
 		    P->getName().c_str());
 		throw CustomException("Missing hash " + P->getName());
 	}
-	this->hash = hash;
+	this->hash = _hash;
 	return this->hash;
 }
 

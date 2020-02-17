@@ -248,10 +248,10 @@ bool World::populateForcedList(PackageCmd *pc)
 	return false;
 }
 
-bool World::packageFinished(Package *p)
+bool World::packageFinished(Package *_p)
 {
 	std::unique_lock<std::mutex> lk(this->cond_lock);
-	this->topo_graph->deleteNode(p);
+	this->topo_graph->deleteNode(_p);
 	this->topo_graph->topological();
 	this->cond.notify_all();
 	return true;

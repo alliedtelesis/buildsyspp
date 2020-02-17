@@ -392,7 +392,8 @@ namespace buildsys
 		 *  \param path The path to run this command in
 		 *  \param app The program to invoke
 		 */
-		PackageCmd(const std::string &path, const std::string &app) : path(path), app(app)
+		PackageCmd(const std::string &_path, const std::string &_app)
+		    : path(_path), app(_app)
 		{
 			this->addArg(app);
 		};
@@ -439,7 +440,7 @@ namespace buildsys
 		mutable std::mutex lock;
 
 	public:
-		explicit DLObject(std::string filename) : filename(filename)
+		explicit DLObject(std::string _filename) : filename(_filename)
 		{
 		}
 		std::string fileName()
@@ -450,9 +451,9 @@ namespace buildsys
 		{
 			return this->hash;
 		}
-		void setHASH(std::string hash)
+		void setHASH(std::string _hash)
 		{
-			this->hash = hash;
+			this->hash = _hash;
 		}
 		std::mutex &getLock()
 		{
@@ -483,7 +484,7 @@ namespace buildsys
 		bool fetched;
 
 	public:
-		FetchUnit(std::string uri, Package *P) : fetch_uri(uri), P(P)
+		FetchUnit(std::string uri, Package *_P) : fetch_uri(uri), P(_P)
 		{
 		}
 		FetchUnit()
@@ -521,8 +522,9 @@ namespace buildsys
 		std::string final_name();
 
 	public:
-		DownloadFetch(std::string uri, bool decompress, std::string filename, Package *P)
-		    : FetchUnit(uri, P), decompress(decompress), filename(filename)
+		DownloadFetch(std::string _uri, bool _decompress, std::string _filename,
+		              Package *_P)
+		    : FetchUnit(_uri, _P), decompress(_decompress), filename(_filename)
 		{
 		}
 		virtual bool fetch(BuildDir *d);
@@ -538,7 +540,7 @@ namespace buildsys
 	class LinkFetch : public FetchUnit
 	{
 	public:
-		LinkFetch(std::string uri, Package *P) : FetchUnit(uri, P)
+		LinkFetch(std::string uri, Package *_P) : FetchUnit(uri, _P)
 		{
 		}
 		virtual bool fetch(BuildDir *d);
@@ -555,7 +557,7 @@ namespace buildsys
 	class CopyFetch : public FetchUnit
 	{
 	public:
-		CopyFetch(std::string uri, Package *P) : FetchUnit(uri, P)
+		CopyFetch(std::string uri, Package *_P) : FetchUnit(uri, _P)
 		{
 		}
 		virtual bool fetch(BuildDir *d);
@@ -676,7 +678,8 @@ namespace buildsys
 
 	public:
 		PatchExtractionUnit(int level, const std::string &patch_path,
-		                    const std::string &patch_fname, const std::string &fname_short);
+		                    const std::string &patch_fname,
+		                    const std::string &_fname_short);
 		virtual ~PatchExtractionUnit()
 		{
 		}
@@ -700,7 +703,7 @@ namespace buildsys
 		std::string fname_short;
 
 	public:
-		FileCopyExtractionUnit(const std::string &fname, const std::string &fname_short);
+		FileCopyExtractionUnit(const std::string &fname, const std::string &_fname_short);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->fname_short << " " << this->HASH()
@@ -722,7 +725,7 @@ namespace buildsys
 		FetchUnit *fetched;
 
 	public:
-		FetchedFileCopyExtractionUnit(FetchUnit *fetch, const std::string &fname_short);
+		FetchedFileCopyExtractionUnit(FetchUnit *fetch, const std::string &_fname_short);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->fname_short << " " << this->HASH()
@@ -834,8 +837,9 @@ namespace buildsys
 		World *WORLD;
 
 	public:
-		FeatureValueUnit(World *WORLD, const std::string &feature, const std::string &value)
-		    : feature(feature), value(value), WORLD(WORLD)
+		FeatureValueUnit(World *_WORLD, const std::string &_feature,
+		                 const std::string &_value)
+		    : feature(_feature), value(_value), WORLD(_WORLD)
 		{
 		}
 		virtual bool print(std::ostream &out);
@@ -852,7 +856,7 @@ namespace buildsys
 		std::string feature;
 
 	public:
-		explicit FeatureNilUnit(const std::string &feature) : feature(feature)
+		explicit FeatureNilUnit(const std::string &_feature) : feature(_feature)
 		{
 		}
 		virtual bool print(std::ostream &out)
@@ -873,7 +877,7 @@ namespace buildsys
 		std::string uri;  //!< URI of this package file
 		std::string hash; //!< Hash of this package file
 	public:
-		PackageFileUnit(const std::string &fname, const std::string &fname_short);
+		PackageFileUnit(const std::string &fname, const std::string &_fname_short);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
@@ -892,7 +896,7 @@ namespace buildsys
 		std::string uri;  //!< URI of this package file
 		std::string hash; //!< Hash of this package file
 	public:
-		RequireFileUnit(const std::string &fname, const std::string &fname_short);
+		RequireFileUnit(const std::string &fname, const std::string &_fname_short);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
@@ -1061,7 +1065,7 @@ namespace buildsys
 		World *WORLD;
 
 	public:
-		NameSpace(World *W, std::string name) : name(name), WORLD(W)
+		NameSpace(World *_W, std::string _name) : name(_name), WORLD(_W)
 		{
 		}
 		~NameSpace();
@@ -1090,7 +1094,7 @@ namespace buildsys
 
 	public:
 		//! Create a package dependency
-		PackageDepend(Package *p, bool locally) : p(p), locally(locally)
+		PackageDepend(Package *_p, bool _locally) : p(_p), locally(_locally)
 		{
 		}
 		~PackageDepend()
@@ -1186,10 +1190,10 @@ namespace buildsys
 		 *  \param name The name of this package
 		 *  \param file The lua file describing this package
 		 */
-		Package(NameSpace *ns, std::string name, std::string file_short, std::string file,
-		        std::string overlay)
-		    : name(name), file(file), file_short(file_short), overlay(overlay),
-		      buildinfo_hash(""), ns(ns), bd(new BuildDir(this)), f(new Fetch()),
+		Package(NameSpace *_ns, std::string _name, std::string _file_short,
+		        std::string _file, std::string _overlay)
+		    : name(_name), file(_file), file_short(_file_short), overlay(_overlay),
+		      buildinfo_hash(""), ns(_ns), bd(new BuildDir(this)), f(new Fetch()),
 		      Extract(new Extraction()), build_description(new BuildDescription()),
 		      lua(new Lua()), intercept(false), depsExtraction(""),
 		      depsExtractionDirectOnly(false), visiting(false), processing_queued(false),
@@ -1221,11 +1225,11 @@ namespace buildsys
 			}
 		};
 		//! Set the namespace this package is in
-		void setNS(NameSpace *ns)
+		void setNS(NameSpace *_ns)
 		{
 			if(this->ns)
 				this->ns->removePackage(this);
-			this->ns = ns;
+			this->ns = _ns;
 			if(this->ns)
 				this->ns->addPackage(this);
 			this->resetBD();
@@ -1534,16 +1538,16 @@ namespace buildsys
 		DLObject *_findDLObject(std::string);
 
 	public:
-		explicit World(char *bsapp)
-		    : bsapp(std::string(bsapp)), features(new key_value()),
+		explicit World(char *_bsapp)
+		    : bsapp(std::string(_bsapp)), features(new key_value()),
 		      forcedDeps(new string_list()), namespaces(new std::list<NameSpace *>()),
 		      dlobjects(new std::list<DLObject *>()), overlays(new string_list()),
 		      ignoredFeatures(new string_list())
 		{
 			overlays->push_back(std::string("."));
-			char *pwd = getcwd(NULL, 0);
-			this->pwd = std::string(pwd);
-			free(pwd);
+			char *_pwd = getcwd(NULL, 0);
+			this->pwd = std::string(_pwd);
+			free(_pwd);
 		};
 
 		~World();

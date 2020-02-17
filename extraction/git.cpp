@@ -131,13 +131,13 @@ std::string GitDirExtractionUnit::dirtyHash()
 	return git_diff_hash(this->localPath());
 }
 
-GitExtractionUnit::GitExtractionUnit(const std::string &remote, const std::string &local,
-                                     std::string refspec, Package *P)
+GitExtractionUnit::GitExtractionUnit(const std::string &remote, const std::string &_local,
+                                     std::string _refspec, Package *_P)
 {
 	this->uri = remote;
-	this->local = P->getWorld()->getWorkingDir() + "/source/" + local;
-	this->refspec = refspec;
-	this->P = P;
+	this->local = P->getWorld()->getWorkingDir() + "/source/" + _local;
+	this->refspec = _refspec;
+	this->P = _P;
 	this->fetched = false;
 }
 
@@ -233,16 +233,16 @@ bool GitExtractionUnit::fetch(BuildDir *d)
 	}
 	bool res = true;
 
-	std::string hash = git_hash(source_dir);
+	std::string _hash = git_hash(source_dir);
 
 	if(!this->hash.empty()) {
-		if(this->hash != hash) {
+		if(this->hash != _hash) {
 			log(this->P, "Hash mismatch for %s\n(committed to %s, providing %s)\n",
-			    this->uri.c_str(), this->hash.c_str(), hash.c_str());
+			    this->uri.c_str(), this->hash.c_str(), _hash.c_str());
 			res = false;
 		}
 	} else {
-		this->hash = hash;
+		this->hash = _hash;
 	}
 
 	this->fetched = res;
@@ -268,20 +268,20 @@ std::string GitExtractionUnit::HASH()
 	return this->hash;
 }
 
-bool GitExtractionUnit::extract(Package *P)
+bool GitExtractionUnit::extract(Package *_P)
 {
 	// make sure it has been fetched
 	if(!this->fetched) {
-		if(!this->fetch(P->builddir())) {
+		if(!this->fetch(_P->builddir())) {
 			return false;
 		}
 	}
 	// copy to work dir
-	PackageCmd pc(P->builddir()->getPath(), "cp");
+	PackageCmd pc(_P->builddir()->getPath(), "cp");
 	pc.addArg("-dpRuf");
 	pc.addArg(this->localPath());
 	pc.addArg(".");
-	if(!pc.Run(P))
+	if(!pc.Run(_P))
 		throw CustomException("Failed to checkout");
 
 	return true;

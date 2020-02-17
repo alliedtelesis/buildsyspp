@@ -142,15 +142,15 @@ bool ZipExtractionUnit::extract(Package *P)
 	return true;
 }
 
-PatchExtractionUnit::PatchExtractionUnit(int level, const std::string &patch_path,
+PatchExtractionUnit::PatchExtractionUnit(int _level, const std::string &_patch_path,
                                          const std::string &patch_fname,
-                                         const std::string &fname_short)
+                                         const std::string &_fname_short)
 {
 	this->uri = patch_fname;
-	this->fname_short = fname_short;
+	this->fname_short = _fname_short;
 	this->hash = hash_file(this->uri);
-	this->level = level;
-	this->patch_path = patch_path;
+	this->level = _level;
+	this->patch_path = _patch_path;
 }
 
 bool PatchExtractionUnit::extract(Package *P)
@@ -185,10 +185,10 @@ bool PatchExtractionUnit::extract(Package *P)
 }
 
 FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string &fname,
-                                               const std::string &fname_short)
+                                               const std::string &_fname_short)
 {
 	this->uri = fname;
-	this->fname_short = fname_short;
+	this->fname_short = _fname_short;
 	this->hash = hash_file(this->uri);
 }
 
@@ -214,12 +214,12 @@ bool FileCopyExtractionUnit::extract(Package *P)
 	return true;
 }
 
-FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(FetchUnit *fetched,
-                                                             const std::string &fname_short)
+FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(
+    FetchUnit *_fetched, const std::string &_fname_short)
 {
-	this->fetched = fetched;
-	this->uri = fetched->relative_path();
-	this->fname_short = fname_short;
+	this->fetched = _fetched;
+	this->uri = _fetched->relative_path();
+	this->fname_short = _fname_short;
 	this->hash = std::string("");
 }
 

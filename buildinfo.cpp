@@ -30,15 +30,15 @@ void BuildDescription::add(BuildUnit *bu)
 	this->BUs.push_back(bu);
 }
 
-PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &fname_short)
+PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_fname_short)
 {
-	this->uri = fname_short;
+	this->uri = _fname_short;
 	this->hash = hash_file(fname);
 }
 
-RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &fname_short)
+RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &_fname_short)
 {
-	this->uri = fname_short;
+	this->uri = _fname_short;
 	this->hash = hash_file(fname);
 }
 
@@ -48,10 +48,10 @@ ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string &fname)
 	this->hash = hash_file(fname + ".new");
 }
 
-BuildInfoFileUnit::BuildInfoFileUnit(const std::string &fname, const std::string &hash)
+BuildInfoFileUnit::BuildInfoFileUnit(const std::string &fname, const std::string &_hash)
 {
 	this->uri = fname;
-	this->hash = hash;
+	this->hash = _hash;
 }
 
 OutputInfoFileUnit::OutputInfoFileUnit(const std::string &fname)

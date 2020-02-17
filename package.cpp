@@ -393,9 +393,9 @@ void Package::prepareBuildInfo()
 
 	// Create the new build info file
 	std::string buildInfoFname = this->bd->getPath() + "/.build.info.new";
-	std::ofstream buildInfo(buildInfoFname.c_str());
-	this->build_description->print(buildInfo);
-	buildInfo.close();
+	std::ofstream _buildInfo(buildInfoFname.c_str());
+	this->build_description->print(_buildInfo);
+	_buildInfo.close();
 	this->updateBuildInfoHash();
 	this->buildInfoPrepared = true;
 }
@@ -469,22 +469,22 @@ bool Package::shouldBuild(bool locally)
 	std::string fname = this->getWorld()->getWorkingDir() + "/output/" +
 	                    this->getNS()->getName() + "/install/" + this->name + ".cpio";
 
-	FILE *f = fopen(fname.c_str(), "r");
-	if(f == NULL) {
+	FILE *_f = fopen(fname.c_str(), "r");
+	if(_f == NULL) {
 		ret = true;
 	} else {
-		fclose(f);
+		fclose(_f);
 	}
 
 	// Now lets check that the staging file (still) exists
 	fname = this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
 	        "/staging/" + this->name + ".cpio";
 
-	f = fopen(fname.c_str(), "r");
-	if(f == NULL) {
+	_f = fopen(fname.c_str(), "r");
+	if(_f == NULL) {
 		ret = true;
 	} else {
-		fclose(f);
+		fclose(_f);
 	}
 
 	std::string cmd =

@@ -58,7 +58,7 @@ std::string NameSpace::getInstallDir()
 	return res.str();
 }
 
-Package *NameSpace::findPackage(std::string name)
+Package *NameSpace::findPackage(std::string _name)
 {
 	std::string file;
 	std::string file_short;
@@ -69,7 +69,7 @@ Package *NameSpace::findPackage(std::string name)
 	std::list<Package *>::iterator iter = this->packagesStart();
 	std::list<Package *>::iterator iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++) {
-		if((*iter)->getName().compare(name) == 0) {
+		if((*iter)->getName().compare(_name) == 0) {
 			return (*iter);
 		}
 	}
@@ -78,7 +78,7 @@ Package *NameSpace::findPackage(std::string name)
 	{
 		// check that the dependency exists
 		std::string lua_file("");
-		char *dependPath = strdup(name.c_str());
+		char *dependPath = strdup(_name.c_str());
 		char *lastPart = strrchr(dependPath, '/');
 		bool found = false;
 
@@ -90,14 +90,14 @@ Package *NameSpace::findPackage(std::string name)
 
 		std::string relative_fname =
 		    string_format("package/%s/%s.lua", dependPath, lastPart);
-		string_list::iterator iter = this->WORLD->overlaysStart();
-		string_list::iterator iterEnd = this->WORLD->overlaysEnd();
-		for(; iter != iterEnd; iter++) {
-			lua_file = string_format("%s/%s", iter->c_str(), relative_fname.c_str());
+		string_list::iterator _iter = this->WORLD->overlaysStart();
+		string_list::iterator _iterEnd = this->WORLD->overlaysEnd();
+		for(; _iter != _iterEnd; _iter++) {
+			lua_file = string_format("%s/%s", _iter->c_str(), relative_fname.c_str());
 			FILE *f = fopen(lua_file.c_str(), "r");
 			if(f != NULL) {
 				found = true;
-				overlay = *iter;
+				overlay = *_iter;
 				fclose(f);
 			}
 			if(found) {
@@ -106,7 +106,7 @@ Package *NameSpace::findPackage(std::string name)
 		}
 
 		if(!found) {
-			throw CustomException("Package not found: " + name);
+			throw CustomException("Package not found: " + _name);
 		}
 
 		free(dependPath);
@@ -116,7 +116,7 @@ Package *NameSpace::findPackage(std::string name)
 		file_short = relative_fname;
 	}
 
-	Package *p = new Package(this, name, file_short, file, overlay);
+	Package *p = new Package(this, _name, file_short, file, overlay);
 	this->_addPackage(p);
 
 	return p;
