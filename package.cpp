@@ -38,7 +38,7 @@ std::list<PackageDepend *>::iterator Package::dependsEnd()
 
 BuildDir *Package::builddir()
 {
-	if(this->bd == NULL) {
+	if(this->bd == nullptr) {
 		this->bd = new BuildDir(this);
 	}
 
@@ -47,7 +47,7 @@ BuildDir *Package::builddir()
 
 FILE *Package::getLogFile()
 {
-	if(this->logFile == NULL) {
+	if(this->logFile == nullptr) {
 		std::string fname = this->builddir()->getPath() + "/build.log";
 		this->logFile = fopen(fname.c_str(), "w");
 	}
@@ -116,12 +116,12 @@ std::string Package::getFileHash(const std::string &filename)
 	std::string ret("");
 	std::string hashes_file = this->relative_fetch_path("Digest");
 	FILE *hashes = fopen(hashes_file.c_str(), "r");
-	if(hashes != NULL) {
+	if(hashes != nullptr) {
 		char buf[1024];
 		memset(buf, 0, 1024);
 		while(fgets(buf, sizeof(buf), hashes) != nullptr) {
 			char *hash = strchr(buf, ' ');
-			if(hash != NULL) {
+			if(hash != nullptr) {
 				*hash = '\0';
 				hash++;
 				char *term = strchr(hash, '\n');
@@ -141,7 +141,7 @@ std::string Package::getFileHash(const std::string &filename)
 
 void Package::resetBD()
 {
-	if(this->bd != NULL) {
+	if(this->bd != nullptr) {
 		delete this->bd;
 		this->bd = new BuildDir(this);
 	}
@@ -221,7 +221,7 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 			return false;
 	}
 
-	if(this->bd != NULL) {
+	if(this->bd != nullptr) {
 		PackageCmd pc(dir, "pax");
 		pc.addArg("-rf");
 		auto pwd = this->getWorld()->getWorkingDir();
@@ -266,7 +266,7 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 	}
 
 	auto pwd = this->getWorld()->getWorkingDir();
-	if(this->bd != NULL) {
+	if(this->bd != nullptr) {
 		if(!this->installFiles.empty()) {
 			std::list<std::string>::iterator it = this->installFiles.begin();
 			std::list<std::string>::iterator end = this->installFiles.end();
@@ -362,7 +362,7 @@ BuildUnit *Package::buildInfo()
 		if(this->buildinfo_hash.compare("") == 0) {
 			log(this, "build.info (in %s) is empty", this->bd->getShortPath().c_str());
 			log(this, "You probably need to build this package");
-			return NULL;
+			return nullptr;
 		}
 		std::string info_file = this->bd->getShortPath() + "/.build.info";
 		res = new BuildInfoFileUnit(info_file, this->buildinfo_hash);
@@ -385,7 +385,7 @@ void Package::prepareBuildInfo()
 	for(; dIt != dEnds; dIt++) {
 		BuildUnit *bi = (*dIt)->getPackage()->buildInfo();
 		if(!bi) {
-			log(this, "bi is NULL :(");
+			log(this, "bi is nullptr :(");
 			exit(-1);
 		}
 		this->build_description->add(bi);
@@ -470,7 +470,7 @@ bool Package::shouldBuild(bool locally)
 	                    this->getNS()->getName() + "/install/" + this->name + ".cpio";
 
 	FILE *_f = fopen(fname.c_str(), "r");
-	if(_f == NULL) {
+	if(_f == nullptr) {
 		ret = true;
 	} else {
 		fclose(_f);
@@ -481,7 +481,7 @@ bool Package::shouldBuild(bool locally)
 	        "/staging/" + this->name + ".cpio";
 
 	_f = fopen(fname.c_str(), "r");
-	if(_f == NULL) {
+	if(_f == nullptr) {
 		ret = true;
 	} else {
 		fclose(_f);

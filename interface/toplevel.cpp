@@ -133,14 +133,14 @@ int li_keepstaging(lua_State *) // NOLINT
 
 static void depend(Package *P, NameSpace *ns, bool locally, const std::string &name)
 {
-	Package *p = NULL;
+	Package *p = nullptr;
 	// create the Package
 	if(ns) {
 		p = ns->findPackage(name);
 	} else {
 		p = P->getNS()->findPackage(name);
 	}
-	if(p == NULL) {
+	if(p == nullptr) {
 		throw CustomException("Failed to create or find Package");
 	}
 
@@ -153,7 +153,7 @@ int li_depend(lua_State *L)
 		throw CustomException("depend() takes 1 argument or 2 arguments");
 	}
 
-	NameSpace *ns = NULL;
+	NameSpace *ns = nullptr;
 	// get the current package
 	Package *P = li_get_package();
 

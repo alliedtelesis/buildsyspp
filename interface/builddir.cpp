@@ -119,7 +119,7 @@ int li_bd_fetch(lua_State *L)
 	lua_pop(L, 1);
 
 	/* Create fetch object here */
-	FetchUnit *f = NULL;
+	FetchUnit *f = nullptr;
 	if(method == "dl") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = dl requires uri to be set");
@@ -279,8 +279,8 @@ int li_bd_extract_table(lua_State *L)
 
 	CHECK_ARGUMENT_TYPE("extract", 2, FetchUnit, f);
 
-	ExtractionUnit *eu = NULL;
-	if(strstr(f->relative_path().c_str(), ".zip") != NULL) {
+	ExtractionUnit *eu = nullptr;
+	if(strstr(f->relative_path().c_str(), ".zip") != nullptr) {
 		eu = new ZipExtractionUnit(f);
 	} else {
 		// The catch all for tar compressed files
@@ -321,7 +321,7 @@ int li_bd_extract(lua_State *L)
 	std::string fName(lua_tostring(L, 2));
 	std::string realFName = relative_path(d, fName, true);
 
-	ExtractionUnit *eu = NULL;
+	ExtractionUnit *eu = nullptr;
 	if(fName.find(".zip") != std::string::npos) {
 		eu = new ZipExtractionUnit(realFName);
 	} else {

@@ -49,7 +49,7 @@ std::string buildsys::hash_file(const std::string &fname)
 	md = EVP_get_digestbyname("sha256");
 
 	mdctx = EVP_MD_CTX_create();
-	EVP_DigestInit_ex(mdctx, md, NULL);
+	EVP_DigestInit_ex(mdctx, md, nullptr);
 
 	FILE *f = fopen(fname.c_str(), "rb");
 	if(!f) {

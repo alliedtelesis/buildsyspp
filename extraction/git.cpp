@@ -57,7 +57,7 @@ static std::string git_hash_ref(const std::string &gdir, const std::string &refs
 {
 	std::string cmd = "cd " + gdir + " && git rev-parse " + refspec;
 	FILE *f = popen(cmd.c_str(), "r");
-	if(f == NULL) {
+	if(f == nullptr) {
 		throw CustomException("git rev-parse ref failed");
 	}
 	char commit[41] = {};
@@ -76,7 +76,7 @@ static std::string git_diff_hash(const std::string &gdir)
 {
 	std::string cmd = "cd " + gdir + " && git diff HEAD | sha1sum";
 	FILE *f = popen(cmd.c_str(), "r");
-	if(f == NULL) {
+	if(f == nullptr) {
 		throw CustomException("git diff | sha1sum failed");
 	}
 	char delta_hash[41] = {};
@@ -91,7 +91,7 @@ static std::string git_remote(const std::string &gdir, const std::string &remote
 	std::string cmd =
 	    "cd " + gdir + " && git config --local --get remote." + remote + ".url";
 	FILE *f = popen(cmd.c_str(), "r");
-	if(f == NULL) {
+	if(f == nullptr) {
 		throw CustomException("git config --local --get remote. .url failed");
 	}
 	char output[1025] = {};

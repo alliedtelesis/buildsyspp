@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interface/luainterface.h"
 #include "include/buildsys.h"
 
-static thread_local Package *__current_package = NULL;
+static thread_local Package *__current_package = nullptr;
 
 void li_set_package(Package *p)
 {

@@ -82,7 +82,7 @@ Package *NameSpace::findPackage(std::string _name)
 		char *lastPart = strrchr(dependPath, '/');
 		bool found = false;
 
-		if(lastPart == NULL) {
+		if(lastPart == nullptr) {
 			lastPart = strdup(dependPath);
 		} else {
 			lastPart = strdup(lastPart + 1);
@@ -95,7 +95,7 @@ Package *NameSpace::findPackage(std::string _name)
 		for(; _iter != _iterEnd; _iter++) {
 			lua_file = string_format("%s/%s", _iter->c_str(), relative_fname.c_str());
 			FILE *f = fopen(lua_file.c_str(), "r");
-			if(f != NULL) {
+			if(f != nullptr) {
 				found = true;
 				overlay = *_iter;
 				fclose(f);

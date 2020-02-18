@@ -96,7 +96,7 @@ CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit *f)
 
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(const std::string &fname)
 {
-	this->fetch = NULL;
+	this->fetch = nullptr;
 	this->uri = fname;
 }
 

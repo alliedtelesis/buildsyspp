@@ -222,7 +222,7 @@ namespace buildsys
 		Lua()
 		{
 			state = luaL_newstate();
-			if(state == NULL)
+			if(state == nullptr)
 				throw LuaException();
 			luaL_openlibs(state);
 		};
@@ -230,7 +230,7 @@ namespace buildsys
 		~Lua()
 		{
 			lua_close(state);
-			this->state = NULL;
+			this->state = nullptr;
 		}
 		/** Load and exexcute a lua file in this instance
 		 *  \param filename The name of the lua file to load and run
@@ -1198,7 +1198,8 @@ namespace buildsys
 		      lua(new Lua()), intercept(false), depsExtraction(""),
 		      depsExtractionDirectOnly(false), visiting(false), processing_queued(false),
 		      buildInfoPrepared(false), codeUpdated(false), no_fetch_from(false),
-		      hash_output(false), suppress_remove_staging(false), run_secs(0), logFile(NULL)
+		      hash_output(false), suppress_remove_staging(false), run_secs(0),
+		      logFile(nullptr)
 		{
 		}
 		~Package()
@@ -1213,7 +1214,7 @@ namespace buildsys
 				this->commands.pop_front();
 				delete pc;
 			}
-			ns = NULL;
+			ns = nullptr;
 			delete bd;
 			delete f;
 			delete Extract;
@@ -1221,7 +1222,7 @@ namespace buildsys
 			delete lua;
 			if(logFile) {
 				fclose(logFile);
-				logFile = NULL;
+				logFile = nullptr;
 			}
 		};
 		//! Set the namespace this package is in
@@ -1483,7 +1484,7 @@ namespace buildsys
 		Package *pop()
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
-			Package *p = NULL;
+			Package *p = nullptr;
 			if(!this->queue.empty()) {
 				p = this->queue.front();
 				this->queue.pop_front();
@@ -1545,7 +1546,7 @@ namespace buildsys
 		      ignoredFeatures(new string_list())
 		{
 			overlays->push_back(std::string("."));
-			char *_pwd = getcwd(NULL, 0);
+			char *_pwd = getcwd(nullptr, 0);
 			this->pwd = std::string(_pwd);
 			free(_pwd);
 		};
@@ -1688,7 +1689,7 @@ namespace buildsys
 		//! Find (or create) a DLObject for a given full file name
 		DLObject *findDLObject(std::string fname)
 		{
-			DLObject *dlo = NULL;
+			DLObject *dlo = nullptr;
 			std::unique_lock<std::mutex> lk(this->dlobjects_lock);
 			dlo = this->_findDLObject(fname);
 			return dlo;
@@ -1795,7 +1796,7 @@ namespace buildsys
 		//! output the dependency graph
 		bool output_graph()
 		{
-			if(this->graph != NULL) {
+			if(this->graph != nullptr) {
 				graph->output();
 			}
 			return true;

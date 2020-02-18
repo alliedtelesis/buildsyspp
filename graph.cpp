@@ -47,14 +47,14 @@ public:
 	 */
 	template <class VertexOrEdge> void operator()(std::ostream &out, VertexOrEdge v)
 	{
-		if(names[v] != NULL)
+		if(names[v] != nullptr)
 			names[v]->printLabel(out);
 	}
 };
 
 Internal_Graph::Internal_Graph(World *W)
 {
-	this->c = NULL;
+	this->c = nullptr;
 	// Setup for graphing
 	this->Nodes = new NodeVertexMap();
 	this->NodeMap = new VertexNodeMap();
@@ -90,7 +90,7 @@ Internal_Graph::Internal_Graph(World *W)
 
 Internal_Graph::~Internal_Graph()
 {
-	if(c != NULL) {
+	if(c != nullptr) {
 		delete c;
 	}
 	delete this->Nodes;
@@ -106,7 +106,7 @@ void Internal_Graph::output()
 
 void Internal_Graph::topological()
 {
-	if(c != NULL) {
+	if(c != nullptr) {
 		delete c;
 	}
 	c = new container();
@@ -126,9 +126,9 @@ void Internal_Graph::deleteNode(Package *p)
 
 Package *Internal_Graph::topoNext()
 {
-	Package *n = NULL;
-	if(c == NULL)
-		return NULL;
+	Package *n = nullptr;
+	if(c == nullptr)
+		return nullptr;
 	for(container::iterator ii = c->begin(); ii != c->end(); ++ii) {
 		Package *p = ((*NodeMap)[*ii]);
 		if(!(p->isBuilt()) && !(p->isBuilding()) && p->canBuild()) {

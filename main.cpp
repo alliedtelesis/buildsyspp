@@ -30,7 +30,7 @@ static bool quietly = false;
 
 void buildsys::log(const char *package, const char *fmt, ...)
 {
-	char *message = NULL;
+	char *message = nullptr;
 	va_list args;
 	va_start(args, fmt);
 	vasprintf(&message, fmt, args);
@@ -42,7 +42,7 @@ void buildsys::log(const char *package, const char *fmt, ...)
 
 void buildsys::log(Package *P, const char *fmt, ...)
 {
-	char *message = NULL;
+	char *message = nullptr;
 	va_list args;
 	va_start(args, fmt);
 	vasprintf(&message, fmt, args);
@@ -60,7 +60,7 @@ static inline const char *get_color(const char *mesg)
 	else if(strstr(mesg, "warning:"))
 		return COLOR_BOLD_BLUE;
 
-	return NULL;
+	return nullptr;
 }
 
 void buildsys::program_output(Package *P, const std::string &mesg)
@@ -68,7 +68,7 @@ void buildsys::program_output(Package *P, const std::string &mesg)
 	static int isATTY = isatty(fileno(stdout));
 	const char *color;
 
-	if(!quietly && isATTY && ((color = get_color(mesg.c_str())) != NULL))
+	if(!quietly && isATTY && ((color = get_color(mesg.c_str())) != nullptr))
 		fprintf(stdout, "%s,%s: %s%s%s\n", P->getNS()->getName().c_str(),
 		        P->getName().c_str(), color, mesg.c_str(), COLOR_RESET);
 	else

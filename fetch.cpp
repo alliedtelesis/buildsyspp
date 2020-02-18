@@ -71,7 +71,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 	 * Also checks for conflicting hashes for the same file
 	 */
 	DLObject *dlobj = d->getWorld()->findDLObject(fullname);
-	if(dlobj == NULL) {
+	if(dlobj == nullptr) {
 		log(this->P, "Failed to get the DLObject for %s\n", fullname.c_str());
 		return false;
 	}
@@ -94,7 +94,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 		std::string fpath = string_format(
 		    "%s/dl/%s", d->getWorld()->getWorkingDir().c_str(), fname.c_str());
 		FILE *f = fopen(fpath.c_str(), "r");
-		if(f == NULL) {
+		if(f == nullptr) {
 			get = true;
 		} else {
 			fclose(f);
@@ -125,7 +125,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 			std::string cmd = std::string();
 			char *_filename = strdup(fname.c_str());
 			char *ext = strrchr(_filename, '.');
-			if(ext == NULL) {
+			if(ext == nullptr) {
 				log(P->getName().c_str(),
 				    "Could not guess decompression based on extension: %s\n",
 				    fname.c_str());

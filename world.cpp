@@ -150,7 +150,7 @@ static void process_packages(Package *p)
 
 	while(!pq.done()) {
 		Package *toProcess = pq.pop();
-		if(toProcess != NULL) {
+		if(toProcess != nullptr) {
 			pq.start();
 
 			std::thread thr(process_package, toProcess, &pq);
@@ -197,11 +197,11 @@ bool World::basePackage(const std::string &filename)
 	this->topo_graph->topological();
 	while(!this->isFailed() && !this->p->isBuilt()) {
 		std::unique_lock<std::mutex> lk(this->cond_lock);
-		Package *toBuild = NULL;
+		Package *toBuild = nullptr;
 		if(this->threads_limit == 0 || this->threads_running < this->threads_limit) {
 			toBuild = this->topo_graph->topoNext();
 		}
-		if(toBuild != NULL) {
+		if(toBuild != nullptr) {
 			// If this package is already building then skip it.
 			if(toBuild->isBuilding()) {
 				continue;
@@ -286,7 +286,7 @@ World::~World()
 {
 	delete this->features;
 	delete this->forcedDeps;
-	this->p = NULL;
+	this->p = nullptr;
 	while(!this->namespaces->empty()) {
 		NameSpace *ns = this->namespaces->front();
 		this->namespaces->pop_front();
