@@ -41,8 +41,7 @@ std::string buildsys::hash_file(const std::string &fname)
 {
 	EVP_MD_CTX *mdctx;
 	const EVP_MD *md;
-	const int BUFLEN = 4096;
-	char buff[BUFLEN];
+	std::vector<char> buff(4096);
 	unsigned char md_value[EVP_MAX_MD_SIZE];
 	unsigned int md_len;
 
@@ -51,16 +50,15 @@ std::string buildsys::hash_file(const std::string &fname)
 	mdctx = EVP_MD_CTX_create();
 	EVP_DigestInit_ex(mdctx, md, nullptr);
 
-	FILE *f = fopen(fname.c_str(), "rb");
-	if(!f) {
+	std::ifstream input(fname, std::ios::in | std::ifstream::binary);
+	if(!input.is_open()) {
 		fprintf(stderr, "Failed opening: %s\n", fname.c_str());
 		return std::string("");
 	}
-	while(!feof(f)) {
-		size_t red = fread(buff, 1, BUFLEN, f);
-		EVP_DigestUpdate(mdctx, buff, red);
+	while(!input.eof()) {
+		input.read(&buff[0], static_cast<std::streamsize>(buff.size()));
+		EVP_DigestUpdate(mdctx, &buff[0], static_cast<size_t>(input.gcount()));
 	}
-	fclose(f);
 
 	EVP_DigestFinal_ex(mdctx, md_value, &md_len);
 	EVP_MD_CTX_destroy(mdctx);
