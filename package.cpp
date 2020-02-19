@@ -113,30 +113,27 @@ std::string Package::relative_fetch_path(const std::string &location, bool also_
 
 std::string Package::getFileHash(const std::string &filename)
 {
-	std::string ret("");
 	std::string hashes_file = this->relative_fetch_path("Digest");
-	FILE *hashes = fopen(hashes_file.c_str(), "r");
-	if(hashes != nullptr) {
-		char buf[1024];
-		memset(buf, 0, 1024);
-		while(fgets(buf, sizeof(buf), hashes) != nullptr) {
-			char *hash = strchr(buf, ' ');
-			if(hash != nullptr) {
-				*hash = '\0';
-				hash++;
-				char *term = strchr(hash, '\n');
-				if(term) {
-					*term = '\0';
-				}
-			}
-			if(strcmp(buf, filename.c_str()) == 0) {
-				ret = std::string(hash);
+	std::ifstream hashes(hashes_file);
+
+	if(!hashes.is_open()) {
+		return "";
+	}
+
+	std::string hash("");
+	std::string line;
+	while(std::getline(hashes, line)) {
+		auto split = line.find(" ");
+		if(split != std::string::npos) {
+			std::string fname = line.substr(0, split);
+			if(fname == filename) {
+				hash = line.substr(split + 1);
 				break;
 			}
 		}
-		fclose(hashes);
 	}
-	return ret;
+
+	return hash;
 }
 
 void Package::resetBD()
