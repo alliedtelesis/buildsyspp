@@ -94,13 +94,9 @@ Package *NameSpace::findPackage(std::string _name)
 		string_list::iterator _iterEnd = this->WORLD->overlaysEnd();
 		for(; _iter != _iterEnd; _iter++) {
 			lua_file = string_format("%s/%s", _iter->c_str(), relative_fname.c_str());
-			FILE *f = fopen(lua_file.c_str(), "r");
-			if(f != nullptr) {
+			if(filesystem::exists(lua_file)) {
 				found = true;
 				overlay = *_iter;
-				fclose(f);
-			}
-			if(found) {
 				break;
 			}
 		}

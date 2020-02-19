@@ -62,8 +62,6 @@ bool DownloadFetch::fetch(BuildDir *d)
 {
 	filesystem::create_directories("dl");
 
-	bool get = false;
-
 	std::string fullname = this->full_name();
 	std::string fname = this->final_name();
 
@@ -90,18 +88,8 @@ bool DownloadFetch::fetch(BuildDir *d)
 		}
 	}
 
-	{
-		std::string fpath = string_format(
-		    "%s/dl/%s", d->getWorld()->getWorkingDir().c_str(), fname.c_str());
-		FILE *f = fopen(fpath.c_str(), "r");
-		if(f == nullptr) {
-			get = true;
-		} else {
-			fclose(f);
-		}
-	}
-
-	if(get) {
+	std::string _fpath = d->getWorld()->getWorkingDir() + "/dl/" + fname;
+	if(!filesystem::exists(_fpath)) {
 		bool localCacheHit = false;
 		// Attempt to get file from local tarball cache if one is configured.
 		if(d->getWorld()->haveTarballCache()) {

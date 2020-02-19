@@ -469,22 +469,16 @@ bool Package::shouldBuild(bool locally)
 	std::string fname = this->getWorld()->getWorkingDir() + "/output/" +
 	                    this->getNS()->getName() + "/install/" + this->name + ".cpio";
 
-	FILE *_f = fopen(fname.c_str(), "r");
-	if(_f == nullptr) {
+	if(!filesystem::exists(fname)) {
 		ret = true;
-	} else {
-		fclose(_f);
 	}
 
 	// Now lets check that the staging file (still) exists
 	fname = this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
 	        "/staging/" + this->name + ".cpio";
 
-	_f = fopen(fname.c_str(), "r");
-	if(_f == nullptr) {
+	if(!filesystem::exists(fname)) {
 		ret = true;
-	} else {
-		fclose(_f);
 	}
 
 	std::string cmd =
