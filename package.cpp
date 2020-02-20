@@ -76,8 +76,8 @@ std::string Package::relative_fetch_path(const std::string &location, bool also_
 	if(location.at(0) == '/' || location.find("dl/") == 0) {
 		src_path = location;
 	} else {
-		string_list::iterator iter = this->getWorld()->overlaysStart();
-		string_list::iterator end = this->getWorld()->overlaysEnd();
+		auto iter = this->getWorld()->overlaysStart();
+		auto end = this->getWorld()->overlaysEnd();
 		bool exists(false);
 
 		if(location.at(0) == '.') {
@@ -201,8 +201,8 @@ bool Package::checkForDependencyLoops()
 bool Package::extract_staging(const std::string &dir, std::list<std::string> *done)
 {
 	{
-		std::list<std::string>::iterator dIt = done->begin();
-		std::list<std::string>::iterator dEnd = done->end();
+		auto dIt = done->begin();
+		auto dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
 			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
@@ -241,8 +241,8 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
                               bool includeChildren)
 {
 	{
-		std::list<std::string>::iterator dIt = done->begin();
-		std::list<std::string>::iterator dEnd = done->end();
+		auto dIt = done->begin();
+		auto dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
 			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
@@ -263,8 +263,8 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 	auto pwd = this->getWorld()->getWorkingDir();
 	if(this->bd != nullptr) {
 		if(!this->installFiles.empty()) {
-			std::list<std::string>::iterator it = this->installFiles.begin();
-			std::list<std::string>::iterator end = this->installFiles.end();
+			auto it = this->installFiles.begin();
+			auto end = this->installFiles.end();
 			for(; it != end; it++) {
 				PackageCmd pc(dir, "cp");
 				std::string arg =
@@ -519,7 +519,7 @@ bool Package::prepareBuildDirs()
 		std::system(cmd.c_str());
 	}
 
-	std::list<std::string> *done = new std::list<std::string>();
+	auto *done = new std::list<std::string>();
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
@@ -552,7 +552,7 @@ bool Package::extractInstallDepends()
 	filesystem::create_directories(this->depsExtraction);
 
 	log(this, "Extracting installed files from dependencies ...");
-	std::list<std::string> *done = new std::list<std::string>();
+	auto *done = new std::list<std::string>();
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
@@ -585,8 +585,8 @@ bool Package::packageNewInstall()
 {
 	auto pwd = this->getWorld()->getWorkingDir();
 	if(!this->installFiles.empty()) {
-		std::list<std::string>::iterator it = this->installFiles.begin();
-		std::list<std::string>::iterator end = this->installFiles.end();
+		auto it = this->installFiles.begin();
+		auto end = this->installFiles.end();
 		for(; it != end; it++) {
 			log(this, ("Copying " + *it + " to install folder").c_str());
 			PackageCmd pc(this->bd->getNewInstall(), "cp");
@@ -703,8 +703,8 @@ bool Package::build(bool locally)
 		return false;
 	}
 
-	std::list<PackageCmd *>::iterator cIt = this->commands.begin();
-	std::list<PackageCmd *>::iterator cEnd = this->commands.end();
+	auto cIt = this->commands.begin();
+	auto cEnd = this->commands.end();
 
 	log(this, "Running Commands");
 	for(; cIt != cEnd; cIt++) {

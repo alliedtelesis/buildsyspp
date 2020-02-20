@@ -43,4 +43,12 @@ cpplint:
 	find -name \*.cpp -not -path "*test/*" -exec cpplint {} \;
 	find -name \*.h -not -path "*test/*" -exec cpplint {} \;
 
+tidy:
+	find -name \*.cpp -not -path "*test/*" -exec clang-tidy \
+		-checks=*,-fuchsia-default-arguments,-hicpp-vararg,-cppcoreguidelines-pro-type-vararg,-cert-env33-c,-llvm-header-guard \
+		-quiet {} -- $(CPPFLAGS) $(shell pkg-config --cflags $(LUAVERSION)) \;
+	find -name \*.h -not -path "*test/*" -exec clang-tidy \
+		-checks=*,-fuchsia-default-arguments,-hicpp-vararg,-cppcoreguidelines-pro-type-vararg,-cert-env33-c,-llvm-header-guard \
+		-quiet -extra-arg-before=-xc++ {} -- $(CPPFLAGS) $(shell pkg-config --cflags $(LUAVERSION)) \;
+
 .PHONY: test

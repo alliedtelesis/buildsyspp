@@ -37,8 +37,8 @@ string_list::iterator World::overlaysEnd()
 
 NameSpace *World::findNameSpace(std::string name)
 {
-	std::list<NameSpace *>::iterator iter = this->nameSpacesStart();
-	std::list<NameSpace *>::iterator iterEnd = this->nameSpacesEnd();
+	auto iter = this->nameSpacesStart();
+	auto iterEnd = this->nameSpacesEnd();
 	for(; iter != iterEnd; iter++) {
 		if((*iter)->getName().compare(name) == 0)
 			return (*iter);
@@ -89,8 +89,7 @@ std::string World::getFeature(const std::string &key)
 void World::printFeatureValues()
 {
 	std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
-	for(key_value::iterator it = this->features->begin(); it != this->features->end();
-	    ++it) {
+	for(auto it = this->features->begin(); it != this->features->end(); ++it) {
 		std::cout << it->first << "\t" << it->second << std::endl;
 	}
 	std::cout << "----END FEATURE VALUES----" << std::endl;
@@ -227,8 +226,8 @@ bool World::basePackage(const std::string &filename)
 
 bool World::isForced(std::string name)
 {
-	string_list::iterator fIt = this->forcedDeps->begin();
-	string_list::iterator fEnd = this->forcedDeps->end();
+	auto fIt = this->forcedDeps->begin();
+	auto fEnd = this->forcedDeps->end();
 
 	for(; fIt != fEnd; fIt++) {
 		if((*fIt).compare(name) == 0)
@@ -239,8 +238,8 @@ bool World::isForced(std::string name)
 
 bool World::populateForcedList(PackageCmd *pc)
 {
-	string_list::iterator fIt = this->forcedDeps->begin();
-	string_list::iterator fEnd = this->forcedDeps->end();
+	auto fIt = this->forcedDeps->begin();
+	auto fEnd = this->forcedDeps->end();
 
 	for(; fIt != fEnd; fIt++) {
 		pc->addArg(*fIt);
@@ -259,8 +258,8 @@ bool World::packageFinished(Package *_p)
 
 bool World::isIgnoredFeature(std::string feature)
 {
-	string_list::iterator iter = this->ignoredFeatures->begin();
-	string_list::iterator iterEnd = this->ignoredFeatures->end();
+	auto iter = this->ignoredFeatures->begin();
+	auto iterEnd = this->ignoredFeatures->end();
 	for(; iter != iterEnd; iter++) {
 		if((*iter).compare(feature) == 0)
 			return true;
@@ -270,8 +269,8 @@ bool World::isIgnoredFeature(std::string feature)
 
 DLObject *World::_findDLObject(std::string fname)
 {
-	std::list<DLObject *>::iterator iter = this->dlobjects->begin();
-	std::list<DLObject *>::iterator iterEnd = this->dlobjects->end();
+	auto iter = this->dlobjects->begin();
+	auto iterEnd = this->dlobjects->end();
 	for(; iter != iterEnd; iter++) {
 		if((*iter)->fileName().compare(fname) == 0)
 			return (*iter);

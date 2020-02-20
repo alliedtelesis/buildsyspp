@@ -59,10 +59,8 @@ Internal_Graph::Internal_Graph(World *W)
 	this->Nodes = new NodeVertexMap();
 	this->NodeMap = new VertexNodeMap();
 
-	for(std::list<NameSpace *>::iterator N = W->nameSpacesStart(); N != W->nameSpacesEnd();
-	    N++) {
-		for(std::list<Package *>::iterator I = (*N)->packagesStart();
-		    I != (*N)->packagesEnd(); I++) {
+	for(auto N = W->nameSpacesStart(); N != W->nameSpacesEnd(); N++) {
+		for(auto I = (*N)->packagesStart(); I != (*N)->packagesEnd(); I++) {
 			NodeVertexMap::iterator pos;
 			bool inserted;
 			boost::tie(pos, inserted) = Nodes->insert(std::make_pair(*I, Vertex()));
@@ -74,10 +72,8 @@ Internal_Graph::Internal_Graph(World *W)
 		}
 	}
 
-	for(std::list<NameSpace *>::iterator N = W->nameSpacesStart(); N != W->nameSpacesEnd();
-	    N++) {
-		for(std::list<Package *>::iterator I = (*N)->packagesStart();
-		    I != (*N)->packagesEnd(); I++) {
+	for(auto N = W->nameSpacesStart(); N != W->nameSpacesEnd(); N++) {
+		for(auto I = (*N)->packagesStart(); I != (*N)->packagesEnd(); I++) {
 			for(auto J = (*I)->dependsStart(); J != (*I)->dependsEnd(); J++) {
 				Edge e;
 				bool inserted;
@@ -129,7 +125,7 @@ Package *Internal_Graph::topoNext()
 	Package *n = nullptr;
 	if(c == nullptr)
 		return nullptr;
-	for(container::iterator ii = c->begin(); ii != c->end(); ++ii) {
+	for(auto ii = c->begin(); ii != c->end(); ++ii) {
 		Package *p = ((*NodeMap)[*ii]);
 		if(!(p->isBuilt()) && !(p->isBuilding()) && p->canBuild()) {
 			// fprintf(stderr, "(Possible) Next Pacakge: %s\n", p->getName().c_str());

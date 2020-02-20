@@ -66,8 +66,8 @@ Package *NameSpace::findPackage(std::string _name)
 
 	std::unique_lock<std::mutex> lk(this->lock);
 
-	std::list<Package *>::iterator iter = this->packagesStart();
-	std::list<Package *>::iterator iterEnd = this->packagesEnd();
+	auto iter = this->packagesStart();
+	auto iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++) {
 		if((*iter)->getName().compare(_name) == 0) {
 			return (*iter);
@@ -90,8 +90,8 @@ Package *NameSpace::findPackage(std::string _name)
 
 		std::string relative_fname =
 		    string_format("package/%s/%s.lua", dependPath, lastPart);
-		string_list::iterator _iter = this->WORLD->overlaysStart();
-		string_list::iterator _iterEnd = this->WORLD->overlaysEnd();
+		auto _iter = this->WORLD->overlaysStart();
+		auto _iterEnd = this->WORLD->overlaysEnd();
 		for(; _iter != _iterEnd; _iter++) {
 			lua_file = string_format("%s/%s", _iter->c_str(), relative_fname.c_str());
 			if(filesystem::exists(lua_file)) {

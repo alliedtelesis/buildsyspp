@@ -307,7 +307,7 @@ int li_bd_extract(lua_State *L)
 	lua_gettable(L, 1);
 	if(!lua_islightuserdata(L, -1))
 		throw CustomException("extract() must be called using : not .");
-	const BuildDir *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1));
+	const auto *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1));
 	lua_pop(L, 1);
 
 	Package *P = li_get_package();
@@ -359,7 +359,7 @@ int li_bd_cmd(lua_State *L)
 	std::string dir = relative_path(d, lua_tostring(L, 2));
 	std::string app(lua_tostring(L, 3));
 
-	PackageCmd *pc = new PackageCmd(dir, app);
+	auto *pc = new PackageCmd(dir, app);
 
 	lua_pushnil(L); /* first key */
 	while(lua_next(L, 4) != 0) {
@@ -414,7 +414,7 @@ int li_bd_patch(lua_State *L)
 
 	std::string patch_path = relative_path(d, lua_tostring(L, 2), true);
 
-	int patch_depth = static_cast<int>(lua_tonumber(L, 3));
+	auto patch_depth = static_cast<int>(lua_tonumber(L, 3));
 
 	lua_pushnil(L); /* first key */
 	while(lua_next(L, 4) != 0) {

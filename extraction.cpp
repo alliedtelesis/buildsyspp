@@ -84,7 +84,7 @@ bool Extraction::extract(Package *P)
 ExtractionInfoFileUnit *Extraction::extractionInfo(BuildDir *bd)
 {
 	std::string fname = bd->getShortPath() + "/.extraction.info";
-	ExtractionInfoFileUnit *ret = new ExtractionInfoFileUnit(fname);
+	auto *ret = new ExtractionInfoFileUnit(fname);
 	return ret;
 }
 

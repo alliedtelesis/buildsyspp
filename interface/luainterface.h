@@ -45,7 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	if(!lua_islightuserdata(L, -1))                                                        \
 		throw CustomException("" #F "() requires data of argument " #N                     \
 		                      " to contain something of type " #T "");                     \
-	T *V = const_cast<T *>(reinterpret_cast<const T *>(lua_topointer(L, -1)));             \
+	auto *V = const_cast<T *>(reinterpret_cast<const T *>(lua_topointer(L, -1)));          \
 	lua_pop(L, 1);
 
 void li_set_package(Package *p);
