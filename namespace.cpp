@@ -69,7 +69,7 @@ Package *NameSpace::findPackage(const std::string &_name)
 	auto iter = this->packagesStart();
 	auto iterEnd = this->packagesEnd();
 	for(; iter != iterEnd; iter++) {
-		if((*iter)->getName().compare(_name) == 0) {
+		if((*iter)->getName() == _name) {
 			return (*iter);
 		}
 	}

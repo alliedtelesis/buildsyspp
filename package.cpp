@@ -205,7 +205,7 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 		auto dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
-			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0) {
+			if((*dIt) == this->getNS()->getName() + "," + this->name) {
 				return true;
 			}
 		}
@@ -247,7 +247,7 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 		auto dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
-			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0) {
+			if((*dIt) == this->getNS()->getName() + "," + this->name) {
 				return true;
 			}
 		}
@@ -357,7 +357,7 @@ BuildUnit *Package::buildInfo()
 		std::string info_file = this->bd->getShortPath() + "/.output.info";
 		res = new OutputInfoFileUnit(info_file);
 	} else {
-		if(this->buildinfo_hash.compare("") == 0) {
+		if(this->buildinfo_hash == "") {
 			log(this, "build.info (in %s) is empty", this->bd->getShortPath().c_str());
 			log(this, "You probably need to build this package");
 			return nullptr;

@@ -209,7 +209,7 @@ bool GitExtractionUnit::fetch(BuildDir *d)
 		}
 	}
 
-	if(this->refspec.compare("HEAD") == 0) {
+	if(this->refspec == "HEAD") {
 		// Don't touch it
 	} else {
 		std::string cmd = "cd " + source_dir +
