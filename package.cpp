@@ -105,7 +105,7 @@ std::string Package::relative_fetch_path(const std::string &location, bool also_
 			}
 		}
 		if(!exists) {
-			throw FileNotFoundException(location.c_str(), this->getName());
+			throw FileNotFoundException(location, this->getName());
 		}
 	}
 	return src_path;
@@ -539,9 +539,9 @@ bool Package::extractInstallDepends()
 	// Extract installed files to a given location
 	log(this, "Removing old install files ...");
 	{
-		PackageCmd pc(this->getWorld()->getWorkingDir().c_str(), "rm");
+		PackageCmd pc(this->getWorld()->getWorkingDir(), "rm");
 		pc.addArg("-fr");
-		pc.addArg(this->depsExtraction.c_str());
+		pc.addArg(this->depsExtraction);
 		if(!pc.Run(this)) {
 			log(this, "Failed to remove %s (pre-install)", this->depsExtraction.c_str());
 			return false;

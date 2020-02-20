@@ -182,14 +182,13 @@ int li_bd_fetch(lua_State *L)
 			throw CustomException("fetch method = copyfile requires uri to be set");
 		}
 		std::string file_path = P->relative_fetch_path(uri);
-		P->extraction()->add(new FileCopyExtractionUnit(file_path.c_str(), uri));
+		P->extraction()->add(new FileCopyExtractionUnit(file_path, uri));
 	} else if(method == "copygit") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = copygit requires uri to be set");
 		}
 		std::string src_path = P->relative_fetch_path(uri);
-		CopyGitDirExtractionUnit *cgdeu =
-		    new CopyGitDirExtractionUnit(src_path.c_str(), ".");
+		CopyGitDirExtractionUnit *cgdeu = new CopyGitDirExtractionUnit(src_path, ".");
 		P->extraction()->add(cgdeu);
 	} else if(method == "copy") {
 		if(uri.empty()) {
@@ -424,8 +423,8 @@ int li_bd_patch(lua_State *L)
 				throw CustomException(
 				    "patch() requires a table of strings as the third argument\n");
 			std::string uri = P->relative_fetch_path(lua_tostring(L, -1));
-			PatchExtractionUnit *peu = new PatchExtractionUnit(
-			    patch_depth, patch_path.c_str(), uri.c_str(), lua_tostring(L, -1));
+			PatchExtractionUnit *peu =
+			    new PatchExtractionUnit(patch_depth, patch_path, uri, lua_tostring(L, -1));
 			P->extraction()->add(peu);
 		}
 		/* removes 'value'; keeps 'key' for next iteration */

@@ -155,8 +155,8 @@ PatchExtractionUnit::PatchExtractionUnit(int _level, const std::string &_patch_p
 
 bool PatchExtractionUnit::extract(Package *P)
 {
-	PackageCmd pc_dry(this->patch_path.c_str(), "patch");
-	PackageCmd pc(this->patch_path.c_str(), "patch");
+	PackageCmd pc_dry(this->patch_path, "patch");
+	PackageCmd pc(this->patch_path, "patch");
 
 	pc_dry.addArg("-p" + std::to_string(this->level));
 	pc.addArg("-p" + std::to_string(this->level));

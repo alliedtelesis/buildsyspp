@@ -103,7 +103,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 		// If we didn't get the file from the local cache, look upstream.
 		if(!localCacheHit) {
 			PackageCmd pc("dl", "wget");
-			pc.addArg(this->fetch_uri.c_str());
+			pc.addArg(this->fetch_uri);
 			pc.addArg("-O" + fullname);
 			if(!pc.Run(this->P))
 				throw CustomException("Failed to fetch file");
@@ -165,7 +165,7 @@ bool LinkFetch::fetch(BuildDir *d)
 	PackageCmd pc(d->getPath(), "ln");
 	pc.addArg("-sf");
 	std::string l = P->relative_fetch_path(this->fetch_uri);
-	pc.addArg(l.c_str());
+	pc.addArg(l);
 	pc.addArg(".");
 	if(!pc.Run(this->P)) {
 		// An error occured, try remove the file, then relink
@@ -214,7 +214,7 @@ bool CopyFetch::fetch(BuildDir *d)
 	PackageCmd pc(d->getPath(), "cp");
 	pc.addArg("-dpRuf");
 	std::string l = P->absolute_fetch_path(this->fetch_uri);
-	pc.addArg(l.c_str());
+	pc.addArg(l);
 	pc.addArg(".");
 	if(!pc.Run(this->P))
 		throw CustomException("Failed to copy (recursively)");
