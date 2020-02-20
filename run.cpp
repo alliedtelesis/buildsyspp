@@ -38,7 +38,7 @@ static void pipe_data(int fd, Package *P)
 	while(1) {
 		ssize_t res = read(fd, reinterpret_cast<void *>(&recv_byte), 1);
 		if(res <= 0) {
-			if(recv_buf.size()) {
+			if(!recv_buf.empty()) {
 				program_output(P, recv_buf);
 			}
 			break;

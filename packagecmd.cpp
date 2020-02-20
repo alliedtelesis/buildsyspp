@@ -31,7 +31,7 @@ bool PackageCmd::Run(Package *P)
 		return true;
 
 	std::vector<std::string> ne;
-	if(this->envp.size() > 0) {
+	if(!this->envp.empty()) {
 		// collect the current enviroment
 		size_t e = 0;
 		while(environ[e] != nullptr) {

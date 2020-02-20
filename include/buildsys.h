@@ -1732,7 +1732,7 @@ namespace buildsys
 		//! Test if the fetch from location is set
 		bool canFetchFrom()
 		{
-			return (this->fetch_from != "");
+			return (!this->fetch_from.empty());
 		}
 		//! Test if the fetch from location is set
 		std::string fetchFrom()
@@ -1748,7 +1748,7 @@ namespace buildsys
 		//! Test if the tarball cache location is set
 		bool haveTarballCache()
 		{
-			return (this->tarball_cache != "");
+			return (!this->tarball_cache.empty());
 		}
 		//! Get the the tarball Cache location
 		std::string tarballCache()

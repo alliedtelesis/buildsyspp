@@ -151,7 +151,7 @@ bool GitExtractionUnit::updateOrigin()
 		PackageCmd pc(source_dir.c_str(), "git");
 		pc.addArg("remote");
 		// If the remote doesn't exist, add it
-		if(remote_url == "") {
+		if(remote_url.empty()) {
 			pc.addArg("add");
 		} else {
 			pc.addArg("set-url");
