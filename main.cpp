@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 			a++;
 		}
 	}
-	std::string target("");
+	std::string target;
 	size_t tn_len = strlen(argv[1]);
 	if(argv[1][tn_len - 4] != '.') {
 		target = string_format("%s.lua", argv[1]);

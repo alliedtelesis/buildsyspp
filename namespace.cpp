@@ -77,7 +77,7 @@ Package *NameSpace::findPackage(const std::string &_name)
 	// Package not found, create it
 	{
 		// check that the dependency exists
-		std::string lua_file("");
+		std::string lua_file;
 		char *dependPath = strdup(_name.c_str());
 		char *lastPart = strrchr(dependPath, '/');
 		bool found = false;

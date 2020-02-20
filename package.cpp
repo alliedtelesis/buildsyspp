@@ -71,7 +71,7 @@ std::string Package::absolute_fetch_path(const std::string &location)
 
 std::string Package::relative_fetch_path(const std::string &location, bool also_root)
 {
-	std::string src_path("");
+	std::string src_path;
 
 	if(location.at(0) == '/' || location.find("dl/") == 0) {
 		src_path = location;
@@ -120,7 +120,7 @@ std::string Package::getFileHash(const std::string &filename)
 		return "";
 	}
 
-	std::string hash("");
+	std::string hash;
 	std::string line;
 	while(std::getline(hashes, line)) {
 		auto split = line.find(" ");

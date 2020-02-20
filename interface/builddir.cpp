@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static std::string absolute_path(BuildDir *d, const std::string &dir, bool allowDL = false)
 {
-	std::string path("");
+	std::string path;
 	if(boost::algorithm::starts_with(dir, "/") ||
 	   (allowDL && boost::algorithm::starts_with(dir, "dl/"))) {
 		path = dir;
@@ -41,7 +41,7 @@ static std::string absolute_path(BuildDir *d, const std::string &dir, bool allow
 static std::string relative_path(const BuildDir *d, const std::string &dir,
                                  bool allowDL = false)
 {
-	std::string path("");
+	std::string path;
 	if(boost::algorithm::starts_with(dir, "/") ||
 	   (allowDL && boost::algorithm::starts_with(dir, "dl/"))) {
 		path = dir;
@@ -71,15 +71,15 @@ int li_bd_fetch(lua_State *L)
 		throw CustomException("fetch() expects a table as the first argument");
 	}
 
-	std::string uri("");
-	std::string to("");
-	std::string method("");
-	std::string filename("");
+	std::string uri;
+	std::string to;
+	std::string method;
+	std::string filename;
 	bool decompress = false;
-	std::string branch("");
-	std::string reponame("");
+	std::string branch;
+	std::string reponame;
 	bool listedonly = false;
-	std::string copyto("");
+	std::string copyto;
 
 	Package *P = li_get_package();
 
