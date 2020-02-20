@@ -680,7 +680,7 @@ namespace buildsys
 		std::string fname_short;
 
 	public:
-		PatchExtractionUnit(int level, const std::string &patch_path,
+		PatchExtractionUnit(int _level, const std::string &_patch_path,
 		                    const std::string &patch_fname,
 		                    const std::string &_fname_short);
 		virtual ~PatchExtractionUnit()
@@ -728,7 +728,7 @@ namespace buildsys
 		FetchUnit *fetched;
 
 	public:
-		FetchedFileCopyExtractionUnit(FetchUnit *fetch, const std::string &_fname_short);
+		FetchedFileCopyExtractionUnit(FetchUnit *_fetched, const std::string &_fname_short);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->fname_short << " " << this->HASH()
@@ -812,10 +812,10 @@ namespace buildsys
 		bool updateOrigin();
 
 	public:
-		GitExtractionUnit(const std::string &remote, const std::string &local,
-		                  std::string refspec, Package *P);
+		GitExtractionUnit(const std::string &remote, const std::string &_local,
+		                  std::string _refspec, Package *_P);
 		virtual bool fetch(BuildDir *d);
-		virtual bool extract(Package *P);
+		virtual bool extract(Package *_P);
 		virtual std::string modeName()
 		{
 			return "fetch";
@@ -937,7 +937,7 @@ namespace buildsys
 		std::string uri;  //!< URI of this build info file
 		std::string hash; //!< Hash of this build info file
 	public:
-		BuildInfoFileUnit(const std::string &fname, const std::string &hash);
+		BuildInfoFileUnit(const std::string &fname, const std::string &_hash);
 		virtual bool print(std::ostream &out)
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
@@ -1164,7 +1164,7 @@ namespace buildsys
 		//! prepare the (new) build.info file
 		void prepareBuildInfo();
 		//! update the build.info file
-		void updateBuildInfo(bool hashOutput = true);
+		void updateBuildInfo(bool updateOutputHash = true);
 		//! Attempt to fetchFrom
 		bool fetchFrom();
 		//! Return a new build unit (the build info) for this package
@@ -1729,7 +1729,7 @@ namespace buildsys
 			return this->failed;
 		}
 		//! Declare a package built
-		bool packageFinished(Package *p);
+		bool packageFinished(Package *_p);
 
 		//! Allow the fetch from location to be set
 		void setFetchFrom(std::string from)
