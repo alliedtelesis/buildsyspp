@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-#include <errno.h>
+#include <cerrno>
 #include <sys/stat.h>
 #include <sys/types.h>
 
