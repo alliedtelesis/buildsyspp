@@ -26,23 +26,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "include/buildsys.h"
 #include "interface/luainterface.h"
 
-std::list<PackageDepend *>::iterator Package::dependsStart()
+std::list<PackageDepend>::iterator Package::dependsStart()
 {
 	return this->depends.begin();
 }
 
-std::list<PackageDepend *>::iterator Package::dependsEnd()
+std::list<PackageDepend>::iterator Package::dependsEnd()
 {
 	return this->depends.end();
 }
 
 BuildDir *Package::builddir()
 {
-	if(this->bd == nullptr) {
-		this->bd = new BuildDir(this);
-	}
-
-	return this->bd;
+	return &this->bd;
 }
 
 FILE *Package::getLogFile()
@@ -136,14 +132,6 @@ std::string Package::getFileHash(const std::string &filename)
 	return hash;
 }
 
-void Package::resetBD()
-{
-	if(this->bd != nullptr) {
-		delete this->bd;
-		this->bd = new BuildDir(this);
-	}
-}
-
 void Package::printLabel(std::ostream &out)
 {
 	out << "[label=\"";
@@ -160,16 +148,16 @@ bool Package::process()
 {
 	log(this, "Processing (%s)", this->file.c_str());
 
-	this->build_description->add(new PackageFileUnit(this->file, this->file_short));
+	this->build_description.add(new PackageFileUnit(this->file, this->file_short));
 
-	if(!interfaceSetup(this->lua)) {
+	if(!interfaceSetup(&this->lua)) {
 		error("interfaceSetup: Failed");
 		exit(-1);
 	}
 
 	li_set_package(this);
 
-	this->lua->processFile(this->file);
+	this->lua.processFile(this->file);
 
 	return true;
 }
@@ -187,7 +175,7 @@ bool Package::checkForDependencyLoops()
 	auto end = this->dependsEnd();
 
 	for(; iter != end; iter++) {
-		if(!(*iter)->getPackage()->checkForDependencyLoops()) {
+		if(!(*iter).getPackage()->checkForDependencyLoops()) {
 			log(this, "Child failed dependency loop check");
 			return false;
 		}
@@ -215,23 +203,21 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 	auto dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_staging(dir, done)) {
+		if(!(*dIt).getPackage()->extract_staging(dir, done)) {
 			return false;
 		}
 	}
 
-	if(this->bd != nullptr) {
-		PackageCmd pc(dir, "tar");
-		pc.addArg("-xzf");
-		auto pwd = this->getWorld()->getWorkingDir();
-		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/staging/" +
-		                  this->name + ".tar.gz";
-		pc.addArg(arg);
+	PackageCmd pc(dir, "tar");
+	pc.addArg("-xzf");
+	auto pwd = this->getWorld()->getWorkingDir();
+	std::string arg =
+	    pwd + "/output/" + this->getNS()->getName() + "/staging/" + this->name + ".tar.gz";
+	pc.addArg(arg);
 
-		if(!pc.Run(this)) {
-			log(this, "Failed to extract staging_dir");
-			return false;
-		}
+	if(!pc.Run(this)) {
+		log(this, "Failed to extract staging_dir");
+		return false;
 	}
 
 	done->push_back(this->getNS()->getName() + "," + this->name);
@@ -258,39 +244,37 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 
 	if(includeChildren && !this->intercept) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->getPackage()->extract_install(dir, done, includeChildren)) {
+			if(!(*dIt).getPackage()->extract_install(dir, done, includeChildren)) {
 				return false;
 			}
 		}
 	}
 
 	auto pwd = this->getWorld()->getWorkingDir();
-	if(this->bd != nullptr) {
-		if(!this->installFiles.empty()) {
-			auto it = this->installFiles.begin();
-			auto end = this->installFiles.end();
-			for(; it != end; it++) {
-				PackageCmd pc(dir, "cp");
-				std::string arg =
-				    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
-				pc.addArg(arg);
-				pc.addArg(*it);
-
-				if(!pc.Run(this)) {
-					log(this, "Failed to copy %s (for install)\n", (*it).c_str());
-					return false;
-				}
-			}
-		} else {
-			PackageCmd pc(dir, "tar");
-			pc.addArg("-xzf");
-			std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
-			                  this->name + ".tar.gz";
+	if(!this->installFiles.empty()) {
+		auto it = this->installFiles.begin();
+		auto end = this->installFiles.end();
+		for(; it != end; it++) {
+			PackageCmd pc(dir, "cp");
+			std::string arg =
+			    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
 			pc.addArg(arg);
+			pc.addArg(*it);
+
 			if(!pc.Run(this)) {
-				log(this, "Failed to extract install_dir\n");
+				log(this, "Failed to copy %s (for install)\n", (*it).c_str());
 				return false;
 			}
+		}
+	} else {
+		PackageCmd pc(dir, "tar");
+		pc.addArg("-xzf");
+		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
+		                  this->name + ".tar.gz";
+		pc.addArg(arg);
+		if(!pc.Run(this)) {
+			log(this, "Failed to extract install_dir\n");
+			return false;
 		}
 	}
 
@@ -310,7 +294,7 @@ bool Package::canBuild()
 
 	if(dIt != dEnds) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->getPackage()->isBuilt()) {
+			if(!(*dIt).getPackage()->isBuilt()) {
 				return false;
 			}
 		}
@@ -337,7 +321,7 @@ static bool ff_file(Package *P, const std::string &hash, const std::string &rfil
 void Package::updateBuildInfoHashExisting()
 {
 	// populate the build.info hash
-	std::string build_info_file = this->bd->getPath() + "/.build.info";
+	std::string build_info_file = this->bd.getPath() + "/.build.info";
 	this->buildinfo_hash = hash_file(build_info_file);
 	log(this, "Hash: %s", this->buildinfo_hash.c_str());
 }
@@ -345,7 +329,7 @@ void Package::updateBuildInfoHashExisting()
 void Package::updateBuildInfoHash()
 {
 	// populate the build.info hash
-	std::string build_info_file = this->bd->getPath() + "/.build.info.new";
+	std::string build_info_file = this->bd.getPath() + "/.build.info.new";
 	this->buildinfo_hash = hash_file(build_info_file);
 	log(this, "Hash: %s", this->buildinfo_hash.c_str());
 }
@@ -354,15 +338,15 @@ BuildUnit *Package::buildInfo()
 {
 	BuildUnit *res;
 	if(this->isHashingOutput()) {
-		std::string info_file = this->bd->getShortPath() + "/.output.info";
+		std::string info_file = this->bd.getShortPath() + "/.output.info";
 		res = new OutputInfoFileUnit(info_file);
 	} else {
 		if(this->buildinfo_hash == "") {
-			log(this, "build.info (in %s) is empty", this->bd->getShortPath().c_str());
+			log(this, "build.info (in %s) is empty", this->bd.getShortPath().c_str());
 			log(this, "You probably need to build this package");
 			return nullptr;
 		}
-		std::string info_file = this->bd->getShortPath() + "/.build.info";
+		std::string info_file = this->bd.getShortPath() + "/.build.info";
 		res = new BuildInfoFileUnit(info_file, this->buildinfo_hash);
 	}
 	return res;
@@ -374,25 +358,25 @@ void Package::prepareBuildInfo()
 		return;
 	}
 	// Add the extraction info file
-	this->build_description->add(this->Extract->extractionInfo(this->bd));
+	this->build_description.add(this->Extract.extractionInfo(&this->bd));
 
 	// Add each of our dependencies build info files
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		BuildUnit *bi = (*dIt)->getPackage()->buildInfo();
+		BuildUnit *bi = (*dIt).getPackage()->buildInfo();
 		if(bi == nullptr) {
 			log(this, "bi is nullptr :(");
 			exit(-1);
 		}
-		this->build_description->add(bi);
+		this->build_description.add(bi);
 	}
 
 	// Create the new build info file
-	std::string buildInfoFname = this->bd->getPath() + "/.build.info.new";
+	std::string buildInfoFname = this->bd.getPath() + "/.build.info.new";
 	std::ofstream _buildInfo(buildInfoFname.c_str());
-	this->build_description->print(_buildInfo);
+	this->build_description.print(_buildInfo);
 	_buildInfo.close();
 	this->updateBuildInfoHash();
 	this->buildInfoPrepared = true;
@@ -401,15 +385,15 @@ void Package::prepareBuildInfo()
 void Package::updateBuildInfo(bool updateOutputHash)
 {
 	// mv the build info file into the regular place
-	std::string oldfname = this->bd->getPath() + "/.build.info.new";
-	std::string newfname = this->bd->getPath() + "/.build.info";
+	std::string oldfname = this->bd.getPath() + "/.build.info.new";
+	std::string newfname = this->bd.getPath() + "/.build.info";
 	rename(oldfname.c_str(), newfname.c_str());
 
 	if(updateOutputHash && this->isHashingOutput()) {
 		// Hash the entire new path
 		std::string cmd = string_format(
 		    "cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
-		    this->bd->getNewPath().c_str(), this->bd->getPath().c_str());
+		    this->bd.getNewPath().c_str(), this->bd.getPath().c_str());
 		std::system(cmd.c_str());
 	}
 }
@@ -423,7 +407,7 @@ bool Package::fetchFrom()
 	    {"usable", staging_dir, this->name, ".tar.gz.ff"},
 	    {"staging.tar.gz", staging_dir, this->name, ".tar.gz"},
 	    {"install.tar.gz", install_dir, this->name, ".tar.gz"},
-	    {"output.info", this->bd->getPath(), ".output", ".info"},
+	    {"output.info", this->bd.getPath(), ".output", ".info"},
 	};
 
 	log(this, "FF URL: %s/%s/%s/%s", this->getWorld()->fetchFrom().c_str(),
@@ -481,9 +465,8 @@ bool Package::shouldBuild(bool locally)
 		ret = true;
 	}
 
-	std::string cmd =
-	    string_format("cmp -s %s/.build.info.new %s/.build.info",
-	                  this->bd->getPath().c_str(), this->bd->getPath().c_str());
+	std::string cmd = string_format("cmp -s %s/.build.info.new %s/.build.info",
+	                                this->bd.getPath().c_str(), this->bd.getPath().c_str());
 	int res = std::system(cmd.c_str());
 
 	// if there are changes,
@@ -530,7 +513,7 @@ bool Package::prepareBuildDirs()
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_staging(staging_dir, done)) {
+		if(!(*dIt).getPackage()->extract_staging(staging_dir, done)) {
 			return false;
 		}
 	}
@@ -564,8 +547,8 @@ bool Package::extractInstallDepends()
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done,
-		                                          !this->depsExtractionDirectOnly)) {
+		if(!(*dIt).getPackage()->extract_install(this->depsExtraction, done,
+		                                         !this->depsExtractionDirectOnly)) {
 			return false;
 		}
 	}
@@ -576,7 +559,7 @@ bool Package::extractInstallDepends()
 
 bool Package::packageNewStaging()
 {
-	PackageCmd pc(this->bd->getNewStaging(), "tar");
+	PackageCmd pc(this->bd.getNewStaging(), "tar");
 	pc.addArg("-czf");
 	std::string arg = this->getWorld()->getWorkingDir() + "/output/" +
 	                  this->getNS()->getName() + "/staging/" + this->name + ".tar.gz";
@@ -598,7 +581,7 @@ bool Package::packageNewInstall()
 		auto end = this->installFiles.end();
 		for(; it != end; it++) {
 			log(this, ("Copying " + *it + " to install folder").c_str());
-			PackageCmd pc(this->bd->getNewInstall(), "cp");
+			PackageCmd pc(this->bd.getNewInstall(), "cp");
 			pc.addArg(*it);
 			std::string arg =
 			    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
@@ -610,7 +593,7 @@ bool Package::packageNewInstall()
 			}
 		}
 	} else {
-		PackageCmd pc(this->bd->getNewInstall(), "tar");
+		PackageCmd pc(this->bd.getNewInstall(), "tar");
 		pc.addArg("-czf");
 		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
 		                  this->name + ".tar.gz";
@@ -630,7 +613,7 @@ void Package::cleanStaging()
 	if(this->suppress_remove_staging) {
 		return;
 	}
-	this->bd->cleanStaging();
+	this->bd.cleanStaging();
 }
 
 bool Package::build(bool locally)
@@ -647,7 +630,7 @@ bool Package::build(bool locally)
 
 	/* Check our dependencies are already built, or build them */
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->build()) {
+		if(!(*dIt).getPackage()->build()) {
 			return false;
 		}
 	}
@@ -662,7 +645,7 @@ bool Package::build(bool locally)
 		return true;
 	}
 	// Create the new extraction.info file
-	this->Extract->prepareNewExtractInfo(this, this->bd);
+	this->Extract.prepareNewExtractInfo(this, &this->bd);
 
 	// Create the new build.info file
 	this->prepareBuildInfo();
@@ -681,25 +664,25 @@ bool Package::build(bool locally)
 	// actually have been
 	dIt = this->dependsStart();
 	for(; dIt != dEnds; dIt++) {
-		if((*dIt)->getLocally()) {
-			log((*dIt)->getPackage(), "Build triggered by %s", this->getName().c_str());
-			if(!(*dIt)->getPackage()->build(true)) {
+		if((*dIt).getLocally()) {
+			log((*dIt).getPackage(), "Build triggered by %s", this->getName().c_str());
+			if(!(*dIt).getPackage()->build(true)) {
 				return false;
 			}
 		}
 	}
 
 	// Fetch anything we don't have yet
-	if(!this->fetch()->fetch(bd)) {
+	if(!this->fetch()->fetch(&this->bd)) {
 		log(this, "Fetching failed");
 		return false;
 	}
 
 	clock_gettime(CLOCK_REALTIME, &start);
 
-	if(this->Extract->extractionRequired(this, this->bd)) {
+	if(this->Extract.extractionRequired(this, &this->bd)) {
 		log(this, "Extracting ...");
-		if(!this->Extract->extract(this)) {
+		if(!this->Extract.extract(this)) {
 			return false;
 		}
 	}
@@ -719,7 +702,7 @@ bool Package::build(bool locally)
 
 	log(this, "Running Commands");
 	for(; cIt != cEnd; cIt++) {
-		if(!(*cIt)->Run(this)) {
+		if(!(*cIt).Run(this)) {
 			return false;
 		}
 	}

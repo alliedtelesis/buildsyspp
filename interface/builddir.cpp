@@ -251,20 +251,20 @@ int li_bd_restore(lua_State *L)
 	}
 
 	if(method == "copyfile") {
-		PackageCmd *pc = new PackageCmd(d->getPath(), "cp");
+		PackageCmd pc(d->getPath(), "cp");
 
-		pc->addArg("-pRLuf");
+		pc.addArg("-pRLuf");
 
 		auto position = location.rfind('/');
 		if(position != std::string::npos) {
-			pc->addArg(location.substr(position + 1));
+			pc.addArg(location.substr(position + 1));
 		} else {
-			pc->addArg(location);
+			pc.addArg(location);
 		}
 
-		pc->addArg(P->absolute_fetch_path(location));
+		pc.addArg(P->absolute_fetch_path(location));
 
-		P->addCommand(pc);
+		P->addCommand(std::move(pc));
 	} else {
 		throw CustomException("Unsupported restore method");
 	}
@@ -376,7 +376,7 @@ int li_bd_cmd(lua_State *L)
 	std::string dir = relative_path(d, lua_tostring(L, 2));
 	std::string app(lua_tostring(L, 3));
 
-	auto *pc = new PackageCmd(dir, app);
+	PackageCmd pc(dir, app);
 
 	lua_pushnil(L); /* first key */
 	while(lua_next(L, 4) != 0) {
@@ -385,7 +385,7 @@ int li_bd_cmd(lua_State *L)
 			throw CustomException(
 			    "cmd() requires a table of strings as the third argument\n");
 		}
-		pc->addArg(lua_tostring(L, -1));
+		pc.addArg(lua_tostring(L, -1));
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);
 	}
@@ -398,14 +398,14 @@ int li_bd_cmd(lua_State *L)
 				throw CustomException(
 				    "cmd() requires a table of strings as the fourth argument\n");
 			}
-			pc->addEnv(std::string(lua_tostring(L, -1)));
+			pc.addEnv(std::string(lua_tostring(L, -1)));
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
 		}
 	}
 
-	add_env(P, pc);
-	P->addCommand(pc);
+	add_env(P, &pc);
+	P->addCommand(std::move(pc));
 
 	return 0;
 }

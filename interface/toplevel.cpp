@@ -149,7 +149,7 @@ static void depend(Package *P, NameSpace *ns, bool locally, const std::string &n
 		throw CustomException("Failed to create or find Package");
 	}
 
-	P->depend(new PackageDepend(p, locally));
+	P->depend(p, locally);
 }
 
 int li_depend(lua_State *L)

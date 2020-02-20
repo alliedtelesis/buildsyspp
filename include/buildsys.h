@@ -1120,19 +1120,19 @@ namespace buildsys
 	class Package
 	{
 	private:
-		std::list<PackageDepend *> depends;
-		std::list<PackageCmd *> commands;
+		std::list<PackageDepend> depends;
+		std::list<PackageCmd> commands;
 		std::string name;
 		std::string file;
 		std::string file_short;
 		std::string overlay;
 		std::string buildinfo_hash;
 		NameSpace *ns;
-		BuildDir *bd;
-		Fetch *f;
-		Extraction *Extract;
-		BuildDescription *build_description;
-		Lua *lua;
+		BuildDir bd;
+		Fetch f;
+		Extraction Extract;
+		BuildDescription build_description;
+		Lua lua;
 		bool intercept;
 		std::string depsExtraction;
 		bool depsExtractionDirectOnly;
@@ -1198,33 +1198,15 @@ namespace buildsys
 		        std::string _file, std::string _overlay)
 		    : name(std::move(_name)), file(std::move(_file)),
 		      file_short(std::move(_file_short)), overlay(std::move(_overlay)),
-		      buildinfo_hash(""), ns(_ns), bd(new BuildDir(this)), f(new Fetch()),
-		      Extract(new Extraction()), build_description(new BuildDescription()),
-		      lua(new Lua()), intercept(false), depsExtraction(""),
-		      depsExtractionDirectOnly(false), visiting(false), processing_queued(false),
-		      buildInfoPrepared(false), codeUpdated(false), no_fetch_from(false),
-		      hash_output(false), suppress_remove_staging(false), run_secs(0),
-		      logFile(nullptr)
+		      buildinfo_hash(""), ns(_ns), bd(BuildDir(this)), intercept(false),
+		      depsExtraction(""), depsExtractionDirectOnly(false), visiting(false),
+		      processing_queued(false), buildInfoPrepared(false), codeUpdated(false),
+		      no_fetch_from(false), hash_output(false), suppress_remove_staging(false),
+		      run_secs(0), logFile(nullptr)
 		{
 		}
 		~Package()
 		{
-			while(!this->depends.empty()) {
-				PackageDepend *pd = this->depends.front();
-				this->depends.pop_front();
-				delete pd;
-			}
-			while(!this->commands.empty()) {
-				PackageCmd *pc = this->commands.front();
-				this->commands.pop_front();
-				delete pc;
-			}
-			ns = nullptr;
-			delete bd;
-			delete f;
-			delete Extract;
-			delete build_description;
-			delete lua;
 			if(logFile != nullptr) {
 				fclose(logFile);
 				logFile = nullptr;
@@ -1240,7 +1222,7 @@ namespace buildsys
 			if(this->ns != nullptr) {
 				this->ns->addPackage(this);
 			}
-			this->resetBD();
+			this->bd = BuildDir(this);
 		};
 		//! Returns the namespace this package is in
 		NameSpace *getNS()
@@ -1261,22 +1243,20 @@ namespace buildsys
 		                                bool also_root = false);
 		//! Get the file hash for the given file (if known)
 		std::string getFileHash(const std::string &filename);
-		//! Recreate the build directory
-		void resetBD();
 		//! Returns the extraction
 		Extraction *extraction()
 		{
-			return this->Extract;
+			return &this->Extract;
 		};
 		//! Returns the fetch
 		Fetch *fetch()
 		{
-			return this->f;
+			return &this->f;
 		};
 		//! Returns the builddescription
 		BuildDescription *buildDescription()
 		{
-			return this->build_description;
+			return &this->build_description;
 		};
 		/** Convert this package to the intercepting type
 		 *  Intercepting packages stop the extract install method from recursing past them.
@@ -1301,9 +1281,9 @@ namespace buildsys
 		/** Depend on another package
 		 *  \param p The package to depend on
 		 */
-		void depend(PackageDepend *p)
+		void depend(Package *P, bool locally)
 		{
-			this->depends.push_back(p);
+			this->depends.emplace_back(P, locally);
 		};
 		/** Set the location to extract install directories to
 		 *  During the build, all files that all dependencies have installed
@@ -1320,9 +1300,9 @@ namespace buildsys
 		//! Add a command to run during the build stage
 		/** \param pc The comamnd to run
 		 */
-		void addCommand(PackageCmd *pc)
+		void addCommand(PackageCmd &&pc)
 		{
-			this->commands.push_back(pc);
+			this->commands.push_back(std::move(pc));
 		};
 		/** Set the file to install
 		 *  Setting this overrides to standard zipping up of the entire new install
@@ -1409,9 +1389,9 @@ namespace buildsys
 		}
 
 		//! Get the start iterator for the dependencies list
-		std::list<PackageDepend *>::iterator dependsStart();
+		std::list<PackageDepend>::iterator dependsStart();
 		//! Get the end iterator for the dependencies list
-		std::list<PackageDepend *>::iterator dependsEnd();
+		std::list<PackageDepend>::iterator dependsEnd();
 
 		/** Print the label for use on the graph
 		 * Prints the package name, number of commands to run, and time spent building
@@ -1426,7 +1406,7 @@ namespace buildsys
 		//! Return the lua instance being used
 		Lua *getLua()
 		{
-			return this->lua;
+			return &this->lua;
 		};
 	};
 
@@ -1438,14 +1418,13 @@ namespace buildsys
 		typedef std::map<Vertex, Package *> VertexNodeMap;
 		typedef std::vector<Vertex> container;
 		Graph g;
-		NodeVertexMap *Nodes;
-		VertexNodeMap *NodeMap;
-		container *c;
+		NodeVertexMap Nodes;
+		VertexNodeMap NodeMap;
+		container c;
 
 	public:
 		//! Create an Internal_Graph
 		explicit Internal_Graph(World *W);
-		~Internal_Graph();
 		//! Output the graph to dependencies.dot
 		void output();
 		//! Perform a topological sort
@@ -1519,18 +1498,18 @@ namespace buildsys
 	{
 	private:
 		std::string bsapp;
-		key_value *features;
-		string_list *forcedDeps;
-		std::list<NameSpace *> *namespaces;
-		std::list<DLObject *> *dlobjects;
+		key_value features;
+		string_list forcedDeps;
+		std::list<NameSpace> namespaces;
+		std::list<DLObject> dlobjects;
 		Package *p{nullptr};
-		string_list *overlays;
+		string_list overlays;
 		Internal_Graph *graph{nullptr};
 		Internal_Graph *topo_graph{nullptr};
 		std::string fetch_from;
 		std::string tarball_cache;
 		std::string pwd;
-		string_list *ignoredFeatures;
+		string_list ignoredFeatures;
 		bool failed{false};
 		bool cleaning{false};
 		bool extractOnly{false};
@@ -1546,13 +1525,9 @@ namespace buildsys
 		DLObject *_findDLObject(const std::string &);
 
 	public:
-		explicit World(char *_bsapp)
-		    : bsapp(std::string(_bsapp)), features(new key_value()),
-		      forcedDeps(new string_list()), namespaces(new std::list<NameSpace *>()),
-		      dlobjects(new std::list<DLObject *>()), overlays(new string_list()),
-		      ignoredFeatures(new string_list())
+		explicit World(char *_bsapp) : bsapp(std::string(_bsapp))
 		{
-			overlays->push_back(std::string("."));
+			overlays.push_back(std::string("."));
 			char *_pwd = getcwd(nullptr, 0);
 			this->pwd = std::string(_pwd);
 			free(_pwd);
@@ -1575,14 +1550,14 @@ namespace buildsys
 		 */
 		bool forcedMode()
 		{
-			return !forcedDeps->empty();
+			return !forcedDeps.empty();
 		};
 		/** Add a package to 'forced' mode
 		 *  This will automatically turn on forced mode
 		 */
 		void forceBuild(const std::string &name)
 		{
-			forcedDeps->push_back(name);
+			forcedDeps.push_back(name);
 		};
 		//! Check if a specific package is being forced
 		bool isForced(const std::string &name);
@@ -1683,14 +1658,14 @@ namespace buildsys
 		//! Ignore a feature for build.info
 		void ignoreFeature(const std::string &feature)
 		{
-			this->ignoredFeatures->push_back(feature);
+			this->ignoredFeatures.push_back(feature);
 		}
 		//! Is a feature ignored
 		bool isIgnoredFeature(const std::string &feature);
 		//! Is the ignore list empty ?
 		bool noIgnoredFeatures()
 		{
-			return this->ignoredFeatures->empty();
+			return this->ignoredFeatures.empty();
 		}
 
 		//! Find (or create) a DLObject for a given full file name
@@ -1706,14 +1681,14 @@ namespace buildsys
 		bool basePackage(const std::string &filename);
 
 		//! Get the start iterator for the namespace list
-		std::list<NameSpace *>::iterator nameSpacesStart()
+		std::list<NameSpace>::iterator nameSpacesStart()
 		{
-			return this->namespaces->begin();
+			return this->namespaces.begin();
 		};
 		//! Get the end iterator for the namespace list
-		std::list<NameSpace *>::iterator nameSpacesEnd()
+		std::list<NameSpace>::iterator nameSpacesEnd()
 		{
-			return this->namespaces->end();
+			return this->namespaces.end();
 		};
 		//! Find (or create) a namespace
 		NameSpace *findNameSpace(const std::string &name);
@@ -1772,7 +1747,7 @@ namespace buildsys
 		//! Add an overlay to search for packages
 		void addOverlayPath(const std::string &path)
 		{
-			this->overlays->push_back(path);
+			this->overlays.push_back(path);
 		};
 		//! Get the start iterator for the overlay list
 		string_list::iterator overlaysStart();

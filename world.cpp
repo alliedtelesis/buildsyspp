@@ -27,12 +27,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 string_list::iterator World::overlaysStart()
 {
-	return this->overlays->begin();
+	return this->overlays.begin();
 }
 
 string_list::iterator World::overlaysEnd()
 {
-	return this->overlays->end();
+	return this->overlays.end();
 }
 
 NameSpace *World::findNameSpace(const std::string &name)
@@ -40,27 +40,26 @@ NameSpace *World::findNameSpace(const std::string &name)
 	auto iter = this->nameSpacesStart();
 	auto iterEnd = this->nameSpacesEnd();
 	for(; iter != iterEnd; iter++) {
-		if((*iter)->getName() == name) {
-			return (*iter);
+		if((*iter).getName() == name) {
+			return &(*iter);
 		}
 	}
 
-	NameSpace *ns = new NameSpace(this, name);
-	this->namespaces->push_back(ns);
-	return ns;
+	this->namespaces.emplace_back(this, name);
+	return &this->namespaces.back();
 }
 
 bool World::setFeature(std::string key, std::string value, bool override)
 {
 	// look for this key
-	if(features->find(key) != features->end()) {
+	if(features.find(key) != features.end()) {
 		if(override) {
 			// only over-write the value if we are explicitly told to
-			(*features)[key] = value;
+			features[key] = value;
 		}
 		return true;
 	}
-	features->insert(std::pair<std::string, std::string>(key, value));
+	features.insert(std::pair<std::string, std::string>(key, value));
 	return true;
 }
 
@@ -81,8 +80,8 @@ bool World::setFeature(const std::string &kv)
 
 std::string World::getFeature(const std::string &key)
 {
-	if(features->find(key) != features->end()) {
-		return (*features)[key];
+	if(features.find(key) != features.end()) {
+		return features[key];
 	}
 	throw NoKeyException();
 }
@@ -90,7 +89,7 @@ std::string World::getFeature(const std::string &key)
 void World::printFeatureValues()
 {
 	std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
-	for(auto it = this->features->begin(); it != this->features->end(); ++it) {
+	for(auto it = this->features.begin(); it != this->features.end(); ++it) {
 		std::cout << it->first << "\t" << it->second << std::endl;
 	}
 	std::cout << "----END FEATURE VALUES----" << std::endl;
@@ -134,7 +133,7 @@ static void process_package(Package *p, PackageQueue *pq)
 	auto end = p->dependsEnd();
 
 	for(; iter != end; iter++) {
-		Package *dp = (*iter)->getPackage();
+		Package *dp = (*iter).getPackage();
 		if(dp->setProcessingQueued()) {
 			pq->push(dp);
 		}
@@ -227,8 +226,8 @@ bool World::basePackage(const std::string &filename)
 
 bool World::isForced(const std::string &name)
 {
-	auto fIt = this->forcedDeps->begin();
-	auto fEnd = this->forcedDeps->end();
+	auto fIt = this->forcedDeps.begin();
+	auto fEnd = this->forcedDeps.end();
 
 	for(; fIt != fEnd; fIt++) {
 		if((*fIt) == name) {
@@ -240,8 +239,8 @@ bool World::isForced(const std::string &name)
 
 bool World::populateForcedList(PackageCmd *pc)
 {
-	auto fIt = this->forcedDeps->begin();
-	auto fEnd = this->forcedDeps->end();
+	auto fIt = this->forcedDeps.begin();
+	auto fEnd = this->forcedDeps.end();
 
 	for(; fIt != fEnd; fIt++) {
 		pc->addArg(*fIt);
@@ -260,8 +259,8 @@ bool World::packageFinished(Package *_p)
 
 bool World::isIgnoredFeature(const std::string &feature)
 {
-	auto iter = this->ignoredFeatures->begin();
-	auto iterEnd = this->ignoredFeatures->end();
+	auto iter = this->ignoredFeatures.begin();
+	auto iterEnd = this->ignoredFeatures.end();
 	for(; iter != iterEnd; iter++) {
 		if((*iter) == feature) {
 			return true;
@@ -272,38 +271,20 @@ bool World::isIgnoredFeature(const std::string &feature)
 
 DLObject *World::_findDLObject(const std::string &fname)
 {
-	auto iter = this->dlobjects->begin();
-	auto iterEnd = this->dlobjects->end();
+	auto iter = this->dlobjects.begin();
+	auto iterEnd = this->dlobjects.end();
 	for(; iter != iterEnd; iter++) {
-		if((*iter)->fileName() == fname) {
-			return (*iter);
+		if((*iter).fileName() == fname) {
+			return &(*iter);
 		}
 	}
 
-	DLObject *dlo = new DLObject(fname);
-	this->dlobjects->push_back(dlo);
-	return dlo;
+	this->dlobjects.emplace_back(fname);
+	return &this->dlobjects.back();
 }
 
 World::~World()
 {
-	delete this->features;
-	delete this->forcedDeps;
-	this->p = nullptr;
-	while(!this->namespaces->empty()) {
-		NameSpace *ns = this->namespaces->front();
-		this->namespaces->pop_front();
-		delete ns;
-	}
-	delete this->namespaces;
-	while(!this->dlobjects->empty()) {
-		DLObject *dlo = this->dlobjects->front();
-		this->dlobjects->pop_front();
-		delete dlo;
-	}
-	delete this->dlobjects;
-	delete this->overlays;
 	delete this->graph;
 	delete this->topo_graph;
-	delete this->ignoredFeatures;
 }

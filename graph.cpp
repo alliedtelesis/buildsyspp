@@ -55,60 +55,43 @@ public:
 
 Internal_Graph::Internal_Graph(World *W)
 {
-	this->c = nullptr;
-	// Setup for graphing
-	this->Nodes = new NodeVertexMap();
-	this->NodeMap = new VertexNodeMap();
-
 	for(auto N = W->nameSpacesStart(); N != W->nameSpacesEnd(); N++) {
-		for(auto I = (*N)->packagesStart(); I != (*N)->packagesEnd(); I++) {
+		for(auto I = (*N).packagesStart(); I != (*N).packagesEnd(); I++) {
 			NodeVertexMap::iterator pos;
 			bool inserted;
-			boost::tie(pos, inserted) = Nodes->insert(std::make_pair(*I, Vertex()));
+			boost::tie(pos, inserted) = Nodes.insert(std::make_pair(*I, Vertex()));
 			if(inserted) {
 				Vertex u = add_vertex(g);
 				pos->second = u;
-				NodeMap->insert(std::make_pair(u, *I));
+				NodeMap.insert(std::make_pair(u, *I));
 			}
 		}
 	}
 
 	for(auto N = W->nameSpacesStart(); N != W->nameSpacesEnd(); N++) {
-		for(auto I = (*N)->packagesStart(); I != (*N)->packagesEnd(); I++) {
+		for(auto I = (*N).packagesStart(); I != (*N).packagesEnd(); I++) {
 			for(auto J = (*I)->dependsStart(); J != (*I)->dependsEnd(); J++) {
 				Edge e;
 				bool inserted;
 				boost::tie(e, inserted) =
-				    add_edge((*Nodes)[(*I)], (*Nodes)[(*J)->getPackage()], g);
+				    add_edge(Nodes[(*I)], Nodes[(*J).getPackage()], g);
 			}
 		}
 	}
-}
-
-Internal_Graph::~Internal_Graph()
-{
-	if(c != nullptr) {
-		delete c;
-	}
-	delete this->Nodes;
-	delete this->NodeMap;
 }
 
 void Internal_Graph::output()
 {
 	std::ofstream dotFile("dependencies.dot");
-	write_graphviz(dotFile, g, graphnode_property_writer<VertexNodeMap>(*NodeMap));
+	write_graphviz(dotFile, g, graphnode_property_writer<VertexNodeMap>(NodeMap));
 	dotFile.flush();
 }
 
 void Internal_Graph::topological()
 {
-	if(c != nullptr) {
-		delete c;
-	}
-	c = new container();
+	this->c.clear();
 
-	topological_sort(this->g, std::back_inserter(*c));
+	topological_sort(this->g, std::back_inserter(c));
 
 	//      std::cout << "A topological ordering: ";
 	//      for ( container::iterator ii=c->begin(); ii!=c->end(); ++ii)
@@ -118,17 +101,15 @@ void Internal_Graph::topological()
 
 void Internal_Graph::deleteNode(Package *p)
 {
-	clear_vertex((*Nodes)[p], this->g);
+	clear_vertex(Nodes[p], this->g);
 }
 
 Package *Internal_Graph::topoNext()
 {
 	Package *n = nullptr;
-	if(c == nullptr) {
-		return nullptr;
-	}
-	for(auto ii = c->begin(); ii != c->end(); ++ii) {
-		Package *p = ((*NodeMap)[*ii]);
+
+	for(auto ii = c.begin(); ii != c.end(); ++ii) {
+		Package *p = NodeMap[*ii];
 		if(!(p->isBuilt()) && !(p->isBuilding()) && p->canBuild()) {
 			// fprintf(stderr, "(Possible) Next Pacakge: %s\n", p->getName().c_str());
 			n = p;
