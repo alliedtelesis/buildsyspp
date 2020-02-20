@@ -45,7 +45,7 @@ static bool refspec_is_commitid(const std::string &refspec)
 	}
 
 	for(char const &c : refspec) {
-		if(!isxdigit(c)) {
+		if(isxdigit(c) == 0) {
 			return false;
 		}
 	}

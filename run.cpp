@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void pipe_data(int fd, Package *P)
 {
-	if(!P) {
+	if(P == nullptr) {
 		return;
 	}
 
@@ -35,7 +35,7 @@ static void pipe_data(int fd, Package *P)
 	std::string recv_buf;
 	char recv_byte;
 
-	while(1) {
+	while(true) {
 		ssize_t res = read(fd, reinterpret_cast<void *>(&recv_byte), 1);
 		if(res <= 0) {
 			if(!recv_buf.empty()) {

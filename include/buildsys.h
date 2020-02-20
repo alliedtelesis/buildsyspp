@@ -1225,7 +1225,7 @@ namespace buildsys
 			delete Extract;
 			delete build_description;
 			delete lua;
-			if(logFile) {
+			if(logFile != nullptr) {
 				fclose(logFile);
 				logFile = nullptr;
 			}
@@ -1233,11 +1233,11 @@ namespace buildsys
 		//! Set the namespace this package is in
 		void setNS(NameSpace *_ns)
 		{
-			if(this->ns) {
+			if(this->ns != nullptr) {
 				this->ns->removePackage(this);
 			}
 			this->ns = _ns;
-			if(this->ns) {
+			if(this->ns != nullptr) {
 				this->ns->addPackage(this);
 			}
 			this->resetBD();

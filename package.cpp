@@ -382,7 +382,7 @@ void Package::prepareBuildInfo()
 
 	for(; dIt != dEnds; dIt++) {
 		BuildUnit *bi = (*dIt)->getPackage()->buildInfo();
-		if(!bi) {
+		if(bi == nullptr) {
 			log(this, "bi is nullptr :(");
 			exit(-1);
 		}

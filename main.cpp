@@ -55,9 +55,9 @@ void buildsys::log(Package *P, const char *fmt, ...)
 
 static inline const char *get_color(const char *mesg)
 {
-	if(strstr(mesg, "error:")) {
+	if(strstr(mesg, "error:") != nullptr) {
 		return COLOR_BOLD_RED;
-	} else if(strstr(mesg, "warning:")) {
+	} else if(strstr(mesg, "warning:") != nullptr) {
 		return COLOR_BOLD_BLUE;
 	}
 
@@ -69,7 +69,7 @@ void buildsys::program_output(Package *P, const std::string &mesg)
 	static int isATTY = isatty(fileno(stdout));
 	const char *color;
 
-	if(!quietly && isATTY && ((color = get_color(mesg.c_str())) != nullptr)) {
+	if(!quietly && (isATTY != 0) && ((color = get_color(mesg.c_str())) != nullptr)) {
 		fprintf(stdout, "%s,%s: %s%s%s\n", P->getNS()->getName().c_str(),
 		        P->getName().c_str(), color, mesg.c_str(), COLOR_RESET);
 	} else {
@@ -102,35 +102,38 @@ int main(int argc, char *argv[])
 	int a = 2;
 	bool foundDashDash = false;
 	while(a < argc && !foundDashDash) {
-		if(!strcmp(argv[a], "--clean")) {
+		if(strcmp(argv[a], "--clean") == 0) {
 			WORLD.setCleaning();
-		} else if(!strcmp(argv[a], "--no-output-prefix") || !strcmp(argv[a], "--nop")) {
+		} else if((strcmp(argv[a], "--no-output-prefix") == 0) ||
+		          (strcmp(argv[a], "--nop") == 0)) {
 			WORLD.clearOutputPrefix();
-		} else if(!strcmp(argv[a], "--cache-server") || !strcmp(argv[a], "--ff")) {
+		} else if((strcmp(argv[a], "--cache-server") == 0) ||
+		          (strcmp(argv[a], "--ff") == 0)) {
 			WORLD.setFetchFrom(argv[a + 1]);
 			a++;
-		} else if(!strcmp(argv[a], "--tarball-cache")) {
+		} else if(strcmp(argv[a], "--tarball-cache") == 0) {
 			log("BuildSys", "Setting tarball cache to %s", argv[a + 1]);
 			WORLD.setTarballCache(argv[a + 1]);
 			a++;
-		} else if(!strcmp(argv[a], "--overlay")) {
+		} else if(strcmp(argv[a], "--overlay") == 0) {
 			WORLD.addOverlayPath(std::string(argv[a + 1]));
 			a++;
-		} else if(!strcmp(argv[a], "--extract-only")) {
+		} else if(strcmp(argv[a], "--extract-only") == 0) {
 			WORLD.setExtractOnly();
-		} else if(!strcmp(argv[a], "--build-info-ignore-fv")) {
+		} else if(strcmp(argv[a], "--build-info-ignore-fv") == 0) {
 			WORLD.ignoreFeature(std::string(argv[a + 1]));
 			a++;
-		} else if(!strcmp(argv[a], "--parse-only")) {
+		} else if(strcmp(argv[a], "--parse-only") == 0) {
 			WORLD.setParseOnly();
-		} else if(!strcmp(argv[a], "--keep-going")) {
+		} else if(strcmp(argv[a], "--keep-going") == 0) {
 			WORLD.setKeepGoing();
-		} else if(!strcmp(argv[a], "--quietly")) {
+		} else if(strcmp(argv[a], "--quietly") == 0) {
 			quietly = true;
-		} else if(!strcmp(argv[a], "--parallel-packages") || !strcmp(argv[a], "-j")) {
+		} else if((strcmp(argv[a], "--parallel-packages") == 0) ||
+		          (strcmp(argv[a], "-j") == 0)) {
 			WORLD.setThreadsLimit(atoi(argv[a + 1]));
 			a++;
-		} else if(!strcmp(argv[a], "--")) {
+		} else if(strcmp(argv[a], "--") == 0) {
 			foundDashDash = true;
 		} else {
 			WORLD.forceBuild(argv[a]);

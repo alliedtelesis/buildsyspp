@@ -89,9 +89,9 @@ int li_bd_fetch(lua_State *L)
 	lua_pushvalue(L, 2);
 	lua_pushnil(L);
 
-	while(lua_next(L, -2)) {
+	while(lua_next(L, -2) != 0) {
 		lua_pushvalue(L, -2);
-		if(lua_isstring(L, -1) && lua_isstring(L, -2)) {
+		if((lua_isstring(L, -1) != 0) && (lua_isstring(L, -2) != 0)) {
 			std::string key(lua_tostring(L, -1));
 			std::string value(lua_tostring(L, -2));
 			if(key == "uri") {
@@ -208,7 +208,7 @@ int li_bd_fetch(lua_State *L)
 	}
 
 	/* Add the fetch unit to the package */
-	if(f) {
+	if(f != nullptr) {
 		P->fetch()->add(f);
 		if(f->force_updated()) {
 			P->setCodeUpdated();
@@ -232,10 +232,10 @@ int li_bd_restore(lua_State *L)
 	if(!lua_istable(L, 1)) {
 		throw CustomException("restore() must be called using : not .");
 	}
-	if(!lua_isstring(L, 2)) {
+	if(lua_isstring(L, 2) == 0) {
 		throw CustomException("restore() expects a string as the first argument");
 	}
-	if(!lua_isstring(L, 3)) {
+	if(lua_isstring(L, 3) == 0) {
 		throw CustomException("restore() expects a string as the second argument");
 	}
 
@@ -308,7 +308,7 @@ int li_bd_extract(lua_State *L)
 	if(lua_istable(L, 2)) {
 		return li_bd_extract_table(L);
 	}
-	if(!lua_isstring(L, 2)) {
+	if(lua_isstring(L, 2) == 0) {
 		throw CustomException("extract() expects a string as the only argument");
 	}
 
@@ -355,10 +355,10 @@ int li_bd_cmd(lua_State *L)
 	if(!lua_istable(L, 1)) {
 		throw CustomException("cmd() must be called using : not .");
 	}
-	if(!lua_isstring(L, 2)) {
+	if(lua_isstring(L, 2) == 0) {
 		throw CustomException("cmd() expects a string as the first argument");
 	}
-	if(!lua_isstring(L, 3)) {
+	if(lua_isstring(L, 3) == 0) {
 		throw CustomException("cmd() expects a string as the second argument");
 	}
 	if(!lua_istable(L, 4)) {
@@ -418,10 +418,10 @@ int li_bd_patch(lua_State *L)
 	if(!lua_istable(L, 1)) {
 		throw CustomException("patch() must be called using : not .");
 	}
-	if(!lua_isstring(L, 2)) {
+	if(lua_isstring(L, 2) == 0) {
 		throw CustomException("patch() expects a string as the first argument");
 	}
-	if(!lua_isnumber(L, 3)) {
+	if(lua_isnumber(L, 3) == 0) {
 		throw CustomException("patch() expects a number as the second argument");
 	}
 	if(!lua_istable(L, 4)) {
@@ -431,7 +431,7 @@ int li_bd_patch(lua_State *L)
 	Package *P = li_get_package();
 
 	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
-		return true;
+		return 1;
 	}
 
 	CHECK_ARGUMENT_TYPE("patch", 1, BuildDir, d);
@@ -468,7 +468,7 @@ int li_bd_installfile(lua_State *L)
 	if(!lua_istable(L, 1)) {
 		throw CustomException("installfile() must be called using : not .");
 	}
-	if(!lua_isstring(L, 2)) {
+	if(lua_isstring(L, 2) == 0) {
 		throw CustomException("installfile() expects a string as the only argument");
 	}
 

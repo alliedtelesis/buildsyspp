@@ -86,7 +86,7 @@ static int li_feature(lua_State *L)
 	std::string value(lua_tostring(L, 2));
 
 	if(lua_gettop(L) == 3) {
-		P->getWorld()->setFeature(key, value, lua_toboolean(L, -3));
+		P->getWorld()->setFeature(key, value, lua_toboolean(L, -3) != 0);
 	}
 
 	P->getWorld()->setFeature(key, value);
@@ -106,7 +106,7 @@ int li_builddir(lua_State *L)
 	CREATE_TABLE(L, P->builddir());
 	P->builddir()->lua_table(L);
 
-	bool clean_requested = (args == 1 && lua_toboolean(L, 1));
+	bool clean_requested = (args == 1 && (lua_toboolean(L, 1) != 0));
 
 	if((clean_requested || P->getWorld()->areCleaning()) &&
 	   !P->getWorld()->areParseOnly() &&
@@ -140,7 +140,7 @@ static void depend(Package *P, NameSpace *ns, bool locally, const std::string &n
 {
 	Package *p = nullptr;
 	// create the Package
-	if(ns) {
+	if(ns != nullptr) {
 		p = ns->findPackage(name);
 	} else {
 		p = P->getNS()->findPackage(name);
@@ -205,7 +205,7 @@ int li_depend(lua_State *L)
 				ns = P->getWorld()->findNameSpace(std::string(lua_tostring(L, -1)));
 			} else if(key == "locally") {
 				if(lua_type(L, -1) == LUA_TBOOLEAN) {
-					locally = lua_toboolean(L, -1);
+					locally = (lua_toboolean(L, -1) != 0);
 				} else if(lua_type(L, -1) == LUA_TSTRING) {
 					std::string value(lua_tostring(L, -1));
 					if(value == "true") {
@@ -265,7 +265,7 @@ int li_require(lua_State *L)
 		throw CustomException("require() takes 1 argument");
 	}
 
-	if(!lua_isstring(L, 1)) {
+	if(lua_isstring(L, 1) == 0) {
 		throw CustomException("Argument to require() must be a string");
 	}
 

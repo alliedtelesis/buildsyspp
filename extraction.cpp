@@ -37,7 +37,7 @@ void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
 		return;
 	}
 
-	if(bd) {
+	if(bd != nullptr) {
 		// Create the new extraction info file
 		std::string fname = bd->getPath() + "/.extraction.info.new";
 		std::ofstream exInfo(fname.c_str());
@@ -103,7 +103,7 @@ CompressedFileExtractionUnit::CompressedFileExtractionUnit(const std::string &fn
 std::string CompressedFileExtractionUnit::HASH()
 {
 	if(this->hash.empty()) {
-		if(this->fetch) {
+		if(this->fetch != nullptr) {
 			this->hash = this->fetch->HASH();
 		} else {
 			this->hash = hash_file(this->uri);
