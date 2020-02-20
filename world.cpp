@@ -35,7 +35,7 @@ string_list::iterator World::overlaysEnd()
 	return this->overlays->end();
 }
 
-NameSpace *World::findNameSpace(std::string name)
+NameSpace *World::findNameSpace(const std::string &name)
 {
 	auto iter = this->nameSpacesStart();
 	auto iterEnd = this->nameSpacesEnd();
@@ -63,7 +63,7 @@ bool World::setFeature(std::string key, std::string value, bool override)
 	return true;
 }
 
-bool World::setFeature(std::string kv)
+bool World::setFeature(const std::string &kv)
 {
 	auto pos = kv.find('=');
 	if(pos == std::string::npos) {
@@ -224,7 +224,7 @@ bool World::basePackage(const std::string &filename)
 	return !this->failed;
 }
 
-bool World::isForced(std::string name)
+bool World::isForced(const std::string &name)
 {
 	auto fIt = this->forcedDeps->begin();
 	auto fEnd = this->forcedDeps->end();
@@ -256,7 +256,7 @@ bool World::packageFinished(Package *_p)
 	return true;
 }
 
-bool World::isIgnoredFeature(std::string feature)
+bool World::isIgnoredFeature(const std::string &feature)
 {
 	auto iter = this->ignoredFeatures->begin();
 	auto iterEnd = this->ignoredFeatures->end();
@@ -267,7 +267,7 @@ bool World::isIgnoredFeature(std::string feature)
 	return false;
 }
 
-DLObject *World::_findDLObject(std::string fname)
+DLObject *World::_findDLObject(const std::string &fname)
 {
 	auto iter = this->dlobjects->begin();
 	auto iterEnd = this->dlobjects->end();

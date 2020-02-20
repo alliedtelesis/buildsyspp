@@ -58,7 +58,7 @@ std::string NameSpace::getInstallDir()
 	return res.str();
 }
 
-Package *NameSpace::findPackage(std::string _name)
+Package *NameSpace::findPackage(const std::string &_name)
 {
 	std::string file;
 	std::string file_short;

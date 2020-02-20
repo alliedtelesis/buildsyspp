@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 extern "C" {
@@ -149,7 +150,7 @@ namespace buildsys
 		/** Construct an exception with a specific error message
 		 *  \param err The erorr message
 		 */
-		explicit CustomException(std::string err) : errmsg(err)
+		explicit CustomException(std::string err) : errmsg(std::move(err))
 		{
 		}
 		virtual std::string error_msg()
@@ -245,7 +246,7 @@ namespace buildsys
 		 *  \param name The name of the function
 		 *  \param fn The function to call
 		 */
-		void registerFunc(std::string name, lua_CFunction fn)
+		void registerFunc(const std::string &name, lua_CFunction fn)
 		{
 			lua_register(state, name.c_str(), fn);
 		}
@@ -253,7 +254,7 @@ namespace buildsys
 		 *  \param name the name to store this data as
 		 *  \param data the data
 		 */
-		void setGlobal(std::string name, void *data)
+		void setGlobal(const std::string &name, void *data)
 		{
 			lua_pushlightuserdata(state, data);
 			lua_setglobal(state, name.c_str());
@@ -441,7 +442,7 @@ namespace buildsys
 		mutable std::mutex lock;
 
 	public:
-		explicit DLObject(std::string _filename) : filename(_filename)
+		explicit DLObject(std::string _filename) : filename(std::move(_filename))
 		{
 		}
 		std::string fileName()
@@ -454,7 +455,7 @@ namespace buildsys
 		}
 		void setHASH(std::string _hash)
 		{
-			this->hash = _hash;
+			this->hash = std::move(_hash);
 		}
 		std::mutex &getLock()
 		{
@@ -484,7 +485,7 @@ namespace buildsys
 		bool fetched;
 
 	public:
-		FetchUnit(std::string uri, Package *_P) : fetch_uri(uri), P(_P)
+		FetchUnit(std::string uri, Package *_P) : fetch_uri(std::move(uri)), P(_P)
 		{
 		}
 		FetchUnit()
@@ -524,7 +525,8 @@ namespace buildsys
 	public:
 		DownloadFetch(std::string _uri, bool _decompress, std::string _filename,
 		              Package *_P)
-		    : FetchUnit(_uri, _P), decompress(_decompress), filename(_filename)
+		    : FetchUnit(std::move(_uri), _P), decompress(_decompress),
+		      filename(std::move(_filename))
 		{
 		}
 		virtual bool fetch(BuildDir *d);
@@ -540,7 +542,7 @@ namespace buildsys
 	class LinkFetch : public FetchUnit
 	{
 	public:
-		LinkFetch(std::string uri, Package *_P) : FetchUnit(uri, _P)
+		LinkFetch(std::string uri, Package *_P) : FetchUnit(std::move(uri), _P)
 		{
 		}
 		virtual bool fetch(BuildDir *d);
@@ -557,7 +559,7 @@ namespace buildsys
 	class CopyFetch : public FetchUnit
 	{
 	public:
-		CopyFetch(std::string uri, Package *_P) : FetchUnit(uri, _P)
+		CopyFetch(std::string uri, Package *_P) : FetchUnit(std::move(uri), _P)
 		{
 		}
 		virtual bool fetch(BuildDir *d);
@@ -1065,7 +1067,7 @@ namespace buildsys
 		World *WORLD;
 
 	public:
-		NameSpace(World *_W, std::string _name) : name(_name), WORLD(_W)
+		NameSpace(World *_W, std::string _name) : name(std::move(_name)), WORLD(_W)
 		{
 		}
 		~NameSpace();
@@ -1076,7 +1078,7 @@ namespace buildsys
 		std::list<Package *>::iterator packagesStart();
 		std::list<Package *>::iterator packagesEnd();
 		//! Find or create a package with the given name
-		Package *findPackage(std::string name);
+		Package *findPackage(const std::string &_name);
 		void addPackage(Package *p);
 		void removePackage(Package *p);
 		std::string getStagingDir();
@@ -1192,7 +1194,8 @@ namespace buildsys
 		 */
 		Package(NameSpace *_ns, std::string _name, std::string _file_short,
 		        std::string _file, std::string _overlay)
-		    : name(_name), file(_file), file_short(_file_short), overlay(_overlay),
+		    : name(std::move(_name)), file(std::move(_file)),
+		      file_short(std::move(_file_short)), overlay(std::move(_overlay)),
 		      buildinfo_hash(""), ns(_ns), bd(new BuildDir(this)), f(new Fetch()),
 		      Extract(new Extraction()), build_description(new BuildDescription()),
 		      lua(new Lua()), intercept(false), depsExtraction(""),
@@ -1536,7 +1539,7 @@ namespace buildsys
 		bool outputPrefix{true};
 
 		mutable std::mutex dlobjects_lock;
-		DLObject *_findDLObject(std::string);
+		DLObject *_findDLObject(const std::string &);
 
 	public:
 		explicit World(char *_bsapp)
@@ -1573,12 +1576,12 @@ namespace buildsys
 		/** Add a package to 'forced' mode
 		 *  This will automatically turn on forced mode
 		 */
-		void forceBuild(std::string name)
+		void forceBuild(const std::string &name)
 		{
 			forcedDeps->push_back(name);
 		};
 		//! Check if a specific package is being forced
-		bool isForced(std::string name);
+		bool isForced(const std::string &name);
 		/** Are we operating in 'cleaning' mode
 		 *  If --clean is parsed as a parameter, we run in cleaning mode
 		 *  This will make any package that would have been built
@@ -1664,7 +1667,7 @@ namespace buildsys
 		/** Set a feature using a key=value string
 		 *  This is used to handle the command line input of feature/value settings
 		 */
-		bool setFeature(std::string kv);
+		bool setFeature(const std::string &kv);
 		/** Get the value of a specific feature
 		 *  lua: feature('magic-support')
 		 */
@@ -1674,12 +1677,12 @@ namespace buildsys
 		void printFeatureValues();
 
 		//! Ignore a feature for build.info
-		void ignoreFeature(std::string feature)
+		void ignoreFeature(const std::string &feature)
 		{
 			this->ignoredFeatures->push_back(feature);
 		}
 		//! Is a feature ignored
-		bool isIgnoredFeature(std::string feature);
+		bool isIgnoredFeature(const std::string &feature);
 		//! Is the ignore list empty ?
 		bool noIgnoredFeatures()
 		{
@@ -1687,7 +1690,7 @@ namespace buildsys
 		}
 
 		//! Find (or create) a DLObject for a given full file name
-		DLObject *findDLObject(std::string fname)
+		DLObject *findDLObject(const std::string &fname)
 		{
 			DLObject *dlo = nullptr;
 			std::unique_lock<std::mutex> lk(this->dlobjects_lock);
@@ -1709,7 +1712,7 @@ namespace buildsys
 			return this->namespaces->end();
 		};
 		//! Find (or create) a namespace
-		NameSpace *findNameSpace(std::string name);
+		NameSpace *findNameSpace(const std::string &name);
 
 		//! Tell everything that we have failed
 		void setFailed()
@@ -1727,7 +1730,7 @@ namespace buildsys
 		//! Allow the fetch from location to be set
 		void setFetchFrom(std::string from)
 		{
-			this->fetch_from = from;
+			this->fetch_from = std::move(from);
 		}
 		//! Test if the fetch from location is set
 		bool canFetchFrom()
@@ -1743,7 +1746,7 @@ namespace buildsys
 		//! Set the location of the local tarball cache
 		void setTarballCache(std::string cache)
 		{
-			this->tarball_cache = cache;
+			this->tarball_cache = std::move(cache);
 		}
 		//! Test if the tarball cache location is set
 		bool haveTarballCache()
@@ -1763,7 +1766,7 @@ namespace buildsys
 		}
 
 		//! Add an overlay to search for packages
-		void addOverlayPath(std::string path)
+		void addOverlayPath(const std::string &path)
 		{
 			this->overlays->push_back(path);
 		};
