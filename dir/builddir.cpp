@@ -41,7 +41,7 @@ BuildDir::BuildDir(Package *P)
 	filesystem::create_directories("output/" + gname + "/staging");
 	filesystem::create_directories("output/" + gname + "/install");
 
-	auto position = pname.rfind("/");
+	auto position = pname.rfind('/');
 	if(position != std::string::npos) {
 		std::string subpart = pname.substr(0, position);
 		filesystem::create_directories("output/" + gname + "/staging/" + subpart);

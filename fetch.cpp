@@ -31,7 +31,7 @@ std::string DownloadFetch::full_name()
 	auto fname = std::string("");
 
 	if(this->filename.empty()) {
-		auto position = this->fetch_uri.rfind("/");
+		auto position = this->fetch_uri.rfind('/');
 		if(position != std::string::npos) {
 			fname = this->fetch_uri.substr(position + 1);
 		}
@@ -49,7 +49,7 @@ std::string DownloadFetch::final_name()
 	auto ret = fullname;
 
 	if(this->decompress) {
-		auto position = fullname.rfind(".");
+		auto position = fullname.rfind('.');
 		if(position != std::string::npos) {
 			ret = fullname.substr(0, position);
 		}
@@ -200,7 +200,7 @@ std::string LinkFetch::HASH()
 
 std::string LinkFetch::relative_path()
 {
-	auto position = this->fetch_uri.rfind("/");
+	auto position = this->fetch_uri.rfind('/');
 	auto path = std::string("");
 
 	if(position != std::string::npos) {
@@ -234,7 +234,7 @@ std::string CopyFetch::HASH()
 
 std::string CopyFetch::relative_path()
 {
-	auto position = this->fetch_uri.rfind("/");
+	auto position = this->fetch_uri.rfind('/');
 	auto path = std::string("");
 
 	if(position != std::string::npos) {

@@ -123,7 +123,7 @@ std::string Package::getFileHash(const std::string &filename)
 	std::string hash;
 	std::string line;
 	while(std::getline(hashes, line)) {
-		auto split = line.find(" ");
+		auto split = line.find(' ');
 		if(split != std::string::npos) {
 			std::string fname = line.substr(0, split);
 			if(fname == filename) {

@@ -137,13 +137,13 @@ int li_bd_fetch(lua_State *L)
 		}
 
 		if(reponame.empty()) {
-			auto last_slash = uri.rfind("/");
+			auto last_slash = uri.rfind('/');
 			if(last_slash == std::string::npos) {
 				throw CustomException("fetch method = git failure parsing uri");
 			}
 
 			if(last_slash == uri.length() - 1) {
-				auto second_last_slash = uri.rfind("/", last_slash - 1);
+				auto second_last_slash = uri.rfind('/', last_slash - 1);
 				reponame = uri.substr(second_last_slash + 1, last_slash);
 			} else {
 				reponame = uri.substr(last_slash + 1, std::string::npos);
@@ -255,7 +255,7 @@ int li_bd_restore(lua_State *L)
 
 		pc->addArg("-pRLuf");
 
-		auto position = location.rfind("/");
+		auto position = location.rfind('/');
 		if(position != std::string::npos) {
 			pc->addArg(location.substr(position + 1));
 		} else {
