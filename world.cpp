@@ -40,8 +40,9 @@ NameSpace *World::findNameSpace(const std::string &name)
 	auto iter = this->nameSpacesStart();
 	auto iterEnd = this->nameSpacesEnd();
 	for(; iter != iterEnd; iter++) {
-		if((*iter)->getName().compare(name) == 0)
+		if((*iter)->getName().compare(name) == 0) {
 			return (*iter);
+		}
 	}
 
 	NameSpace *ns = new NameSpace(this, name);
@@ -230,8 +231,9 @@ bool World::isForced(const std::string &name)
 	auto fEnd = this->forcedDeps->end();
 
 	for(; fIt != fEnd; fIt++) {
-		if((*fIt).compare(name) == 0)
+		if((*fIt).compare(name) == 0) {
 			return true;
+		}
 	}
 	return false;
 }
@@ -261,8 +263,9 @@ bool World::isIgnoredFeature(const std::string &feature)
 	auto iter = this->ignoredFeatures->begin();
 	auto iterEnd = this->ignoredFeatures->end();
 	for(; iter != iterEnd; iter++) {
-		if((*iter).compare(feature) == 0)
+		if((*iter).compare(feature) == 0) {
 			return true;
+		}
 	}
 	return false;
 }
@@ -272,8 +275,9 @@ DLObject *World::_findDLObject(const std::string &fname)
 	auto iter = this->dlobjects->begin();
 	auto iterEnd = this->dlobjects->end();
 	for(; iter != iterEnd; iter++) {
-		if((*iter)->fileName().compare(fname) == 0)
+		if((*iter)->fileName().compare(fname) == 0) {
 			return (*iter);
+		}
 	}
 
 	DLObject *dlo = new DLObject(fname);

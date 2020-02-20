@@ -223,8 +223,9 @@ namespace buildsys
 		Lua()
 		{
 			state = luaL_newstate();
-			if(state == nullptr)
+			if(state == nullptr) {
 				throw LuaException();
+			}
 			luaL_openlibs(state);
 		};
 
@@ -987,8 +988,9 @@ namespace buildsys
 		bool fetch(BuildDir *d)
 		{
 			for(auto unit : this->FUs) {
-				if(!unit->fetch(d))
+				if(!unit->fetch(d)) {
 					return false;
+				}
 			}
 			return true;
 		};
@@ -1231,11 +1233,13 @@ namespace buildsys
 		//! Set the namespace this package is in
 		void setNS(NameSpace *_ns)
 		{
-			if(this->ns)
+			if(this->ns) {
 				this->ns->removePackage(this);
+			}
 			this->ns = _ns;
-			if(this->ns)
+			if(this->ns) {
 				this->ns->addPackage(this);
+			}
 			this->resetBD();
 		};
 		//! Returns the namespace this package is in

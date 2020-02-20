@@ -204,8 +204,9 @@ bool GitExtractionUnit::fetch(BuildDir *d)
 		pc.addArg("-n");
 		pc.addArg(location);
 		pc.addArg(source_dir);
-		if(!pc.Run(this->P))
+		if(!pc.Run(this->P)) {
 			throw CustomException("Failed to git clone");
+		}
 	}
 
 	if(this->refspec.compare("HEAD") == 0) {
@@ -227,8 +228,9 @@ bool GitExtractionUnit::fetch(BuildDir *d)
 			pc.addArg("-q");
 			pc.addArg("--detach");
 			pc.addArg(this->refspec);
-			if(!pc.Run(this->P))
+			if(!pc.Run(this->P)) {
 				throw CustomException("Failed to checkout");
+			}
 		}
 	}
 	bool res = true;
@@ -281,8 +283,9 @@ bool GitExtractionUnit::extract(Package *_P)
 	pc.addArg("-dpRuf");
 	pc.addArg(this->localPath());
 	pc.addArg(".");
-	if(!pc.Run(_P))
+	if(!pc.Run(_P)) {
 		throw CustomException("Failed to checkout");
+	}
 
 	return true;
 }

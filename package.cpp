@@ -205,8 +205,9 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 		auto dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
-			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
+			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0) {
 				return true;
+			}
 		}
 	}
 
@@ -214,8 +215,9 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 	auto dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_staging(dir, done))
+		if(!(*dIt)->getPackage()->extract_staging(dir, done)) {
 			return false;
+		}
 	}
 
 	if(this->bd != nullptr) {
@@ -245,8 +247,9 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 		auto dEnd = done->end();
 
 		for(; dIt != dEnd; dIt++) {
-			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0)
+			if((*dIt).compare(this->getNS()->getName() + "," + this->name) == 0) {
 				return true;
+			}
 		}
 	}
 
@@ -255,8 +258,9 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 
 	if(includeChildren && !this->intercept) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->getPackage()->extract_install(dir, done, includeChildren))
+			if(!(*dIt)->getPackage()->extract_install(dir, done, includeChildren)) {
 				return false;
+			}
 		}
 	}
 
@@ -306,8 +310,9 @@ bool Package::canBuild()
 
 	if(dIt != dEnds) {
 		for(; dIt != dEnds; dIt++) {
-			if(!(*dIt)->getPackage()->isBuilt())
+			if(!(*dIt)->getPackage()->isBuilt()) {
 				return false;
+			}
 		}
 	}
 	return true;
@@ -450,11 +455,13 @@ bool Package::fetchFrom()
 bool Package::shouldBuild(bool locally)
 {
 	// we need to rebuild if the code is updated
-	if(this->codeUpdated)
+	if(this->codeUpdated) {
 		return true;
+	}
 	// we need to rebuild if installFiles is not empty
-	if(!this->installFiles.empty())
+	if(!this->installFiles.empty()) {
 		return true;
+	}
 
 	// lets make sure the install file (still) exists
 	bool ret = false;
@@ -523,8 +530,9 @@ bool Package::prepareBuildDirs()
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->extract_staging(staging_dir, done))
+		if(!(*dIt)->getPackage()->extract_staging(staging_dir, done)) {
 			return false;
+		}
 	}
 	log(this, "Done (%d)", done->size());
 	delete done;
@@ -557,8 +565,9 @@ bool Package::extractInstallDepends()
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
 		if(!(*dIt)->getPackage()->extract_install(this->depsExtraction, done,
-		                                          !this->depsExtractionDirectOnly))
+		                                          !this->depsExtractionDirectOnly)) {
 			return false;
+		}
 	}
 	delete done;
 	log(this, "Dependency install files extracted");
@@ -638,8 +647,9 @@ bool Package::build(bool locally)
 
 	/* Check our dependencies are already built, or build them */
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt)->getPackage()->build())
+		if(!(*dIt)->getPackage()->build()) {
 			return false;
+		}
 	}
 
 	if((this->getWorld()->forcedMode() && !this->getWorld()->isForced(this->name))) {
@@ -673,8 +683,9 @@ bool Package::build(bool locally)
 	for(; dIt != dEnds; dIt++) {
 		if((*dIt)->getLocally()) {
 			log((*dIt)->getPackage(), "Build triggered by %s", this->getName().c_str());
-			if(!(*dIt)->getPackage()->build(true))
+			if(!(*dIt)->getPackage()->build(true)) {
 				return false;
+			}
 		}
 	}
 
@@ -708,8 +719,9 @@ bool Package::build(bool locally)
 
 	log(this, "Running Commands");
 	for(; cIt != cEnd; cIt++) {
-		if(!(*cIt)->Run(this))
+		if(!(*cIt)->Run(this)) {
 			return false;
+		}
 	}
 	log(this, "Done Commands");
 

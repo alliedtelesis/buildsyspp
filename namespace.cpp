@@ -121,8 +121,9 @@ Package *NameSpace::findPackage(const std::string &_name)
 void NameSpace::_addPackage(Package *p)
 {
 	this->packages.push_back(p);
-	if(p->getNS() != this)
+	if(p->getNS() != this) {
 		p->setNS(this);
+	}
 }
 
 void NameSpace::addPackage(Package *p)

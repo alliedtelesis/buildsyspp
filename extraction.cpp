@@ -121,8 +121,9 @@ bool TarExtractionUnit::extract(Package *P)
 	pc.addArg("xf");
 	pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
 
-	if(!pc.Run(P))
+	if(!pc.Run(P)) {
 		throw CustomException("Failed to extract file");
+	}
 
 	return true;
 }
@@ -136,8 +137,9 @@ bool ZipExtractionUnit::extract(Package *P)
 	pc.addArg("-o");
 	pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
 
-	if(!pc.Run(P))
+	if(!pc.Run(P)) {
 		throw CustomException("Failed to extract file");
+	}
 
 	return true;
 }
@@ -178,8 +180,9 @@ bool PatchExtractionUnit::extract(Package *P)
 		throw CustomException("Will fail to patch");
 	}
 
-	if(!pc.Run(P))
+	if(!pc.Run(P)) {
 		throw CustomException("Truely failed to patch");
+	}
 
 	return true;
 }

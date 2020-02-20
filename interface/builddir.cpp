@@ -64,10 +64,12 @@ int li_bd_fetch(lua_State *L)
 	if(argc < 1) {
 		throw CustomException("fetch() requires 1 argument");
 	}
-	if(!lua_istable(L, 1))
+	if(!lua_istable(L, 1)) {
 		throw CustomException("fetch() must be called using : not .");
-	if(!lua_istable(L, 2))
+	}
+	if(!lua_istable(L, 2)) {
 		throw CustomException("fetch() expects a table as the first argument");
+	}
 
 	std::string uri("");
 	std::string to("");
@@ -227,12 +229,15 @@ int li_bd_restore(lua_State *L)
 	if(argc < 1) {
 		throw CustomException("restore() requires at least 2 arguments");
 	}
-	if(!lua_istable(L, 1))
+	if(!lua_istable(L, 1)) {
 		throw CustomException("restore() must be called using : not .");
-	if(!lua_isstring(L, 2))
+	}
+	if(!lua_isstring(L, 2)) {
 		throw CustomException("restore() expects a string as the first argument");
-	if(!lua_isstring(L, 3))
+	}
+	if(!lua_isstring(L, 3)) {
 		throw CustomException("restore() expects a string as the second argument");
+	}
 
 	Package *P = li_get_package();
 
@@ -269,10 +274,12 @@ int li_bd_restore(lua_State *L)
 
 int li_bd_extract_table(lua_State *L)
 {
-	if(lua_gettop(L) != 2)
+	if(lua_gettop(L) != 2) {
 		throw CustomException("extract() requires exactly 1 argument");
-	if(!lua_istable(L, 1))
+	}
+	if(!lua_istable(L, 1)) {
 		throw CustomException("extract() must be called using : not .");
+	}
 
 	Package *P = li_get_package();
 
@@ -292,20 +299,24 @@ int li_bd_extract_table(lua_State *L)
 
 int li_bd_extract(lua_State *L)
 {
-	if(lua_gettop(L) != 2)
+	if(lua_gettop(L) != 2) {
 		throw CustomException("extract() requires exactly 1 argument");
-	if(!lua_istable(L, 1))
+	}
+	if(!lua_istable(L, 1)) {
 		throw CustomException("extract() must be called using : not .");
+	}
 	if(lua_istable(L, 2)) {
 		return li_bd_extract_table(L);
 	}
-	if(!lua_isstring(L, 2))
+	if(!lua_isstring(L, 2)) {
 		throw CustomException("extract() expects a string as the only argument");
+	}
 
 	lua_pushstring(L, "data");
 	lua_gettable(L, 1);
-	if(!lua_islightuserdata(L, -1))
+	if(!lua_islightuserdata(L, -1)) {
 		throw CustomException("extract() must be called using : not .");
+	}
 	const auto *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1));
 	lua_pop(L, 1);
 
@@ -335,21 +346,28 @@ int li_bd_extract(lua_State *L)
 int li_bd_cmd(lua_State *L)
 {
 	int argc = lua_gettop(L);
-	if(argc < 4)
+	if(argc < 4) {
 		throw CustomException("cmd() requires at least 3 arguments");
-	if(argc > 5)
+	}
+	if(argc > 5) {
 		throw CustomException("cmd() requires at most 4 arguments");
-	if(!lua_istable(L, 1))
+	}
+	if(!lua_istable(L, 1)) {
 		throw CustomException("cmd() must be called using : not .");
-	if(!lua_isstring(L, 2))
+	}
+	if(!lua_isstring(L, 2)) {
 		throw CustomException("cmd() expects a string as the first argument");
-	if(!lua_isstring(L, 3))
+	}
+	if(!lua_isstring(L, 3)) {
 		throw CustomException("cmd() expects a string as the second argument");
-	if(!lua_istable(L, 4))
+	}
+	if(!lua_istable(L, 4)) {
 		throw CustomException("cmd() expects a table of strings as the third argument");
-	if(argc == 5 && !lua_istable(L, 5))
+	}
+	if(argc == 5 && !lua_istable(L, 5)) {
 		throw CustomException(
 		    "cmd() expects a table of strings as the fourth argument, if present");
+	}
 
 	CHECK_ARGUMENT_TYPE("cmd", 1, BuildDir, d);
 
@@ -363,9 +381,10 @@ int li_bd_cmd(lua_State *L)
 	lua_pushnil(L); /* first key */
 	while(lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
-		if(lua_type(L, -1) != LUA_TSTRING)
+		if(lua_type(L, -1) != LUA_TSTRING) {
 			throw CustomException(
 			    "cmd() requires a table of strings as the third argument\n");
+		}
 		pc->addArg(lua_tostring(L, -1));
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);
@@ -375,9 +394,10 @@ int li_bd_cmd(lua_State *L)
 		lua_pushnil(L); /* first key */
 		while(lua_next(L, 5) != 0) {
 			/* uses 'key' (at index -2) and 'value' (at index -1) */
-			if(lua_type(L, -1) != LUA_TSTRING)
+			if(lua_type(L, -1) != LUA_TSTRING) {
 				throw CustomException(
 				    "cmd() requires a table of strings as the fourth argument\n");
+			}
 			pc->addEnv(std::string(lua_tostring(L, -1)));
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
@@ -392,16 +412,21 @@ int li_bd_cmd(lua_State *L)
 
 int li_bd_patch(lua_State *L)
 {
-	if(lua_gettop(L) != 4)
+	if(lua_gettop(L) != 4) {
 		throw CustomException("patch() requires exactly 3 arguments");
-	if(!lua_istable(L, 1))
+	}
+	if(!lua_istable(L, 1)) {
 		throw CustomException("patch() must be called using : not .");
-	if(!lua_isstring(L, 2))
+	}
+	if(!lua_isstring(L, 2)) {
 		throw CustomException("patch() expects a string as the first argument");
-	if(!lua_isnumber(L, 3))
+	}
+	if(!lua_isnumber(L, 3)) {
 		throw CustomException("patch() expects a number as the second argument");
-	if(!lua_istable(L, 4))
+	}
+	if(!lua_istable(L, 4)) {
 		throw CustomException("patch() expects a table of strings as the third argument");
+	}
 
 	Package *P = li_get_package();
 
@@ -419,9 +444,10 @@ int li_bd_patch(lua_State *L)
 	while(lua_next(L, 4) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 		{
-			if(lua_type(L, -1) != LUA_TSTRING)
+			if(lua_type(L, -1) != LUA_TSTRING) {
 				throw CustomException(
 				    "patch() requires a table of strings as the third argument\n");
+			}
 			std::string uri = P->relative_fetch_path(lua_tostring(L, -1));
 			PatchExtractionUnit *peu =
 			    new PatchExtractionUnit(patch_depth, patch_path, uri, lua_tostring(L, -1));
@@ -436,12 +462,15 @@ int li_bd_patch(lua_State *L)
 
 int li_bd_installfile(lua_State *L)
 {
-	if(lua_gettop(L) != 2)
+	if(lua_gettop(L) != 2) {
 		throw CustomException("installfile() requires exactly 1 argument");
-	if(!lua_istable(L, 1))
+	}
+	if(!lua_istable(L, 1)) {
 		throw CustomException("installfile() must be called using : not .");
-	if(!lua_isstring(L, 2))
+	}
+	if(!lua_isstring(L, 2)) {
 		throw CustomException("installfile() expects a string as the only argument");
+	}
 
 	Package *P = li_get_package();
 	P->setInstallFile(std::string(lua_tostring(L, 2)));

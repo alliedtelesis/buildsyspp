@@ -41,8 +41,9 @@ static int li_name(lua_State *L)
 		lua_pushstring(L, value.c_str());
 		return 1;
 	}
-	if(lua_type(L, 1) != LUA_TSTRING)
+	if(lua_type(L, 1) != LUA_TSTRING) {
 		throw CustomException("Argument to name() must be a string");
+	}
 	std::string value(lua_tostring(L, 1));
 
 	P->setNS(P->getWorld()->findNameSpace(value));
@@ -58,8 +59,9 @@ static int li_feature(lua_State *L)
 	Package *P = li_get_package();
 
 	if(lua_gettop(L) == 1) {
-		if(lua_type(L, 1) != LUA_TSTRING)
+		if(lua_type(L, 1) != LUA_TSTRING) {
 			throw CustomException("Argument to feature() must be a string");
+		}
 		std::string key(lua_tostring(L, 1));
 		try {
 			std::string value = P->getFeature(key);
@@ -71,12 +73,15 @@ static int li_feature(lua_State *L)
 		}
 		return 1;
 	}
-	if(lua_type(L, 1) != LUA_TSTRING)
+	if(lua_type(L, 1) != LUA_TSTRING) {
 		throw CustomException("First argument to feature() must be a string");
-	if(lua_type(L, 2) != LUA_TSTRING)
+	}
+	if(lua_type(L, 2) != LUA_TSTRING) {
 		throw CustomException("Second argument to feature() must be a string");
-	if(lua_gettop(L) == 3 && lua_type(L, 3) != LUA_TBOOLEAN)
+	}
+	if(lua_gettop(L) == 3 && lua_type(L, 3) != LUA_TBOOLEAN) {
 		throw CustomException("Third argument to feature() must be boolean, if present");
+	}
 	std::string key(lua_tostring(L, 1));
 	std::string value(lua_tostring(L, 2));
 

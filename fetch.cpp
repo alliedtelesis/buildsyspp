@@ -105,8 +105,9 @@ bool DownloadFetch::fetch(BuildDir *d)
 			PackageCmd pc("dl", "wget");
 			pc.addArg(this->fetch_uri);
 			pc.addArg("-O" + fullname);
-			if(!pc.Run(this->P))
+			if(!pc.Run(this->P)) {
 				throw CustomException("Failed to fetch file");
+			}
 		}
 		if(decompress) {
 			// We want to run a command on this file
@@ -180,12 +181,14 @@ bool LinkFetch::fetch(BuildDir *d)
 		l2++;
 		rmpc.addArg(l2);
 		free(l_copy);
-		if(!rmpc.Run(this->P))
+		if(!rmpc.Run(this->P)) {
 			throw CustomException(
 			    "Failed to ln (symbolically), could not remove target first");
-		if(!pc.Run(this->P))
+		}
+		if(!pc.Run(this->P)) {
 			throw CustomException(
 			    "Failed to ln (symbolically), even after removing target first");
+		}
 	}
 	return true;
 }
@@ -216,8 +219,9 @@ bool CopyFetch::fetch(BuildDir *d)
 	std::string l = P->absolute_fetch_path(this->fetch_uri);
 	pc.addArg(l);
 	pc.addArg(".");
-	if(!pc.Run(this->P))
+	if(!pc.Run(this->P)) {
 		throw CustomException("Failed to copy (recursively)");
+	}
 	log(P, "Copied data in, considering code updated");
 	P->setCodeUpdated();
 	return true;

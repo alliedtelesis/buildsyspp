@@ -27,8 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 bool PackageCmd::Run(Package *P)
 {
-	if(this->skip)
+	if(this->skip) {
 		return true;
+	}
 
 	std::vector<std::string> ne;
 	if(!this->envp.empty()) {
@@ -45,8 +46,9 @@ bool PackageCmd::Run(Package *P)
 	}
 
 	bool res = true;
-	if(run(P, this->args[0], this->args, this->path, ne) != 0)
+	if(run(P, this->args[0], this->args, this->path, ne) != 0) {
 		res = false;
+	}
 
 	if(!res) {
 		this->printCmd();

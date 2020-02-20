@@ -28,8 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int li_fu_path(lua_State *L)
 {
-	if(!lua_istable(L, 1))
+	if(!lua_istable(L, 1)) {
 		throw CustomException("fetch() must be called using : not .");
+	}
 
 	CHECK_ARGUMENT_TYPE("path", 1, FetchUnit, f);
 

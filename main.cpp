@@ -55,10 +55,11 @@ void buildsys::log(Package *P, const char *fmt, ...)
 
 static inline const char *get_color(const char *mesg)
 {
-	if(strstr(mesg, "error:"))
+	if(strstr(mesg, "error:")) {
 		return COLOR_BOLD_RED;
-	else if(strstr(mesg, "warning:"))
+	} else if(strstr(mesg, "warning:")) {
 		return COLOR_BOLD_BLUE;
+	}
 
 	return nullptr;
 }
@@ -68,12 +69,13 @@ void buildsys::program_output(Package *P, const std::string &mesg)
 	static int isATTY = isatty(fileno(stdout));
 	const char *color;
 
-	if(!quietly && isATTY && ((color = get_color(mesg.c_str())) != nullptr))
+	if(!quietly && isATTY && ((color = get_color(mesg.c_str())) != nullptr)) {
 		fprintf(stdout, "%s,%s: %s%s%s\n", P->getNS()->getName().c_str(),
 		        P->getName().c_str(), color, mesg.c_str(), COLOR_RESET);
-	else
+	} else {
 		fprintf(quietly ? P->getLogFile() : stdout, "%s,%s: %s\n",
 		        P->getNS()->getName().c_str(), P->getName().c_str(), mesg.c_str());
+	}
 }
 
 int main(int argc, char *argv[])
@@ -177,12 +179,13 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_REALTIME, &end);
 
-	if(end.tv_nsec >= start.tv_nsec)
+	if(end.tv_nsec >= start.tv_nsec) {
 		log(argv[1], "Total time: %ds and %dms", (end.tv_sec - start.tv_sec),
 		    (end.tv_nsec - start.tv_nsec) / 1000000);
-	else
+	} else {
 		log(argv[1], "Total time: %ds and %dms", (end.tv_sec - start.tv_sec - 1),
 		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
+	}
 
 	hash_shutdown();
 

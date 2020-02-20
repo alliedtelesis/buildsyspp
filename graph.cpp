@@ -47,8 +47,9 @@ public:
 	 */
 	template <class VertexOrEdge> void operator()(std::ostream &out, VertexOrEdge v)
 	{
-		if(names[v] != nullptr)
+		if(names[v] != nullptr) {
 			names[v]->printLabel(out);
+		}
 	}
 };
 
@@ -123,8 +124,9 @@ void Internal_Graph::deleteNode(Package *p)
 Package *Internal_Graph::topoNext()
 {
 	Package *n = nullptr;
-	if(c == nullptr)
+	if(c == nullptr) {
 		return nullptr;
+	}
 	for(auto ii = c->begin(); ii != c->end(); ++ii) {
 		Package *p = ((*NodeMap)[*ii]);
 		if(!(p->isBuilt()) && !(p->isBuilding()) && p->canBuild()) {
