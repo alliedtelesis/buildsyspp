@@ -573,7 +573,7 @@ namespace buildsys
 		{
 		}
 		~ExtractionUnit() override = default;
-		virtual bool print(std::ostream &out) = 0;
+		virtual void print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 		virtual bool extract(Package *P) = 0;
 		virtual std::string URI()
@@ -593,7 +593,7 @@ namespace buildsys
 	{
 	public:
 		virtual ~BuildUnit() = default;
-		virtual bool print(std::ostream &out) = 0;
+		virtual void print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 	};
 
@@ -607,10 +607,9 @@ namespace buildsys
 		explicit CompressedFileExtractionUnit(const std::string &fname);
 		explicit CompressedFileExtractionUnit(FetchUnit *f);
 		std::string HASH() override;
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->HASH() << std::endl;
-			return true;
 		}
 	};
 
@@ -665,11 +664,10 @@ namespace buildsys
 		                    const std::string &patch_fname,
 		                    const std::string &_fname_short);
 		~PatchExtractionUnit() override = default;
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->level << " " << this->patch_path << " "
 			    << this->fname_short << " " << this->HASH() << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -686,11 +684,10 @@ namespace buildsys
 
 	public:
 		FileCopyExtractionUnit(const std::string &fname, const std::string &_fname_short);
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->fname_short << " " << this->HASH()
 			    << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -708,11 +705,10 @@ namespace buildsys
 
 	public:
 		FetchedFileCopyExtractionUnit(FetchUnit *_fetched, const std::string &_fname_short);
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->fname_short << " " << this->HASH()
 			    << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -731,12 +727,11 @@ namespace buildsys
 	public:
 		GitDirExtractionUnit(const std::string &git_dir, const std::string &to_dir);
 		GitDirExtractionUnit() = default;
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->modeName() << " " << this->uri << " "
 			    << this->toDir << " " << this->HASH() << " "
 			    << (this->isDirty() ? this->dirtyHash() : "") << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -823,7 +818,7 @@ namespace buildsys
 		    : feature(std::move(_feature)), value(std::move(_value)), WORLD(_WORLD)
 		{
 		}
-		bool print(std::ostream &out) override;
+		void print(std::ostream &out) override;
 		std::string type() override
 		{
 			return std::string("FeatureValue");
@@ -840,10 +835,9 @@ namespace buildsys
 		explicit FeatureNilUnit(std::string _feature) : feature(std::move(_feature))
 		{
 		}
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->feature << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -859,10 +853,9 @@ namespace buildsys
 		std::string hash; //!< Hash of this package file
 	public:
 		PackageFileUnit(const std::string &fname, const std::string &_fname_short);
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -878,10 +871,9 @@ namespace buildsys
 		std::string hash; //!< Hash of this package file
 	public:
 		RequireFileUnit(const std::string &fname, const std::string &_fname_short);
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -897,10 +889,9 @@ namespace buildsys
 		std::string hash; //!< Hash of this extraction info file
 	public:
 		explicit ExtractionInfoFileUnit(const std::string &fname);
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -916,10 +907,9 @@ namespace buildsys
 		std::string hash; //!< Hash of this build info file
 	public:
 		BuildInfoFileUnit(const std::string &fname, const std::string &_hash);
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -935,10 +925,9 @@ namespace buildsys
 		std::string hash; //!< Hash of this output info file
 	public:
 		explicit OutputInfoFileUnit(const std::string &fname);
-		bool print(std::ostream &out) override
+		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-			return true;
 		}
 		std::string type() override
 		{
@@ -992,14 +981,11 @@ namespace buildsys
 			}
 		}
 		void add(ExtractionUnit *eu);
-		bool print(std::ostream &out)
+		void print(std::ostream &out)
 		{
 			for(auto unit : this->EUs) {
-				if(!unit->print(out)) {
-					return false;
-				}
+				unit->print(out);
 			}
-			return true;
 		}
 		bool extract(Package *P);
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
@@ -1023,15 +1009,11 @@ namespace buildsys
 			}
 		};
 		void add(BuildUnit *bu);
-		bool print(std::ostream &out)
+		void print(std::ostream &out)
 		{
 			for(auto unit : this->BUs) {
-				if(!unit->print(out)) {
-					return false;
-				}
+				unit->print(out);
 			}
-
-			return true;
 		}
 	};
 
