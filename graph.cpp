@@ -37,7 +37,7 @@ public:
 	//! Construct a property writer
 	/** \param _name the mapping from vertices/edges to objects
 	 */
-	explicit graphnode_property_writer(Name _name) : names(_name)
+	explicit graphnode_property_writer(Name _name) : names(std::move(_name))
 	{
 	}
 	//! The outputting function

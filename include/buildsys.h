@@ -387,8 +387,8 @@ namespace buildsys
 		 *  \param path The path to run this command in
 		 *  \param app The program to invoke
 		 */
-		PackageCmd(const std::string &_path, const std::string &_app)
-		    : path(_path), app(_app)
+		PackageCmd(std::string _path, std::string _app)
+		    : path(std::move(_path)), app(std::move(_app))
 		{
 			this->addArg(app);
 		};
@@ -819,9 +819,8 @@ namespace buildsys
 		World *WORLD;
 
 	public:
-		FeatureValueUnit(World *_WORLD, const std::string &_feature,
-		                 const std::string &_value)
-		    : feature(_feature), value(_value), WORLD(_WORLD)
+		FeatureValueUnit(World *_WORLD, std::string _feature, std::string _value)
+		    : feature(std::move(_feature)), value(std::move(_value)), WORLD(_WORLD)
 		{
 		}
 		bool print(std::ostream &out) override;
@@ -838,7 +837,7 @@ namespace buildsys
 		std::string feature;
 
 	public:
-		explicit FeatureNilUnit(const std::string &_feature) : feature(_feature)
+		explicit FeatureNilUnit(std::string _feature) : feature(std::move(_feature))
 		{
 		}
 		bool print(std::ostream &out) override
