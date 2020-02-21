@@ -129,7 +129,7 @@ namespace buildsys
 	class World;
 
 	/*! The catchable exception */
-	class Exception
+	class Exception : public std::exception
 	{
 	public:
 		virtual ~Exception() = default;
