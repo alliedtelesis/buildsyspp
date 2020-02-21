@@ -41,13 +41,13 @@ BuildDir *Package::builddir()
 	return &this->bd;
 }
 
-FILE *Package::getLogFile()
+std::ofstream &Package::getLogFile()
 {
 	if(this->logFile == nullptr) {
-		std::string fname = this->builddir()->getPath() + "/build.log";
-		this->logFile = fopen(fname.c_str(), "w");
+		this->logFile =
+		    std::make_unique<std::ofstream>(this->builddir()->getPath() + "/build.log");
 	}
-	return this->logFile;
+	return *this->logFile;
 }
 
 std::string Package::getFeature(const std::string &key)

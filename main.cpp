@@ -46,8 +46,11 @@ void buildsys::log(Package *P, const char *fmt, ...)
 	vasprintf(&message, fmt, args);
 	va_end(args);
 
-	fprintf(quietly ? P->getLogFile() : stderr, "%s,%s: %s\n",
-	        P->getNS()->getName().c_str(), P->getName().c_str(), message);
+	std::ostream &s = quietly ? P->getLogFile() : std::cerr;
+	auto msg =
+	    boost::format{"%1%,%2%: %3%"} % P->getNS()->getName() % P->getName() % message;
+	s << msg << std::endl;
+
 	free(message);
 }
 
@@ -67,14 +70,16 @@ void buildsys::program_output(Package *P, const std::string &mesg)
 {
 	static int isATTY = isatty(fileno(stdout));
 	const char *color;
+	std::ostream &s = quietly ? P->getLogFile() : std::cout;
+	boost::format msg;
 
 	if(!quietly && (isATTY != 0) && ((color = get_color(mesg.c_str())) != nullptr)) {
-		fprintf(stdout, "%s,%s: %s%s%s\n", P->getNS()->getName().c_str(),
-		        P->getName().c_str(), color, mesg.c_str(), COLOR_RESET);
+		msg = boost::format{"%1%,%2%: %3%%4%%5%"} % P->getNS()->getName() % P->getName() %
+		      color % mesg % COLOR_RESET;
 	} else {
-		fprintf(quietly ? P->getLogFile() : stdout, "%s,%s: %s\n",
-		        P->getNS()->getName().c_str(), P->getName().c_str(), mesg.c_str());
+		msg = boost::format{"%1%,%2%: %3%"} % P->getNS()->getName() % P->getName() % mesg;
 	}
+	s << msg << std::endl;
 }
 
 int main(int argc, char *argv[])

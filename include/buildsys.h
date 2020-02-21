@@ -1102,7 +1102,7 @@ namespace buildsys
 		bool suppress_remove_staging;
 		mutable std::mutex lock;
 		time_t run_secs;
-		FILE *logFile;
+		std::unique_ptr<std::ofstream> logFile;
 		//! Set the buildinfo file hash from the new .build.info.new file
 		void updateBuildInfoHash();
 		//! Set the buildinfo file hash from the existing .build.info file
@@ -1155,16 +1155,9 @@ namespace buildsys
 		      depsExtraction(""), depsExtractionDirectOnly(false), visiting(false),
 		      processing_queued(false), buildInfoPrepared(false), codeUpdated(false),
 		      no_fetch_from(false), hash_output(false), suppress_remove_staging(false),
-		      run_secs(0), logFile(nullptr)
+		      run_secs(0)
 		{
 		}
-		~Package()
-		{
-			if(logFile != nullptr) {
-				fclose(logFile);
-				logFile = nullptr;
-			}
-		};
 		//! Set the namespace this package is in
 		void setNS(NameSpace *_ns)
 		{
@@ -1229,7 +1222,7 @@ namespace buildsys
 			return this->overlay;
 		};
 		//! Get the log file for this package
-		FILE *getLogFile();
+		std::ofstream &getLogFile();
 
 		/** Depend on another package
 		 *  \param p The package to depend on
