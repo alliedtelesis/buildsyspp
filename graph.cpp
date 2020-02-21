@@ -53,7 +53,7 @@ public:
 	}
 };
 
-Internal_Graph::Internal_Graph(World *W)
+void Internal_Graph::fill(World *W)
 {
 	for(auto N = W->nameSpacesStart(); N != W->nameSpacesEnd(); N++) {
 		for(auto I = (*N).packagesStart(); I != (*N).packagesEnd(); I++) {

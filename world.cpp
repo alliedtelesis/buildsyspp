@@ -190,15 +190,16 @@ bool World::basePackage(const std::string &filename)
 		// We are done, no building required
 		return true;
 	}
-	this->graph = new Internal_Graph(this);
-	this->topo_graph = new Internal_Graph(this);
 
-	this->topo_graph->topological();
+	this->graph.fill(this);
+	this->topo_graph.fill(this);
+
+	this->topo_graph.topological();
 	while(!this->isFailed() && !this->p->isBuilt()) {
 		std::unique_lock<std::mutex> lk(this->cond_lock);
 		Package *toBuild = nullptr;
 		if(this->threads_limit == 0 || this->threads_running < this->threads_limit) {
-			toBuild = this->topo_graph->topoNext();
+			toBuild = this->topo_graph.topoNext();
 		}
 		if(toBuild != nullptr) {
 			// If this package is already building then skip it.
@@ -251,8 +252,8 @@ bool World::populateForcedList(PackageCmd *pc)
 bool World::packageFinished(Package *_p)
 {
 	std::unique_lock<std::mutex> lk(this->cond_lock);
-	this->topo_graph->deleteNode(_p);
-	this->topo_graph->topological();
+	this->topo_graph.deleteNode(_p);
+	this->topo_graph.topological();
 	this->cond.notify_all();
 	return true;
 }
@@ -281,10 +282,4 @@ DLObject *World::_findDLObject(const std::string &fname)
 
 	this->dlobjects.emplace_back(fname);
 	return &this->dlobjects.back();
-}
-
-World::~World()
-{
-	delete this->graph;
-	delete this->topo_graph;
 }

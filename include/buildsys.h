@@ -1423,8 +1423,8 @@ namespace buildsys
 		container c;
 
 	public:
-		//! Create an Internal_Graph
-		explicit Internal_Graph(World *W);
+		//! Fill the Internal_Graph
+		void fill(World *W);
 		//! Output the graph to dependencies.dot
 		void output();
 		//! Perform a topological sort
@@ -1504,8 +1504,8 @@ namespace buildsys
 		std::list<DLObject> dlobjects;
 		Package *p{nullptr};
 		string_list overlays;
-		Internal_Graph *graph{nullptr};
-		Internal_Graph *topo_graph{nullptr};
+		Internal_Graph graph;
+		Internal_Graph topo_graph;
 		std::string fetch_from;
 		std::string tarball_cache;
 		std::string pwd;
@@ -1532,8 +1532,6 @@ namespace buildsys
 			this->pwd = std::string(_pwd);
 			free(_pwd);
 		};
-
-		~World();
 
 		//! Return the name we were invoked as
 		std::string getAppName()
@@ -1778,9 +1776,7 @@ namespace buildsys
 		//! output the dependency graph
 		bool output_graph()
 		{
-			if(this->graph != nullptr) {
-				graph->output();
-			}
+			graph.output();
 			return true;
 		};
 		//! populate the arguments list with out forced build list
