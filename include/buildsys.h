@@ -272,13 +272,7 @@ namespace buildsys
 	{
 	private:
 	public:
-		//! Create a directory
-		Dir()
-		{
-		}
-		virtual ~Dir()
-		{
-		}
+		virtual ~Dir() = default;
 		//! Set this as a Dir for lua
 		static void lua_table_r(lua_State *L)
 		{
@@ -313,9 +307,7 @@ namespace buildsys
 		 *  \param P The package this directory is for
 		 */
 		explicit BuildDir(Package *P);
-		~BuildDir() override
-		{
-		}
+		~BuildDir() override = default;
 		//! Return the full path to this directory
 		const std::string &getPath()
 		{
@@ -489,12 +481,8 @@ namespace buildsys
 		FetchUnit(std::string uri, Package *_P) : fetch_uri(std::move(uri)), P(_P)
 		{
 		}
-		FetchUnit()
-		{
-		}
-		~FetchUnit() override
-		{
-		}
+		FetchUnit() = default;
+		~FetchUnit() override = default;
 		virtual bool fetch(BuildDir *d) = 0;
 		virtual bool force_updated()
 		{
@@ -584,9 +572,7 @@ namespace buildsys
 		ExtractionUnit() : uri(std::string()), hash(std::string())
 		{
 		}
-		~ExtractionUnit() override
-		{
-		}
+		~ExtractionUnit() override = default;
 		virtual bool print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 		virtual bool extract(Package *P) = 0;
@@ -606,12 +592,7 @@ namespace buildsys
 	class BuildUnit
 	{
 	public:
-		BuildUnit()
-		{
-		}
-		virtual ~BuildUnit()
-		{
-		}
+		virtual ~BuildUnit() = default;
 		virtual bool print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 	};
@@ -683,9 +664,7 @@ namespace buildsys
 		PatchExtractionUnit(int _level, const std::string &_patch_path,
 		                    const std::string &patch_fname,
 		                    const std::string &_fname_short);
-		~PatchExtractionUnit() override
-		{
-		}
+		~PatchExtractionUnit() override = default;
 		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->level << " " << this->patch_path << " "
@@ -751,7 +730,7 @@ namespace buildsys
 
 	public:
 		GitDirExtractionUnit(const std::string &git_dir, const std::string &to_dir);
-		GitDirExtractionUnit();
+		GitDirExtractionUnit() = default;
 		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->modeName() << " " << this->uri << " "
@@ -1101,9 +1080,6 @@ namespace buildsys
 		PackageDepend(Package *_p, bool _locally) : p(_p), locally(_locally)
 		{
 		}
-		~PackageDepend()
-		{
-		}
 		//! Get the package
 		Package *getPackage()
 		{
@@ -1446,9 +1422,6 @@ namespace buildsys
 
 	public:
 		PackageQueue() : started(0), finished(0)
-		{
-		}
-		~PackageQueue()
 		{
 		}
 		void start()

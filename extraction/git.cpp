@@ -109,10 +109,6 @@ GitDirExtractionUnit::GitDirExtractionUnit(const std::string &git_dir,
 	this->toDir = to_dir;
 }
 
-GitDirExtractionUnit::GitDirExtractionUnit()
-{
-}
-
 bool GitDirExtractionUnit::isDirty()
 {
 	if(!directory_exists(this->localPath())) {
