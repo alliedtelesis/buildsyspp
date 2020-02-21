@@ -132,7 +132,7 @@ namespace buildsys
 	class Exception : public std::exception
 	{
 	public:
-		virtual ~Exception() = default;
+		~Exception() override = default;
 		//! Return the error message for this exception
 		virtual std::string error_msg()
 		{
@@ -153,7 +153,7 @@ namespace buildsys
 		explicit CustomException(std::string err) : errmsg(std::move(err))
 		{
 		}
-		virtual std::string error_msg()
+		std::string error_msg() override
 		{
 			return errmsg;
 		}
@@ -163,7 +163,7 @@ namespace buildsys
 	class LuaException : public Exception
 	{
 	public:
-		virtual std::string error_msg()
+		std::string error_msg() override
 		{
 			return "Lua Error";
 		}
@@ -173,7 +173,7 @@ namespace buildsys
 	class MemoryException : public Exception
 	{
 	public:
-		virtual std::string error_msg()
+		std::string error_msg() override
 		{
 			return "Memory Error";
 		}
@@ -183,7 +183,7 @@ namespace buildsys
 	class NoKeyException : public Exception
 	{
 	public:
-		virtual std::string error_msg()
+		std::string error_msg() override
 		{
 			return "Key does not exist";
 		}
@@ -204,7 +204,7 @@ namespace buildsys
 		{
 			errmsg = string_format("%s: File not found '%s'", where.c_str(), file.c_str());
 		}
-		virtual std::string error_msg()
+		std::string error_msg() override
 		{
 			return errmsg;
 		}
@@ -313,7 +313,7 @@ namespace buildsys
 		 *  \param P The package this directory is for
 		 */
 		explicit BuildDir(Package *P);
-		~BuildDir()
+		~BuildDir() override
 		{
 		}
 		//! Return the full path to this directory
@@ -367,7 +367,7 @@ namespace buildsys
 			LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
 			super::lua_table_r(L);
 		}
-		virtual void lua_table(lua_State *L)
+		void lua_table(lua_State *L) override
 		{
 			lua_table_r(L);
 			LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
@@ -492,7 +492,7 @@ namespace buildsys
 		FetchUnit()
 		{
 		}
-		virtual ~FetchUnit()
+		~FetchUnit() override
 		{
 		}
 		virtual bool fetch(BuildDir *d) = 0;
@@ -530,9 +530,9 @@ namespace buildsys
 		      filename(std::move(_filename))
 		{
 		}
-		virtual bool fetch(BuildDir *d);
-		virtual std::string HASH();
-		virtual std::string relative_path()
+		bool fetch(BuildDir *d) override;
+		std::string HASH() override;
+		std::string relative_path() override
 		{
 			return "dl/" + this->final_name();
 		};
@@ -546,13 +546,13 @@ namespace buildsys
 		LinkFetch(std::string uri, Package *_P) : FetchUnit(std::move(uri), _P)
 		{
 		}
-		virtual bool fetch(BuildDir *d);
-		virtual bool force_updated()
+		bool fetch(BuildDir *d) override;
+		bool force_updated() override
 		{
 			return true;
 		};
-		virtual std::string HASH();
-		virtual std::string relative_path();
+		std::string HASH() override;
+		std::string relative_path() override;
 	};
 
 	/* A copied file/directory
@@ -563,13 +563,13 @@ namespace buildsys
 		CopyFetch(std::string uri, Package *_P) : FetchUnit(std::move(uri), _P)
 		{
 		}
-		virtual bool fetch(BuildDir *d);
-		virtual bool force_updated()
+		bool fetch(BuildDir *d) override;
+		bool force_updated() override
 		{
 			return true;
 		};
-		virtual std::string HASH();
-		virtual std::string relative_path();
+		std::string HASH() override;
+		std::string relative_path() override;
 	};
 
 	/** An extraction unit
@@ -584,7 +584,7 @@ namespace buildsys
 		ExtractionUnit() : uri(std::string()), hash(std::string())
 		{
 		}
-		virtual ~ExtractionUnit()
+		~ExtractionUnit() override
 		{
 		}
 		virtual bool print(std::ostream &out) = 0;
@@ -594,7 +594,7 @@ namespace buildsys
 		{
 			return this->uri;
 		};
-		virtual std::string HASH()
+		std::string HASH() override
 		{
 			return this->hash;
 		};
@@ -625,8 +625,8 @@ namespace buildsys
 	public:
 		explicit CompressedFileExtractionUnit(const std::string &fname);
 		explicit CompressedFileExtractionUnit(FetchUnit *f);
-		virtual std::string HASH();
-		virtual bool print(std::ostream &out)
+		std::string HASH() override;
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->HASH() << std::endl;
 			return true;
@@ -646,11 +646,11 @@ namespace buildsys
 		explicit TarExtractionUnit(FetchUnit *f) : CompressedFileExtractionUnit(f)
 		{
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("TarFile");
 		}
-		virtual bool extract(Package *P);
+		bool extract(Package *P) override;
 	};
 
 	class ZipExtractionUnit : public CompressedFileExtractionUnit
@@ -664,11 +664,11 @@ namespace buildsys
 		explicit ZipExtractionUnit(FetchUnit *f) : CompressedFileExtractionUnit(f)
 		{
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("ZipFile");
 		}
-		virtual bool extract(Package *P);
+		bool extract(Package *P) override;
 	};
 
 	//! A patch file as part of the extraction step
@@ -683,20 +683,20 @@ namespace buildsys
 		PatchExtractionUnit(int _level, const std::string &_patch_path,
 		                    const std::string &patch_fname,
 		                    const std::string &_fname_short);
-		virtual ~PatchExtractionUnit()
+		~PatchExtractionUnit() override
 		{
 		}
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->level << " " << this->patch_path << " "
 			    << this->fname_short << " " << this->HASH() << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("PatchFile");
 		}
-		virtual bool extract(Package *P);
+		bool extract(Package *P) override;
 	};
 
 	//! A file copy as part of the extraction step
@@ -707,17 +707,17 @@ namespace buildsys
 
 	public:
 		FileCopyExtractionUnit(const std::string &fname, const std::string &_fname_short);
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->fname_short << " " << this->HASH()
 			    << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("FileCopy");
 		}
-		virtual bool extract(Package *P);
+		bool extract(Package *P) override;
 	};
 
 	//! A file copy of a fetched file as part of the extraction step
@@ -729,18 +729,18 @@ namespace buildsys
 
 	public:
 		FetchedFileCopyExtractionUnit(FetchUnit *_fetched, const std::string &_fname_short);
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->fname_short << " " << this->HASH()
 			    << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("FetchedFileCopy");
 		}
-		virtual bool extract(Package *P);
-		virtual std::string HASH();
+		bool extract(Package *P) override;
+		std::string HASH() override;
 	};
 
 	//! A git directory as part of the extraction step
@@ -752,18 +752,18 @@ namespace buildsys
 	public:
 		GitDirExtractionUnit(const std::string &git_dir, const std::string &to_dir);
 		GitDirExtractionUnit();
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->modeName() << " " << this->uri << " "
 			    << this->toDir << " " << this->HASH() << " "
 			    << (this->isDirty() ? this->dirtyHash() : "") << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("GitDir");
 		}
-		virtual bool extract(Package *P) = 0;
+		bool extract(Package *P) override = 0;
 		virtual bool isDirty();
 		virtual std::string dirtyHash();
 		virtual std::string localPath()
@@ -781,8 +781,8 @@ namespace buildsys
 		    : GitDirExtractionUnit(git_dir, to_dir)
 		{
 		}
-		virtual bool extract(Package *P);
-		virtual std::string modeName()
+		bool extract(Package *P) override;
+		std::string modeName() override
 		{
 			return "link";
 		};
@@ -796,8 +796,8 @@ namespace buildsys
 		    : GitDirExtractionUnit(git_dir, to_dir)
 		{
 		}
-		virtual bool extract(Package *P);
-		virtual std::string modeName()
+		bool extract(Package *P) override;
+		std::string modeName() override
 		{
 			return "copy";
 		};
@@ -814,18 +814,18 @@ namespace buildsys
 	public:
 		GitExtractionUnit(const std::string &remote, const std::string &_local,
 		                  std::string _refspec, Package *_P);
-		virtual bool fetch(BuildDir *d);
-		virtual bool extract(Package *_P);
-		virtual std::string modeName()
+		bool fetch(BuildDir *d) override;
+		bool extract(Package *_P) override;
+		std::string modeName() override
 		{
 			return "fetch";
 		};
-		virtual std::string localPath()
+		std::string localPath() override
 		{
 			return this->local;
 		};
-		virtual std::string HASH();
-		virtual std::string relative_path()
+		std::string HASH() override;
+		std::string relative_path() override
 		{
 			return this->localPath();
 		};
@@ -845,8 +845,8 @@ namespace buildsys
 		    : feature(_feature), value(_value), WORLD(_WORLD)
 		{
 		}
-		virtual bool print(std::ostream &out);
-		virtual std::string type()
+		bool print(std::ostream &out) override;
+		std::string type() override
 		{
 			return std::string("FeatureValue");
 		}
@@ -862,12 +862,12 @@ namespace buildsys
 		explicit FeatureNilUnit(const std::string &_feature) : feature(_feature)
 		{
 		}
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->feature << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("FeatureNil");
 		}
@@ -881,12 +881,12 @@ namespace buildsys
 		std::string hash; //!< Hash of this package file
 	public:
 		PackageFileUnit(const std::string &fname, const std::string &_fname_short);
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("PackageFile");
 		}
@@ -900,12 +900,12 @@ namespace buildsys
 		std::string hash; //!< Hash of this package file
 	public:
 		RequireFileUnit(const std::string &fname, const std::string &_fname_short);
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("RequireFile");
 		}
@@ -919,12 +919,12 @@ namespace buildsys
 		std::string hash; //!< Hash of this extraction info file
 	public:
 		explicit ExtractionInfoFileUnit(const std::string &fname);
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("ExtractionInfoFile");
 		}
@@ -938,12 +938,12 @@ namespace buildsys
 		std::string hash; //!< Hash of this build info file
 	public:
 		BuildInfoFileUnit(const std::string &fname, const std::string &_hash);
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("BuildInfoFile");
 		}
@@ -957,12 +957,12 @@ namespace buildsys
 		std::string hash; //!< Hash of this output info file
 	public:
 		explicit OutputInfoFileUnit(const std::string &fname);
-		virtual bool print(std::ostream &out)
+		bool print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
 			return true;
 		}
-		virtual std::string type()
+		std::string type() override
 		{
 			return std::string("OutputInfoFile");
 		}
