@@ -1461,7 +1461,7 @@ namespace buildsys
 		DLObject *_findDLObject(const std::string &);
 
 	public:
-		explicit World(char *_bsapp) : bsapp(std::string(_bsapp))
+		explicit World(std::string _bsapp) : bsapp(std::move(_bsapp))
 		{
 			overlays.push_back(std::string("."));
 			char *_pwd = getcwd(nullptr, 0);

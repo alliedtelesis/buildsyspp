@@ -92,71 +92,68 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	World WORLD(argv[0]);
+	std::vector<std::string> argList(argv, argv + argc);
+
+	World WORLD(argList[0]);
 	hash_setup();
 
 	// process arguments ...
 	// first we take a list of package names to exclusevily build
 	// this will over-ride any dependency checks and force them to be built
 	// without first building their dependencies
-	int a = 2;
+	size_t a = 2;
 	bool foundDashDash = false;
-	while(a < argc && !foundDashDash) {
-		if(strcmp(argv[a], "--clean") == 0) {
+	while(a < argList.size() && !foundDashDash) {
+		if(argList[a] == "--clean") {
 			WORLD.setCleaning();
-		} else if((strcmp(argv[a], "--no-output-prefix") == 0) ||
-		          (strcmp(argv[a], "--nop") == 0)) {
+		} else if(argList[a] == "--no-output-prefix" || argList[a] == "--nop") {
 			WORLD.clearOutputPrefix();
-		} else if((strcmp(argv[a], "--cache-server") == 0) ||
-		          (strcmp(argv[a], "--ff") == 0)) {
-			WORLD.setFetchFrom(argv[a + 1]);
+		} else if(argList[a] == "--cache-server" || argList[a] == "--ff") {
+			WORLD.setFetchFrom(argList[a + 1]);
 			a++;
-		} else if(strcmp(argv[a], "--tarball-cache") == 0) {
-			log("BuildSys", "Setting tarball cache to %s", argv[a + 1]);
-			WORLD.setTarballCache(argv[a + 1]);
+		} else if(argList[a] == "--tarball-cache") {
+			log("BuildSys", "Setting tarball cache to %s", argList[a + 1].c_str());
+			WORLD.setTarballCache(argList[a + 1]);
 			a++;
-		} else if(strcmp(argv[a], "--overlay") == 0) {
-			WORLD.addOverlayPath(std::string(argv[a + 1]));
+		} else if(argList[a] == "--overlay") {
+			WORLD.addOverlayPath(argList[a + 1]);
 			a++;
-		} else if(strcmp(argv[a], "--extract-only") == 0) {
+		} else if(argList[a] == "--extract-only") {
 			WORLD.setExtractOnly();
-		} else if(strcmp(argv[a], "--build-info-ignore-fv") == 0) {
-			WORLD.ignoreFeature(std::string(argv[a + 1]));
+		} else if(argList[a] == "--build-info-ignore-fv") {
+			WORLD.ignoreFeature(argList[a + 1]);
 			a++;
-		} else if(strcmp(argv[a], "--parse-only") == 0) {
+		} else if(argList[a] == "--parse-only") {
 			WORLD.setParseOnly();
-		} else if(strcmp(argv[a], "--keep-going") == 0) {
+		} else if(argList[a] == "--keep-going") {
 			WORLD.setKeepGoing();
-		} else if(strcmp(argv[a], "--quietly") == 0) {
+		} else if(argList[a] == "--quietly") {
 			quietly = true;
-		} else if((strcmp(argv[a], "--parallel-packages") == 0) ||
-		          (strcmp(argv[a], "-j") == 0)) {
-			WORLD.setThreadsLimit(atoi(argv[a + 1]));
+		} else if(argList[a] == "--parallel-packages" || argList[a] == "-j") {
+			WORLD.setThreadsLimit(std::stoi(argList[a + 1]));
 			a++;
-		} else if(strcmp(argv[a], "--") == 0) {
+		} else if(argList[a] == "--") {
 			foundDashDash = true;
 		} else {
-			WORLD.forceBuild(argv[a]);
+			WORLD.forceBuild(argList[a]);
 		}
 		a++;
 	}
 	// then we find a --
 	if(foundDashDash) {
 		// then we can preload the feature set
-		while(a < argc) {
-			if(!WORLD.setFeature(argv[a])) {
+		while(a < argList.size()) {
+			if(!WORLD.setFeature(argList[a])) {
 				error("setFeature: Failed");
 				exit(-1);
 			}
 			a++;
 		}
 	}
-	std::string target;
-	size_t tn_len = strlen(argv[1]);
-	if(argv[1][tn_len - 4] != '.') {
-		target = string_format("%s.lua", argv[1]);
-	} else {
-		target = std::string(argv[1]);
+
+	std::string target = argList[1];
+	if(target.find(".lua") == std::string::npos) {
+		target = target + ".lua";
 	}
 
 	if(WORLD.noIgnoredFeatures()) {
@@ -183,10 +180,10 @@ int main(int argc, char *argv[])
 	clock_gettime(CLOCK_REALTIME, &end);
 
 	if(end.tv_nsec >= start.tv_nsec) {
-		log(argv[1], "Total time: %ds and %dms", (end.tv_sec - start.tv_sec),
+		log(argList[1].c_str(), "Total time: %ds and %dms", (end.tv_sec - start.tv_sec),
 		    (end.tv_nsec - start.tv_nsec) / 1000000);
 	} else {
-		log(argv[1], "Total time: %ds and %dms", (end.tv_sec - start.tv_sec - 1),
+		log(argList[1].c_str(), "Total time: %ds and %dms", (end.tv_sec - start.tv_sec - 1),
 		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
 	}
 
