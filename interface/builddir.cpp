@@ -164,15 +164,11 @@ int li_bd_fetch(lua_State *L)
 			throw CustomException("fetch method = linkgit requires uri to be set");
 		}
 		std::string l = P->relative_fetch_path(uri);
-		char *l_copy = strdup(l.c_str());
-		char *l2 = strrchr(l_copy, '/');
-		if(l2[1] == '\0') {
-			l2[0] = '\0';
-			l2 = strrchr(l_copy, '/');
-		}
-		l2++;
-		P->extraction()->add(std::make_unique<LinkGitDirExtractionUnit>(uri, l2));
-		free(l_copy);
+		// Remove any trailing slashes
+		l.erase(l.find_last_not_of('/') + 1);
+		// Strip the directory from the file name
+		l = l.substr(l.rfind('/') + 1);
+		P->extraction()->add(std::make_unique<LinkGitDirExtractionUnit>(uri, l));
 	} else if(method == "link") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = link requires uri to be set");

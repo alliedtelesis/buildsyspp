@@ -78,18 +78,16 @@ Package *NameSpace::findPackage(const std::string &_name)
 	{
 		// check that the dependency exists
 		std::string lua_file;
-		char *dependPath = strdup(_name.c_str());
-		char *lastPart = strrchr(dependPath, '/');
-		bool found = false;
+		std::string lastPart = _name;
 
-		if(lastPart == nullptr) {
-			lastPart = strdup(dependPath);
-		} else {
-			lastPart = strdup(lastPart + 1);
+		size_t lastSlash = _name.rfind('/');
+		if(lastSlash != std::string::npos) {
+			lastPart = _name.substr(lastSlash + 1);
 		}
 
+		bool found = false;
 		std::string relative_fname =
-		    string_format("package/%s/%s.lua", dependPath, lastPart);
+		    string_format("package/%s/%s.lua", _name.c_str(), lastPart.c_str());
 		auto _iter = this->WORLD->overlaysStart();
 		auto _iterEnd = this->WORLD->overlaysEnd();
 		for(; _iter != _iterEnd; _iter++) {
@@ -104,9 +102,6 @@ Package *NameSpace::findPackage(const std::string &_name)
 		if(!found) {
 			throw CustomException("Package not found: " + _name);
 		}
-
-		free(dependPath);
-		free(lastPart);
 
 		file = lua_file;
 		file_short = relative_fname;

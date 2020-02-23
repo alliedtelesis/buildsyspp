@@ -117,22 +117,22 @@ bool DownloadFetch::fetch(BuildDir *d)
 		}
 		if(decompress) {
 			// We want to run a command on this file
-			std::string cmd = std::string();
-			char *_filename = strdup(fname.c_str());
-			char *ext = strrchr(_filename, '.');
-			if(ext == nullptr) {
+			std::string cmd;
+
+			size_t ext_pos = fname.rfind('.');
+			if(ext_pos == std::string::npos) {
 				log(P->getName().c_str(),
 				    "Could not guess decompression based on extension: %s\n",
 				    fname.c_str());
+			} else {
+				std::string ext = fname.substr(ext_pos + 1);
+				if(ext == ".bz2") {
+					cmd = string_format("bunzip2 -d dl/%s", fullname.c_str());
+				} else if(ext == ".gz") {
+					cmd = string_format("gunzip -d dl/%s", fullname.c_str());
+				}
+				std::system(cmd.c_str());
 			}
-
-			if(strcmp(ext, ".bz2") == 0) {
-				cmd = string_format("bunzip2 -d dl/%s", fullname.c_str());
-			} else if(strcmp(ext, ".gz") == 0) {
-				cmd = string_format("gunzip -d dl/%s", fullname.c_str());
-			}
-			std::system(cmd.c_str());
-			free(_filename);
 		}
 	}
 
@@ -178,15 +178,13 @@ bool LinkFetch::fetch(BuildDir *d)
 		// An error occured, try remove the file, then relink
 		PackageCmd rmpc(d->getPath(), "rm");
 		rmpc.addArg("-fr");
-		char *l_copy = strdup(l.c_str());
-		char *l2 = strrchr(l_copy, '/');
-		if(l2[1] == '\0') {
-			l2[0] = '\0';
-			l2 = strrchr(l_copy, '/');
-		}
-		l2++;
+
+		// Remove any trailing slashes
+		std::string l2 = l;
+		l2.erase(l2.find_last_not_of('/') + 1);
+		// Strip the directory from the file name
+		l2 = l2.substr(l2.rfind('/') + 1);
 		rmpc.addArg(l2);
-		free(l_copy);
 		if(!rmpc.Run(this->P)) {
 			throw CustomException(
 			    "Failed to ln (symbolically), could not remove target first");

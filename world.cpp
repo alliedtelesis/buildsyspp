@@ -115,21 +115,17 @@ static void process_packages(Package *p)
 
 bool World::basePackage(const std::string &filename)
 {
-	// Strip the directory from the base package name
-	char *filename_copy = strdup(filename.c_str());
-	const char *pname = basename(filename_copy);
+	std::string filename_copy = filename;
 
+	// Remove any trailing slashes
+	filename_copy.erase(filename_copy.find_last_not_of('/') + 1);
+	// Strip the directory from the base package name
+	std::string pname = filename_copy.substr(filename_copy.rfind('/') + 1);
 	// Strip the '.lua' from end of the filename for the namespace name
-	char *nsname = strdup(pname);
-	size_t p_len = strlen(pname);
-	if(nsname[p_len - 4] == '.') {
-		nsname[p_len - 4] = '\0';
-	}
+	std::string nsname = pname.substr(0, pname.find(".lua"));
 
 	this->p =
 	    new Package(this->findNameSpace(nsname), pname, filename_copy, filename_copy, "");
-	free(nsname);
-	free(filename_copy);
 	this->p->setNS(this->p->getNS());
 
 	process_packages(this->p);
