@@ -25,9 +25,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-void BuildDescription::add(BuildUnit *bu)
+void BuildDescription::add(std::unique_ptr<BuildUnit> bu)
 {
-	this->BUs.push_back(bu);
+	this->BUs.push_back(std::move(bu));
 }
 
 PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_fname_short)

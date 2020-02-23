@@ -246,7 +246,7 @@ std::string CopyFetch::relative_path()
 	return path;
 }
 
-void Fetch::add(FetchUnit *fu)
+void Fetch::add(std::unique_ptr<FetchUnit> fu)
 {
-	this->FUs.push_back(fu);
+	this->FUs.push_back(std::move(fu));
 }

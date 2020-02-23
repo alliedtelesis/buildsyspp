@@ -121,15 +121,16 @@ int li_bd_fetch(lua_State *L)
 	lua_pop(L, 1);
 
 	/* Create fetch object here */
-	FetchUnit *f = nullptr;
+	std::unique_ptr<FetchUnit> f;
 	if(method == "dl") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = dl requires uri to be set");
 		}
 
-		f = new DownloadFetch(uri, decompress, filename, P);
+		f = std::make_unique<DownloadFetch>(uri, decompress, filename, P);
 		if(!copyto.empty()) {
-			P->extraction()->add(new FetchedFileCopyExtractionUnit(f, copyto));
+			P->extraction()->add(
+			    std::make_unique<FetchedFileCopyExtractionUnit>(f.get(), copyto));
 		}
 	} else if(method == "git") {
 		if(uri.empty()) {
@@ -157,8 +158,7 @@ int li_bd_fetch(lua_State *L)
 			// Default to master
 			branch = std::string("origin/master");
 		}
-		GitExtractionUnit *geu = new GitExtractionUnit(uri, reponame, branch, P);
-		P->extraction()->add(geu);
+		P->extraction()->add(std::make_unique<GitExtractionUnit>(uri, reponame, branch, P));
 	} else if(method == "linkgit") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = linkgit requires uri to be set");
@@ -171,32 +171,30 @@ int li_bd_fetch(lua_State *L)
 			l2 = strrchr(l_copy, '/');
 		}
 		l2++;
-		LinkGitDirExtractionUnit *lgdeu = new LinkGitDirExtractionUnit(uri, l2);
-		P->extraction()->add(lgdeu);
+		P->extraction()->add(std::make_unique<LinkGitDirExtractionUnit>(uri, l2));
 		free(l_copy);
 	} else if(method == "link") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = link requires uri to be set");
 		}
-		f = new LinkFetch(uri, P);
+		f = std::make_unique<LinkFetch>(uri, P);
 	} else if(method == "copyfile") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = copyfile requires uri to be set");
 		}
 		std::string file_path = P->relative_fetch_path(uri);
-		P->extraction()->add(new FileCopyExtractionUnit(file_path, uri));
+		P->extraction()->add(std::make_unique<FileCopyExtractionUnit>(file_path, uri));
 	} else if(method == "copygit") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = copygit requires uri to be set");
 		}
 		std::string src_path = P->relative_fetch_path(uri);
-		CopyGitDirExtractionUnit *cgdeu = new CopyGitDirExtractionUnit(src_path, ".");
-		P->extraction()->add(cgdeu);
+		P->extraction()->add(std::make_unique<CopyGitDirExtractionUnit>(src_path, "."));
 	} else if(method == "copy") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = copy requires uri to be set");
 		}
-		f = new CopyFetch(uri, P);
+		f = std::make_unique<CopyFetch>(uri, P);
 	} else if(method == "deps") {
 		std::string path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
@@ -209,14 +207,15 @@ int li_bd_fetch(lua_State *L)
 
 	/* Add the fetch unit to the package */
 	if(f != nullptr) {
-		P->fetch()->add(f);
 		if(f->force_updated()) {
 			P->setCodeUpdated();
 		}
 
 		/* Return the fetch object here */
-		CREATE_TABLE(L, f);
+		CREATE_TABLE(L, f.get());
 		f->lua_table(L);
+
+		P->fetch()->add(std::move(f));
 	}
 
 	return 1;
@@ -285,14 +284,12 @@ int li_bd_extract_table(lua_State *L)
 
 	CHECK_ARGUMENT_TYPE("extract", 2, FetchUnit, f);
 
-	ExtractionUnit *eu = nullptr;
 	if(strstr(f->relative_path().c_str(), ".zip") != nullptr) {
-		eu = new ZipExtractionUnit(f);
+		P->extraction()->add(std::make_unique<ZipExtractionUnit>(f));
 	} else {
 		// The catch all for tar compressed files
-		eu = new TarExtractionUnit(f);
+		P->extraction()->add(std::make_unique<TarExtractionUnit>(f));
 	}
-	P->extraction()->add(eu);
 
 	return 0;
 }
@@ -331,14 +328,12 @@ int li_bd_extract(lua_State *L)
 	std::string fName(lua_tostring(L, 2));
 	std::string realFName = relative_path(d, fName, true);
 
-	ExtractionUnit *eu = nullptr;
 	if(fName.find(".zip") != std::string::npos) {
-		eu = new ZipExtractionUnit(realFName);
+		P->extraction()->add(std::make_unique<ZipExtractionUnit>(realFName));
 	} else {
 		// The catch all for tar compressed files
-		eu = new TarExtractionUnit(realFName);
+		P->extraction()->add(std::make_unique<TarExtractionUnit>(realFName));
 	}
-	P->extraction()->add(eu);
 
 	return 0;
 }
@@ -449,9 +444,8 @@ int li_bd_patch(lua_State *L)
 				    "patch() requires a table of strings as the third argument\n");
 			}
 			std::string uri = P->relative_fetch_path(lua_tostring(L, -1));
-			PatchExtractionUnit *peu =
-			    new PatchExtractionUnit(patch_depth, patch_path, uri, lua_tostring(L, -1));
-			P->extraction()->add(peu);
+			P->extraction()->add(std::make_unique<PatchExtractionUnit>(
+			    patch_depth, patch_path, uri, lua_tostring(L, -1)));
 		}
 		/* removes 'value'; keeps 'key' for next iteration */
 		lua_pop(L, 1);

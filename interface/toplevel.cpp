@@ -66,10 +66,11 @@ static int li_feature(lua_State *L)
 		try {
 			std::string value = P->getFeature(key);
 			lua_pushstring(L, value.c_str());
-			P->buildDescription()->add(new FeatureValueUnit(P->getWorld(), key, value));
+			P->buildDescription()->add(
+			    std::make_unique<FeatureValueUnit>(P->getWorld(), key, value));
 		} catch(NoKeyException &E) {
 			lua_pushnil(L);
-			P->buildDescription()->add(new FeatureNilUnit(key));
+			P->buildDescription()->add(std::make_unique<FeatureNilUnit>(key));
 		}
 		return 1;
 	}
@@ -281,7 +282,7 @@ int li_require(lua_State *L)
 	}
 
 	P->getLua()->processFile(relative_fname);
-	P->buildDescription()->add(new RequireFileUnit(relative_fname, fname));
+	P->buildDescription()->add(std::make_unique<RequireFileUnit>(relative_fname, fname));
 
 	return 0;
 }

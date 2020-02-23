@@ -942,19 +942,13 @@ namespace buildsys
 	class Fetch
 	{
 	private:
-		std::vector<FetchUnit *> FUs;
+		std::vector<std::unique_ptr<FetchUnit>> FUs;
 
 	public:
-		~Fetch()
-		{
-			for(auto unit : this->FUs) {
-				delete unit;
-			}
-		}
-		void add(FetchUnit *fu);
+		void add(std::unique_ptr<FetchUnit> fu);
 		bool fetch(BuildDir *d)
 		{
-			for(auto unit : this->FUs) {
+			for(auto &unit : this->FUs) {
 				if(!unit->fetch(d)) {
 					return false;
 				}
@@ -970,27 +964,21 @@ namespace buildsys
 	class Extraction
 	{
 	private:
-		std::vector<ExtractionUnit *> EUs;
+		std::vector<std::unique_ptr<ExtractionUnit>> EUs;
 		bool extracted{false};
 
 	public:
-		~Extraction()
-		{
-			for(auto unit : this->EUs) {
-				delete unit;
-			}
-		}
-		void add(ExtractionUnit *eu);
+		void add(std::unique_ptr<ExtractionUnit> eu);
 		void print(std::ostream &out)
 		{
-			for(auto unit : this->EUs) {
+			for(auto &unit : this->EUs) {
 				unit->print(out);
 			}
 		}
 		bool extract(Package *P);
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
 		bool extractionRequired(Package *P, BuildDir *bd);
-		ExtractionInfoFileUnit *extractionInfo(BuildDir *bd);
+		std::unique_ptr<ExtractionInfoFileUnit> extractionInfo(BuildDir *bd);
 	};
 
 	/** A build description
@@ -999,19 +987,13 @@ namespace buildsys
 	class BuildDescription
 	{
 	private:
-		std::vector<BuildUnit *> BUs;
+		std::vector<std::unique_ptr<BuildUnit>> BUs;
 
 	public:
-		~BuildDescription()
-		{
-			for(auto unit : this->BUs) {
-				delete unit;
-			}
-		};
-		void add(BuildUnit *bu);
+		void add(std::unique_ptr<BuildUnit> bu);
 		void print(std::ostream &out)
 		{
-			for(auto unit : this->BUs) {
+			for(auto &unit : this->BUs) {
 				unit->print(out);
 			}
 		}
@@ -1125,7 +1107,7 @@ namespace buildsys
 		//! Attempt to fetchFrom
 		bool fetchFrom();
 		//! Return a new build unit (the build info) for this package
-		BuildUnit *buildInfo();
+		std::unique_ptr<BuildUnit> buildInfo();
 		//! Prepare the (new) staging/install directories for the building of this package
 		bool prepareBuildDirs();
 		//! Extract all dependencies install dirs for this package (if bd:fetch(,'deps') was

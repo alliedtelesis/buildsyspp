@@ -25,9 +25,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-void Extraction::add(ExtractionUnit *eu)
+void Extraction::add(std::unique_ptr<ExtractionUnit> eu)
 {
-	this->EUs.push_back(eu);
+	this->EUs.push_back(std::move(eu));
 }
 
 void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
@@ -67,7 +67,7 @@ bool Extraction::extractionRequired(Package *P, BuildDir *bd)
 bool Extraction::extract(Package *P)
 {
 	log(P, "Extracting sources and patching");
-	for(auto unit : this->EUs) {
+	for(auto &unit : this->EUs) {
 		if(!unit->extract(P)) {
 			return false;
 		}
@@ -81,11 +81,10 @@ bool Extraction::extract(Package *P)
 	return true;
 }
 
-ExtractionInfoFileUnit *Extraction::extractionInfo(BuildDir *bd)
+std::unique_ptr<ExtractionInfoFileUnit> Extraction::extractionInfo(BuildDir *bd)
 {
 	std::string fname = bd->getShortPath() + "/.extraction.info";
-	auto *ret = new ExtractionInfoFileUnit(fname);
-	return ret;
+	return std::make_unique<ExtractionInfoFileUnit>(fname);
 }
 
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit *f)

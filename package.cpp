@@ -148,7 +148,8 @@ bool Package::process()
 {
 	log(this, "Processing (%s)", this->file.c_str());
 
-	this->build_description.add(new PackageFileUnit(this->file, this->file_short));
+	this->build_description.add(
+	    std::make_unique<PackageFileUnit>(this->file, this->file_short));
 
 	if(!interfaceSetup(&this->lua)) {
 		error("interfaceSetup: Failed");
@@ -334,22 +335,21 @@ void Package::updateBuildInfoHash()
 	log(this, "Hash: %s", this->buildinfo_hash.c_str());
 }
 
-BuildUnit *Package::buildInfo()
+std::unique_ptr<BuildUnit> Package::buildInfo()
 {
-	BuildUnit *res;
 	if(this->isHashingOutput()) {
 		std::string info_file = this->bd.getShortPath() + "/.output.info";
-		res = new OutputInfoFileUnit(info_file);
-	} else {
-		if(this->buildinfo_hash == "") {
-			log(this, "build.info (in %s) is empty", this->bd.getShortPath().c_str());
-			log(this, "You probably need to build this package");
-			return nullptr;
-		}
-		std::string info_file = this->bd.getShortPath() + "/.build.info";
-		res = new BuildInfoFileUnit(info_file, this->buildinfo_hash);
+		return std::make_unique<OutputInfoFileUnit>(info_file);
 	}
-	return res;
+
+	if(this->buildinfo_hash == "") {
+		log(this, "build.info (in %s) is empty", this->bd.getShortPath().c_str());
+		log(this, "You probably need to build this package");
+		return nullptr;
+	}
+
+	std::string info_file = this->bd.getShortPath() + "/.build.info";
+	return std::make_unique<BuildInfoFileUnit>(info_file, this->buildinfo_hash);
 }
 
 void Package::prepareBuildInfo()
@@ -365,12 +365,12 @@ void Package::prepareBuildInfo()
 	auto dEnds = this->dependsEnd();
 
 	for(; dIt != dEnds; dIt++) {
-		BuildUnit *bi = (*dIt).getPackage()->buildInfo();
+		std::unique_ptr<BuildUnit> bi = (*dIt).getPackage()->buildInfo();
 		if(bi == nullptr) {
 			log(this, "bi is nullptr :(");
 			exit(-1);
 		}
-		this->build_description.add(bi);
+		this->build_description.add(std::move(bi));
 	}
 
 	// Create the new build info file
