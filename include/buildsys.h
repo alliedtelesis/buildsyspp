@@ -394,7 +394,7 @@ namespace buildsys
 		};
 
 		//! Mark a command to allow skiping its execution
-		void skipCommand(void)
+		void skipCommand()
 		{
 			this->skip = true;
 		}
@@ -1725,9 +1725,9 @@ namespace buildsys
 	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
 	        const std::string &path, const std::vector<std::string> &newenvp);
 
-	void hash_setup(void);
+	void hash_setup();
 	std::string hash_file(const std::string &fname);
-	void hash_shutdown(void);
+	void hash_shutdown();
 } // namespace buildsys
 
 using namespace buildsys;

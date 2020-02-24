@@ -33,7 +33,7 @@ void li_set_package(Package *p)
 	__current_package = p;
 }
 
-Package *li_get_package(void)
+Package *li_get_package()
 {
 	return __current_package;
 }

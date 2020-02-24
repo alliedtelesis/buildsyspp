@@ -49,6 +49,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	lua_pop(L, 1);
 
 void li_set_package(Package *p);
-Package *li_get_package(void);
+Package *li_get_package();
 
 #endif // INTERFACE_LUAINTERFACE_H_
