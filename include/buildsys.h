@@ -122,11 +122,22 @@ int li_fu_path(lua_State *L);
 
 namespace buildsys
 {
-	typedef std::map<std::string, std::string> key_value;
 	typedef std::list<std::string> string_list;
 
+	class Lua;
 	class Package;
 	class World;
+
+	bool interfaceSetup(Lua *lua);
+	void log(const char *package, const char *fmt, ...);
+	void log(Package *P, const char *fmt, ...);
+	void program_output(Package *P, const std::string &mesg);
+	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
+	        const std::string &path, const std::vector<std::string> &newenvp);
+
+	void hash_setup();
+	std::string hash_file(const std::string &fname);
+	void hash_shutdown();
 
 	/*! The catchable exception */
 	class Exception : public std::exception
@@ -1429,12 +1440,78 @@ namespace buildsys
 		}
 	};
 
+	class FeatureMap
+	{
+	private:
+		std::map<std::string, std::string> features;
+		mutable std::mutex lock;
+
+	public:
+		/** Set a feature to a specific value
+		 *  Note that the default is to not set already-set features to new values
+		 *  pass override=true to ignore this safety
+		 *  lua: feature('magic-support','yes',true)
+		 */
+		void setFeature(std::string key, std::string value, bool override = false)
+		{
+			std::unique_lock<std::mutex> lk(this->lock);
+			// look for this key
+			if(features.find(key) != features.end()) {
+				if(override) {
+					// only over-write the value if we are explicitly told to
+					features[key] = value;
+				}
+			} else {
+				features.insert(std::pair<std::string, std::string>(key, value));
+			}
+		}
+		/** Set a feature using a key=value string
+		 *  This is used to handle the command line input of feature/value settings
+		 */
+		bool setFeature(const std::string &kv)
+		{
+			auto pos = kv.find('=');
+			if(pos == std::string::npos) {
+				error("Features must be described as feature=value\n");
+				return false;
+			}
+
+			std::string key = kv.substr(0, pos);
+			std::string value = kv.substr(pos + 1);
+
+			this->setFeature(key, value, true);
+			return true;
+		}
+		/** Get the value of a specific feature
+		 *  lua: feature('magic-support')
+		 */
+		std::string getFeature(const std::string &key)
+		{
+			std::unique_lock<std::mutex> lk(this->lock);
+			if(features.find(key) != features.end()) {
+				return features[key];
+			}
+			throw NoKeyException();
+		}
+		/** Print all feature/values to the console
+		 */
+		void printFeatureValues()
+		{
+			std::unique_lock<std::mutex> lk(this->lock);
+			std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
+			for(auto it = this->features.begin(); it != this->features.end(); ++it) {
+				std::cout << it->first << "\t" << it->second << std::endl;
+			}
+			std::cout << "----END FEATURE VALUES----" << std::endl;
+		}
+	};
+
 	//! The world, everything that everything needs to access
 	class World
 	{
 	private:
 		std::string bsapp;
-		key_value features;
+		FeatureMap features;
 		string_list forcedDeps;
 		std::list<NameSpace> namespaces;
 		std::list<DLObject> dlobjects;
@@ -1571,24 +1648,6 @@ namespace buildsys
 		{
 			this->outputPrefix = false;
 		}
-		/** Set a feature to a specific value
-		 *  Note that the default is to not set already-set features to new values
-		 *  pass override=true to ignore this safety
-		 *  lua: feature('magic-support','yes',true)
-		 */
-		bool setFeature(std::string key, std::string value, bool override = false);
-		/** Set a feature using a key=value string
-		 *  This is used to handle the command line input of feature/value settings
-		 */
-		bool setFeature(const std::string &kv);
-		/** Get the value of a specific feature
-		 *  lua: feature('magic-support')
-		 */
-		std::string getFeature(const std::string &key);
-		/** Print all feature/values to the console
-		 */
-		void printFeatureValues();
-
 		//! Ignore a feature for build.info
 		void ignoreFeature(const std::string &feature)
 		{
@@ -1717,17 +1776,12 @@ namespace buildsys
 		};
 		//! populate the arguments list with out forced build list
 		bool populateForcedList(PackageCmd *pc);
-	};
-	bool interfaceSetup(Lua *lua);
-	void log(const char *package, const char *fmt, ...);
-	void log(Package *P, const char *fmt, ...);
-	void program_output(Package *P, const std::string &mesg);
-	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
-	        const std::string &path, const std::vector<std::string> &newenvp);
 
-	void hash_setup();
-	std::string hash_file(const std::string &fname);
-	void hash_shutdown();
+		FeatureMap *featureMap()
+		{
+			return &this->features;
+		}
+	};
 } // namespace buildsys
 
 using namespace buildsys;

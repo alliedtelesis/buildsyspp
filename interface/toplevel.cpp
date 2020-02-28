@@ -87,10 +87,10 @@ static int li_feature(lua_State *L)
 	std::string value(lua_tostring(L, 2));
 
 	if(lua_gettop(L) == 3) {
-		P->getWorld()->setFeature(key, value, lua_toboolean(L, -3) != 0);
+		P->getWorld()->featureMap()->setFeature(key, value, lua_toboolean(L, -3) != 0);
 	}
 
-	P->getWorld()->setFeature(key, value);
+	P->getWorld()->featureMap()->setFeature(key, value);
 	return 0;
 }
 

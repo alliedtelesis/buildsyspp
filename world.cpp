@@ -49,52 +49,6 @@ NameSpace *World::findNameSpace(const std::string &name)
 	return &this->namespaces.back();
 }
 
-bool World::setFeature(std::string key, std::string value, bool override)
-{
-	// look for this key
-	if(features.find(key) != features.end()) {
-		if(override) {
-			// only over-write the value if we are explicitly told to
-			features[key] = value;
-		}
-		return true;
-	}
-	features.insert(std::pair<std::string, std::string>(key, value));
-	return true;
-}
-
-bool World::setFeature(const std::string &kv)
-{
-	auto pos = kv.find('=');
-	if(pos == std::string::npos) {
-		error("Features must be described as feature=value\n");
-		return false;
-	}
-
-	std::string key = kv.substr(0, pos);
-	std::string value = kv.substr(pos + 1);
-
-	this->setFeature(key, value, true);
-	return true;
-}
-
-std::string World::getFeature(const std::string &key)
-{
-	if(features.find(key) != features.end()) {
-		return features[key];
-	}
-	throw NoKeyException();
-}
-
-void World::printFeatureValues()
-{
-	std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
-	for(auto it = this->features.begin(); it != this->features.end(); ++it) {
-		std::cout << it->first << "\t" << it->second << std::endl;
-	}
-	std::cout << "----END FEATURE VALUES----" << std::endl;
-}
-
 static void build_thread(Package *p)
 {
 	World *w = p->getNS()->getWorld();

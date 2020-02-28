@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 	if(foundDashDash) {
 		// then we can preload the feature set
 		while(a < argList.size()) {
-			if(!WORLD.setFeature(argList[a])) {
+			if(!WORLD.featureMap()->setFeature(argList[a])) {
 				error("setFeature: Failed");
 				exit(-1);
 			}
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 
 	if(WORLD.areParseOnly()) {
 		// Print all the feature/values
-		WORLD.printFeatureValues();
+		WORLD.featureMap()->printFeatureValues();
 	}
 	// Write out the dependency graph
 	WORLD.output_graph();

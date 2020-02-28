@@ -54,9 +54,9 @@ std::string Package::getFeature(const std::string &key)
 {
 	/* Try the feature prefixed with our package name first */
 	try {
-		return this->getWorld()->getFeature(this->name + ":" + key);
+		return this->getWorld()->featureMap()->getFeature(this->name + ":" + key);
 	} catch(NoKeyException &E) {
-		return this->getWorld()->getFeature(key);
+		return this->getWorld()->featureMap()->getFeature(key);
 	}
 }
 
