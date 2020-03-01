@@ -188,17 +188,6 @@ bool World::isForced(const std::string &name)
 	return false;
 }
 
-bool World::populateForcedList(PackageCmd *pc)
-{
-	auto fIt = this->forcedDeps.begin();
-	auto fEnd = this->forcedDeps.end();
-
-	for(; fIt != fEnd; fIt++) {
-		pc->addArg(*fIt);
-	}
-	return false;
-}
-
 bool World::packageFinished(Package *_p)
 {
 	std::unique_lock<std::mutex> lk(this->cond_lock);

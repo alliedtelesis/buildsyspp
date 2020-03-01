@@ -1771,9 +1771,6 @@ namespace buildsys
 			graph.output();
 			return true;
 		};
-		//! populate the arguments list with out forced build list
-		bool populateForcedList(PackageCmd *pc);
-
 		FeatureMap *featureMap()
 		{
 			return &this->features;
