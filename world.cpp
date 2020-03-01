@@ -175,19 +175,6 @@ bool World::basePackage(const std::string &filename)
 	return !this->failed;
 }
 
-bool World::isForced(const std::string &name)
-{
-	auto fIt = this->forcedDeps.begin();
-	auto fEnd = this->forcedDeps.end();
-
-	for(; fIt != fEnd; fIt++) {
-		if((*fIt) == name) {
-			return true;
-		}
-	}
-	return false;
-}
-
 bool World::packageFinished(Package *_p)
 {
 	std::unique_lock<std::mutex> lk(this->cond_lock);
@@ -195,18 +182,6 @@ bool World::packageFinished(Package *_p)
 	this->topo_graph.topological();
 	this->cond.notify_all();
 	return true;
-}
-
-bool World::isIgnoredFeature(const std::string &feature)
-{
-	auto iter = this->ignoredFeatures.begin();
-	auto iterEnd = this->ignoredFeatures.end();
-	for(; iter != iterEnd; iter++) {
-		if((*iter) == feature) {
-			return true;
-		}
-	}
-	return false;
 }
 
 DLObject *World::_findDLObject(const std::string &fname)

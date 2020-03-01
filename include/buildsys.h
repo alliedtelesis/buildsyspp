@@ -1568,7 +1568,11 @@ namespace buildsys
 			forcedDeps.push_back(name);
 		};
 		//! Check if a specific package is being forced
-		bool isForced(const std::string &name);
+		bool isForced(const std::string &name)
+		{
+			return (std::find(this->forcedDeps.begin(), this->forcedDeps.end(), name) !=
+			        this->forcedDeps.end());
+		}
 		/** Are we operating in 'cleaning' mode
 		 *  If --clean is parsed as a parameter, we run in cleaning mode
 		 *  This will make any package that would have been built
@@ -1651,7 +1655,11 @@ namespace buildsys
 			this->ignoredFeatures.push_back(feature);
 		}
 		//! Is a feature ignored
-		bool isIgnoredFeature(const std::string &feature);
+		bool isIgnoredFeature(const std::string &feature)
+		{
+			return (std::find(this->ignoredFeatures.begin(), this->ignoredFeatures.end(),
+			                  feature) != this->ignoredFeatures.end());
+		}
 		//! Is the ignore list empty ?
 		bool noIgnoredFeatures()
 		{
