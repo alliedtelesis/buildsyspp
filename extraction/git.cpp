@@ -30,7 +30,8 @@ static bool directory_exists(const std::string &dir)
 	if(!filesystem::exists(dir)) {
 		/* Nothing here */
 		return false;
-	} else if(buildsys::filesystem::is_directory(dir)) {
+	}
+	if(buildsys::filesystem::is_directory(dir)) {
 		/* Actually a directory */
 		return true;
 	}

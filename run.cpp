@@ -42,15 +42,14 @@ static void pipe_data(int fd, Package *P)
 				program_output(P, recv_buf);
 			}
 			break;
+		}
+		if(recv_byte == '\n') {
+			recv_buf.push_back('\0');
+			// Print the line, clear the string and start again
+			program_output(P, recv_buf);
+			recv_buf.clear();
 		} else {
-			if(recv_byte == '\n') {
-				recv_buf.push_back('\0');
-				// Print the line, clear the string and start again
-				program_output(P, recv_buf);
-				recv_buf.clear();
-			} else {
-				recv_buf.push_back(recv_byte);
-			}
+			recv_buf.push_back(recv_byte);
 		}
 	}
 }

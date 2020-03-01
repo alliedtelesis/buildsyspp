@@ -485,8 +485,8 @@ namespace buildsys
 	{
 	protected:
 		std::string fetch_uri; //!< URI of this unit
-		Package *P;            //!< Which package is this fetch unit for ?
-		bool fetched;
+		Package *P{nullptr};   //!< Which package is this fetch unit for ?
+		bool fetched{false};
 
 	public:
 		FetchUnit(std::string uri, Package *_P) : fetch_uri(std::move(uri)), P(_P)
@@ -1391,13 +1391,10 @@ namespace buildsys
 		std::list<Package *> queue;
 		mutable std::mutex lock;
 		mutable std::condition_variable cond;
-		int started;
-		int finished;
+		int started{0};
+		int finished{0};
 
 	public:
-		PackageQueue() : started(0), finished(0)
-		{
-		}
 		void start()
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
@@ -1499,8 +1496,8 @@ namespace buildsys
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
 			std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
-			for(auto it = this->features.begin(); it != this->features.end(); ++it) {
-				std::cout << it->first << "\t" << it->second << std::endl;
+			for(auto &feature : this->features) {
+				std::cout << feature.first << "\t" << feature.second << std::endl;
 			}
 			std::cout << "----END FEATURE VALUES----" << std::endl;
 		}

@@ -67,10 +67,7 @@ namespace buildsys
 		bool is_directory(const std::string &path)
 		{
 			struct stat buf;
-			if(stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode)) {
-				return true;
-			}
-			return false;
+			return (stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode));
 		}
 		void rename(const std::string &from, const std::string &to)
 		{

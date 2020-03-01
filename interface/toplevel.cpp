@@ -183,7 +183,7 @@ int li_depend(lua_State *L)
 			std::string key(lua_tostring(L, -2));
 			if(key == "package" || key == "packages") {
 				if(lua_type(L, -1) == LUA_TSTRING) {
-					package_names.push_back(std::string(lua_tostring(L, -1)));
+					package_names.emplace_back(lua_tostring(L, -1));
 				} else if(lua_istable(L, -1)) {
 					lua_pushnil(L);
 					while(lua_next(L, -2) != 0) {
@@ -191,7 +191,7 @@ int li_depend(lua_State *L)
 							throw CustomException("depend() requires a single package "
 							                      "name or table of package names\n");
 						}
-						package_names.push_back(std::string(lua_tostring(L, -1)));
+						package_names.emplace_back(lua_tostring(L, -1));
 						lua_pop(L, 1);
 					}
 				} else {
@@ -217,8 +217,8 @@ int li_depend(lua_State *L)
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
 		}
-		for(auto iter = package_names.begin(); iter != package_names.end(); iter++) {
-			depend(P, ns, locally, (*iter));
+		for(auto &package_name : package_names) {
+			depend(P, ns, locally, package_name);
 		}
 	} else {
 		throw CustomException("depend() takes a string or a table of strings");

@@ -36,7 +36,7 @@ bool PackageCmd::Run(Package *P)
 		// collect the current enviroment
 		size_t e = 0;
 		while(environ[e] != nullptr) {
-			ne.push_back(environ[e]);
+			ne.emplace_back(environ[e]);
 			e++;
 		}
 		// append any new enviroment to it

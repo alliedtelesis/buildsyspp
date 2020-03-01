@@ -57,7 +57,8 @@ static inline const char *get_color(const char *mesg)
 {
 	if(strstr(mesg, "error:") != nullptr) {
 		return COLOR_BOLD_RED;
-	} else if(strstr(mesg, "warning:") != nullptr) {
+	}
+	if(strstr(mesg, "warning:") != nullptr) {
 		return COLOR_BOLD_BLUE;
 	}
 

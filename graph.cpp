@@ -108,8 +108,8 @@ Package *Internal_Graph::topoNext()
 {
 	Package *n = nullptr;
 
-	for(auto ii = c.begin(); ii != c.end(); ++ii) {
-		Package *p = NodeMap[*ii];
+	for(unsigned long &ii : c) {
+		Package *p = NodeMap[ii];
 		if(!(p->isBuilt()) && !(p->isBuilding()) && p->canBuild()) {
 			// fprintf(stderr, "(Possible) Next Pacakge: %s\n", p->getName().c_str());
 			n = p;

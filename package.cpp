@@ -165,7 +165,7 @@ bool Package::process()
 
 bool Package::checkForDependencyLoops()
 {
-	if(this->visiting == true) {
+	if(this->visiting) {
 		log(this, "Cyclic Dependency");
 		return false;
 	}
@@ -342,7 +342,7 @@ std::unique_ptr<BuildUnit> Package::buildInfo()
 		return std::make_unique<OutputInfoFileUnit>(info_file);
 	}
 
-	if(this->buildinfo_hash == "") {
+	if(this->buildinfo_hash.empty()) {
 		log(this, "build.info (in %s) is empty", this->bd.getShortPath().c_str());
 		log(this, "You probably need to build this package");
 		return nullptr;
