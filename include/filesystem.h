@@ -34,8 +34,10 @@ namespace buildsys
 	{
 		void create_directories(const std::string &path);
 		void remove_all(const std::string &path);
+		void remove(const std::string &path);
 		bool exists(const std::string &path);
 		bool is_directory(const std::string &path);
+		void rename(const std::string &from, const std::string &to);
 	} // namespace filesystem
 } // namespace buildsys
 

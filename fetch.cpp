@@ -93,21 +93,27 @@ bool DownloadFetch::fetch(BuildDir *d)
 		bool localCacheHit = false;
 		// Attempt to get file from local tarball cache if one is configured.
 		if(d->getWorld()->haveTarballCache()) {
+			filesystem::remove("dl/" + fullname + ".tmp");
 			PackageCmd pc("dl", "wget");
 			std::string url = string_format("%s/%s", d->getWorld()->tarballCache().c_str(),
 			                                fname.c_str());
 			pc.addArg(url);
-			pc.addArg("-O" + fullname);
+			pc.addArg("-O" + fullname + ".tmp");
 			localCacheHit = pc.Run(this->P);
+			if(localCacheHit) {
+				filesystem::rename("dl/" + fullname + ".tmp", "dl/" + fullname);
+			}
 		}
 		// If we didn't get the file from the local cache, look upstream.
 		if(!localCacheHit) {
+			filesystem::remove("dl/" + fullname + ".tmp");
 			PackageCmd pc("dl", "wget");
 			pc.addArg(this->fetch_uri);
-			pc.addArg("-O" + fullname);
+			pc.addArg("-O" + fullname + ".tmp");
 			if(!pc.Run(this->P)) {
 				throw CustomException("Failed to fetch file");
 			}
+			filesystem::rename("dl/" + fullname + ".tmp", "dl/" + fullname);
 		}
 		if(decompress) {
 			// We want to run a command on this file

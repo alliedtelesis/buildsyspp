@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 #include <sys/stat.h>
+#include <stdio.h>
 
 namespace buildsys
 {
@@ -54,6 +55,10 @@ namespace buildsys
 				throw CustomException("Failed to remove directories");
 			}
 		}
+		void remove(const std::string &path)
+		{
+			unlink(path.c_str());
+		}
 		bool exists(const std::string &path)
 		{
 			struct stat buf;
@@ -66,6 +71,12 @@ namespace buildsys
 				return true;
 			}
 			return false;
+		}
+		void rename(const std::string &from, const std::string &to)
+		{
+			if(std::rename(from.c_str(), to.c_str()) != 0) {
+				throw CustomException("Failed to rename");
+			}
 		}
 	} // namespace filesystem
 } // namespace buildsys
