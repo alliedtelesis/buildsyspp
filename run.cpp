@@ -65,16 +65,15 @@ static void exec_process(const std::string &program,
                          const std::vector<std::string> &args = {},
                          const std::vector<std::string> &env = {})
 {
-	using std::placeholders::_1;
-
 	std::vector<const char *> pargs(args.size());
 	std::vector<const char *> penv(env.size());
 
 	std::transform(args.begin(), args.end(), pargs.begin(),
-	               std::bind(&std::string::data, _1));
+	               [](const std::string &s) { return s.c_str(); });
 	pargs.push_back(nullptr);
 
-	std::transform(env.begin(), env.end(), penv.begin(), std::bind(&std::string::data, _1));
+	std::transform(env.begin(), env.end(), penv.begin(),
+	               [](const std::string &s) { return s.c_str(); });
 	penv.push_back(nullptr);
 
 	execvpe(program.c_str(), const_cast<char *const *>(pargs.data()),
