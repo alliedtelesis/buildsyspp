@@ -131,7 +131,7 @@ GitExtractionUnit::GitExtractionUnit(const std::string &remote, const std::strin
                                      std::string _refspec, Package *_P)
 {
 	this->uri = remote;
-	this->local = P->getWorld()->getWorkingDir() + "/source/" + _local;
+	this->local = _P->getWorld()->getWorkingDir() + "/source/" + _local;
 	this->refspec = std::move(_refspec);
 	this->P = _P;
 	this->fetched = false;
