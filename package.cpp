@@ -270,8 +270,8 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 	} else {
 		PackageCmd pc(dir, "tar");
 		pc.addArg("-xf");
-		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
-		                  this->name + ".tar";
+		std::string arg =
+		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name + ".tar";
 		pc.addArg(arg);
 		if(!pc.Run(this)) {
 			log(this, "Failed to extract install_dir\n");
@@ -391,10 +391,10 @@ void Package::updateBuildInfo(bool updateOutputHash)
 
 	if(updateOutputHash && this->isHashingOutput()) {
 		// Hash the entire new path
-		std::string cmd = string_format(
-		    "cd %s; find -type f -exec sha256sum {} \\; | sort -k 2 > %s/.output.info",
-		    this->bd.getNewPath().c_str(), this->bd.getPath().c_str());
-		std::system(cmd.c_str());
+		auto cmd = boost::format{"cd %1%; find -type f -exec sha256sum {} \\; | sort -k 2 "
+		                         "> %2%/.output.info"} %
+		           this->bd.getNewPath() % this->bd.getPath();
+		std::system(cmd.str().c_str());
 	}
 }
 
@@ -465,9 +465,9 @@ bool Package::shouldBuild(bool locally)
 		ret = true;
 	}
 
-	std::string cmd = string_format("cmp -s %s/.build.info.new %s/.build.info",
-	                                this->bd.getPath().c_str(), this->bd.getPath().c_str());
-	int res = std::system(cmd.c_str());
+	auto cmd =
+	    boost::format{"cmp -s %1%/.build.info.new %1%/.build.info"} % this->bd.getPath();
+	int res = std::system(cmd.str().c_str());
 
 	// if there are changes,
 	if(res != 0 || ret) {
@@ -595,8 +595,8 @@ bool Package::packageNewInstall()
 	} else {
 		PackageCmd pc(this->bd.getNewInstall(), "tar");
 		pc.addArg("-cf");
-		std::string arg = pwd + "/output/" + this->getNS()->getName() + "/install/" +
-		                  this->name + ".tar";
+		std::string arg =
+		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name + ".tar";
 		pc.addArg(arg);
 		pc.addArg(".");
 

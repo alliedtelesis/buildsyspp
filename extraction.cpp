@@ -52,9 +52,9 @@ bool Extraction::extractionRequired(Package *P, BuildDir *bd)
 		return false;
 	}
 
-	std::string cmd = string_format("cmp -s %s/.extraction.info.new %s/.extraction.info",
-	                                bd->getPath().c_str(), bd->getPath().c_str());
-	int res = std::system(cmd.c_str());
+	auto cmd = boost::format{"cmp -s %1%/.extraction.info.new %1%/.extraction.info"} %
+	           bd->getPath();
+	int res = std::system(cmd.str().c_str());
 
 	// if there are changes,
 	if(res != 0 || P->isCodeUpdated()) { // Extract our source code
@@ -175,7 +175,7 @@ bool PatchExtractionUnit::extract(Package *P)
 	pc_dry.addArg("--dry-run");
 
 	if(!pc_dry.Run(P)) {
-		log(P->getName().c_str(), "Patch file: %s", this->uri.c_str());
+		log(P, "Patch file: %s", this->uri.c_str());
 		throw CustomException("Will fail to patch");
 	}
 

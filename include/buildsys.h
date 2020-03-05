@@ -54,6 +54,7 @@ extern "C" {
 
 #include <boost/algorithm/string.hpp>
 #include <boost/config.hpp>
+#include <boost/format.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/connected_components.hpp>
@@ -66,7 +67,6 @@ extern "C" {
 #include <boost/utility.hpp>
 
 #include "include/filesystem.h"
-#include "include/string_format.tcc"
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
@@ -74,7 +74,8 @@ typedef boost::graph_traits<Graph>::edge_descriptor Edge;
 
 #define error(M)                                                                           \
 	do {                                                                                   \
-		log("BuildSys", "%s:%s():%i: %s", __FILE__, __FUNCTION__, __LINE__, M);            \
+		log("BuildSys",                                                                    \
+		    boost::format{"%1%:%2%():%3%: %4%"} % __FILE__ % __FUNCTION__ % __LINE__ % M); \
 	} while(0)
 
 #define LUA_SET_TABLE_TYPE(L, T)                                                           \
@@ -129,7 +130,8 @@ namespace buildsys
 	class World;
 
 	bool interfaceSetup(Lua *lua);
-	void log(const char *package, const char *fmt, ...);
+	void log(const std::string &package, const std::string &str);
+	void log(const std::string &package, const boost::format &str);
 	void log(Package *P, const char *fmt, ...);
 	void program_output(Package *P, const std::string &mesg);
 	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
@@ -213,7 +215,8 @@ namespace buildsys
 		 */
 		FileNotFoundException(const std::string &file, const std::string &where)
 		{
-			errmsg = string_format("%s: File not found '%s'", where.c_str(), file.c_str());
+			auto msg = boost::format{"%1%: File not found '%2%'"} % where % file;
+			this->errmsg = msg.str();
 		}
 		std::string error_msg() override
 		{

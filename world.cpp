@@ -54,8 +54,8 @@ static void build_thread(Package *p)
 	World *w = p->getNS()->getWorld();
 
 	log(p, "Build Thread");
-	log((p->getNS()->getName() + "," + p->getName()).c_str(),
-	    "Building (%i others running)", w->threadsRunning() - 1);
+	log(p->getNS()->getName() + "," + p->getName(),
+	    boost::format{"Building (%1% others running)"} % (w->threadsRunning() - 1));
 
 	try {
 		if(!p->build()) {
@@ -68,8 +68,8 @@ static void build_thread(Package *p)
 	}
 	w->threadEnded();
 
-	log((p->getNS()->getName() + "," + p->getName()).c_str(),
-	    "Finished (%i others running)", w->threadsRunning());
+	log(p->getNS()->getName() + "," + p->getName(),
+	    boost::format{"Finished (%1% others running)"} % w->threadsRunning());
 }
 
 static void process_package(Package *p, PackageQueue *pq)

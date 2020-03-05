@@ -86,12 +86,11 @@ Package *NameSpace::findPackage(const std::string &_name)
 		}
 
 		bool found = false;
-		std::string relative_fname =
-		    string_format("package/%s/%s.lua", _name.c_str(), lastPart.c_str());
+		auto relative_fname = boost::format{"package/%1%/%2%.lua"} % _name % lastPart;
 		auto _iter = this->WORLD->overlaysStart();
 		auto _iterEnd = this->WORLD->overlaysEnd();
 		for(; _iter != _iterEnd; _iter++) {
-			lua_file = string_format("%s/%s", _iter->c_str(), relative_fname.c_str());
+			lua_file = *_iter + "/" + relative_fname.str();
 			if(filesystem::exists(lua_file)) {
 				found = true;
 				overlay = *_iter;
@@ -104,7 +103,7 @@ Package *NameSpace::findPackage(const std::string &_name)
 		}
 
 		file = lua_file;
-		file_short = relative_fname;
+		file_short = relative_fname.str();
 	}
 
 	Package *p = new Package(this, _name, file_short, file, overlay);

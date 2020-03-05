@@ -272,7 +272,7 @@ int li_require(lua_State *L)
 
 	Package *P = li_get_package();
 
-	std::string fname = string_format("%s.lua", lua_tostring(L, 1));
+	std::string fname = std::string(lua_tostring(L, 1)) + ".lua";
 	std::string relative_fname = P->relative_fetch_path(fname, true);
 
 	// Check whether the relative file path exists. If it does

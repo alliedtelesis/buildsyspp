@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "include/buildsys.h"
-#include <sys/stat.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 namespace buildsys
 {
@@ -40,7 +40,7 @@ namespace buildsys
 		void create_directories(const std::string &path)
 		{
 			if(!exists(path)) {
-				auto cmd = string_format("mkdir -p %s", path.c_str());
+				auto cmd = "mkdir -p " + path;
 				auto ret = std::system(cmd.c_str());
 				if(ret != 0) {
 					throw CustomException("Failed to create directories");
@@ -49,7 +49,7 @@ namespace buildsys
 		}
 		void remove_all(const std::string &path)
 		{
-			auto cmd = string_format("rm -fr %s", path.c_str());
+			auto cmd = "rm -fr " + path;
 			auto ret = std::system(cmd.c_str());
 			if(ret != 0) {
 				throw CustomException("Failed to remove directories");

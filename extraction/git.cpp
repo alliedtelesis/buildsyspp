@@ -117,10 +117,8 @@ bool GitDirExtractionUnit::isDirty()
 		return false;
 	}
 
-	std::string cmd =
-	    string_format("cd %s && git diff --quiet HEAD", this->localPath().c_str());
-	int res = std::system(cmd.c_str());
-	return (res != 0);
+	auto cmd = boost::format{"cd %1% && git diff --quiet HEAD"} % this->localPath();
+	return (std::system(cmd.str().c_str()) != 0);
 }
 
 std::string GitDirExtractionUnit::dirtyHash()
@@ -254,8 +252,7 @@ std::string GitExtractionUnit::HASH()
 	if(refspec_is_commitid(this->refspec)) {
 		this->hash = this->refspec;
 	} else {
-		std::string digest_name =
-		    string_format("%s#%s", this->uri.c_str(), this->refspec.c_str());
+		std::string digest_name = this->uri + "#" + this->refspec;
 		/* Check if the package contains pre-computed hashes */
 		std::string Hash = P->getFileHash(digest_name);
 		if(Hash.empty()) {

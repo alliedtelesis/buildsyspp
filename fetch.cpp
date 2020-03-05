@@ -95,8 +95,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 		if(d->getWorld()->haveTarballCache()) {
 			filesystem::remove("dl/" + fullname + ".tmp");
 			PackageCmd pc("dl", "wget");
-			std::string url = string_format("%s/%s", d->getWorld()->tarballCache().c_str(),
-			                                fname.c_str());
+			std::string url = d->getWorld()->tarballCache() + "/" + fname;
 			pc.addArg(url);
 			pc.addArg("-O" + fullname + ".tmp");
 			localCacheHit = pc.Run(this->P);
@@ -121,15 +120,14 @@ bool DownloadFetch::fetch(BuildDir *d)
 
 			size_t ext_pos = fname.rfind('.');
 			if(ext_pos == std::string::npos) {
-				log(P->getName().c_str(),
-				    "Could not guess decompression based on extension: %s\n",
+				log(P, "Could not guess decompression based on extension: %s\n",
 				    fname.c_str());
 			} else {
 				std::string ext = fname.substr(ext_pos + 1);
 				if(ext == ".bz2") {
-					cmd = string_format("bunzip2 -d dl/%s", fullname.c_str());
+					cmd = "bunzip2 -d dl/" + fullname;
 				} else if(ext == ".gz") {
-					cmd = string_format("gunzip -d dl/%s", fullname.c_str());
+					cmd = "gunzip -d dl/" + fullname;
 				}
 				std::system(cmd.c_str());
 			}
@@ -139,11 +137,11 @@ bool DownloadFetch::fetch(BuildDir *d)
 	bool ret = true;
 
 	if(this->hash.length() != 0) {
-		std::string fpath = string_format(
-		    "%s/dl/%s", d->getWorld()->getWorkingDir().c_str(), this->final_name().c_str());
-		std::string _hash = hash_file(fpath);
+		auto fpath = boost::format{"%1%/dl/%2%"} % d->getWorld()->getWorkingDir() %
+		             this->final_name();
+		std::string _hash = hash_file(fpath.str());
 
-		if(strcmp(this->hash.c_str(), _hash.c_str()) != 0) {
+		if(this->hash != _hash) {
 			log(this->P, "Hash mismatched for %s\n(committed to %s, providing %s)",
 			    this->final_name().c_str(), this->hash.c_str(), _hash.c_str());
 			ret = false;

@@ -53,7 +53,7 @@ static std::string relative_path(const BuildDir *d, const std::string &dir,
 
 static void add_env(Package *P, PackageCmd *pc)
 {
-	std::string pn_env = string_format("BS_PACKAGE_NAME=%s", P->getName().c_str());
+	std::string pn_env = "BS_PACKAGE_NAME=" + P->getName();
 	pc->addEnv(pn_env);
 }
 

@@ -28,16 +28,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static bool quietly = false;
 
-void buildsys::log(const char *package, const char *fmt, ...)
+void buildsys::log(const std::string &package, const std::string &str)
 {
-	char *message = nullptr;
-	va_list args;
-	va_start(args, fmt);
-	vasprintf(&message, fmt, args);
-	va_end(args);
+	std::cerr << boost::format{"%1%: %2%"} % package % str << std::endl;
+}
 
-	fprintf(stderr, "%s: %s\n", package, message);
-	free(message);
+void buildsys::log(const std::string &package, const boost::format &str)
+{
+	log(package, str.str());
 }
 
 void buildsys::log(Package *P, const char *fmt, ...)
@@ -86,7 +84,7 @@ int main(int argc, char *argv[])
 	clock_gettime(CLOCK_REALTIME, &start);
 
 	log("BuildSys", "Buildsys (C++ version)");
-	log("BuildSys", "Built: %s %s", __TIME__, __DATE__);
+	log("BuildSys", boost::format{"Built: %1% %2%"} % __TIME__ % __DATE__);
 
 	if(argc <= 1) {
 		error("At least 1 parameter is required");
@@ -113,7 +111,8 @@ int main(int argc, char *argv[])
 			WORLD.setFetchFrom(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--tarball-cache") {
-			log("BuildSys", "Setting tarball cache to %s", argList[a + 1].c_str());
+			log("BuildSys",
+			    boost::format{"Setting tarball cache to %1%"} % (argList[a + 1]));
 			WORLD.setTarballCache(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--overlay") {
@@ -181,11 +180,13 @@ int main(int argc, char *argv[])
 	clock_gettime(CLOCK_REALTIME, &end);
 
 	if(end.tv_nsec >= start.tv_nsec) {
-		log(argList[1].c_str(), "Total time: %ds and %dms", (end.tv_sec - start.tv_sec),
-		    (end.tv_nsec - start.tv_nsec) / 1000000);
+		log(argList[1], boost::format{"Total time: %1%s and %2%ms"} %
+		                    (end.tv_sec - start.tv_sec) %
+		                    ((end.tv_nsec - start.tv_nsec) / 1000000));
 	} else {
-		log(argList[1].c_str(), "Total time: %ds and %dms", (end.tv_sec - start.tv_sec - 1),
-		    (1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000);
+		log(argList[1], boost::format{"Total time: %1%s and %2%ms"} %
+		                    (end.tv_sec - start.tv_sec - 1) %
+		                    ((1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000));
 	}
 
 	hash_shutdown();
