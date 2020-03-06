@@ -52,7 +52,7 @@ std::string buildsys::hash_file(const std::string &fname)
 
 	std::ifstream input(fname, std::ios::in | std::ifstream::binary);
 	if(!input.is_open()) {
-		fprintf(stderr, "Failed opening: %s\n", fname.c_str());
+		log("BuildSys", "Failed opening: " + fname);
 		return std::string("");
 	}
 	while(!input.eof()) {

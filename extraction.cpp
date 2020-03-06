@@ -175,7 +175,7 @@ bool PatchExtractionUnit::extract(Package *P)
 	pc_dry.addArg("--dry-run");
 
 	if(!pc_dry.Run(P)) {
-		log(P, "Patch file: %s", this->uri.c_str());
+		log(P, "Patch file: " + this->uri);
 		throw CustomException("Will fail to patch");
 	}
 

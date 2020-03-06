@@ -132,7 +132,8 @@ namespace buildsys
 	bool interfaceSetup(Lua *lua);
 	void log(const std::string &package, const std::string &str);
 	void log(const std::string &package, const boost::format &str);
-	void log(Package *P, const char *fmt, ...);
+	void log(Package *P, const std::string &str);
+	void log(Package *P, const boost::format &str);
 	void program_output(Package *P, const std::string &mesg);
 	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
 	        const std::string &path, const std::vector<std::string> &newenvp);
@@ -1465,7 +1466,7 @@ namespace buildsys
 		{
 			auto pos = kv.find('=');
 			if(pos == std::string::npos) {
-				error("Features must be described as feature=value\n");
+				error("Features must be described as feature=value");
 				return false;
 			}
 

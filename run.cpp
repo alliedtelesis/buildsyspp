@@ -83,16 +83,12 @@ int buildsys::run(Package *P, const std::string &program,
                   const std::vector<std::string> &argv, const std::string &path,
                   const std::vector<std::string> &newenvp)
 {
-#ifdef LOG_COMMANDS
-	log(P, "Running %s", program);
-#endif
-
 	int fds[2];
 	if(P->getWorld()->areOutputPrefix()) {
 		int res = pipe(fds);
 
 		if(res != 0) {
-			log(P, "pipe() failed: %s", strerror(errno));
+			log(P, "pipe() failed: " + std::string(strerror(errno)));
 		}
 
 		std::thread thr(pipe_data_thread, P, fds[0]);
@@ -101,7 +97,7 @@ int buildsys::run(Package *P, const std::string &program,
 	// call the program ...
 	int pid = fork();
 	if(pid < 0) { // something bad happened ...
-		log(P, "fork() failed: %s", strerror(errno));
+		log(P, "fork() failed: " + std::string(strerror(errno)));
 		exit(-1);
 	} else if(pid == 0) { // child process
 		if(P->getWorld()->areOutputPrefix()) {
@@ -111,11 +107,11 @@ int buildsys::run(Package *P, const std::string &program,
 			close(fds[1]);
 		}
 		if(chdir(path.c_str()) != 0) {
-			log(P, "chdir '%s' failed", path.c_str());
+			log(P, boost::format{"chdir '%1%' failed"} % path);
 			exit(-1);
 		}
 		exec_process(program, argv, newenvp);
-		log(P, "Failed Running %s", program.c_str());
+		log(P, "Failed Running " + program);
 		exit(-1);
 	} else {
 		if(P->getWorld()->areOutputPrefix()) {
@@ -125,8 +121,8 @@ int buildsys::run(Package *P, const std::string &program,
 		waitpid(pid, &status, 0);
 		// check return status ...
 		if(WEXITSTATUS(status) < 0) {
-			log(P, "Error Running %s (path = %s, return code = %i)", program.c_str(),
-			    path.c_str(), status);
+			log(P, boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
+			           program % path % status);
 		}
 		return WEXITSTATUS(status);
 	}

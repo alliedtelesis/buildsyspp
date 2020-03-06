@@ -146,7 +146,7 @@ void Package::printLabel(std::ostream &out)
 
 bool Package::process()
 {
-	log(this, "Processing (%s)", this->file.c_str());
+	log(this, boost::format{"Processing (%1%)"} % this->file);
 
 	this->build_description.add(
 	    std::make_unique<PackageFileUnit>(this->file, this->file_short));
@@ -263,7 +263,7 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 			pc.addArg(*it);
 
 			if(!pc.Run(this)) {
-				log(this, "Failed to copy %s (for install)\n", (*it).c_str());
+				log(this, boost::format{"Failed to copy %1% (for install)"} % *it);
 				return false;
 			}
 		}
@@ -274,7 +274,7 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name + ".tar";
 		pc.addArg(arg);
 		if(!pc.Run(this)) {
-			log(this, "Failed to extract install_dir\n");
+			log(this, "Failed to extract install_dir");
 			return false;
 		}
 	}
@@ -313,7 +313,7 @@ static bool ff_file(Package *P, const std::string &hash, const std::string &rfil
 	std::string cmd = "wget -q " + url + " -O " + path + "/" + fname + fext;
 	int res = std::system(cmd.c_str());
 	if(res != 0) {
-		log(P, "Failed to get %s", rfile.c_str());
+		log(P, "Failed to get " + rfile);
 		ret = true;
 	}
 	return ret;
@@ -324,7 +324,7 @@ void Package::updateBuildInfoHashExisting()
 	// populate the build.info hash
 	std::string build_info_file = this->bd.getPath() + "/.build.info";
 	this->buildinfo_hash = hash_file(build_info_file);
-	log(this, "Hash: %s", this->buildinfo_hash.c_str());
+	log(this, "Hash: " + this->buildinfo_hash);
 }
 
 void Package::updateBuildInfoHash()
@@ -332,7 +332,7 @@ void Package::updateBuildInfoHash()
 	// populate the build.info hash
 	std::string build_info_file = this->bd.getPath() + "/.build.info.new";
 	this->buildinfo_hash = hash_file(build_info_file);
-	log(this, "Hash: %s", this->buildinfo_hash.c_str());
+	log(this, "Hash: " + this->buildinfo_hash);
 }
 
 std::unique_ptr<BuildUnit> Package::buildInfo()
@@ -343,7 +343,7 @@ std::unique_ptr<BuildUnit> Package::buildInfo()
 	}
 
 	if(this->buildinfo_hash.empty()) {
-		log(this, "build.info (in %s) is empty", this->bd.getShortPath().c_str());
+		log(this, boost::format{"build.info (in %1%) is empty"} % this->bd.getShortPath());
 		log(this, "You probably need to build this package");
 		return nullptr;
 	}
@@ -410,8 +410,8 @@ bool Package::fetchFrom()
 	    {"output.info", this->bd.getPath(), ".output", ".info"},
 	};
 
-	log(this, "FF URL: %s/%s/%s/%s", this->getWorld()->fetchFrom().c_str(),
-	    this->getNS()->getName().c_str(), this->name.c_str(), this->buildinfo_hash.c_str());
+	log(this, boost::format{"FF URL: %1%/%2%/%3%/%4%"} % this->getWorld()->fetchFrom() %
+	              this->getNS()->getName() % this->name % this->buildinfo_hash);
 
 	if(!this->isHashingOutput()) {
 		files.pop_back();
@@ -517,7 +517,7 @@ bool Package::prepareBuildDirs()
 			return false;
 		}
 	}
-	log(this, "Done (%d)", done->size());
+	log(this, boost::format{"Done (%1%)"} % done->size());
 	delete done;
 	return true;
 }
@@ -534,7 +534,8 @@ bool Package::extractInstallDepends()
 		pc.addArg("-fr");
 		pc.addArg(this->depsExtraction);
 		if(!pc.Run(this)) {
-			log(this, "Failed to remove %s (pre-install)", this->depsExtraction.c_str());
+			log(this,
+			    boost::format{"Failed to remove %1% (pre-install)"} % this->depsExtraction);
 			return false;
 		}
 	}
@@ -580,7 +581,7 @@ bool Package::packageNewInstall()
 		auto it = this->installFiles.begin();
 		auto end = this->installFiles.end();
 		for(; it != end; it++) {
-			log(this, ("Copying " + *it + " to install folder").c_str());
+			log(this, "Copying " + *it + " to install folder");
 			PackageCmd pc(this->bd.getNewInstall(), "cp");
 			pc.addArg(*it);
 			std::string arg =
@@ -588,7 +589,7 @@ bool Package::packageNewInstall()
 			pc.addArg(arg);
 
 			if(!pc.Run(this)) {
-				log(this, "Failed to copy install file (%s) ", (*it).c_str());
+				log(this, boost::format{"Failed to copy install file (%1%)"} % *it);
 				return false;
 			}
 		}
@@ -665,7 +666,7 @@ bool Package::build(bool locally)
 	dIt = this->dependsStart();
 	for(; dIt != dEnds; dIt++) {
 		if((*dIt).getLocally()) {
-			log((*dIt).getPackage(), "Build triggered by %s", this->getName().c_str());
+			log((*dIt).getPackage(), "Build triggered by " + this->getName());
 			if(!(*dIt).getPackage()->build(true)) {
 				return false;
 			}
@@ -726,7 +727,7 @@ bool Package::build(bool locally)
 
 	this->run_secs = (end.tv_sec - start.tv_sec);
 
-	log(this, "Built in %d seconds", this->run_secs);
+	log(this, boost::format{"Built in %1% seconds"} % this->run_secs);
 
 	std::unique_lock<std::mutex> lk(this->lock);
 	this->building = false;

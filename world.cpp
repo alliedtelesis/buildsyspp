@@ -60,10 +60,10 @@ static void build_thread(Package *p)
 	try {
 		if(!p->build()) {
 			w->setFailed();
-			log((p->getNS()->getName() + "," + p->getName()).c_str(), "Building failed");
+			log(p->getNS()->getName() + "," + p->getName(), "Building failed");
 		}
 	} catch(Exception &E) {
-		error(E.error_msg().c_str());
+		error(E.error_msg());
 		throw;
 	}
 	w->threadEnded();
@@ -79,7 +79,7 @@ static void process_package(Package *p, PackageQueue *pq)
 			log(p, "Processing failed");
 		}
 	} catch(Exception &E) {
-		log(p, E.error_msg().c_str());
+		log(p, E.error_msg());
 		throw;
 	}
 

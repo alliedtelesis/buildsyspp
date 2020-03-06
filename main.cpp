@@ -38,20 +38,16 @@ void buildsys::log(const std::string &package, const boost::format &str)
 	log(package, str.str());
 }
 
-void buildsys::log(Package *P, const char *fmt, ...)
+void buildsys::log(Package *P, const std::string &str)
 {
-	char *message = nullptr;
-	va_list args;
-	va_start(args, fmt);
-	vasprintf(&message, fmt, args);
-	va_end(args);
-
 	std::ostream &s = quietly ? P->getLogFile() : std::cerr;
-	auto msg =
-	    boost::format{"%1%,%2%: %3%"} % P->getNS()->getName() % P->getName() % message;
+	auto msg = boost::format{"%1%,%2%: %3%"} % P->getNS()->getName() % P->getName() % str;
 	s << msg << std::endl;
+}
 
-	free(message);
+void buildsys::log(Package *P, const boost::format &str)
+{
+	log(P, str.str());
 }
 
 static inline const char *get_color(const char *mesg)

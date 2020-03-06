@@ -234,8 +234,9 @@ bool GitExtractionUnit::fetch(BuildDir *d)
 
 	if(!this->hash.empty()) {
 		if(this->hash != _hash) {
-			log(this->P, "Hash mismatch for %s\n(committed to %s, providing %s)\n",
-			    this->uri.c_str(), this->hash.c_str(), _hash.c_str());
+			log(this->P,
+			    boost::format{"Hash mismatch for %1%\n(committed to %2%, providing %3%)"} %
+			        this->uri % this->hash % _hash);
 			res = false;
 		}
 	} else {

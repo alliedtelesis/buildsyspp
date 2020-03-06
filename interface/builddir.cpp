@@ -113,7 +113,7 @@ int li_bd_fetch(lua_State *L)
 			} else if(key == "copyto") {
 				copyto = value;
 			} else {
-				log(P, "Unknown key %s (%s)", key.c_str(), value.c_str());
+				log(P, boost::format{"Unknown key %1% (%2%)"} % key % value);
 			}
 		}
 		lua_pop(L, 2);

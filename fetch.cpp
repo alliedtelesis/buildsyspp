@@ -70,7 +70,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 	 */
 	DLObject *dlobj = d->getWorld()->findDLObject(fullname);
 	if(dlobj == nullptr) {
-		log(this->P, "Failed to get the DLObject for %s\n", fullname.c_str());
+		log(this->P, "Failed to get the DLObject for " + fullname);
 		return false;
 	}
 
@@ -80,9 +80,10 @@ bool DownloadFetch::fetch(BuildDir *d)
 		if(dlobj->HASH().length() != 0) {
 			if(dlobj->HASH() != this->hash) {
 				log(this->P,
-				    "Another package has already downloaded %s with hash %s (but "
-				    "we need %s)\n",
-				    fullname.c_str(), dlobj->HASH().c_str(), this->hash.c_str());
+				    boost::format{
+				        "Another package has already downloaded %1% with hash %2% (but "
+				        "we need %3%)"} %
+				        fullname % dlobj->HASH() % this->hash);
 				return false;
 			}
 		}
@@ -120,8 +121,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 
 			size_t ext_pos = fname.rfind('.');
 			if(ext_pos == std::string::npos) {
-				log(P, "Could not guess decompression based on extension: %s\n",
-				    fname.c_str());
+				log(P, "Could not guess decompression based on extension: " + fname);
 			} else {
 				std::string ext = fname.substr(ext_pos + 1);
 				if(ext == ".bz2") {
@@ -142,8 +142,10 @@ bool DownloadFetch::fetch(BuildDir *d)
 		std::string _hash = hash_file(fpath.str());
 
 		if(this->hash != _hash) {
-			log(this->P, "Hash mismatched for %s\n(committed to %s, providing %s)",
-			    this->final_name().c_str(), this->hash.c_str(), _hash.c_str());
+			log(this->P,
+			    boost::format{
+			        "Hash mismatched for %1%\n(committed to %2%, providing %3%)"} %
+			        this->final_name() % this->hash % _hash);
 			ret = false;
 		}
 	}
@@ -157,8 +159,8 @@ std::string DownloadFetch::HASH()
 	std::string _hash = P->getFileHash(this->final_name());
 	/* Otherwise fetch and calculate the hash */
 	if(_hash.empty()) {
-		log(P, "No hash for %s in package/%s/Digest", this->final_name().c_str(),
-		    P->getName().c_str());
+		log(P, boost::format{"No hash for %1% in package/%2%/Digest"} % this->final_name() %
+		           P->getName());
 		throw CustomException("Missing hash " + P->getName());
 	}
 	this->hash = _hash;
