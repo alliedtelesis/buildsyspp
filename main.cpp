@@ -80,7 +80,9 @@ void buildsys::program_output(Package *P, const std::string &mesg)
 
 int main(int argc, char *argv[])
 {
-	struct timespec start, end;
+	// clang-format off
+	struct timespec start {}, end {};
+	// clang-format on
 
 	clock_gettime(CLOCK_REALTIME, &start);
 

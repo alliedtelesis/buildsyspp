@@ -61,12 +61,16 @@ namespace buildsys
 		}
 		bool exists(const std::string &path)
 		{
-			struct stat buf;
+			// clang-format off
+			struct stat buf {};
+			// clang-format on
 			return (stat(path.c_str(), &buf) == 0);
 		}
 		bool is_directory(const std::string &path)
 		{
-			struct stat buf;
+			// clang-format off
+			struct stat buf {};
+			// clang-format on
 			return (stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode));
 		}
 		void rename(const std::string &from, const std::string &to)

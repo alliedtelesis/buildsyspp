@@ -619,7 +619,9 @@ void Package::cleanStaging()
 
 bool Package::build(bool locally)
 {
-	struct timespec start, end;
+	// clang-format off
+	struct timespec start {}, end {};
+	// clang-format on
 
 	// Already build, pretend to successfully build
 	if((locally && this->was_built) || (!locally && this->isBuilt())) {
