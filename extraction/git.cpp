@@ -47,11 +47,11 @@ static std::string git_hash_ref(const std::string &gdir, const std::string &refs
 	if(f == nullptr) {
 		throw CustomException("git rev-parse ref failed");
 	}
-	char commit[41] = {};
-	fread(commit, sizeof(char), 40, f);
+	std::vector<char> commit(41, '\0');
+	fread(&commit[0], sizeof(char), commit.size() - 1, f);
 	pclose(f);
 
-	return std::string(commit);
+	return std::string(commit.begin(), commit.end());
 }
 
 static std::string git_hash(const std::string &gdir)
@@ -66,11 +66,11 @@ static std::string git_diff_hash(const std::string &gdir)
 	if(f == nullptr) {
 		throw CustomException("git diff | sha1sum failed");
 	}
-	char delta_hash[41] = {};
-	fread(delta_hash, sizeof(char), 40, f);
+	std::vector<char> delta_hash(41, '\0');
+	fread(&delta_hash[0], sizeof(char), delta_hash.size() - 1, f);
 	pclose(f);
 
-	return std::string(delta_hash);
+	return std::string(delta_hash.begin(), delta_hash.end());
 }
 
 static std::string git_remote(const std::string &gdir, const std::string &remote)
@@ -81,11 +81,11 @@ static std::string git_remote(const std::string &gdir, const std::string &remote
 	if(f == nullptr) {
 		throw CustomException("git config --local --get remote. .url failed");
 	}
-	char output[1025] = {};
-	fread(output, sizeof(char), 1024, f);
+	std::vector<char> output(1025, '\0');
+	fread(&output[0], sizeof(char), output.size() - 1, f);
 	pclose(f);
 
-	return std::string(output);
+	return std::string(output.begin(), output.end());
 }
 
 GitDirExtractionUnit::GitDirExtractionUnit(const std::string &git_dir,
