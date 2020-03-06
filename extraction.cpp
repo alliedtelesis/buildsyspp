@@ -40,7 +40,7 @@ void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
 	if(bd != nullptr) {
 		// Create the new extraction info file
 		std::string fname = bd->getPath() + "/.extraction.info.new";
-		std::ofstream exInfo(fname.c_str());
+		std::ofstream exInfo(fname);
 		this->print(exInfo);
 		exInfo.close();
 	}

@@ -137,7 +137,7 @@ void Package::printLabel(std::ostream &out)
 	out << "[label=\"";
 
 	out << this->getName() << "\\n";
-	out << this->getNS()->getName().c_str() << "\\n";
+	out << this->getNS()->getName() << "\\n";
 	out << "Cmds:" << this->commands.size() << "\\n";
 	out << "Time: " << this->run_secs << "s";
 

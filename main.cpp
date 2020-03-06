@@ -50,12 +50,12 @@ void buildsys::log(Package *P, const boost::format &str)
 	log(P, str.str());
 }
 
-static inline const char *get_color(const char *mesg)
+static inline const char *get_color(const std::string &mesg)
 {
-	if(strstr(mesg, "error:") != nullptr) {
+	if(mesg.find("error:") != std::string::npos) {
 		return COLOR_BOLD_RED;
 	}
-	if(strstr(mesg, "warning:") != nullptr) {
+	if(mesg.find("warning:") != std::string::npos) {
 		return COLOR_BOLD_BLUE;
 	}
 
@@ -69,7 +69,7 @@ void buildsys::program_output(Package *P, const std::string &mesg)
 	std::ostream &s = quietly ? P->getLogFile() : std::cout;
 	boost::format msg;
 
-	if(!quietly && (isATTY != 0) && ((color = get_color(mesg.c_str())) != nullptr)) {
+	if(!quietly && (isATTY != 0) && ((color = get_color(mesg)) != nullptr)) {
 		msg = boost::format{"%1%,%2%: %3%%4%%5%"} % P->getNS()->getName() % P->getName() %
 		      color % mesg % COLOR_RESET;
 	} else {

@@ -280,7 +280,7 @@ int li_bd_extract_table(lua_State *L)
 
 	CHECK_ARGUMENT_TYPE("extract", 2, FetchUnit, f);
 
-	if(strstr(f->relative_path().c_str(), ".zip") != nullptr) {
+	if(f->relative_path().find(".zip") != std::string::npos) {
 		P->extraction()->add(std::make_unique<ZipExtractionUnit>(f));
 	} else {
 		// The catch all for tar compressed files
