@@ -83,7 +83,7 @@ int li_bd_fetch(lua_State *L)
 
 	Package *P = li_get_package();
 
-	CHECK_ARGUMENT_TYPE("fetch_table", 1, BuildDir, d);
+	auto *d = CHECK_ARGUMENT_TYPE<BuildDir>(L, "fetch_table", 1, "BuildDir");
 
 	/* Get the parameters from the table */
 	lua_pushvalue(L, 2);
@@ -236,7 +236,7 @@ int li_bd_restore(lua_State *L)
 
 	Package *P = li_get_package();
 
-	CHECK_ARGUMENT_TYPE("restore", 1, BuildDir, d);
+	auto *d = CHECK_ARGUMENT_TYPE<BuildDir>(L, "restore", 1, "BuildDir");
 
 	std::string location(lua_tostring(L, 2));
 	std::string method(lua_tostring(L, 3));
@@ -278,7 +278,7 @@ int li_bd_extract_table(lua_State *L)
 
 	Package *P = li_get_package();
 
-	CHECK_ARGUMENT_TYPE("extract", 2, FetchUnit, f);
+	auto *f = CHECK_ARGUMENT_TYPE<FetchUnit>(L, "extract", 2, "FetchUnit");
 
 	if(f->relative_path().find(".zip") != std::string::npos) {
 		P->extraction()->add(std::make_unique<ZipExtractionUnit>(f));
@@ -310,7 +310,7 @@ int li_bd_extract(lua_State *L)
 	if(!lua_islightuserdata(L, -1)) {
 		throw CustomException("extract() must be called using : not .");
 	}
-	const auto *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1));
+	const auto *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1)); // NOLINT
 	lua_pop(L, 1);
 
 	Package *P = li_get_package();
@@ -360,7 +360,7 @@ int li_bd_cmd(lua_State *L)
 		    "cmd() expects a table of strings as the fourth argument, if present");
 	}
 
-	CHECK_ARGUMENT_TYPE("cmd", 1, BuildDir, d);
+	auto *d = CHECK_ARGUMENT_TYPE<BuildDir>(L, "cmd", 1, "BuildDir");
 
 	Package *P = li_get_package();
 
@@ -425,7 +425,7 @@ int li_bd_patch(lua_State *L)
 		return 1;
 	}
 
-	CHECK_ARGUMENT_TYPE("patch", 1, BuildDir, d);
+	auto *d = CHECK_ARGUMENT_TYPE<BuildDir>(L, "patch", 1, "BuildDir");
 
 	std::string patch_path = relative_path(d, lua_tostring(L, 2), true);
 

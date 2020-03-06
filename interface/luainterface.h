@@ -28,25 +28,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-#define CHECK_ARGUMENT(F, N, T)                                                            \
-	if(!lua_is##T(L, N))                                                                   \
-		throw CustomException("" #F "() requires a " #T " as argument " #N);
-
-#define CHECK_ARGUMENT_TYPE(F, N, T, V)                                                    \
-	CHECK_ARGUMENT(F, N, table)                                                            \
-	lua_pushstring(L, #T);                                                                 \
-	lua_gettable(L, N);                                                                    \
-	if(!lua_isstring(L, -1) || strcmp(lua_tostring(L, -1), "yes") != 0)                    \
-		throw CustomException("" #F "() requires an object of type " #T                    \
-		                      " as argument " #N);                                         \
-	lua_pop(L, 1);                                                                         \
-	lua_pushstring(L, "data");                                                             \
-	lua_gettable(L, N);                                                                    \
-	if(!lua_islightuserdata(L, -1))                                                        \
-		throw CustomException("" #F "() requires data of argument " #N                     \
-		                      " to contain something of type " #T "");                     \
-	auto *V = const_cast<T *>(reinterpret_cast<const T *>(lua_topointer(L, -1)));          \
+template <typename T>
+T *CHECK_ARGUMENT_TYPE(lua_State *L, const std::string &func, int num_args,
+                       const std::string &type_str)
+{
+	if(!lua_istable(L, num_args)) {
+		throw CustomException(func + "() requires a " + type_str + " as argument " +
+		                      std::to_string(num_args));
+	}
+	lua_pushstring(L, type_str.c_str());
+	lua_gettable(L, num_args);
+	if(!lua_isstring(L, -1) || strcmp(lua_tostring(L, -1), "yes") != 0) {
+		throw CustomException(func + "() requires an object of type " + type_str +
+		                      " as argument " + std::to_string(num_args));
+	}
 	lua_pop(L, 1);
+	lua_pushstring(L, "data");
+	lua_gettable(L, num_args);
+	if(!lua_islightuserdata(L, -1)) {
+		throw CustomException(func + "() requires data of argument " +
+		                      std::to_string(num_args) + " to contain something of type " +
+		                      type_str);
+	}
+
+	auto *V = const_cast<T *>(reinterpret_cast<const T *>(lua_topointer(L, -1))); // NOLINT
+	lua_pop(L, 1);
+
+	return V;
+}
 
 void li_set_package(Package *p);
 Package *li_get_package();

@@ -32,7 +32,7 @@ int li_fu_path(lua_State *L)
 		throw CustomException("fetch() must be called using : not .");
 	}
 
-	CHECK_ARGUMENT_TYPE("path", 1, FetchUnit, f);
+	auto *f = CHECK_ARGUMENT_TYPE<FetchUnit>(L, "path", 1, "FetchUnit");
 
 	lua_pushstring(L, f->relative_path().c_str());
 
