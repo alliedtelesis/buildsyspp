@@ -509,16 +509,15 @@ bool Package::prepareBuildDirs()
 		std::system(cmd.c_str());
 	}
 
-	auto *done = new std::list<std::string>();
+	std::list<std::string> done;
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt).getPackage()->extract_staging(staging_dir, done)) {
+		if(!(*dIt).getPackage()->extract_staging(staging_dir, &done)) {
 			return false;
 		}
 	}
-	log(this, boost::format{"Done (%1%)"} % done->size());
-	delete done;
+	log(this, boost::format{"Done (%1%)"} % done.size());
 	return true;
 }
 
@@ -544,16 +543,15 @@ bool Package::extractInstallDepends()
 	filesystem::create_directories(this->depsExtraction);
 
 	log(this, "Extracting installed files from dependencies ...");
-	auto *done = new std::list<std::string>();
+	std::list<std::string> done;
 	auto dIt = this->dependsStart();
 	auto dEnds = this->dependsEnd();
 	for(; dIt != dEnds; dIt++) {
-		if(!(*dIt).getPackage()->extract_install(this->depsExtraction, done,
+		if(!(*dIt).getPackage()->extract_install(this->depsExtraction, &done,
 		                                         !this->depsExtractionDirectOnly)) {
 			return false;
 		}
 	}
-	delete done;
 	log(this, "Dependency install files extracted");
 	return true;
 }
