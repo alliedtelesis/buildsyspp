@@ -59,8 +59,8 @@ bool PackageCmd::Run(Package *P)
 
 void PackageCmd::printCmd()
 {
-	printf("Path: %s\n", this->path.c_str());
+	std::cout << "Path: " << this->path << std::endl;
 	for(size_t i = 0; i < this->args.size(); i++) {
-		printf("Arg[%zi] = '%s'\n", i, this->args[i].c_str());
+		std::cout << boost::format{"Arg[%1%] = '%2%'"} % i % this->args[i] << std::endl;
 	}
 }
