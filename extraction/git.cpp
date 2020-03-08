@@ -25,20 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-static bool directory_exists(const std::string &dir)
-{
-	if(!filesystem::exists(dir)) {
-		/* Nothing here */
-		return false;
-	}
-	if(buildsys::filesystem::is_directory(dir)) {
-		/* Actually a directory */
-		return true;
-	}
-	/* Something other than a directory */
-	return false;
-}
-
 static bool refspec_is_commitid(const std::string &refspec)
 {
 	if(refspec.length() != 40) {
@@ -112,7 +98,7 @@ GitDirExtractionUnit::GitDirExtractionUnit(const std::string &git_dir,
 
 bool GitDirExtractionUnit::isDirty()
 {
-	if(!directory_exists(this->localPath())) {
+	if(!filesystem::is_directory(this->localPath())) {
 		/* If the source directory doesn't exist, then it can't be dirty */
 		return false;
 	}
@@ -175,7 +161,7 @@ bool GitExtractionUnit::fetch(BuildDir *d)
 	std::string source_dir = this->local;
 	std::string cwd = d->getWorld()->getWorkingDir();
 
-	bool exists = directory_exists(source_dir);
+	bool exists = filesystem::is_directory(source_dir);
 
 	PackageCmd pc(exists ? source_dir : cwd, "git");
 
