@@ -28,26 +28,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool PackageCmd::Run(Package *P)
 {
 	std::vector<std::string> ne;
-	if(!this->envp.empty()) {
-		// collect the current enviroment
-		size_t e = 0;
-		while(environ[e] != nullptr) {
-			ne.emplace_back(environ[e]);
-			e++;
-		}
-		// append any new enviroment to it
-		for(auto &env : this->envp) {
-			ne.push_back(env);
-		}
+
+	// collect the current enviroment
+	size_t e = 0;
+	while(environ[e] != nullptr) {   // NOLINT
+		ne.emplace_back(environ[e]); // NOLINT
+		e++;
+	}
+
+	// append any new enviroment to it
+	for(auto &env : this->envp) {
+		ne.push_back(env);
 	}
 
 	bool res = true;
 	if(run(P, this->args[0], this->args, this->path, ne) != 0) {
-		res = false;
-	}
-
-	if(!res) {
 		this->printCmd();
+		res = false;
 	}
 
 	return res;
