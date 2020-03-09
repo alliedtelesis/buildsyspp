@@ -27,10 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 bool PackageCmd::Run(Package *P)
 {
-	if(this->skip) {
-		return true;
-	}
-
 	std::vector<std::string> ne;
 	if(!this->envp.empty()) {
 		// collect the current enviroment

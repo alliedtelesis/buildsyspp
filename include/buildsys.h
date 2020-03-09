@@ -395,7 +395,6 @@ namespace buildsys
 		std::string app;
 		std::vector<std::string> args;
 		std::vector<std::string> envp;
-		bool skip{false};
 
 	public:
 		/** Create a Package Command
@@ -407,12 +406,6 @@ namespace buildsys
 		{
 			this->addArg(app);
 		};
-
-		//! Mark a command to allow skiping its execution
-		void skipCommand()
-		{
-			this->skip = true;
-		}
 
 		/** Add an argument to this command
 		 *  \param arg The argument to append to this command
