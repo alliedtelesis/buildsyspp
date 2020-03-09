@@ -987,8 +987,6 @@ namespace buildsys
 		const std::string name;
 		std::list<Package *> packages;
 		mutable std::mutex lock;
-		void _addPackage(Package *p);
-		void _removePackage(Package *p);
 		World *WORLD;
 
 	public:
@@ -1007,7 +1005,6 @@ namespace buildsys
 		//! Find or create a package with the given name
 		Package *findPackage(const std::string &_name);
 		void addPackage(Package *p);
-		void removePackage(Package *p);
 		std::string getStagingDir() const;
 		std::string getInstallDir() const;
 		//! Get the World this NS belongs to
@@ -1130,18 +1127,6 @@ namespace buildsys
 		      bd(BuildDir(this->pwd, _ns->getName(), this->name))
 		{
 		}
-		//! Set the namespace this package is in
-		void setNS(NameSpace *_ns)
-		{
-			if(this->ns != nullptr) {
-				this->ns->removePackage(this);
-			}
-			this->ns = _ns;
-			if(this->ns != nullptr) {
-				this->ns->addPackage(this);
-			}
-			this->bd = BuildDir(this->getPwd(), _ns->getName(), this->name);
-		};
 		//! Returns the namespace this package is in
 		NameSpace *getNS()
 		{

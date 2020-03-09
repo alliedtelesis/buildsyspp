@@ -29,26 +29,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static int li_name(lua_State *L)
 {
-	if(lua_gettop(L) < 0 || lua_gettop(L) > 1) {
-		throw CustomException("name() takes 1 or no argument(s)");
+	if(lua_gettop(L) != 0) {
+		throw CustomException("name() takes no arguments");
 	}
-	int args = lua_gettop(L);
 
 	Package *P = li_get_package();
 
-	if(args == 0) {
-		std::string value = P->getNS()->getName();
-		lua_pushstring(L, value.c_str());
-		return 1;
-	}
-	if(lua_type(L, 1) != LUA_TSTRING) {
-		throw CustomException("Argument to name() must be a string");
-	}
-	std::string value(lua_tostring(L, 1));
-
-	P->setNS(P->getWorld()->findNameSpace(value));
-
-	return 0;
+	std::string value = P->getNS()->getName();
+	lua_pushstring(L, value.c_str());
+	return 1;
 }
 
 static int li_feature(lua_State *L)

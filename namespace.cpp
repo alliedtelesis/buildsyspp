@@ -94,34 +94,15 @@ Package *NameSpace::findPackage(const std::string &_name)
 
 	Package *p =
 	    new Package(this, _name, file_short, file, overlay, this->WORLD->getWorkingDir());
-	this->_addPackage(p);
+	this->packages.push_back(p);
 
 	return p;
-}
-
-void NameSpace::_addPackage(Package *p)
-{
-	this->packages.push_back(p);
-	if(p->getNS() != this) {
-		p->setNS(this);
-	}
 }
 
 void NameSpace::addPackage(Package *p)
 {
 	std::unique_lock<std::mutex> lk(this->lock);
-	this->_addPackage(p);
-}
-
-void NameSpace::_removePackage(Package *p)
-{
-	this->packages.remove(p);
-}
-
-void NameSpace::removePackage(Package *p)
-{
-	std::unique_lock<std::mutex> lk(this->lock);
-	this->_removePackage(p);
+	this->packages.push_back(p);
 }
 
 World *NameSpace::getWorld()
