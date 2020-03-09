@@ -10,7 +10,7 @@ $(error Can't find lua, please install and/or check that pkg-config knows about 
 endif
 WARNFLAGS	:= -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wcast-align -Wunused -Woverloaded-virtual \
 		   -Wpedantic -Wconversion -Wsign-conversion -Wlogical-op -Wuseless-cast -Wdouble-promotion \
-		   -Wold-style-cast
+		   -Wold-style-cast -Wno-missing-field-initializers
 BASEFLAGS	:= $(WARNFLAGS) -ggdb2 -pthread $(shell pkg-config --cflags $(LUAVERSION)) $(USER_DEFINES)
 CXXFLAGS	:= -std=c++14 $(BASEFLAGS)
 CFLAGS		:= -std=c99 $(BASEFLAGS)
