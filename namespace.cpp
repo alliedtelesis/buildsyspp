@@ -34,16 +34,6 @@ NameSpace::~NameSpace()
 	}
 }
 
-std::list<Package *>::iterator NameSpace::packagesStart()
-{
-	return this->packages.begin();
-}
-
-std::list<Package *>::iterator NameSpace::packagesEnd()
-{
-	return this->packages.end();
-}
-
 std::string NameSpace::getStagingDir()
 {
 	std::stringstream res;
@@ -66,11 +56,9 @@ Package *NameSpace::findPackage(const std::string &_name)
 
 	std::unique_lock<std::mutex> lk(this->lock);
 
-	auto iter = this->packagesStart();
-	auto iterEnd = this->packagesEnd();
-	for(; iter != iterEnd; iter++) {
-		if((*iter)->getName() == _name) {
-			return (*iter);
+	for(const auto package : this->getPackages()) {
+		if(package->getName() == _name) {
+			return package;
 		}
 	}
 
@@ -87,13 +75,11 @@ Package *NameSpace::findPackage(const std::string &_name)
 
 		bool found = false;
 		auto relative_fname = boost::format{"package/%1%/%2%.lua"} % _name % lastPart;
-		auto _iter = this->WORLD->overlaysStart();
-		auto _iterEnd = this->WORLD->overlaysEnd();
-		for(; _iter != _iterEnd; _iter++) {
-			lua_file = *_iter + "/" + relative_fname.str();
+		for(const auto &ov : this->WORLD->getOverlays()) {
+			lua_file = ov + "/" + relative_fname.str();
 			if(filesystem::exists(lua_file)) {
 				found = true;
-				overlay = *_iter;
+				overlay = ov;
 				break;
 			}
 		}

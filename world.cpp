@@ -25,23 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-string_list::iterator World::overlaysStart()
-{
-	return this->overlays.begin();
-}
-
-string_list::iterator World::overlaysEnd()
-{
-	return this->overlays.end();
-}
-
 NameSpace *World::findNameSpace(const std::string &name)
 {
-	auto iter = this->nameSpacesStart();
-	auto iterEnd = this->nameSpacesEnd();
-	for(; iter != iterEnd; iter++) {
-		if((*iter).getName() == name) {
-			return &(*iter);
+	for(auto &ns : this->namespaces) {
+		if(ns.getName() == name) {
+			return &ns;
 		}
 	}
 
@@ -83,11 +71,8 @@ static void process_package(Package *p, PackageQueue *pq)
 		throw;
 	}
 
-	auto iter = p->dependsStart();
-	auto end = p->dependsEnd();
-
-	for(; iter != end; iter++) {
-		Package *dp = (*iter).getPackage();
+	for(auto &depend : p->getDepends()) {
+		Package *dp = depend.getPackage();
 		if(dp->setProcessingQueued()) {
 			pq->push(dp);
 		}

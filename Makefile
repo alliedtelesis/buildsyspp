@@ -43,7 +43,8 @@ cpplint:
 
 tidy:
 	find \( -name "*.cpp" -o -name "*.h" \)  -not -path "*test/*" -exec clang-tidy \
-		-checks=*,-fuchsia-default-arguments,-cert-env33-c,-llvm-header-guard,-fuchsia-overloaded-operator,-google-build-using-namespace,-google-global-names-in-headers \
+		-checks=*,-fuchsia-default-arguments,-cert-env33-c,-llvm-header-guard,-fuchsia-overloaded-operator,\
+-google-build-using-namespace,-google-global-names-in-headers,-performance-inefficient-string-concatenation \
 		-quiet -extra-arg-before=-xc++ {} -- $(CPPFLAGS) $(shell pkg-config --cflags $(LUAVERSION)) \;
 
 .PHONY: test

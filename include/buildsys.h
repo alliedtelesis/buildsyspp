@@ -1027,8 +1027,10 @@ namespace buildsys
 		{
 			return name;
 		};
-		std::list<Package *>::iterator packagesStart();
-		std::list<Package *>::iterator packagesEnd();
+		const std::list<Package *> &getPackages() const
+		{
+			return packages;
+		}
 		//! Find or create a package with the given name
 		Package *findPackage(const std::string &_name);
 		void addPackage(Package *p);
@@ -1328,10 +1330,10 @@ namespace buildsys
 			this->building = true;
 		}
 
-		//! Get the start iterator for the dependencies list
-		std::list<PackageDepend>::iterator dependsStart();
-		//! Get the end iterator for the dependencies list
-		std::list<PackageDepend>::iterator dependsEnd();
+		std::list<PackageDepend> &getDepends()
+		{
+			return this->depends;
+		}
 
 		/** Print the label for use on the graph
 		 * Prints the package name, number of commands to run, and time spent building
@@ -1503,7 +1505,7 @@ namespace buildsys
 		std::list<NameSpace> namespaces;
 		std::list<DLObject> dlobjects;
 		Package *p{nullptr};
-		string_list overlays;
+		std::list<std::string> overlays;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
 		std::string fetch_from;
@@ -1527,7 +1529,7 @@ namespace buildsys
 	public:
 		explicit World(std::string _bsapp) : bsapp(std::move(_bsapp))
 		{
-			overlays.push_back(std::string("."));
+			overlays.emplace_back(std::string("."));
 			char *_pwd = getcwd(nullptr, 0);
 			this->pwd = std::string(_pwd);
 			free(_pwd); // NOLINT
@@ -1668,16 +1670,12 @@ namespace buildsys
 		//! Start the processing and building steps with the given meta package
 		bool basePackage(const std::string &filename);
 
-		//! Get the start iterator for the namespace list
-		std::list<NameSpace>::iterator nameSpacesStart()
+		//! Get the namespace list
+		const std::list<NameSpace> &getNameSpaces()
 		{
-			return this->namespaces.begin();
-		};
-		//! Get the end iterator for the namespace list
-		std::list<NameSpace>::iterator nameSpacesEnd()
-		{
-			return this->namespaces.end();
-		};
+			return this->namespaces;
+		}
+
 		//! Find (or create) a namespace
 		NameSpace *findNameSpace(const std::string &name);
 
@@ -1737,10 +1735,11 @@ namespace buildsys
 		{
 			this->overlays.push_back(path);
 		};
-		//! Get the start iterator for the overlay list
-		string_list::iterator overlaysStart();
-		//! Get the end iterator for the over list
-		string_list::iterator overlaysEnd();
+		//! Get the overlay list
+		const std::list<std::string> &getOverlays()
+		{
+			return this->overlays;
+		}
 		//! A thread has started
 		void threadStarted()
 		{
