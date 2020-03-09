@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INTERFACE_LUAINTERFACE_H_
 
 #include "include/buildsys.h"
+#include <string>
 
 template <typename T>
 T *CHECK_ARGUMENT_TYPE(lua_State *L, const std::string &func, int num_args,

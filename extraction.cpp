@@ -55,13 +55,7 @@ bool Extraction::extractionRequired(Package *P, BuildDir *bd)
 	auto cmd = boost::format{"cmp -s %1%/.extraction.info.new %1%/.extraction.info"} %
 	           bd->getPath();
 	int res = std::system(cmd.str().c_str());
-
-	// if there are changes,
-	if(res != 0 || P->isCodeUpdated()) { // Extract our source code
-		return true;
-	}
-
-	return false;
+	return (res != 0 || P->isCodeUpdated());
 }
 
 bool Extraction::extract(Package *P)

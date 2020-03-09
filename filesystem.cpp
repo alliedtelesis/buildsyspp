@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "include/buildsys.h"
-#include <stdio.h>
+#include <cstdio>
 #include <sys/stat.h>
 
 namespace buildsys
@@ -71,7 +71,7 @@ namespace buildsys
 			// clang-format off
 			struct stat buf {};
 			// clang-format on
-			return (stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode));
+			return (stat(path.c_str(), &buf) == 0 && S_ISDIR(buf.st_mode)); // NOLINT
 		}
 		void rename(const std::string &from, const std::string &to)
 		{

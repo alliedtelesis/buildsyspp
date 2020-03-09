@@ -68,14 +68,14 @@ extern "C" {
 
 #include "include/filesystem.h"
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> Graph;
-typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
-typedef boost::graph_traits<Graph>::edge_descriptor Edge;
+using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
+using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
+using Edge = boost::graph_traits<Graph>::edge_descriptor;
 
 #define error(M)                                                                           \
 	do {                                                                                   \
-		log("BuildSys",                                                                    \
-		    boost::format{"%1%:%2%():%3%: %4%"} % __FILE__ % __FUNCTION__ % __LINE__ % M); \
+		log("BuildSys", boost::format{"%1%:%2%():%3%: %4%"} % __FILE__ % __FUNCTION__ %    \
+		                    __LINE__ % (M));                                               \
 	} while(0)
 
 #define LUA_SET_TABLE_TYPE(L, T)                                                           \
@@ -102,7 +102,7 @@ typedef boost::graph_traits<Graph>::edge_descriptor Edge;
 #define LUA_ADD_TABLE_TABLE(L, N, D)                                                       \
 	lua_pushstring(L, N);                                                                  \
 	CREATE_TABLE(D)                                                                        \
-	D->lua_table(L);                                                                       \
+	(D)->lua_table(L);                                                                     \
 	lua_settable(L, -3);
 
 #define LUA_ADD_TABLE_STRING(L, N, S)                                                      \
@@ -123,7 +123,7 @@ int li_fu_path(lua_State *L);
 
 namespace buildsys
 {
-	typedef std::list<std::string> string_list;
+	using string_list = std::list<std::string>;
 
 	class Lua;
 	class Package;
@@ -306,7 +306,7 @@ namespace buildsys
 	class BuildDir : public Dir
 	{
 	private:
-		typedef Dir super;
+		using super = Dir;
 		std::string path;
 		std::string rpath;
 		std::string staging;
@@ -1361,9 +1361,9 @@ namespace buildsys
 	class Internal_Graph
 	{
 	private:
-		typedef std::map<Package *, Vertex> NodeVertexMap;
-		typedef std::map<Vertex, Package *> VertexNodeMap;
-		typedef std::vector<Vertex> container;
+		using NodeVertexMap = std::map<Package *, Vertex>;
+		using VertexNodeMap = std::map<Vertex, Package *>;
+		using container = std::vector<Vertex>;
 		Graph g;
 		NodeVertexMap Nodes;
 		VertexNodeMap NodeMap;
@@ -1537,7 +1537,7 @@ namespace buildsys
 			overlays.push_back(std::string("."));
 			char *_pwd = getcwd(nullptr, 0);
 			this->pwd = std::string(_pwd);
-			free(_pwd);
+			free(_pwd); // NOLINT
 		};
 
 		//! Return the name we were invoked as

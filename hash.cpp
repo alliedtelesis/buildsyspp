@@ -42,7 +42,7 @@ std::string buildsys::hash_file(const std::string &fname)
 	EVP_MD_CTX *mdctx;
 	const EVP_MD *md;
 	std::vector<char> buff(4096);
-	unsigned char md_value[EVP_MAX_MD_SIZE];
+	std::vector<unsigned char> md_value(EVP_MAX_MD_SIZE);
 	unsigned int md_len;
 
 	md = EVP_get_digestbyname("sha256");
@@ -60,7 +60,7 @@ std::string buildsys::hash_file(const std::string &fname)
 		EVP_DigestUpdate(mdctx, &buff[0], static_cast<size_t>(input.gcount()));
 	}
 
-	EVP_DigestFinal_ex(mdctx, md_value, &md_len);
+	EVP_DigestFinal_ex(mdctx, &md_value[0], &md_len);
 	EVP_MD_CTX_destroy(mdctx);
 
 	std::stringstream ss;

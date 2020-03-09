@@ -36,7 +36,7 @@ static void pipe_data(int fd, Package *P)
 	char recv_byte;
 
 	while(true) {
-		ssize_t res = read(fd, reinterpret_cast<void *>(&recv_byte), 1);
+		ssize_t res = read(fd, reinterpret_cast<void *>(&recv_byte), 1); // NOLINT
 		if(res <= 0) {
 			if(!recv_buf.empty()) {
 				program_output(P, recv_buf);
@@ -75,17 +75,17 @@ static void exec_process(const std::string &program,
 	               [](const std::string &s) { return s.c_str(); });
 	penv.push_back(nullptr);
 
-	execvpe(program.c_str(), const_cast<char *const *>(pargs.data()),
-	        const_cast<char *const *>(penv.data()));
+	execvpe(program.c_str(), const_cast<char *const *>(pargs.data()), // NOLINT
+	        const_cast<char *const *>(penv.data()));                  // NOLINT
 }
 
 int buildsys::run(Package *P, const std::string &program,
                   const std::vector<std::string> &argv, const std::string &path,
                   const std::vector<std::string> &newenvp)
 {
-	int fds[2];
+	std::vector<int> fds(2);
 	if(P->getWorld()->areOutputPrefix()) {
-		int res = pipe(fds);
+		int res = pipe(&fds[0]);
 
 		if(res != 0) {
 			log(P, "pipe() failed: " + std::string(strerror(errno)));
@@ -120,11 +120,11 @@ int buildsys::run(Package *P, const std::string &program,
 		int status = 0;
 		waitpid(pid, &status, 0);
 		// check return status ...
-		if(WEXITSTATUS(status) < 0) {
+		if(WEXITSTATUS(status) < 0) { // NOLINT
 			log(P, boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
 			           program % path % status);
 		}
-		return WEXITSTATUS(status);
+		return WEXITSTATUS(status); // NOLINT
 	}
 	return -1;
 }
