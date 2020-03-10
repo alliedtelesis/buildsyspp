@@ -121,8 +121,6 @@ int main(int argc, char *argv[])
 		} else if(argList[a] == "--overlay") {
 			WORLD.addOverlayPath(argList[a + 1]);
 			a++;
-		} else if(argList[a] == "--extract-only") {
-			WORLD.setExtractOnly();
 		} else if(argList[a] == "--build-info-ignore-fv") {
 			WORLD.ignoreFeature(argList[a + 1]);
 			a++;

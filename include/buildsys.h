@@ -1519,7 +1519,6 @@ namespace buildsys
 		string_list ignoredFeatures;
 		bool failed{false};
 		bool cleaning{false};
-		bool extractOnly{false};
 		bool parseOnly{false};
 		bool keepGoing{false};
 		mutable std::mutex cond_lock;
@@ -1584,21 +1583,6 @@ namespace buildsys
 		void setCleaning()
 		{
 			this->cleaning = true;
-		}
-		/** Are we operating in 'extract only' mode
-		 *  If --extract-only is parsed as a parameter, we run in 'extract-only' mode
-		 *  This will make buildsys stop after extracting all sources (obeying all other
-		 * package
-		 * filtering rules)
-		 */
-		bool areExtractOnly()
-		{
-			return this->extractOnly;
-		}
-		//! Set extract only mode
-		void setExtractOnly()
-		{
-			this->extractOnly = true;
 		}
 
 		/** Are we operating in 'parse only' mode
