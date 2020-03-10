@@ -160,8 +160,8 @@ bool Package::checkForDependencyLoops()
 
 	this->visiting = true;
 
-	for(auto &depend : this->depends) {
-		if(!depend.getPackage()->checkForDependencyLoops()) {
+	for(auto &dp : this->depends) {
+		if(!dp.getPackage()->checkForDependencyLoops()) {
 			log(this, "Child failed dependency loop check");
 			return false;
 		}
@@ -185,8 +185,8 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 		}
 	}
 
-	for(auto &depend : this->depends) {
-		if(!depend.getPackage()->extract_staging(dir, done)) {
+	for(auto &dp : this->depends) {
+		if(!dp.getPackage()->extract_staging(dir, done)) {
 			return false;
 		}
 	}
@@ -223,8 +223,8 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 	}
 
 	if(includeChildren && !this->intercept) {
-		for(auto &depend : this->depends) {
-			if(!depend.getPackage()->extract_install(dir, done, includeChildren)) {
+		for(auto &dp : this->depends) {
+			if(!dp.getPackage()->extract_install(dir, done, includeChildren)) {
 				return false;
 			}
 		}
@@ -269,8 +269,8 @@ bool Package::canBuild()
 		return true;
 	}
 
-	for(auto &depend : this->depends) {
-		if(!depend.getPackage()->isBuilt()) {
+	for(auto &dp : this->depends) {
+		if(!dp.getPackage()->isBuilt()) {
 			return false;
 		}
 	}
@@ -336,8 +336,8 @@ void Package::prepareBuildInfo()
 	this->build_description.add(this->Extract.extractionInfo(&this->bd));
 
 	// Add each of our dependencies build info files
-	for(auto &depend : this->depends) {
-		std::unique_ptr<BuildUnit> bi = depend.getPackage()->buildInfo();
+	for(auto &dp : this->depends) {
+		std::unique_ptr<BuildUnit> bi = dp.getPackage()->buildInfo();
 		if(bi == nullptr) {
 			log(this, "bi is nullptr :(");
 			exit(-1);
@@ -482,8 +482,8 @@ bool Package::prepareBuildDirs()
 	}
 
 	std::list<std::string> done;
-	for(auto &depend : this->depends) {
-		if(!depend.getPackage()->extract_staging(staging_dir, &done)) {
+	for(auto &dp : this->depends) {
+		if(!dp.getPackage()->extract_staging(staging_dir, &done)) {
 			return false;
 		}
 	}
@@ -514,9 +514,9 @@ bool Package::extractInstallDepends()
 
 	log(this, "Extracting installed files from dependencies ...");
 	std::list<std::string> done;
-	for(auto &depend : this->depends) {
-		if(!depend.getPackage()->extract_install(this->depsExtraction, &done,
-		                                         !this->depsExtractionDirectOnly)) {
+	for(auto &dp : this->depends) {
+		if(!dp.getPackage()->extract_install(this->depsExtraction, &done,
+		                                     !this->depsExtractionDirectOnly)) {
 			return false;
 		}
 	}
@@ -595,8 +595,8 @@ bool Package::build(bool locally)
 	}
 
 	/* Check our dependencies are already built, or build them */
-	for(auto &depend : this->depends) {
-		if(!depend.getPackage()->build()) {
+	for(auto &dp : this->depends) {
+		if(!dp.getPackage()->build()) {
 			return false;
 		}
 	}
@@ -628,10 +628,10 @@ bool Package::build(bool locally)
 	}
 	// Need to check that any packages that need to have been built locally
 	// actually have been
-	for(auto &depend : this->depends) {
-		if(depend.getLocally()) {
-			log(depend.getPackage(), "Build triggered by " + this->getName());
-			if(!depend.getPackage()->build(true)) {
+	for(auto &dp : this->depends) {
+		if(dp.getLocally()) {
+			log(dp.getPackage(), "Build triggered by " + this->getName());
+			if(!dp.getPackage()->build(true)) {
 				return false;
 			}
 		}
