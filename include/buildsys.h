@@ -1772,6 +1772,7 @@ namespace buildsys
 		{
 			return &this->features;
 		}
+		void printNameSpaces();
 	};
 } // namespace buildsys
 

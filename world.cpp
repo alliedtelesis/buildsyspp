@@ -182,3 +182,12 @@ DLObject *World::_findDLObject(const std::string &fname)
 	this->dlobjects.emplace_back(fname);
 	return &this->dlobjects.back();
 }
+
+void World::printNameSpaces()
+{
+	std::cout << std::endl << "----BEGIN NAMESPACES----" << std::endl;
+	for(auto &ns : this->namespaces) {
+		std::cout << ns.getName() << std::endl;
+	}
+	std::cout << "----END NAMESPACES----" << std::endl;
+}

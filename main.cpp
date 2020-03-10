@@ -176,6 +176,7 @@ int main(int argc, char *argv[])
 	if(WORLD.areParseOnly()) {
 		// Print all the feature/values
 		WORLD.featureMap()->printFeatureValues();
+		WORLD.printNameSpaces();
 	}
 	// Write out the dependency graph
 	WORLD.output_graph();
