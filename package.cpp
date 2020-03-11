@@ -172,25 +172,15 @@ bool Package::checkForDependencyLoops()
 	return true;
 }
 
-bool Package::extract_staging(const std::string &dir, std::list<std::string> *done)
+/**
+ * Extract the staging output for the package into the given directory.
+ *
+ * @param dir - The directory to extract the staging output into.
+ *
+ * @returns true if the extraction was successful, false otherwise.
+ */
+bool Package::extract_staging(const std::string &dir)
 {
-	{
-		auto dIt = done->begin();
-		auto dEnd = done->end();
-
-		for(; dIt != dEnd; dIt++) {
-			if((*dIt) == this->getNS()->getName() + "," + this->name) {
-				return true;
-			}
-		}
-	}
-
-	for(auto &dp : this->depends) {
-		if(!dp.getPackage()->extract_staging(dir, done)) {
-			return false;
-		}
-	}
-
 	PackageCmd pc(dir, "tar");
 	pc.addArg("-xf");
 	auto pwd = this->getWorld()->getWorkingDir();
@@ -202,8 +192,6 @@ bool Package::extract_staging(const std::string &dir, std::list<std::string> *do
 		log(this, "Failed to extract staging_dir");
 		return false;
 	}
-
-	done->push_back(this->getNS()->getName() + "," + this->name);
 
 	return true;
 }
@@ -459,6 +447,25 @@ bool Package::shouldBuild(bool locally)
 	return ret;
 }
 
+/**
+ * Get the set of packages that this package depends on. Note that this includes
+ * the packages that the directly depended packages depend on and so forth.
+ *
+ * @returns The set of containing all of the depended packages.
+ */
+std::unordered_set<Package *> Package::getAllDependedPackages()
+{
+	std::unordered_set<Package *> packages;
+
+	for(auto &dp : this->depends) {
+		packages.insert(dp.getPackage());
+		auto recursed_packages = dp.getPackage()->getAllDependedPackages();
+		packages.insert(recursed_packages.begin(), recursed_packages.end());
+	}
+
+	return packages;
+}
+
 bool Package::prepareBuildDirs()
 {
 	std::string staging_dir =
@@ -481,14 +488,27 @@ bool Package::prepareBuildDirs()
 		std::system(cmd.c_str());
 	}
 
-	std::list<std::string> done;
-	for(auto &dp : this->depends) {
-		if(!dp.getPackage()->extract_staging(staging_dir, &done)) {
-			return false;
-		}
+	std::unordered_set<Package *> packages = this->getAllDependedPackages();
+	std::list<std::thread> threads;
+	std::atomic<bool> result{true};
+	for(auto p : packages) {
+		std::thread th([p, &staging_dir, &result] {
+			bool ret = p->extract_staging(staging_dir);
+			if(!ret) {
+				result = false;
+			}
+		});
+		threads.push_back(std::move(th));
 	}
-	log(this, boost::format{"Done (%1%)"} % done.size());
-	return true;
+	for(auto &t : threads) {
+		t.join();
+	}
+
+	if(result) {
+		log(this, boost::format{"Done (%1%)"} % packages.size());
+	}
+
+	return result;
 }
 
 bool Package::extractInstallDepends()

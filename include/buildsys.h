@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -1105,8 +1106,7 @@ namespace buildsys
 		void updateBuildInfoHashExisting();
 
 	protected:
-		//! Extract the new staging directory this package created in the given path
-		bool extract_staging(const std::string &dir, std::list<std::string> *done);
+		bool extract_staging(const std::string &dir);
 		//! Extract the new install directory this package created in the given path
 		bool extract_install(const std::string &dir, std::list<std::string> *done,
 		                     bool includeChildren);
@@ -1350,6 +1350,8 @@ namespace buildsys
 		{
 			return &this->lua;
 		};
+
+		std::unordered_set<Package *> getAllDependedPackages();
 	};
 
 	//! A graph of dependencies between packages
