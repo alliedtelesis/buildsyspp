@@ -116,7 +116,7 @@ GitExtractionUnit::GitExtractionUnit(const std::string &remote, const std::strin
                                      std::string _refspec, Package *_P)
 {
 	this->uri = remote;
-	this->local = _P->getWorld()->getWorkingDir() + "/source/" + _local;
+	this->local = _P->getPwd() + "/source/" + _local;
 	this->refspec = std::move(_refspec);
 	this->P = _P;
 	this->fetched = false;
@@ -278,7 +278,7 @@ bool LinkGitDirExtractionUnit::extract(Package *P)
 	pc.addArg("-sfT");
 
 	if(this->uri.at(0) == '.') {
-		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
+		std::string arg = P->getPwd() + "/" + this->uri;
 		pc.addArg(arg);
 	} else {
 		pc.addArg(this->uri);
@@ -298,7 +298,7 @@ bool CopyGitDirExtractionUnit::extract(Package *P)
 	pc.addArg("-dpRuf");
 
 	if(this->uri.at(0) == '.') {
-		std::string arg = P->getWorld()->getWorkingDir() + "/" + this->uri;
+		std::string arg = P->getPwd() + "/" + this->uri;
 		pc.addArg(arg);
 	} else {
 		pc.addArg(this->uri);

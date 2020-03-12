@@ -92,7 +92,8 @@ Package *NameSpace::findPackage(const std::string &_name)
 		file_short = relative_fname.str();
 	}
 
-	Package *p = new Package(this, _name, file_short, file, overlay);
+	Package *p =
+	    new Package(this, _name, file_short, file, overlay, this->WORLD->getWorkingDir());
 	this->_addPackage(p);
 
 	return p;

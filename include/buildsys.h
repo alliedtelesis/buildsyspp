@@ -1077,6 +1077,7 @@ namespace buildsys
 		std::string file_short;
 		std::string overlay;
 		std::string buildinfo_hash;
+		const std::string pwd;
 		NameSpace *ns;
 		BuildDir bd;
 		Fetch f;
@@ -1147,12 +1148,13 @@ namespace buildsys
 		 * @param _file_short - The relative path to the lua file describing this package.
 		 * @param _file - The full path to the lua file describing this package.
 		 * @param _overlay - The overlay the package comes from.
+		 * @param _pwd - The working directory for buildsys++.
 		 */
 		Package(NameSpace *_ns, std::string _name, std::string _file_short,
-		        std::string _file, std::string _overlay)
+		        std::string _file, std::string _overlay, std::string _pwd)
 		    : name(std::move(_name)), file(std::move(_file)),
-		      file_short(std::move(_file_short)), overlay(std::move(_overlay)), ns(_ns),
-		      bd(BuildDir(this))
+		      file_short(std::move(_file_short)), overlay(std::move(_overlay)),
+		      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(this))
 		{
 		}
 		//! Set the namespace this package is in
@@ -1355,6 +1357,12 @@ namespace buildsys
 		{
 			return &this->lua;
 		};
+
+		//! Get the current working directory
+		const std::string &getPwd() const
+		{
+			return this->pwd;
+		}
 	};
 
 	//! A graph of dependencies between packages

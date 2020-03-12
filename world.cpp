@@ -109,8 +109,8 @@ bool World::basePackage(const std::string &filename)
 	// Strip the '.lua' from end of the filename for the namespace name
 	std::string nsname = pname.substr(0, pname.find(".lua"));
 
-	this->p =
-	    new Package(this->findNameSpace(nsname), pname, filename_copy, filename_copy, "");
+	this->p = new Package(this->findNameSpace(nsname), pname, filename_copy, filename_copy,
+	                      "", this->pwd);
 	this->p->setNS(this->p->getNS());
 
 	process_packages(this->p);

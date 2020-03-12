@@ -112,7 +112,7 @@ bool TarExtractionUnit::extract(Package *P)
 	filesystem::create_directories("dl");
 
 	pc.addArg("xf");
-	pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
+	pc.addArg(P->getPwd() + "/" + this->uri);
 
 	if(!pc.Run(P)) {
 		throw CustomException("Failed to extract file");
@@ -128,7 +128,7 @@ bool ZipExtractionUnit::extract(Package *P)
 	filesystem::create_directories("dl");
 
 	pc.addArg("-o");
-	pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
+	pc.addArg(P->getPwd() + "/" + this->uri);
 
 	if(!pc.Run(P)) {
 		throw CustomException("Failed to extract file");
@@ -162,7 +162,7 @@ bool PatchExtractionUnit::extract(Package *P)
 	pc_dry.addArg("-i");
 	pc.addArg("-i");
 
-	auto pwd = P->getWorld()->getWorkingDir();
+	auto pwd = P->getPwd();
 	pc_dry.addArg(pwd + "/" + this->uri);
 	pc.addArg(pwd + "/" + this->uri);
 
@@ -197,7 +197,7 @@ bool FileCopyExtractionUnit::extract(Package *P)
 	if(path.at(0) == '/') {
 		pc.addArg(path);
 	} else {
-		std::string arg = P->getWorld()->getWorkingDir() + "/" + path;
+		std::string arg = P->getPwd() + "/" + path;
 		pc.addArg(arg);
 	}
 
@@ -235,7 +235,7 @@ bool FetchedFileCopyExtractionUnit::extract(Package *P)
 	if(boost::algorithm::starts_with(this->uri, "/")) {
 		pc.addArg(this->uri);
 	} else {
-		pc.addArg(P->getWorld()->getWorkingDir() + "/" + this->uri);
+		pc.addArg(P->getPwd() + "/" + this->uri);
 	}
 
 	pc.addArg(".");

@@ -52,7 +52,7 @@ std::string Package::getFeature(const std::string &key)
 
 std::string Package::absolute_fetch_path(const std::string &location)
 {
-	return this->getWorld()->getWorkingDir() + "/" + this->relative_fetch_path(location);
+	return this->pwd + "/" + this->relative_fetch_path(location);
 }
 
 std::string Package::relative_fetch_path(const std::string &location, bool also_root)
@@ -183,9 +183,8 @@ bool Package::extract_staging(const std::string &dir)
 {
 	PackageCmd pc(dir, "tar");
 	pc.addArg("-xf");
-	auto pwd = this->getWorld()->getWorkingDir();
-	std::string arg =
-	    pwd + "/output/" + this->getNS()->getName() + "/staging/" + this->name + ".tar";
+	std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/staging/" +
+	                  this->name + ".tar";
 	pc.addArg(arg);
 
 	if(!pc.Run(this)) {
@@ -205,14 +204,13 @@ bool Package::extract_staging(const std::string &dir)
  */
 bool Package::extract_install(const std::string &dir)
 {
-	auto pwd = this->getWorld()->getWorkingDir();
 	if(!this->installFiles.empty()) {
 		auto it = this->installFiles.begin();
 		auto end = this->installFiles.end();
 		for(; it != end; it++) {
 			PackageCmd pc(dir, "cp");
 			std::string arg =
-			    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
+			    this->pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
 			pc.addArg(arg);
 			pc.addArg(*it);
 
@@ -224,8 +222,8 @@ bool Package::extract_install(const std::string &dir)
 	} else {
 		PackageCmd pc(dir, "tar");
 		pc.addArg("-xf");
-		std::string arg =
-		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name + ".tar";
+		std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/install/" +
+		                  this->name + ".tar";
 		pc.addArg(arg);
 		if(!pc.Run(this)) {
 			log(this, "Failed to extract install_dir");
@@ -395,16 +393,16 @@ bool Package::shouldBuild(bool locally)
 	// lets make sure the install file (still) exists
 	bool ret = false;
 
-	std::string fname = this->getWorld()->getWorkingDir() + "/output/" +
-	                    this->getNS()->getName() + "/install/" + this->name + ".tar";
+	std::string fname = this->pwd + "/output/" + this->getNS()->getName() + "/install/" +
+	                    this->name + ".tar";
 
 	if(!filesystem::exists(fname)) {
 		ret = true;
 	}
 
 	// Now lets check that the staging file (still) exists
-	fname = this->getWorld()->getWorkingDir() + "/output/" + this->getNS()->getName() +
-	        "/staging/" + this->name + ".tar";
+	fname = this->pwd + "/output/" + this->getNS()->getName() + "/staging/" + this->name +
+	        ".tar";
 
 	if(!filesystem::exists(fname)) {
 		ret = true;
@@ -477,21 +475,18 @@ bool Package::prepareBuildDirs()
 	    "output/" + this->getNS()->getName() + "/" + this->name + "/staging";
 	log(this, "Generating staging directory ...");
 
-	{ // Clean out the (new) staging/install directories
-		std::string pwd = this->getWorld()->getWorkingDir();
+	// Clean out the (new) staging/install directories
+	std::string cmd = "rm -fr " + this->pwd + "/output/" + this->getNS()->getName() + "/" +
+	                  this->name + "/new/install/*";
+	std::system(cmd.c_str());
 
-		std::string cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() + "/" +
-		                  this->name + "/new/install/*";
-		std::system(cmd.c_str());
+	cmd = "rm -fr " + this->pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
+	      "/new/staging/*";
+	std::system(cmd.c_str());
 
-		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
-		      "/new/staging/*";
-		std::system(cmd.c_str());
-
-		cmd = "rm -fr " + pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
-		      "/staging/*";
-		std::system(cmd.c_str());
-	}
+	cmd = "rm -fr " + this->pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
+	      "/staging/*";
+	std::system(cmd.c_str());
 
 	std::unordered_set<Package *> packages = this->getAllDependedPackages();
 	std::list<std::thread> threads;
@@ -524,7 +519,7 @@ bool Package::extractInstallDepends()
 
 	// Extract installed files to a given location
 	log(this, "Removing old install files ...");
-	PackageCmd pc(this->getWorld()->getWorkingDir(), "rm");
+	PackageCmd pc(this->pwd, "rm");
 	pc.addArg("-fr");
 	pc.addArg(this->depsExtraction);
 	if(!pc.Run(this)) {
@@ -565,8 +560,8 @@ bool Package::packageNewStaging()
 {
 	PackageCmd pc(this->bd.getNewStaging(), "tar");
 	pc.addArg("-cf");
-	std::string arg = this->getWorld()->getWorkingDir() + "/output/" +
-	                  this->getNS()->getName() + "/staging/" + this->name + ".tar";
+	std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/staging/" +
+	                  this->name + ".tar";
 	pc.addArg(arg);
 	pc.addArg(".");
 
@@ -579,7 +574,6 @@ bool Package::packageNewStaging()
 
 bool Package::packageNewInstall()
 {
-	auto pwd = this->getWorld()->getWorkingDir();
 	if(!this->installFiles.empty()) {
 		auto it = this->installFiles.begin();
 		auto end = this->installFiles.end();
@@ -588,7 +582,7 @@ bool Package::packageNewInstall()
 			PackageCmd pc(this->bd.getNewInstall(), "cp");
 			pc.addArg(*it);
 			std::string arg =
-			    pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
+			    this->pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
 			pc.addArg(arg);
 
 			if(!pc.Run(this)) {
@@ -599,8 +593,8 @@ bool Package::packageNewInstall()
 	} else {
 		PackageCmd pc(this->bd.getNewInstall(), "tar");
 		pc.addArg("-cf");
-		std::string arg =
-		    pwd + "/output/" + this->getNS()->getName() + "/install/" + this->name + ".tar";
+		std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/install/" +
+		                  this->name + ".tar";
 		pc.addArg(arg);
 		pc.addArg(".");
 
