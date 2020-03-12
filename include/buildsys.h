@@ -1083,22 +1083,22 @@ namespace buildsys
 		Extraction Extract;
 		BuildDescription build_description;
 		Lua lua;
-		bool intercept;
+		bool intercept{false};
 		std::string depsExtraction;
-		bool depsExtractionDirectOnly;
+		bool depsExtractionDirectOnly{false};
 		string_list installFiles;
-		bool visiting;
-		bool processing_queued;
-		bool buildInfoPrepared;
+		bool visiting{false};
+		bool processing_queued{false};
+		bool buildInfoPrepared{false};
 		std::atomic<bool> built{false};
 		std::atomic<bool> building{false};
 		std::atomic<bool> was_built{false};
-		bool codeUpdated;
-		bool no_fetch_from;
-		bool hash_output;
-		bool suppress_remove_staging;
+		bool codeUpdated{false};
+		bool no_fetch_from{false};
+		bool hash_output{false};
+		bool suppress_remove_staging{false};
 		mutable std::mutex lock;
-		time_t run_secs;
+		time_t run_secs{0};
 		std::unique_ptr<std::ofstream> logFile;
 		//! Set the buildinfo file hash from the new .build.info.new file
 		void updateBuildInfoHash();
@@ -1138,20 +1138,20 @@ namespace buildsys
 		bool shouldBuild(bool locally);
 
 	public:
-		/** Create a package
-		 *  Constucts a package with a given name, based on a specific file
-		 *  \param name The name of this package
-		 *  \param file The lua file describing this package
+		/**
+		 * Create a package.
+		 *
+		 * @param _ns - The namespace the package is in.
+		 * @param _name - The name of the package.
+		 * @param _file_short - The relative path to the lua file describing this package.
+		 * @param _file - The full path to the lua file describing this package.
+		 * @param _overlay - The overlay the package comes from.
 		 */
 		Package(NameSpace *_ns, std::string _name, std::string _file_short,
 		        std::string _file, std::string _overlay)
 		    : name(std::move(_name)), file(std::move(_file)),
-		      file_short(std::move(_file_short)), overlay(std::move(_overlay)),
-		      buildinfo_hash(""), ns(_ns), bd(BuildDir(this)), intercept(false),
-		      depsExtraction(""), depsExtractionDirectOnly(false), visiting(false),
-		      processing_queued(false), buildInfoPrepared(false), codeUpdated(false),
-		      no_fetch_from(false), hash_output(false), suppress_remove_staging(false),
-		      run_secs(0)
+		      file_short(std::move(_file_short)), overlay(std::move(_overlay)), ns(_ns),
+		      bd(BuildDir(this))
 		{
 		}
 		//! Set the namespace this package is in
