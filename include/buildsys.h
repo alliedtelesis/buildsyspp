@@ -1104,12 +1104,13 @@ namespace buildsys
 		void updateBuildInfoHash();
 		//! Set the buildinfo file hash from the existing .build.info file
 		void updateBuildInfoHashExisting();
+		bool extract_staging(const std::string &dir);
+		bool extract_install(const std::string &dir);
+		std::unordered_set<Package *> getAllDependedPackages();
+		std::unordered_set<Package *> getDependedPackages(bool include_children,
+		                                                  bool ignore_intercept);
 
 	protected:
-		bool extract_staging(const std::string &dir);
-		//! Extract the new install directory this package created in the given path
-		bool extract_install(const std::string &dir, std::list<std::string> *done,
-		                     bool includeChildren);
 		//! prepare the (new) build.info file
 		void prepareBuildInfo();
 		//! update the build.info file
@@ -1207,6 +1208,10 @@ namespace buildsys
 		{
 			this->intercept = true;
 		};
+		bool getIntercept() const
+		{
+			return this->intercept;
+		}
 		//! Return the name of this package
 		std::string getName()
 		{
@@ -1350,8 +1355,6 @@ namespace buildsys
 		{
 			return &this->lua;
 		};
-
-		std::unordered_set<Package *> getAllDependedPackages();
 	};
 
 	//! A graph of dependencies between packages

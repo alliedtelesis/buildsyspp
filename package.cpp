@@ -196,28 +196,15 @@ bool Package::extract_staging(const std::string &dir)
 	return true;
 }
 
-bool Package::extract_install(const std::string &dir, std::list<std::string> *done,
-                              bool includeChildren)
+/**
+ * Extract the install output for the package into the given directory.
+ *
+ * @param dir - The directory to extract the install output into.
+ *
+ * @returns true if the extraction was successful, false otherwise.
+ */
+bool Package::extract_install(const std::string &dir)
 {
-	{
-		auto dIt = done->begin();
-		auto dEnd = done->end();
-
-		for(; dIt != dEnd; dIt++) {
-			if((*dIt) == this->getNS()->getName() + "," + this->name) {
-				return true;
-			}
-		}
-	}
-
-	if(includeChildren && !this->intercept) {
-		for(auto &dp : this->depends) {
-			if(!dp.getPackage()->extract_install(dir, done, includeChildren)) {
-				return false;
-			}
-		}
-	}
-
 	auto pwd = this->getWorld()->getWorkingDir();
 	if(!this->installFiles.empty()) {
 		auto it = this->installFiles.begin();
@@ -245,8 +232,6 @@ bool Package::extract_install(const std::string &dir, std::list<std::string> *do
 			return false;
 		}
 	}
-
-	done->push_back(this->getNS()->getName() + "," + this->name);
 
 	return true;
 }
@@ -448,22 +433,42 @@ bool Package::shouldBuild(bool locally)
 }
 
 /**
- * Get the set of packages that this package depends on. Note that this includes
+ * Get the set of packages that this package depends on.
+ *
+ * @oaram include_children - Set true to include the child dependencies of any direct
+ * dependencies.
+ * @param ignore_intercept - Ignore the intercept setting on the depended package (i.e.
+ * include its child dependencies).
+ *
+ * @returns The set of containing the depended packages.
+ */
+std::unordered_set<Package *> Package::getDependedPackages(bool include_children,
+                                                           bool ignore_intercept)
+{
+	std::unordered_set<Package *> packages;
+
+	for(auto &dp : this->depends) {
+		packages.insert(dp.getPackage());
+
+		if(include_children && (ignore_intercept || !dp.getPackage()->getIntercept())) {
+			auto recursed_packages =
+			    dp.getPackage()->getDependedPackages(include_children, ignore_intercept);
+			packages.insert(recursed_packages.begin(), recursed_packages.end());
+		}
+	}
+
+	return packages;
+}
+
+/**
+ * Get the set of all packages that this package depends on. Note that this includes
  * the packages that the directly depended packages depend on and so forth.
  *
  * @returns The set of containing all of the depended packages.
  */
 std::unordered_set<Package *> Package::getAllDependedPackages()
 {
-	std::unordered_set<Package *> packages;
-
-	for(auto &dp : this->depends) {
-		packages.insert(dp.getPackage());
-		auto recursed_packages = dp.getPackage()->getAllDependedPackages();
-		packages.insert(recursed_packages.begin(), recursed_packages.end());
-	}
-
-	return packages;
+	return this->getDependedPackages(true, true);
 }
 
 bool Package::prepareBuildDirs()
@@ -516,32 +521,44 @@ bool Package::extractInstallDepends()
 	if(this->depsExtraction.empty()) {
 		return true;
 	}
+
 	// Extract installed files to a given location
 	log(this, "Removing old install files ...");
-	{
-		PackageCmd pc(this->getWorld()->getWorkingDir(), "rm");
-		pc.addArg("-fr");
-		pc.addArg(this->depsExtraction);
-		if(!pc.Run(this)) {
-			log(this,
-			    boost::format{"Failed to remove %1% (pre-install)"} % this->depsExtraction);
-			return false;
-		}
+	PackageCmd pc(this->getWorld()->getWorkingDir(), "rm");
+	pc.addArg("-fr");
+	pc.addArg(this->depsExtraction);
+	if(!pc.Run(this)) {
+		log(this,
+		    boost::format{"Failed to remove %1% (pre-install)"} % this->depsExtraction);
+		return false;
 	}
 
 	// Create the directory
 	filesystem::create_directories(this->depsExtraction);
 
 	log(this, "Extracting installed files from dependencies ...");
-	std::list<std::string> done;
-	for(auto &dp : this->depends) {
-		if(!dp.getPackage()->extract_install(this->depsExtraction, &done,
-		                                     !this->depsExtractionDirectOnly)) {
-			return false;
-		}
+
+	std::unordered_set<Package *> packages =
+	    this->getDependedPackages(!this->depsExtractionDirectOnly, false);
+	std::list<std::thread> threads;
+	std::atomic<bool> result{true};
+	for(auto p : packages) {
+		std::thread th([p, this, &result] {
+			bool ret = p->extract_install(this->depsExtraction);
+			if(!ret) {
+				result = false;
+			}
+		});
+		threads.push_back(std::move(th));
 	}
-	log(this, "Dependency install files extracted");
-	return true;
+	for(auto &t : threads) {
+		t.join();
+	}
+
+	if(result) {
+		log(this, "Dependency install files extracted");
+	}
+	return result;
 }
 
 bool Package::packageNewStaging()
