@@ -46,7 +46,7 @@ void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
 	}
 }
 
-bool Extraction::extractionRequired(Package *P, BuildDir *bd)
+bool Extraction::extractionRequired(Package *P, BuildDir *bd) const
 {
 	if(this->extracted) {
 		return false;
@@ -75,7 +75,7 @@ bool Extraction::extract(Package *P)
 	return true;
 }
 
-std::unique_ptr<ExtractionInfoFileUnit> Extraction::extractionInfo(BuildDir *bd)
+std::unique_ptr<ExtractionInfoFileUnit> Extraction::extractionInfo(BuildDir *bd) const
 {
 	std::string fname = bd->getShortPath() + "/.extraction.info";
 	return std::make_unique<ExtractionInfoFileUnit>(fname);

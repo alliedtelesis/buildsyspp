@@ -50,7 +50,7 @@ bool PackageCmd::Run(Package *P)
 	return res;
 }
 
-void PackageCmd::printCmd()
+void PackageCmd::printCmd() const
 {
 	std::cout << "Path: " << this->path << std::endl;
 	for(size_t i = 0; i < this->args.size(); i++) {

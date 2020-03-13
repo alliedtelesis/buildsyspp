@@ -325,7 +325,7 @@ namespace buildsys
 		explicit BuildDir(Package *P);
 		~BuildDir() override = default;
 		//! Return the full path to this directory
-		const std::string &getPath()
+		const std::string &getPath() const
 		{
 			return this->path;
 		};
@@ -335,22 +335,22 @@ namespace buildsys
 			return this->rpath;
 		};
 		//! Return the full path to the staging directory
-		const std::string &getStaging()
+		const std::string &getStaging() const
 		{
 			return this->staging;
 		};
 		//! Return the full path to the new directory
-		const std::string &getNewPath()
+		const std::string &getNewPath() const
 		{
 			return this->new_path;
 		};
 		//! Return the full path to the new staging directory
-		const std::string &getNewStaging()
+		const std::string &getNewStaging() const
 		{
 			return this->new_staging;
 		};
 		//! Return the full path to the new install directory
-		const std::string &getNewInstall()
+		const std::string &getNewInstall() const
 		{
 			return this->new_install;
 		};
@@ -360,9 +360,9 @@ namespace buildsys
 			return this->WORLD;
 		};
 		//! Remove all of the work directory contents
-		void clean();
+		void clean() const;
 		//! Remove all of the staging directory contents
-		void cleanStaging();
+		void cleanStaging() const;
 
 		static void lua_table_r(lua_State *L)
 		{
@@ -430,7 +430,7 @@ namespace buildsys
 		bool Run(Package *P);
 
 		//! Print the command line
-		void printCmd();
+		void printCmd() const;
 	};
 
 	/* A Downloaded Object
@@ -439,7 +439,7 @@ namespace buildsys
 	class DLObject
 	{
 	private:
-		std::string filename;
+		const std::string filename;
 		std::string hash;
 		mutable std::mutex lock;
 
@@ -447,11 +447,11 @@ namespace buildsys
 		explicit DLObject(std::string _filename) : filename(std::move(_filename))
 		{
 		}
-		std::string fileName()
+		const std::string &fileName() const
 		{
 			return this->filename;
 		}
-		std::string HASH()
+		const std::string &HASH() const
 		{
 			return this->hash;
 		}
@@ -459,7 +459,7 @@ namespace buildsys
 		{
 			this->hash = std::move(_hash);
 		}
-		std::mutex &getLock()
+		std::mutex &getLock() const
 		{
 			return this->lock;
 		}
@@ -482,8 +482,8 @@ namespace buildsys
 	class FetchUnit : public HashableUnit
 	{
 	protected:
-		std::string fetch_uri; //!< URI of this unit
-		Package *P{nullptr};   //!< Which package is this fetch unit for ?
+		const std::string fetch_uri; //!< URI of this unit
+		Package *P{nullptr};         //!< Which package is this fetch unit for ?
 		bool fetched{false};
 
 	public:
@@ -514,8 +514,8 @@ namespace buildsys
 	class DownloadFetch : public FetchUnit
 	{
 	protected:
-		bool decompress;
-		std::string filename;
+		const bool decompress;
+		const std::string filename;
 		std::string hash;
 		std::string full_name();
 		std::string final_name();
@@ -818,8 +818,8 @@ namespace buildsys
 	class FeatureValueUnit : public BuildUnit
 	{
 	private:
-		std::string feature;
-		std::string value;
+		const std::string feature;
+		const std::string value;
 		World *WORLD;
 
 	public:
@@ -838,7 +838,7 @@ namespace buildsys
 	class FeatureNilUnit : public BuildUnit
 	{
 	private:
-		std::string feature;
+		const std::string feature;
 
 	public:
 		explicit FeatureNilUnit(std::string _feature) : feature(std::move(_feature))
@@ -978,7 +978,7 @@ namespace buildsys
 
 	public:
 		void add(std::unique_ptr<ExtractionUnit> eu);
-		void print(std::ostream &out)
+		void print(std::ostream &out) const
 		{
 			for(auto &unit : this->EUs) {
 				unit->print(out);
@@ -986,8 +986,8 @@ namespace buildsys
 		}
 		bool extract(Package *P);
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
-		bool extractionRequired(Package *P, BuildDir *bd);
-		std::unique_ptr<ExtractionInfoFileUnit> extractionInfo(BuildDir *bd);
+		bool extractionRequired(Package *P, BuildDir *bd) const;
+		std::unique_ptr<ExtractionInfoFileUnit> extractionInfo(BuildDir *bd) const;
 	};
 
 	/** A build description
@@ -1000,7 +1000,7 @@ namespace buildsys
 
 	public:
 		void add(std::unique_ptr<BuildUnit> bu);
-		void print(std::ostream &out)
+		void print(std::ostream &out) const
 		{
 			for(auto &unit : this->BUs) {
 				unit->print(out);
@@ -1012,7 +1012,7 @@ namespace buildsys
 	class NameSpace
 	{
 	private:
-		std::string name;
+		const std::string name;
 		std::list<Package *> packages;
 		mutable std::mutex lock;
 		void _addPackage(Package *p);
@@ -1024,7 +1024,7 @@ namespace buildsys
 		{
 		}
 		~NameSpace();
-		std::string getName()
+		const std::string &getName() const
 		{
 			return name;
 		};
@@ -1036,8 +1036,8 @@ namespace buildsys
 		Package *findPackage(const std::string &_name);
 		void addPackage(Package *p);
 		void removePackage(Package *p);
-		std::string getStagingDir();
-		std::string getInstallDir();
+		std::string getStagingDir() const;
+		std::string getInstallDir() const;
 		//! Get the World this NS belongs to
 		World *getWorld();
 	};
@@ -1047,7 +1047,7 @@ namespace buildsys
 	{
 	private:
 		Package *p;
-		bool locally;
+		const bool locally;
 
 	public:
 		//! Create a package dependency
@@ -1060,7 +1060,7 @@ namespace buildsys
 			return this->p;
 		};
 		//! Get the locally flag
-		bool getLocally()
+		bool getLocally() const
 		{
 			return this->locally;
 		};
@@ -1130,7 +1130,7 @@ namespace buildsys
 		//! Package up the new/install directory (or installFile, if set)
 		bool packageNewInstall();
 		//! Remove the staging directory (to save space, if not suppressed)
-		void cleanStaging();
+		void cleanStaging() const;
 		/** Should this package be rebuilt ?
 		 *  This returns true when any of the following occur:
 		 *  - The output staging or install tarballs are removed
@@ -1215,12 +1215,12 @@ namespace buildsys
 			return this->intercept;
 		}
 		//! Return the name of this package
-		std::string getName()
+		const std::string &getName() const
 		{
 			return this->name;
 		};
 		//! Return the overlay this package is from
-		std::string getOverlay()
+		const std::string &getOverlay() const
 		{
 			return this->overlay;
 		};
@@ -1284,7 +1284,7 @@ namespace buildsys
 			this->codeUpdated = true;
 		};
 		//! Is the code updated flag set
-		bool isCodeUpdated()
+		bool isCodeUpdated() const
 		{
 			return this->codeUpdated;
 		};
@@ -1296,7 +1296,7 @@ namespace buildsys
 		 *  \return true if this package has already been built during this invocation of
 		 * buildsys
 		 */
-		bool isBuilt()
+		bool isBuilt() const
 		{
 			return this->built;
 		}
@@ -1306,7 +1306,7 @@ namespace buildsys
 			this->no_fetch_from = true;
 		};
 		//! Can we fetch-from ?
-		bool canFetchFrom()
+		bool canFetchFrom() const
 		{
 			return !this->no_fetch_from;
 		};
@@ -1316,7 +1316,7 @@ namespace buildsys
 			this->hash_output = true;
 		};
 		//! Is this package hashing its' output ?
-		bool isHashingOutput()
+		bool isHashingOutput() const
 		{
 			return this->hash_output;
 		};
@@ -1327,7 +1327,7 @@ namespace buildsys
 		//! Build this package
 		bool build(bool locally = false);
 		//! Has building of this package already started ?
-		bool isBuilding()
+		bool isBuilding() const
 		{
 			return this->building;
 		}
@@ -1381,7 +1381,7 @@ namespace buildsys
 		//! Fill the Internal_Graph
 		void fill(World *W);
 		//! Output the graph to dependencies.dot
-		void output();
+		void output() const;
 		//! Perform a topological sort
 		void topological();
 		//! Find a package with no dependencies
@@ -1426,12 +1426,12 @@ namespace buildsys
 			}
 			return p;
 		}
-		bool done()
+		bool done() const
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
 			return (this->started == this->finished) && this->queue.empty();
 		}
-		void wait()
+		void wait() const
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
 			if(this->started != this->finished) {
@@ -1487,17 +1487,17 @@ namespace buildsys
 		/** Get the value of a specific feature
 		 *  lua: feature('magic-support')
 		 */
-		std::string getFeature(const std::string &key)
+		std::string getFeature(const std::string &key) const
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
 			if(features.find(key) != features.end()) {
-				return features[key];
+				return features.at(key);
 			}
 			throw NoKeyException();
 		}
 		/** Print all feature/values to the console
 		 */
-		void printFeatureValues()
+		void printFeatureValues() const
 		{
 			std::unique_lock<std::mutex> lk(this->lock);
 			std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
@@ -1535,7 +1535,7 @@ namespace buildsys
 		bool outputPrefix{true};
 
 		mutable std::mutex dlobjects_lock;
-		DLObject *_findDLObject(const std::string &);
+		const DLObject *_findDLObject(const std::string &);
 
 	public:
 		World()
@@ -1553,7 +1553,7 @@ namespace buildsys
 		 *  and build only a specific set of packages (all the arguments, except the first
 		 * one)
 		 */
-		bool forcedMode()
+		bool forcedMode() const
 		{
 			return !forcedDeps.empty();
 		};
@@ -1565,7 +1565,7 @@ namespace buildsys
 			forcedDeps.push_back(name);
 		};
 		//! Check if a specific package is being forced
-		bool isForced(const std::string &name)
+		bool isForced(const std::string &name) const
 		{
 			return (std::find(this->forcedDeps.begin(), this->forcedDeps.end(), name) !=
 			        this->forcedDeps.end());
@@ -1576,7 +1576,7 @@ namespace buildsys
 		 *  clean out its working directory instead
 		 *  (Ignoring dependency scanning, but obeying forced mode)
 		 */
-		bool areCleaning()
+		bool areCleaning() const
 		{
 			return this->cleaning;
 		}
@@ -1591,7 +1591,7 @@ namespace buildsys
 		 *  This will make buildsys stop after parsing all packages (package filtering rules
 		 * have no impact)
 		 */
-		bool areParseOnly()
+		bool areParseOnly() const
 		{
 			return this->parseOnly;
 		}
@@ -1607,7 +1607,7 @@ namespace buildsys
 		 * exiting
 		 * if there is a fault
 		 */
-		bool areKeepGoing()
+		bool areKeepGoing() const
 		{
 			return this->keepGoing;
 		}
@@ -1622,7 +1622,7 @@ namespace buildsys
 		 *  This will make it so that menuconfig doesn't look horrible.
 		 *  At the expense of making it much harder to debug when the build breaks.
 		 */
-		bool areOutputPrefix()
+		bool areOutputPrefix() const
 		{
 			return this->outputPrefix;
 		}
@@ -1643,25 +1643,23 @@ namespace buildsys
 			                  feature) != this->ignoredFeatures.end());
 		}
 		//! Is the ignore list empty ?
-		bool noIgnoredFeatures()
+		bool noIgnoredFeatures() const
 		{
 			return this->ignoredFeatures.empty();
 		}
 
 		//! Find (or create) a DLObject for a given full file name
-		DLObject *findDLObject(const std::string &fname)
+		const DLObject *findDLObject(const std::string &fname)
 		{
-			DLObject *dlo = nullptr;
 			std::unique_lock<std::mutex> lk(this->dlobjects_lock);
-			dlo = this->_findDLObject(fname);
-			return dlo;
+			return this->_findDLObject(fname);
 		}
 
 		//! Start the processing and building steps with the given meta package
 		bool basePackage(const std::string &filename);
 
 		//! Get the namespace list
-		const std::list<NameSpace> &getNameSpaces()
+		const std::list<NameSpace> &getNameSpaces() const
 		{
 			return this->namespaces;
 		}
@@ -1675,7 +1673,7 @@ namespace buildsys
 			this->failed = true;
 		};
 		//! Test if we have failed
-		bool isFailed()
+		bool isFailed() const
 		{
 			return this->failed;
 		}
@@ -1688,12 +1686,12 @@ namespace buildsys
 			this->fetch_from = std::move(from);
 		}
 		//! Test if the fetch from location is set
-		bool canFetchFrom()
+		bool canFetchFrom() const
 		{
 			return (!this->fetch_from.empty());
 		}
 		//! Test if the fetch from location is set
-		std::string fetchFrom()
+		const std::string &fetchFrom() const
 		{
 			return this->fetch_from;
 		}
@@ -1704,18 +1702,18 @@ namespace buildsys
 			this->tarball_cache = std::move(cache);
 		}
 		//! Test if the tarball cache location is set
-		bool haveTarballCache()
+		bool haveTarballCache() const
 		{
 			return (!this->tarball_cache.empty());
 		}
 		//! Get the the tarball Cache location
-		std::string tarballCache()
+		const std::string &tarballCache() const
 		{
 			return this->tarball_cache;
 		}
 
 		//! Get 'pwd'
-		const std::string &getWorkingDir()
+		const std::string &getWorkingDir() const
 		{
 			return this->pwd;
 		}
@@ -1726,7 +1724,7 @@ namespace buildsys
 			this->overlays.push_back(path);
 		};
 		//! Get the overlay list
-		const std::list<std::string> &getOverlays()
+		const std::list<std::string> &getOverlays() const
 		{
 			return this->overlays;
 		}
@@ -1743,7 +1741,7 @@ namespace buildsys
 			this->cond.notify_all();
 		};
 		//! How many threads are currently running ?
-		int threadsRunning()
+		int threadsRunning() const
 		{
 			return this->threads_running;
 		};
@@ -1762,7 +1760,7 @@ namespace buildsys
 		{
 			return &this->features;
 		}
-		void printNameSpaces();
+		void printNameSpaces() const;
 	};
 } // namespace buildsys
 

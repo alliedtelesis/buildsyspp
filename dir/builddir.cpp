@@ -68,13 +68,13 @@ BuildDir::BuildDir(Package *P)
 	filesystem::create_directories(this->new_install);
 }
 
-void BuildDir::clean()
+void BuildDir::clean() const
 {
 	filesystem::remove_all(this->path);
 	filesystem::create_directories(this->path);
 }
 
-void BuildDir::cleanStaging()
+void BuildDir::cleanStaging() const
 {
 	filesystem::remove_all(this->staging);
 }

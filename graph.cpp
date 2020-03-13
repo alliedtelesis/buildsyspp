@@ -80,7 +80,7 @@ void Internal_Graph::fill(World *W)
 	}
 }
 
-void Internal_Graph::output()
+void Internal_Graph::output() const
 {
 	std::ofstream dotFile("dependencies.dot");
 	write_graphviz(dotFile, g, graphnode_property_writer<VertexNodeMap>(NodeMap));

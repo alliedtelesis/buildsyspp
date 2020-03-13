@@ -606,7 +606,7 @@ bool Package::packageNewInstall()
 	return true;
 }
 
-void Package::cleanStaging()
+void Package::cleanStaging() const
 {
 	if(this->suppress_remove_staging) {
 		return;

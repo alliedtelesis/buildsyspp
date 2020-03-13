@@ -169,7 +169,7 @@ bool World::packageFinished(Package *_p)
 	return true;
 }
 
-DLObject *World::_findDLObject(const std::string &fname)
+const DLObject *World::_findDLObject(const std::string &fname)
 {
 	auto iter = this->dlobjects.begin();
 	auto iterEnd = this->dlobjects.end();
@@ -183,7 +183,7 @@ DLObject *World::_findDLObject(const std::string &fname)
 	return &this->dlobjects.back();
 }
 
-void World::printNameSpaces()
+void World::printNameSpaces() const
 {
 	std::cout << std::endl << "----BEGIN NAMESPACES----" << std::endl;
 	for(auto &ns : this->namespaces) {

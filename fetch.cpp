@@ -68,7 +68,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 	/* Hold a lock while we download this file
 	 * Also checks for conflicting hashes for the same file
 	 */
-	DLObject *dlobj = d->getWorld()->findDLObject(fullname);
+	const DLObject *dlobj = d->getWorld()->findDLObject(fullname);
 	if(dlobj == nullptr) {
 		log(this->P, "Failed to get the DLObject for " + fullname);
 		return false;

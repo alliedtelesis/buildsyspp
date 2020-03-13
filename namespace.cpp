@@ -34,14 +34,14 @@ NameSpace::~NameSpace()
 	}
 }
 
-std::string NameSpace::getStagingDir()
+std::string NameSpace::getStagingDir() const
 {
 	std::stringstream res;
 	res << "output/" << this->getName() << "/staging";
 	return res.str();
 }
 
-std::string NameSpace::getInstallDir()
+std::string NameSpace::getInstallDir() const
 {
 	std::stringstream res;
 	res << "output/" << this->getName() << "/install";
