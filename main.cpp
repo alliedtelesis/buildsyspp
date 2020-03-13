@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
 	std::vector<std::string> argList(argv, argv + argc);
 
-	World WORLD(argList[0]);
+	World WORLD;
 	hash_setup();
 
 	// process arguments ...

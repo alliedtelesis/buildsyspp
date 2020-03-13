@@ -1512,7 +1512,6 @@ namespace buildsys
 	class World
 	{
 	private:
-		std::string bsapp;
 		FeatureMap features;
 		string_list forcedDeps;
 		std::list<NameSpace> namespaces;
@@ -1539,18 +1538,12 @@ namespace buildsys
 		DLObject *_findDLObject(const std::string &);
 
 	public:
-		explicit World(std::string _bsapp) : bsapp(std::move(_bsapp))
+		World()
 		{
 			overlays.emplace_back(std::string("."));
 			char *_pwd = getcwd(nullptr, 0);
 			this->pwd = std::string(_pwd);
 			free(_pwd); // NOLINT
-		};
-
-		//! Return the name we were invoked as
-		std::string getAppName()
-		{
-			return this->bsapp;
 		};
 
 		/** Are we operating in 'forced' mode
