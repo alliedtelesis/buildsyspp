@@ -51,7 +51,7 @@ static std::string git_hash_ref(const std::string &gdir, const std::string &refs
 	fread(&commit[0], sizeof(char), commit.size() - 1, f);
 	pclose(f);
 
-	return std::string(commit.begin(), commit.end());
+	return std::string(commit.data());
 }
 
 static std::string git_hash(const std::string &gdir)
@@ -70,7 +70,7 @@ static std::string git_diff_hash(const std::string &gdir)
 	fread(&delta_hash[0], sizeof(char), delta_hash.size() - 1, f);
 	pclose(f);
 
-	return std::string(delta_hash.begin(), delta_hash.end());
+	return std::string(delta_hash.data());
 }
 
 static std::string git_remote(const std::string &gdir, const std::string &remote)
@@ -85,7 +85,7 @@ static std::string git_remote(const std::string &gdir, const std::string &remote
 	fread(&output[0], sizeof(char), output.size() - 1, f);
 	pclose(f);
 
-	return std::string(output.begin(), output.end());
+	return std::string(output.data());
 }
 
 GitDirExtractionUnit::GitDirExtractionUnit(const std::string &git_dir,
