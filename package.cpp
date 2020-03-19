@@ -489,19 +489,12 @@ bool Package::prepareBuildDirs()
 	std::system(cmd.c_str());
 
 	std::unordered_set<Package *> packages = this->getAllDependedPackages();
-	std::list<std::thread> threads;
-	std::atomic<bool> result{true};
+	bool result{true};
 	for(auto p : packages) {
-		std::thread th([p, &staging_dir, &result] {
-			bool ret = p->extract_staging(staging_dir);
-			if(!ret) {
-				result = false;
-			}
-		});
-		threads.push_back(std::move(th));
-	}
-	for(auto &t : threads) {
-		t.join();
+		result = p->extract_staging(staging_dir);
+		if(!result) {
+			break;
+		}
 	}
 
 	if(result) {
@@ -535,19 +528,12 @@ bool Package::extractInstallDepends()
 
 	std::unordered_set<Package *> packages =
 	    this->getDependedPackages(!this->depsExtractionDirectOnly, false);
-	std::list<std::thread> threads;
-	std::atomic<bool> result{true};
+	bool result{true};
 	for(auto p : packages) {
-		std::thread th([p, this, &result] {
-			bool ret = p->extract_install(this->depsExtraction);
-			if(!ret) {
-				result = false;
-			}
-		});
-		threads.push_back(std::move(th));
-	}
-	for(auto &t : threads) {
-		t.join();
+		result = p->extract_install(this->depsExtraction);
+		if(!result) {
+			break;
+		}
 	}
 
 	if(result) {
