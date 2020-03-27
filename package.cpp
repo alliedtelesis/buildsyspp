@@ -182,7 +182,7 @@ bool Package::checkForDependencyLoops()
 bool Package::extract_staging(const std::string &dir)
 {
 	PackageCmd pc(dir, "tar");
-	pc.addArg("-xf");
+	pc.addArg("-xkf");
 	std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/staging/" +
 	                  this->name + ".tar";
 	pc.addArg(arg);
@@ -221,7 +221,7 @@ bool Package::extract_install(const std::string &dir)
 		}
 	} else {
 		PackageCmd pc(dir, "tar");
-		pc.addArg("-xf");
+		pc.addArg("-xkf");
 		std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/install/" +
 		                  this->name + ".tar";
 		pc.addArg(arg);
