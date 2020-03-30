@@ -469,29 +469,29 @@ std::unordered_set<Package *> Package::getAllDependedPackages()
 	return this->getDependedPackages(true, true);
 }
 
+static void cleanDir(const std::string &dir)
+{
+	std::string cmd;
+
+	cmd = "rm -fr " + dir;
+	std::system(cmd.c_str());
+	cmd = "mkdir " + dir;
+	std::system(cmd.c_str());
+}
+
 bool Package::prepareBuildDirs()
 {
-	std::string staging_dir =
-	    "output/" + this->getNS()->getName() + "/" + this->name + "/staging";
 	log(this, "Generating staging directory ...");
 
 	// Clean out the (new) staging/install directories
-	std::string cmd = "rm -fr " + this->pwd + "/output/" + this->getNS()->getName() + "/" +
-	                  this->name + "/new/install/*";
-	std::system(cmd.c_str());
-
-	cmd = "rm -fr " + this->pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
-	      "/new/staging/*";
-	std::system(cmd.c_str());
-
-	cmd = "rm -fr " + this->pwd + "/output/" + this->getNS()->getName() + "/" + this->name +
-	      "/staging/*";
-	std::system(cmd.c_str());
+	cleanDir(this->bd.getNewInstall());
+	cleanDir(this->bd.getNewStaging());
+	cleanDir(this->bd.getStaging());
 
 	std::unordered_set<Package *> packages = this->getAllDependedPackages();
 	bool result{true};
 	for(auto p : packages) {
-		result = p->extract_staging(staging_dir);
+		result = p->extract_staging(this->bd.getStaging());
 		if(!result) {
 			break;
 		}
