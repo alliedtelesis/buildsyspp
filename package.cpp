@@ -26,6 +26,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "include/buildsys.h"
 #include "interface/luainterface.h"
 
+#ifndef TAR_CMD
+#define TAR_CMD "/bin/tar"
+#endif
+
+
 BuildDir *Package::builddir()
 {
 	return &this->bd;
@@ -181,7 +186,10 @@ bool Package::checkForDependencyLoops()
  */
 bool Package::extract_staging(const std::string &dir)
 {
-	PackageCmd pc(dir, "tar");
+	PackageCmd pc(dir, TAR_CMD);
+	pc.addArg("--no-same-owner");
+	pc.addArg("-b");
+	pc.addArg("256");
 	pc.addArg("-xkf");
 	std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/staging/" +
 	                  this->name + ".tar";
@@ -220,7 +228,10 @@ bool Package::extract_install(const std::string &dir)
 			}
 		}
 	} else {
-		PackageCmd pc(dir, "tar");
+		PackageCmd pc(dir, TAR_CMD);
+		pc.addArg("--no-same-owner");
+		pc.addArg("-b");
+		pc.addArg("256");
 		pc.addArg("-xkf");
 		std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/install/" +
 		                  this->name + ".tar";
@@ -473,10 +484,9 @@ static void cleanDir(const std::string &dir)
 {
 	std::string cmd;
 
-	cmd = "rm -fr " + dir;
+	cmd = "/bin/rm -fr " + dir;
 	std::system(cmd.c_str());
-	cmd = "mkdir " + dir;
-	std::system(cmd.c_str());
+	mkdir(dir.c_str(), 0777);
 }
 
 bool Package::prepareBuildDirs()
@@ -512,7 +522,7 @@ bool Package::extractInstallDepends()
 
 	// Extract installed files to a given location
 	log(this, "Removing old install files ...");
-	PackageCmd pc(this->pwd, "rm");
+	PackageCmd pc(this->pwd, "/bin/rm");
 	pc.addArg("-fr");
 	pc.addArg(this->depsExtraction);
 	if(!pc.Run(this)) {
@@ -544,7 +554,10 @@ bool Package::extractInstallDepends()
 
 bool Package::packageNewStaging()
 {
-	PackageCmd pc(this->bd.getNewStaging(), "tar");
+	PackageCmd pc(this->bd.getNewStaging(), TAR_CMD);
+	pc.addArg("--numeric-owner");
+	pc.addArg("-b");
+	pc.addArg("256");
 	pc.addArg("-cf");
 	std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/staging/" +
 	                  this->name + ".tar";
@@ -577,7 +590,10 @@ bool Package::packageNewInstall()
 			}
 		}
 	} else {
-		PackageCmd pc(this->bd.getNewInstall(), "tar");
+		PackageCmd pc(this->bd.getNewInstall(), TAR_CMD);
+		pc.addArg("--numeric-owner");
+		pc.addArg("-b");
+		pc.addArg("256");
 		pc.addArg("-cf");
 		std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/install/" +
 		                  this->name + ".tar";
