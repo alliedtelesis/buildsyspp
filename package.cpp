@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TAR_CMD "/bin/tar"
 #endif
 
-
 BuildDir *Package::builddir()
 {
 	return &this->bd;
@@ -444,40 +443,40 @@ bool Package::shouldBuild(bool locally)
 /**
  * Get the set of packages that this package depends on.
  *
- * @oaram include_children - Set true to include the child dependencies of any direct
+ * @param The set to fill with the depended packages.
+ * @param include_children - Set true to include the child dependencies of any direct
  * dependencies.
  * @param ignore_intercept - Ignore the intercept setting on the depended package (i.e.
  * include its child dependencies).
- *
- * @returns The set of containing the depended packages.
  */
-std::unordered_set<Package *> Package::getDependedPackages(bool include_children,
-                                                           bool ignore_intercept)
+void Package::getDependedPackages(std::unordered_set<Package *> *packages,
+                                  bool include_children, bool ignore_intercept)
 {
-	std::unordered_set<Package *> packages;
-
 	for(auto &dp : this->depends) {
-		packages.insert(dp.getPackage());
+		// This depended package (and therefore all of its dependencies) are already in the
+		// set. Don't recurse through them again.
+		if(packages->find(dp.getPackage()) != packages->end()) {
+			continue;
+		}
+
+		packages->insert(dp.getPackage());
 
 		if(include_children && (ignore_intercept || !dp.getPackage()->getIntercept())) {
-			auto recursed_packages =
-			    dp.getPackage()->getDependedPackages(include_children, ignore_intercept);
-			packages.insert(recursed_packages.begin(), recursed_packages.end());
+			dp.getPackage()->getDependedPackages(packages, include_children,
+			                                     ignore_intercept);
 		}
 	}
-
-	return packages;
 }
 
 /**
  * Get the set of all packages that this package depends on. Note that this includes
  * the packages that the directly depended packages depend on and so forth.
  *
- * @returns The set of containing all of the depended packages.
+ * @param The set to fill with all of the depended packages.
  */
-std::unordered_set<Package *> Package::getAllDependedPackages()
+void Package::getAllDependedPackages(std::unordered_set<Package *> *packages)
 {
-	return this->getDependedPackages(true, true);
+	this->getDependedPackages(packages, true, true);
 }
 
 static void cleanDir(const std::string &dir)
@@ -498,7 +497,8 @@ bool Package::prepareBuildDirs()
 	cleanDir(this->bd.getNewStaging());
 	cleanDir(this->bd.getStaging());
 
-	std::unordered_set<Package *> packages = this->getAllDependedPackages();
+	std::unordered_set<Package *> packages;
+	this->getAllDependedPackages(&packages);
 	bool result{true};
 	for(auto p : packages) {
 		result = p->extract_staging(this->bd.getStaging());
@@ -536,8 +536,8 @@ bool Package::extractInstallDepends()
 
 	log(this, "Extracting installed files from dependencies ...");
 
-	std::unordered_set<Package *> packages =
-	    this->getDependedPackages(!this->depsExtractionDirectOnly, false);
+	std::unordered_set<Package *> packages;
+	this->getDependedPackages(&packages, !this->depsExtractionDirectOnly, false);
 	bool result{true};
 	for(auto p : packages) {
 		result = p->extract_install(this->depsExtraction);

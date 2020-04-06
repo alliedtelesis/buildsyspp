@@ -1107,9 +1107,9 @@ namespace buildsys
 		void updateBuildInfoHashExisting();
 		bool extract_staging(const std::string &dir);
 		bool extract_install(const std::string &dir);
-		std::unordered_set<Package *> getAllDependedPackages();
-		std::unordered_set<Package *> getDependedPackages(bool include_children,
-		                                                  bool ignore_intercept);
+		void getAllDependedPackages(std::unordered_set<Package *> *packages);
+		void getDependedPackages(std::unordered_set<Package *> *packages,
+		                         bool include_children, bool ignore_intercept);
 
 	protected:
 		//! prepare the (new) build.info file
