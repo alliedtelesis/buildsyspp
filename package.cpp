@@ -38,8 +38,9 @@ BuildDir *Package::builddir()
 std::ofstream &Package::getLogFile()
 {
 	if(this->logFile == nullptr) {
-		this->logFile =
-		    std::make_unique<std::ofstream>(this->builddir()->getPath() + "/build.log");
+		auto log_path = boost::format{"%1%/output/%2%/%3%/build.log"} % this->pwd %
+		                this->getNS()->getName() % this->name;
+		this->logFile = std::make_unique<std::ofstream>(log_path.str());
 	}
 	return *this->logFile;
 }
