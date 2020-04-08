@@ -297,7 +297,6 @@ namespace buildsys
 		std::string new_install;
 		std::string work_build;
 		std::string work_src;
-		World *WORLD;
 
 	public:
 		/** Create a build directory
@@ -333,11 +332,6 @@ namespace buildsys
 		const std::string &getNewInstall() const
 		{
 			return this->new_install;
-		};
-		//! Get the world this builddir is part of
-		World *getWorld()
-		{
-			return this->WORLD;
 		};
 		//! Remove all of the work directory contents
 		void clean() const;

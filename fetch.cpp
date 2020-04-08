@@ -58,7 +58,7 @@ std::string DownloadFetch::final_name()
 	return ret;
 }
 
-bool DownloadFetch::fetch(BuildDir *d)
+bool DownloadFetch::fetch(BuildDir *) // NOLINT
 {
 	filesystem::create_directories("dl");
 
@@ -68,7 +68,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 	/* Hold a lock while we download this file
 	 * Also checks for conflicting hashes for the same file
 	 */
-	const DLObject *dlobj = d->getWorld()->findDLObject(fullname);
+	const DLObject *dlobj = this->P->getWorld()->findDLObject(fullname);
 	if(dlobj == nullptr) {
 		log(this->P, "Failed to get the DLObject for " + fullname);
 		return false;
@@ -89,14 +89,14 @@ bool DownloadFetch::fetch(BuildDir *d)
 		}
 	}
 
-	std::string _fpath = d->getWorld()->getWorkingDir() + "/dl/" + fname;
+	std::string _fpath = this->P->getPwd() + "/dl/" + fname;
 	if(!filesystem::exists(_fpath)) {
 		bool localCacheHit = false;
 		// Attempt to get file from local tarball cache if one is configured.
-		if(d->getWorld()->haveTarballCache()) {
+		if(this->P->getWorld()->haveTarballCache()) {
 			filesystem::remove("dl/" + fullname + ".tmp");
 			PackageCmd pc("dl", "wget");
-			std::string url = d->getWorld()->tarballCache() + "/" + fname;
+			std::string url = this->P->getWorld()->tarballCache() + "/" + fname;
 			pc.addArg(url);
 			pc.addArg("-O" + fullname + ".tmp");
 			localCacheHit = pc.Run(this->P);
@@ -137,8 +137,7 @@ bool DownloadFetch::fetch(BuildDir *d)
 	bool ret = true;
 
 	if(this->hash.length() != 0) {
-		auto fpath = boost::format{"%1%/dl/%2%"} % d->getWorld()->getWorkingDir() %
-		             this->final_name();
+		auto fpath = boost::format{"%1%/dl/%2%"} % this->P->getPwd() % this->final_name();
 		std::string _hash = hash_file(fpath.str());
 
 		if(this->hash != _hash) {

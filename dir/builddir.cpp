@@ -34,7 +34,6 @@ BuildDir::BuildDir(Package *P)
 	std::string gname = P->getNS()->getName();
 	std::string pname = P->getName();
 	std::string pwd = P->getPwd();
-	this->WORLD = P->getWorld();
 
 	filesystem::create_directories("output");
 	filesystem::create_directories("output/" + gname);

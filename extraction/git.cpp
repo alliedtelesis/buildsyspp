@@ -155,11 +155,11 @@ bool GitExtractionUnit::updateOrigin()
 	return true;
 }
 
-bool GitExtractionUnit::fetch(BuildDir *d)
+bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 {
 	std::string location = this->uri;
 	std::string source_dir = this->local;
-	std::string cwd = d->getWorld()->getWorkingDir();
+	std::string cwd = this->P->getPwd();
 
 	bool exists = filesystem::is_directory(source_dir);
 
