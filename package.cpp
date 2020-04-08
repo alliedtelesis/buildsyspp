@@ -500,12 +500,25 @@ bool Package::prepareBuildDirs()
 
 	std::unordered_set<Package *> packages;
 	this->getAllDependedPackages(&packages);
-	bool result{true};
+
+	bool use_threads = this->getWorld()->getThreadsLimit() == 0;
+	std::list<std::thread> threads;
+	std::atomic<bool> result{true};
 	for(auto p : packages) {
-		result = p->extract_staging(this->bd.getStaging());
-		if(!result) {
-			break;
+		if(use_threads) {
+			std::thread th([p, this, &result] {
+				bool ret = p->extract_staging(this->bd.getStaging());
+				if(!ret) {
+					result = false;
+				}
+			});
+			threads.push_back(std::move(th));
+		} else {
+			result = p->extract_staging(this->bd.getStaging());
 		}
+	}
+	for(auto &t : threads) {
+		t.join();
 	}
 
 	if(result) {
@@ -539,12 +552,25 @@ bool Package::extractInstallDepends()
 
 	std::unordered_set<Package *> packages;
 	this->getDependedPackages(&packages, !this->depsExtractionDirectOnly, false);
-	bool result{true};
+
+	bool use_threads = this->getWorld()->getThreadsLimit() == 0;
+	std::list<std::thread> threads;
+	std::atomic<bool> result{true};
 	for(auto p : packages) {
-		result = p->extract_install(this->depsExtraction);
-		if(!result) {
-			break;
+		if(use_threads) {
+			std::thread th([p, this, &result] {
+				bool ret = p->extract_install(this->depsExtraction);
+				if(!ret) {
+					result = false;
+				}
+			});
+			threads.push_back(std::move(th));
+		} else {
+			result = p->extract_install(this->depsExtraction);
 		}
+	}
+	for(auto &t : threads) {
+		t.join();
 	}
 
 	if(result) {

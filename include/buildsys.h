@@ -1750,6 +1750,11 @@ namespace buildsys
 		{
 			this->threads_limit = tl;
 		};
+		//! Get the thread limit value
+		int getThreadsLimit() const
+		{
+			return this->threads_limit;
+		}
 		//! output the dependency graph
 		bool output_graph()
 		{
