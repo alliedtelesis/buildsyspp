@@ -283,31 +283,12 @@ namespace buildsys
 		}
 	};
 
-	//! A directory to perform actions on
-	class Dir
-	{
-	private:
-	public:
-		virtual ~Dir() = default;
-		//! Set this as a Dir for lua
-		static void lua_table_r(lua_State *L)
-		{
-			LUA_SET_TABLE_TYPE(L, Dir)
-		}
-		//! Register as a lua table for return from a function
-		virtual void lua_table(lua_State *L)
-		{
-			lua_table_r(L);
-		};
-	};
-
 	/** A directory for building a package in
 	 *  Each package has one build directory which is used to run all the commands in
 	 */
-	class BuildDir : public Dir
+	class BuildDir
 	{
 	private:
-		using super = Dir;
 		std::string path;
 		std::string rpath;
 		std::string staging;
@@ -323,7 +304,6 @@ namespace buildsys
 		 *  \param P The package this directory is for
 		 */
 		explicit BuildDir(Package *P);
-		~BuildDir() override = default;
 		//! Return the full path to this directory
 		const std::string &getPath() const
 		{
@@ -364,7 +344,7 @@ namespace buildsys
 		//! Remove all of the staging directory contents
 		void cleanStaging() const;
 
-		static void lua_table_r(lua_State *L)
+		void lua_table(lua_State *L)
 		{
 			LUA_SET_TABLE_TYPE(L, BuildDir);
 			LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
@@ -373,11 +353,6 @@ namespace buildsys
 			LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
 			LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
 			LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
-			super::lua_table_r(L);
-		}
-		void lua_table(lua_State *L) override
-		{
-			lua_table_r(L);
 			LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
 			LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
 			LUA_ADD_TABLE_STRING(L, "path", path.c_str());
