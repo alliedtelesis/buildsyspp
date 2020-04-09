@@ -102,8 +102,15 @@ bool World::basePackage(const std::string &filename)
 {
 	std::string filename_copy = filename;
 
-	// Remove any trailing slashes
-	filename_copy.erase(filename_copy.find_last_not_of('/') + 1);
+	// Resolve any symbolic links
+	char *resolved_path = realpath(filename_copy.c_str(), nullptr);
+	if(resolved_path == nullptr) {
+		error("Base package path does not exist");
+		return false;
+	}
+	filename_copy = std::string(resolved_path);
+	free(resolved_path); // NOLINT
+
 	// Strip the directory from the base package name
 	std::string pname = filename_copy.substr(filename_copy.rfind('/') + 1);
 	// Strip the '.lua' from end of the filename for the namespace name
