@@ -300,9 +300,12 @@ namespace buildsys
 
 	public:
 		/** Create a build directory
-		 *  \param P The package this directory is for
+		 *  @param pwd - The current working directory
+		 *  @param gname - The namespace name of the package
+		 *  @param pname - The package name
 		 */
-		explicit BuildDir(Package *P);
+		BuildDir(const std::string &pwd, const std::string &gname,
+		         const std::string &pname);
 		//! Return the full path to this directory
 		const std::string &getPath() const
 		{
@@ -1123,7 +1126,7 @@ namespace buildsys
 		        std::string _file, std::string _overlay, std::string _pwd)
 		    : name(std::move(_name)), file(std::move(_file)),
 		      file_short(std::move(_file_short)), overlay(std::move(_overlay)),
-		      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(this))
+		      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(_pwd, _ns->getName(), _name))
 		{
 		}
 		//! Set the namespace this package is in
@@ -1136,7 +1139,7 @@ namespace buildsys
 			if(this->ns != nullptr) {
 				this->ns->addPackage(this);
 			}
-			this->bd = BuildDir(this);
+			this->bd = BuildDir(this->getPwd(), _ns->getName(), this->name);
 		};
 		//! Returns the namespace this package is in
 		NameSpace *getNS()

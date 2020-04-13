@@ -29,12 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <sys/types.h>
 
-BuildDir::BuildDir(Package *P)
+BuildDir::BuildDir(const std::string &pwd, const std::string &gname,
+                   const std::string &pname)
 {
-	std::string gname = P->getNS()->getName();
-	std::string pname = P->getName();
-	std::string pwd = P->getPwd();
-
 	filesystem::create_directories("output");
 	filesystem::create_directories("output/" + gname);
 	filesystem::create_directories("output/" + gname + "/staging");
