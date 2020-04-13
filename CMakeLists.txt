@@ -8,6 +8,8 @@ project(Buildsys++ LANGUAGES CXX)
 
 include(FetchContent)
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 enable_testing()
 
 add_subdirectory(unit-test)
