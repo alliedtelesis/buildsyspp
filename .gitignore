@@ -1,3 +1,5 @@
 buildsys
 *.o
 *.gch
+test/dl
+build

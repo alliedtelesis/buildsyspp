@@ -37,7 +37,7 @@ test:
 	$(MAKE) -C test
 
 indent:
-	find \( -name "*.cpp" -o -name "*.h" \) -not -path "*test/*" -exec clang-format -i -style=file {} \;
+	find \( -name "*.cpp" -o -name "*.h" \) -not -path "output/*" -and -not -path "test/*" -exec clang-format -i -style=file {} \;
 
 cpplint:
 	find \( -name "*.cpp" -o -name "*.h" \) -not -path "*test/*" -exec cpplint {} \;
