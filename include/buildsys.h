@@ -1126,7 +1126,8 @@ namespace buildsys
 		        std::string _file, std::string _overlay, std::string _pwd)
 		    : name(std::move(_name)), file(std::move(_file)),
 		      file_short(std::move(_file_short)), overlay(std::move(_overlay)),
-		      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(_pwd, _ns->getName(), _name))
+		      pwd(std::move(_pwd)), ns(_ns),
+		      bd(BuildDir(this->pwd, _ns->getName(), this->name))
 		{
 		}
 		//! Set the namespace this package is in
