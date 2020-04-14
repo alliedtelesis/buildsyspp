@@ -515,7 +515,7 @@ bool Package::prepareBuildDirs()
 			threads.push_back(std::move(th));
 		} else {
 			result = p->extract_staging(this->bd.getStaging());
-			if (!result) {
+			if(!result) {
 				break;
 			}
 		}
@@ -570,7 +570,7 @@ bool Package::extractInstallDepends()
 			threads.push_back(std::move(th));
 		} else {
 			result = p->extract_install(this->depsExtraction);
-			if (!result) {
+			if(!result) {
 				break;
 			}
 		}

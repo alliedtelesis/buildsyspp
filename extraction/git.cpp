@@ -86,7 +86,7 @@ static std::string git_remote(const std::string &gdir, const std::string &remote
 	pclose(f);
 
 	std::string res = std::string(output.data());
-	res.erase(res.find_last_not_of(" \n\r\t")+1);
+	res.erase(res.find_last_not_of(" \n\r\t") + 1);
 	return res;
 }
 
