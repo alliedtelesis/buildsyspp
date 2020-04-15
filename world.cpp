@@ -117,13 +117,16 @@ bool World::basePackage(const std::string &filename)
 	std::string nsname = pname.substr(0, pname.find(".lua"));
 
 	NameSpace *ns = this->findNameSpace(nsname);
-	this->p = new Package(ns, pname, filename_copy, filename_copy, "", this->pwd);
-	ns->addPackage(this->p);
 
-	process_packages(this->p);
+	std::unique_ptr<Package> p =
+	    std::make_unique<Package>(ns, pname, filename_copy, filename_copy, "", this->pwd);
+	Package *base_package = p.get();
+	ns->addPackage(std::move(p));
+
+	process_packages(base_package);
 
 	// Check for dependency loops
-	if(!this->p->checkForDependencyLoops()) {
+	if(!base_package->checkForDependencyLoops()) {
 		error("Dependency Loop Detected");
 		return false;
 	}
@@ -137,7 +140,7 @@ bool World::basePackage(const std::string &filename)
 	this->topo_graph.fill(this);
 
 	this->topo_graph.topological();
-	while(!this->isFailed() && !this->p->isBuilt()) {
+	while(!this->isFailed() && !base_package->isBuilt()) {
 		std::unique_lock<std::mutex> lk(this->cond_lock);
 		Package *toBuild = nullptr;
 		if(this->threads_limit == 0 || this->threads_running < this->threads_limit) {
@@ -159,7 +162,7 @@ bool World::basePackage(const std::string &filename)
 	}
 	if(this->areKeepGoing()) {
 		std::unique_lock<std::mutex> lk(this->cond_lock);
-		while(!this->p->isBuilt() && this->threads_running > 0) {
+		while(!base_package->isBuilt() && this->threads_running > 0) {
 			this->cond.wait(lk);
 			lk.lock();
 		}

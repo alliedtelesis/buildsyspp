@@ -56,14 +56,15 @@ public:
 void Internal_Graph::fill(World *W)
 {
 	for(const auto &ns : W->getNameSpaces()) {
-		for(const auto package : ns.getPackages()) {
+		for(const auto &package : ns.getPackages()) {
 			NodeVertexMap::iterator pos;
 			bool inserted;
-			boost::tie(pos, inserted) = Nodes.insert(std::make_pair(package, Vertex()));
+			boost::tie(pos, inserted) =
+			    Nodes.insert(std::make_pair(package.get(), Vertex()));
 			if(inserted) {
 				Vertex u = add_vertex(g);
 				pos->second = u;
-				NodeMap.insert(std::make_pair(u, package));
+				NodeMap.insert(std::make_pair(u, package.get()));
 			}
 		}
 	}
@@ -74,7 +75,7 @@ void Internal_Graph::fill(World *W)
 				Edge e;
 				bool inserted;
 				boost::tie(e, inserted) =
-				    add_edge(Nodes[(package)], Nodes[depend.getPackage()], g);
+				    add_edge(Nodes[(package.get())], Nodes[depend.getPackage()], g);
 			}
 		}
 	}

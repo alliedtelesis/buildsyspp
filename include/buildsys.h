@@ -985,7 +985,7 @@ namespace buildsys
 	{
 	private:
 		const std::string name;
-		std::list<Package *> packages;
+		std::list<std::unique_ptr<Package>> packages;
 		mutable std::mutex lock;
 		World *WORLD;
 
@@ -993,18 +993,17 @@ namespace buildsys
 		NameSpace(World *_W, std::string _name) : name(std::move(_name)), WORLD(_W)
 		{
 		}
-		~NameSpace();
 		const std::string &getName() const
 		{
 			return name;
 		};
-		const std::list<Package *> &getPackages() const
+		const std::list<std::unique_ptr<Package>> &getPackages() const
 		{
 			return packages;
 		}
 		//! Find or create a package with the given name
 		Package *findPackage(const std::string &_name);
-		void addPackage(Package *p);
+		void addPackage(std::unique_ptr<Package> p);
 		std::string getStagingDir() const;
 		std::string getInstallDir() const;
 		//! Get the World this NS belongs to
@@ -1474,7 +1473,6 @@ namespace buildsys
 		string_list forcedDeps;
 		std::list<NameSpace> namespaces;
 		std::list<DLObject> dlobjects;
-		Package *p{nullptr};
 		std::list<std::string> overlays;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;

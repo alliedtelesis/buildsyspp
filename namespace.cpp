@@ -25,15 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-NameSpace::~NameSpace()
-{
-	while(!this->packages.empty()) {
-		Package *p = this->packages.front();
-		this->packages.pop_front();
-		delete p;
-	}
-}
-
 std::string NameSpace::getStagingDir() const
 {
 	std::stringstream res;
@@ -56,9 +47,9 @@ Package *NameSpace::findPackage(const std::string &_name)
 
 	std::unique_lock<std::mutex> lk(this->lock);
 
-	for(const auto package : this->getPackages()) {
+	for(const auto &package : this->getPackages()) {
 		if(package->getName() == _name) {
-			return package;
+			return package.get();
 		}
 	}
 
@@ -92,17 +83,18 @@ Package *NameSpace::findPackage(const std::string &_name)
 		file_short = relative_fname.str();
 	}
 
-	Package *p =
-	    new Package(this, _name, file_short, file, overlay, this->WORLD->getWorkingDir());
-	this->packages.push_back(p);
+	std::unique_ptr<Package> p = std::make_unique<Package>(
+	    this, _name, file_short, file, overlay, this->WORLD->getWorkingDir());
+	Package *ret = p.get();
+	this->packages.push_back(std::move(p));
 
-	return p;
+	return ret;
 }
 
-void NameSpace::addPackage(Package *p)
+void NameSpace::addPackage(std::unique_ptr<Package> p)
 {
 	std::unique_lock<std::mutex> lk(this->lock);
-	this->packages.push_back(p);
+	this->packages.push_back(std::move(p));
 }
 
 World *NameSpace::getWorld()
