@@ -42,13 +42,12 @@ static void build_thread(Package *p)
 	World *w = p->getNS()->getWorld();
 
 	log(p, "Build Thread");
-	log(p->getNS()->getName() + "," + p->getName(),
-	    boost::format{"Building (%1% others running)"} % (w->threadsRunning() - 1));
+	log(p, boost::format{"Building (%1% others running)"} % (w->threadsRunning() - 1));
 
 	try {
 		if(!p->build()) {
 			w->setFailed();
-			log(p->getNS()->getName() + "," + p->getName(), "Building failed");
+			log(p, "Building failed");
 		}
 	} catch(Exception &E) {
 		error(E.error_msg());
@@ -56,8 +55,7 @@ static void build_thread(Package *p)
 	}
 	w->threadEnded();
 
-	log(p->getNS()->getName() + "," + p->getName(),
-	    boost::format{"Finished (%1% others running)"} % w->threadsRunning());
+	log(p, boost::format{"Finished (%1% others running)"} % w->threadsRunning());
 }
 
 static void process_package(Package *p, PackageQueue *pq)
