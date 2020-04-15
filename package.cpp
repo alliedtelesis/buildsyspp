@@ -152,7 +152,7 @@ bool Package::process()
 	    std::make_unique<PackageFileUnit>(this->file, this->file_short));
 
 	if(!interfaceSetup(&this->lua)) {
-		error("interfaceSetup: Failed");
+		this->log("interfaceSetup: Failed");
 		exit(-1);
 	}
 

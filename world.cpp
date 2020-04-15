@@ -50,7 +50,7 @@ static void build_thread(Package *p)
 			p->log("Building failed");
 		}
 	} catch(Exception &E) {
-		error(E.error_msg());
+		p->log(E.error_msg());
 		throw;
 	}
 	w->threadEnded();
@@ -99,11 +99,12 @@ static void process_packages(Package *p)
 bool World::basePackage(const std::string &filename)
 {
 	std::string filename_copy = filename;
+	Logger err_logger("BuildSys");
 
 	// Resolve any symbolic links
 	char *resolved_path = realpath(filename_copy.c_str(), nullptr);
 	if(resolved_path == nullptr) {
-		error("Base package path does not exist");
+		err_logger.log("Base package path does not exist");
 		return false;
 	}
 	filename_copy = std::string(resolved_path);
@@ -125,7 +126,7 @@ bool World::basePackage(const std::string &filename)
 
 	// Check for dependency loops
 	if(!base_package->checkForDependencyLoops()) {
-		error("Dependency Loop Detected");
+		err_logger.log("Dependency Loop Detected");
 		return false;
 	}
 

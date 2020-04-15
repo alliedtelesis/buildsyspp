@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	logger.log(boost::format{"Built: %1% %2%"} % __TIME__ % __DATE__);
 
 	if(argc <= 1) {
-		error("At least 1 parameter is required");
+		logger.log("At least 1 parameter is required");
 		exit(-1);
 	}
 
@@ -93,7 +93,8 @@ int main(int argc, char *argv[])
 		// then we can preload the feature set
 		while(a < argList.size()) {
 			if(!WORLD.featureMap()->setFeature(argList[a])) {
-				error("setFeature: Failed");
+				logger.log(
+				    "setFeature Failed: Features must be described as feature=value");
 				exit(-1);
 			}
 			a++;
@@ -112,7 +113,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(!WORLD.basePackage(target)) {
-		error("Building: Failed");
+		logger.log("Building: Failed");
 		if(WORLD.areKeepGoing()) {
 			hash_shutdown();
 		}

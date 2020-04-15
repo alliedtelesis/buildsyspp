@@ -74,13 +74,6 @@ using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
 using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
 using Edge = boost::graph_traits<Graph>::edge_descriptor;
 
-#define error(M)                                                                           \
-	do {                                                                                   \
-		Logger err_logger("BuildSys");                                                     \
-		err_logger.log(boost::format{"%1%:%2%():%3%: %4%"} % __FILE__ % __FUNCTION__ %     \
-		               __LINE__ % (M));                                                    \
-	} while(0)
-
 #define LUA_SET_TABLE_TYPE(L, T)                                                           \
 	lua_pushstring(L, #T);                                                                 \
 	lua_pushstring(L, "yes");                                                              \
@@ -1433,7 +1426,6 @@ namespace buildsys
 		{
 			auto pos = kv.find('=');
 			if(pos == std::string::npos) {
-				error("Features must be described as feature=value");
 				return false;
 			}
 
