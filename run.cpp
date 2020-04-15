@@ -39,14 +39,14 @@ static void pipe_data(int fd, Package *P)
 		ssize_t res = read(fd, reinterpret_cast<void *>(&recv_byte), 1); // NOLINT
 		if(res <= 0) {
 			if(!recv_buf.empty()) {
-				program_output(P, recv_buf);
+				P->program_output(recv_buf);
 			}
 			break;
 		}
 		if(recv_byte == '\n') {
 			recv_buf.push_back('\0');
 			// Print the line, clear the string and start again
-			program_output(P, recv_buf);
+			P->program_output(recv_buf);
 			recv_buf.clear();
 		} else {
 			recv_buf.push_back(recv_byte);
@@ -88,7 +88,7 @@ int buildsys::run(Package *P, const std::string &program,
 		int res = pipe(&fds[0]);
 
 		if(res != 0) {
-			log(P, "pipe() failed: " + std::string(strerror(errno)));
+			P->log("pipe() failed: " + std::string(strerror(errno)));
 		}
 
 		std::thread thr(pipe_data_thread, P, fds[0]);
@@ -97,7 +97,7 @@ int buildsys::run(Package *P, const std::string &program,
 	// call the program ...
 	int pid = fork();
 	if(pid < 0) { // something bad happened ...
-		log(P, "fork() failed: " + std::string(strerror(errno)));
+		P->log("fork() failed: " + std::string(strerror(errno)));
 		exit(-1);
 	} else if(pid == 0) { // child process
 		if(P->getWorld()->areOutputPrefix()) {
@@ -107,11 +107,11 @@ int buildsys::run(Package *P, const std::string &program,
 			close(fds[1]);
 		}
 		if(chdir(path.c_str()) != 0) {
-			log(P, boost::format{"chdir '%1%' failed"} % path);
+			P->log(boost::format{"chdir '%1%' failed"} % path);
 			exit(-1);
 		}
 		exec_process(program, argv, newenvp);
-		log(P, "Failed Running " + program);
+		P->log("Failed Running " + program);
 		exit(-1);
 	} else {
 		if(P->getWorld()->areOutputPrefix()) {
@@ -121,8 +121,8 @@ int buildsys::run(Package *P, const std::string &program,
 		waitpid(pid, &status, 0);
 		// check return status ...
 		if(WEXITSTATUS(status) < 0) { // NOLINT
-			log(P, boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
-			           program % path % status);
+			P->log(boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
+			       program % path % status);
 		}
 		return WEXITSTATUS(status); // NOLINT
 	}

@@ -33,7 +33,7 @@ void Extraction::add(std::unique_ptr<ExtractionUnit> eu)
 void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
 {
 	if(this->extracted) {
-		log(P, "Already extracted");
+		P->log("Already extracted");
 		return;
 	}
 
@@ -60,7 +60,7 @@ bool Extraction::extractionRequired(Package *P, BuildDir *bd) const
 
 bool Extraction::extract(Package *P)
 {
-	log(P, "Extracting sources and patching");
+	P->log("Extracting sources and patching");
 	for(auto &unit : this->EUs) {
 		if(!unit->extract(P)) {
 			return false;
@@ -169,7 +169,7 @@ bool PatchExtractionUnit::extract(Package *P)
 	pc_dry.addArg("--dry-run");
 
 	if(!pc_dry.Run(P)) {
-		log(P, "Patch file: " + this->uri);
+		P->log("Patch file: " + this->uri);
 		throw CustomException("Will fail to patch");
 	}
 

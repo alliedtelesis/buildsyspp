@@ -24,70 +24,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "include/buildsys.h"
-#include "include/color.h"
-
-static bool quietly = false;
-
-void buildsys::log(const std::string &package, const std::string &str)
-{
-	std::cerr << boost::format{"%1%: %2%"} % package % str << std::endl;
-}
-
-void buildsys::log(const std::string &package, const boost::format &str)
-{
-	log(package, str.str());
-}
-
-void buildsys::log(Package *P, const std::string &str)
-{
-	std::ostream &s = quietly ? P->getLogFile() : std::cerr;
-	auto msg = boost::format{"%1%,%2%: %3%"} % P->getNS()->getName() % P->getName() % str;
-	s << msg << std::endl;
-}
-
-void buildsys::log(Package *P, const boost::format &str)
-{
-	log(P, str.str());
-}
-
-static inline const char *get_color(const std::string &mesg)
-{
-	if(mesg.find("error:") != std::string::npos) {
-		return COLOR_BOLD_RED;
-	}
-	if(mesg.find("warning:") != std::string::npos) {
-		return COLOR_BOLD_BLUE;
-	}
-
-	return nullptr;
-}
-
-void buildsys::program_output(Package *P, const std::string &mesg)
-{
-	static int isATTY = isatty(fileno(stdout));
-	const char *color;
-	std::ostream &s = quietly ? P->getLogFile() : std::cout;
-	boost::format msg;
-
-	if(!quietly && (isATTY != 0) && ((color = get_color(mesg)) != nullptr)) {
-		msg = boost::format{"%1%,%2%: %3%%4%%5%"} % P->getNS()->getName() % P->getName() %
-		      color % mesg % COLOR_RESET;
-	} else {
-		msg = boost::format{"%1%,%2%: %3%"} % P->getNS()->getName() % P->getName() % mesg;
-	}
-	s << msg << std::endl;
-}
+#include "logger.hpp"
 
 int main(int argc, char *argv[])
 {
 	// clang-format off
 	struct timespec start {}, end {};
 	// clang-format on
+	Logger logger("BuildSys");
 
 	clock_gettime(CLOCK_REALTIME, &start);
 
-	log("BuildSys", "Buildsys (C++ version)");
-	log("BuildSys", boost::format{"Built: %1% %2%"} % __TIME__ % __DATE__);
+	logger.log("Buildsys (C++ version)");
+	logger.log(boost::format{"Built: %1% %2%"} % __TIME__ % __DATE__);
 
 	if(argc <= 1) {
 		error("At least 1 parameter is required");
@@ -114,8 +63,7 @@ int main(int argc, char *argv[])
 			WORLD.setFetchFrom(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--tarball-cache") {
-			log("BuildSys",
-			    boost::format{"Setting tarball cache to %1%"} % (argList[a + 1]));
+			logger.log(boost::format{"Setting tarball cache to %1%"} % (argList[a + 1]));
 			WORLD.setTarballCache(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--overlay") {
@@ -129,7 +77,7 @@ int main(int argc, char *argv[])
 		} else if(argList[a] == "--keep-going") {
 			WORLD.setKeepGoing();
 		} else if(argList[a] == "--quietly") {
-			quietly = true;
+			WORLD.setQuietly();
 		} else if(argList[a] == "--parallel-packages" || argList[a] == "-j") {
 			WORLD.setThreadsLimit(std::stoi(argList[a + 1]));
 			a++;
@@ -181,14 +129,14 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_REALTIME, &end);
 
+	logger.log("Finished: " + argList[1]);
 	if(end.tv_nsec >= start.tv_nsec) {
-		log(argList[1], boost::format{"Total time: %1%s and %2%ms"} %
-		                    (end.tv_sec - start.tv_sec) %
-		                    ((end.tv_nsec - start.tv_nsec) / 1000000));
+		logger.log(boost::format{"Total time: %1%s and %2%ms"} %
+		           (end.tv_sec - start.tv_sec) % ((end.tv_nsec - start.tv_nsec) / 1000000));
 	} else {
-		log(argList[1], boost::format{"Total time: %1%s and %2%ms"} %
-		                    (end.tv_sec - start.tv_sec - 1) %
-		                    ((1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000));
+		logger.log(boost::format{"Total time: %1%s and %2%ms"} %
+		           (end.tv_sec - start.tv_sec - 1) %
+		           ((1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000));
 	}
 
 	hash_shutdown();

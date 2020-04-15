@@ -113,7 +113,7 @@ int li_bd_fetch(lua_State *L)
 			} else if(key == "copyto") {
 				copyto = value;
 			} else {
-				log(P, boost::format{"Unknown key %1% (%2%)"} % key % value);
+				P->log(boost::format{"Unknown key %1% (%2%)"} % key % value);
 			}
 		}
 		lua_pop(L, 2);
@@ -195,7 +195,7 @@ int li_bd_fetch(lua_State *L)
 		std::string path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
 		P->setDepsExtract(path, listedonly);
-		log(P, "Will add installed files, considering code updated");
+		P->log("Will add installed files, considering code updated");
 		P->setCodeUpdated();
 	} else {
 		throw CustomException("Unsupported fetch method");
@@ -315,7 +315,7 @@ int li_bd_extract(lua_State *L)
 
 	Package *P = li_get_package();
 
-	log(P, "Using deprecated extract API");
+	P->log("Using deprecated extract API");
 
 	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
 		return 0;

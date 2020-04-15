@@ -30,19 +30,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TAR_CMD "/bin/tar"
 #endif
 
+Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
+                 std::string _file, std::string _overlay, std::string _pwd)
+    : name(std::move(_name)), file(std::move(_file)), file_short(std::move(_file_short)),
+      overlay(std::move(_overlay)), pwd(std::move(_pwd)), ns(_ns),
+      bd(BuildDir(this->pwd, _ns->getName(), this->name))
+{
+	std::string prefix = this->ns->getName() + "," + this->name;
+
+	if(this->getWorld()->isQuietly()) {
+		auto log_path = boost::format{"%1%/output/%2%/%3%/build.log"} % this->pwd %
+		                this->getNS()->getName() % this->name;
+		this->logger = std::move(Logger(prefix, log_path.str()));
+	} else {
+		this->logger = std::move(Logger(prefix));
+	}
+}
+
 BuildDir *Package::builddir()
 {
 	return &this->bd;
-}
-
-std::ofstream &Package::getLogFile()
-{
-	if(this->logFile == nullptr) {
-		auto log_path = boost::format{"%1%/output/%2%/%3%/build.log"} % this->pwd %
-		                this->getNS()->getName() % this->name;
-		this->logFile = std::make_unique<std::ofstream>(log_path.str());
-	}
-	return *this->logFile;
 }
 
 std::string Package::getFeature(const std::string &key)
@@ -139,7 +146,7 @@ void Package::printLabel(std::ostream &out)
 
 bool Package::process()
 {
-	log(this, boost::format{"Processing (%1%)"} % this->file);
+	this->log(boost::format{"Processing (%1%)"} % this->file);
 
 	this->build_description.add(
 	    std::make_unique<PackageFileUnit>(this->file, this->file_short));
@@ -159,7 +166,7 @@ bool Package::process()
 bool Package::checkForDependencyLoops()
 {
 	if(this->visiting) {
-		log(this, "Cyclic Dependency");
+		this->log("Cyclic Dependency");
 		return false;
 	}
 
@@ -167,7 +174,7 @@ bool Package::checkForDependencyLoops()
 
 	for(auto &dp : this->depends) {
 		if(!dp.getPackage()->checkForDependencyLoops()) {
-			log(this, "Child failed dependency loop check");
+			this->log("Child failed dependency loop check");
 			return false;
 		}
 	}
@@ -196,7 +203,7 @@ bool Package::extract_staging(const std::string &dir)
 	pc.addArg(arg);
 
 	if(!pc.Run(this)) {
-		log(this, "Failed to extract staging_dir");
+		this->log("Failed to extract staging_dir");
 		return false;
 	}
 
@@ -223,7 +230,7 @@ bool Package::extract_install(const std::string &dir)
 			pc.addArg(*it);
 
 			if(!pc.Run(this)) {
-				log(this, boost::format{"Failed to copy %1% (for install)"} % *it);
+				this->log(boost::format{"Failed to copy %1% (for install)"} % *it);
 				return false;
 			}
 		}
@@ -237,7 +244,7 @@ bool Package::extract_install(const std::string &dir)
 		                  this->name + ".tar";
 		pc.addArg(arg);
 		if(!pc.Run(this)) {
-			log(this, "Failed to extract install_dir");
+			this->log("Failed to extract install_dir");
 			return false;
 		}
 	}
@@ -270,7 +277,7 @@ static bool ff_file(Package *P, const std::string &hash, const std::string &rfil
 	std::string cmd = "wget -q " + url + " -O " + path + "/" + fname + fext;
 	int res = std::system(cmd.c_str());
 	if(res != 0) {
-		log(P, "Failed to get " + rfile);
+		P->log("Failed to get " + rfile);
 		ret = true;
 	}
 	return ret;
@@ -281,7 +288,7 @@ void Package::updateBuildInfoHashExisting()
 	// populate the build.info hash
 	std::string build_info_file = this->bd.getPath() + "/.build.info";
 	this->buildinfo_hash = hash_file(build_info_file);
-	log(this, "Hash: " + this->buildinfo_hash);
+	this->log("Hash: " + this->buildinfo_hash);
 }
 
 void Package::updateBuildInfoHash()
@@ -289,7 +296,7 @@ void Package::updateBuildInfoHash()
 	// populate the build.info hash
 	std::string build_info_file = this->bd.getPath() + "/.build.info.new";
 	this->buildinfo_hash = hash_file(build_info_file);
-	log(this, "Hash: " + this->buildinfo_hash);
+	this->log("Hash: " + this->buildinfo_hash);
 }
 
 std::unique_ptr<BuildUnit> Package::buildInfo()
@@ -300,8 +307,8 @@ std::unique_ptr<BuildUnit> Package::buildInfo()
 	}
 
 	if(this->buildinfo_hash.empty()) {
-		log(this, boost::format{"build.info (in %1%) is empty"} % this->bd.getShortPath());
-		log(this, "You probably need to build this package");
+		this->log(boost::format{"build.info (in %1%) is empty"} % this->bd.getShortPath());
+		this->log("You probably need to build this package");
 		return nullptr;
 	}
 
@@ -321,7 +328,7 @@ void Package::prepareBuildInfo()
 	for(auto &dp : this->depends) {
 		std::unique_ptr<BuildUnit> bi = dp.getPackage()->buildInfo();
 		if(bi == nullptr) {
-			log(this, "bi is nullptr :(");
+			this->log("bi is nullptr :(");
 			exit(-1);
 		}
 		this->build_description.add(std::move(bi));
@@ -364,8 +371,8 @@ bool Package::fetchFrom()
 	    {"output.info", this->bd.getPath(), ".output", ".info"},
 	};
 
-	log(this, boost::format{"FF URL: %1%/%2%/%3%/%4%"} % this->getWorld()->fetchFrom() %
-	              this->getNS()->getName() % this->name % this->buildinfo_hash);
+	this->log(boost::format{"FF URL: %1%/%2%/%3%/%4%"} % this->getWorld()->fetchFrom() %
+	          this->getNS()->getName() % this->name % this->buildinfo_hash);
 
 	if(!this->isHashingOutput()) {
 		files.pop_back();
@@ -380,9 +387,9 @@ bool Package::fetchFrom()
 	}
 
 	if(ret) {
-		log(this, "Could not optimize away building");
+		this->log("Could not optimize away building");
 	} else {
-		log(this, "Build cache used");
+		this->log("Build cache used");
 
 		this->updateBuildInfo(false);
 	}
@@ -491,7 +498,7 @@ static void cleanDir(const std::string &dir)
 
 bool Package::prepareBuildDirs()
 {
-	log(this, "Generating staging directory ...");
+	this->log("Generating staging directory ...");
 
 	// Clean out the (new) staging/install directories
 	cleanDir(this->bd.getNewInstall());
@@ -525,7 +532,7 @@ bool Package::prepareBuildDirs()
 	}
 
 	if(result) {
-		log(this, boost::format{"Done (%1%)"} % packages.size());
+		this->log(boost::format{"Done (%1%)"} % packages.size());
 	}
 
 	return result;
@@ -538,20 +545,20 @@ bool Package::extractInstallDepends()
 	}
 
 	// Extract installed files to a given location
-	log(this, "Removing old install files ...");
+	this->log("Removing old install files ...");
 	PackageCmd pc(this->pwd, "/bin/rm");
 	pc.addArg("-fr");
 	pc.addArg(this->depsExtraction);
 	if(!pc.Run(this)) {
-		log(this,
-		    boost::format{"Failed to remove %1% (pre-install)"} % this->depsExtraction);
+		this->log(boost::format{"Failed to remove %1% (pre-install)"} %
+		          this->depsExtraction);
 		return false;
 	}
 
 	// Create the directory
 	filesystem::create_directories(this->depsExtraction);
 
-	log(this, "Extracting installed files from dependencies ...");
+	this->log("Extracting installed files from dependencies ...");
 
 	std::unordered_set<Package *> packages;
 	this->getDependedPackages(&packages, !this->depsExtractionDirectOnly, false);
@@ -580,7 +587,7 @@ bool Package::extractInstallDepends()
 	}
 
 	if(result) {
-		log(this, "Dependency install files extracted");
+		this->log("Dependency install files extracted");
 	}
 	return result;
 }
@@ -598,7 +605,7 @@ bool Package::packageNewStaging()
 	pc.addArg(".");
 
 	if(!pc.Run(this)) {
-		log(this, "Failed to compress staging directory");
+		this->log("Failed to compress staging directory");
 		return false;
 	}
 	return true;
@@ -610,7 +617,7 @@ bool Package::packageNewInstall()
 		auto it = this->installFiles.begin();
 		auto end = this->installFiles.end();
 		for(; it != end; it++) {
-			log(this, "Copying " + *it + " to install folder");
+			this->log("Copying " + *it + " to install folder");
 			PackageCmd pc(this->bd.getNewInstall(), "cp");
 			pc.addArg(*it);
 			std::string arg =
@@ -618,7 +625,7 @@ bool Package::packageNewInstall()
 			pc.addArg(arg);
 
 			if(!pc.Run(this)) {
-				log(this, boost::format{"Failed to copy install file (%1%)"} % *it);
+				this->log(boost::format{"Failed to copy install file (%1%)"} % *it);
 				return false;
 			}
 		}
@@ -634,7 +641,7 @@ bool Package::packageNewInstall()
 		pc.addArg(".");
 
 		if(!pc.Run(this)) {
-			log(this, "Failed to compress install directory");
+			this->log("Failed to compress install directory");
 			return false;
 		}
 	}
@@ -670,7 +677,7 @@ bool Package::build(bool locally)
 	if((this->getWorld()->forcedMode() && !this->getWorld()->isForced(this->name))) {
 		// Set the build.info hash based on what is currently present
 		this->updateBuildInfoHashExisting();
-		log(this, "Building suppressed");
+		this->log("Building suppressed");
 		// Just pretend we are built
 		this->built = true;
 		this->getWorld()->packageFinished(this);
@@ -686,7 +693,7 @@ bool Package::build(bool locally)
 	bool sb = this->shouldBuild(locally);
 
 	if(!sb) {
-		log(this, "Not required");
+		this->log("Not required");
 		// Already built
 		this->built = true;
 		this->getWorld()->packageFinished(this);
@@ -696,7 +703,7 @@ bool Package::build(bool locally)
 	// actually have been
 	for(auto &dp : this->depends) {
 		if(dp.getLocally()) {
-			log(dp.getPackage(), "Build triggered by " + this->getName());
+			dp.getPackage()->log("Build triggered by " + this->getName());
 			if(!dp.getPackage()->build(true)) {
 				return false;
 			}
@@ -705,20 +712,20 @@ bool Package::build(bool locally)
 
 	// Fetch anything we don't have yet
 	if(!this->fetch()->fetch(&this->bd)) {
-		log(this, "Fetching failed");
+		this->log("Fetching failed");
 		return false;
 	}
 
 	clock_gettime(CLOCK_REALTIME, &start);
 
 	if(this->Extract.extractionRequired(this, &this->bd)) {
-		log(this, "Extracting ...");
+		this->log("Extracting ...");
 		if(!this->Extract.extract(this)) {
 			return false;
 		}
 	}
 
-	log(this, "Building ...");
+	this->log("Building ...");
 	// Clean new/{staging,install}, Extract the dependency staging directories
 	if(!this->prepareBuildDirs()) {
 		return false;
@@ -731,15 +738,15 @@ bool Package::build(bool locally)
 	auto cIt = this->commands.begin();
 	auto cEnd = this->commands.end();
 
-	log(this, "Running Commands");
+	this->log("Running Commands");
 	for(; cIt != cEnd; cIt++) {
 		if(!(*cIt).Run(this)) {
 			return false;
 		}
 	}
-	log(this, "Done Commands");
+	this->log("Done Commands");
 
-	log(this, "BUILT");
+	this->log("BUILT");
 
 	if(!this->packageNewStaging()) {
 		return false;
@@ -757,7 +764,7 @@ bool Package::build(bool locally)
 
 	this->run_secs = (end.tv_sec - start.tv_sec);
 
-	log(this, boost::format{"Built in %1% seconds"} % this->run_secs);
+	this->log(boost::format{"Built in %1% seconds"} % this->run_secs);
 
 	std::unique_lock<std::mutex> lk(this->lock);
 	this->building = false;

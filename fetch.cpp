@@ -70,7 +70,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 	 */
 	const DLObject *dlobj = this->P->getWorld()->findDLObject(fullname);
 	if(dlobj == nullptr) {
-		log(this->P, "Failed to get the DLObject for " + fullname);
+		this->P->log("Failed to get the DLObject for " + fullname);
 		return false;
 	}
 
@@ -79,11 +79,11 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 	if(this->hash.length() != 0) {
 		if(dlobj->HASH().length() != 0) {
 			if(dlobj->HASH() != this->hash) {
-				log(this->P,
+				this->P->log(
 				    boost::format{
 				        "Another package has already downloaded %1% with hash %2% (but "
 				        "we need %3%)"} %
-				        fullname % dlobj->HASH() % this->hash);
+				    fullname % dlobj->HASH() % this->hash);
 				return false;
 			}
 		}
@@ -121,7 +121,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 
 			size_t ext_pos = fname.rfind('.');
 			if(ext_pos == std::string::npos) {
-				log(P, "Could not guess decompression based on extension: " + fname);
+				P->log("Could not guess decompression based on extension: " + fname);
 			} else {
 				std::string ext = fname.substr(ext_pos + 1);
 				if(ext == ".bz2") {
@@ -141,10 +141,9 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 		std::string _hash = hash_file(fpath.str());
 
 		if(this->hash != _hash) {
-			log(this->P,
-			    boost::format{
-			        "Hash mismatched for %1%\n(committed to %2%, providing %3%)"} %
-			        this->final_name() % this->hash % _hash);
+			this->P->log(boost::format{
+			                 "Hash mismatched for %1%\n(committed to %2%, providing %3%)"} %
+			             this->final_name() % this->hash % _hash);
 			ret = false;
 		}
 	}
@@ -158,8 +157,8 @@ std::string DownloadFetch::HASH()
 	std::string _hash = P->getFileHash(this->final_name());
 	/* Otherwise fetch and calculate the hash */
 	if(_hash.empty()) {
-		log(P, boost::format{"No hash for %1% in package/%2%/Digest"} % this->final_name() %
-		           P->getName());
+		P->log(boost::format{"No hash for %1% in package/%2%/Digest"} % this->final_name() %
+		       P->getName());
 		throw CustomException("Missing hash " + P->getName());
 	}
 	this->hash = _hash;
@@ -225,7 +224,7 @@ bool CopyFetch::fetch(BuildDir *d)
 	if(!pc.Run(this->P)) {
 		throw CustomException("Failed to copy (recursively)");
 	}
-	log(P, "Copied data in, considering code updated");
+	P->log("Copied data in, considering code updated");
 	P->setCodeUpdated();
 	return true;
 }

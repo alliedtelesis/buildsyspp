@@ -67,6 +67,7 @@ extern "C" {
 #include <boost/property_map/property_map.hpp>
 #include <boost/utility.hpp>
 
+#include "../logger.hpp"
 #include "include/filesystem.h"
 
 using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
@@ -75,8 +76,9 @@ using Edge = boost::graph_traits<Graph>::edge_descriptor;
 
 #define error(M)                                                                           \
 	do {                                                                                   \
-		log("BuildSys", boost::format{"%1%:%2%():%3%: %4%"} % __FILE__ % __FUNCTION__ %    \
-		                    __LINE__ % (M));                                               \
+		Logger err_logger("BuildSys");                                                     \
+		err_logger.log(boost::format{"%1%:%2%():%3%: %4%"} % __FILE__ % __FUNCTION__ %     \
+		               __LINE__ % (M));                                                    \
 	} while(0)
 
 #define LUA_SET_TABLE_TYPE(L, T)                                                           \
@@ -131,11 +133,6 @@ namespace buildsys
 	class World;
 
 	bool interfaceSetup(Lua *lua);
-	void log(const std::string &package, const std::string &str);
-	void log(const std::string &package, const boost::format &str);
-	void log(Package *P, const std::string &str);
-	void log(Package *P, const boost::format &str);
-	void program_output(Package *P, const std::string &mesg);
 	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
 	        const std::string &path, const std::vector<std::string> &newenvp);
 
@@ -1068,7 +1065,7 @@ namespace buildsys
 		bool suppress_remove_staging{false};
 		mutable std::mutex lock;
 		time_t run_secs{0};
-		std::unique_ptr<std::ofstream> logFile;
+		Logger logger;
 		//! Set the buildinfo file hash from the new .build.info.new file
 		void updateBuildInfoHash();
 		//! Set the buildinfo file hash from the existing .build.info file
@@ -1119,13 +1116,7 @@ namespace buildsys
 		 * @param _pwd - The working directory for buildsys++.
 		 */
 		Package(NameSpace *_ns, std::string _name, std::string _file_short,
-		        std::string _file, std::string _overlay, std::string _pwd)
-		    : name(std::move(_name)), file(std::move(_file)),
-		      file_short(std::move(_file_short)), overlay(std::move(_overlay)),
-		      pwd(std::move(_pwd)), ns(_ns),
-		      bd(BuildDir(this->pwd, _ns->getName(), this->name))
-		{
-		}
+		        std::string _file, std::string _overlay, std::string _pwd);
 		//! Returns the namespace this package is in
 		NameSpace *getNS()
 		{
@@ -1181,8 +1172,6 @@ namespace buildsys
 		{
 			return this->overlay;
 		};
-		//! Get the log file for this package
-		std::ofstream &getLogFile();
 
 		/** Depend on another package
 		 *  \param p The package to depend on
@@ -1319,6 +1308,19 @@ namespace buildsys
 		const std::string &getPwd() const
 		{
 			return this->pwd;
+		}
+
+		void log(const std::string &str)
+		{
+			this->logger.log(str);
+		}
+		void log(const boost::format &str)
+		{
+			this->logger.log(str);
+		}
+		void program_output(const std::string &mesg)
+		{
+			this->logger.program_output(mesg);
 		}
 	};
 
@@ -1484,6 +1486,7 @@ namespace buildsys
 		bool cleaning{false};
 		bool parseOnly{false};
 		bool keepGoing{false};
+		bool quietly{false};
 		mutable std::mutex cond_lock;
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
@@ -1571,6 +1574,20 @@ namespace buildsys
 		void setKeepGoing()
 		{
 			this->keepGoing = true;
+		}
+
+		//! Set quietly mode
+		void setQuietly()
+		{
+			this->quietly = true;
+		}
+
+		/**
+		 * Are we operating in 'quietly' mode
+		 */
+		bool isQuietly()
+		{
+			return this->quietly;
 		}
 
 		/** Are we expected to output the package name as a prefix

@@ -37,13 +37,13 @@ test:
 	$(MAKE) -C test
 
 indent:
-	find \( -name "*.cpp" -o -name "*.h" \) -not -path "output/*" -and -not -path "test/*" -exec clang-format -i -style=file {} \;
+	find \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -not -path "output/*" -and -not -path "test/*" -exec clang-format -i -style=file {} \;
 
 cpplint:
-	find \( -name "*.cpp" -o -name "*.h" \) -not -path "*test/*" -exec cpplint {} \;
+	find \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -not -path "*test/*" -exec cpplint {} \;
 
 tidy:
-	find \( -name "*.cpp" -o -name "*.h" \)  -not -path "*test/*" -exec clang-tidy \
+	find \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \)  -not -path "*test/*" -exec clang-tidy \
 		-checks=*,-fuchsia-default-arguments,-cert-env33-c,-llvm-header-guard,-fuchsia-overloaded-operator,\
 -google-build-using-namespace,-google-global-names-in-headers,-performance-inefficient-string-concatenation \
 		-quiet -extra-arg-before=-xc++ {} -- $(CPPFLAGS) $(shell pkg-config --cflags $(LUAVERSION)) \;

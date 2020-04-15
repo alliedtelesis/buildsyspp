@@ -101,7 +101,7 @@ int li_builddir(lua_State *L)
 	if((clean_requested || P->getWorld()->areCleaning()) &&
 	   !P->getWorld()->areParseOnly() &&
 	   !(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName()))) {
-		log(P, "Cleaning");
+		P->log("Cleaning");
 		P->builddir()->clean();
 	}
 
