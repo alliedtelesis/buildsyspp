@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright 2019 Allied Telesis Labs Ltd. All rights reserved.
+ Copyright 2020 Allied Telesis Labs Ltd. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -40,14 +40,24 @@ namespace buildsys
 		std::string prefix;
 		std::unique_ptr<std::ofstream> file_output;
 		std::ostream *output{nullptr};
+		bool output_supports_colour{false};
+
+		const char *get_colour(const std::string &str);
 
 	public:
+		// VT100 terminal color escape sequences
+		static constexpr const char *COLOUR_NORMAL{""};
+		static constexpr const char *COLOUR_RESET{"\033[m"};
+		static constexpr const char *COLOUR_BOLD_RED{"\033[1;31m"};
+		static constexpr const char *COLOUR_BOLD_BLUE{"\033[1;34m"};
+
 		Logger();
-		explicit Logger(std::string _prefix);
-		Logger(std::string _prefix, const std::string &file_path);
+		explicit Logger(const std::string &_prefix);
+		Logger(const std::string &_prefix, const std::string &file_path);
 		void log(const std::string &str);
 		void log(const boost::format &str);
-		void program_output(const std::string &mesg);
+		void program_output(const std::string &str);
+		void force_colour_output(bool set);
 	};
 } // namespace buildsys
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright 2019 Allied Telesis Labs Ltd. All rights reserved.
+ Copyright 2020 Allied Telesis Labs Ltd. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -27,80 +27,124 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace buildsys;
 
-// VT100 terminal color escape sequences
-#define COLOR_NORMAL ""
-#define COLOR_RESET "\033[m"
-#define COLOR_BOLD "\033[1m"
-#define COLOR_RED "\033[31m"
-#define COLOR_GREEN "\033[32m"
-#define COLOR_YELLOW "\033[33m"
-#define COLOR_BLUE "\033[34m"
-#define COLOR_MAGENTA "\033[35m"
-#define COLOR_CYAN "\033[36m"
-#define COLOR_BOLD_RED "\033[1;31m"
-#define COLOR_BOLD_GREEN "\033[1;32m"
-#define COLOR_BOLD_YELLOW "\033[1;33m"
-#define COLOR_BOLD_BLUE "\033[1;34m"
-#define COLOR_BOLD_MAGENTA "\033[1;35m"
-#define COLOR_BOLD_CYAN "\033[1;36m"
-#define COLOR_BG_RED "\033[41m"
-#define COLOR_BG_GREEN "\033[42m"
-#define COLOR_BG_YELLOW "\033[43m"
-#define COLOR_BG_BLUE "\033[44m"
-#define COLOR_BG_MAGENTA "\033[45m"
-#define COLOR_BG_CYAN "\033[46m"
+constexpr const char *Logger::COLOUR_NORMAL;
+constexpr const char *Logger::COLOUR_RESET;
+constexpr const char *Logger::COLOUR_BOLD_RED;
+constexpr const char *Logger::COLOUR_BOLD_BLUE;
 
+/**
+ * Construct a Logger object. Log messages will be output to std::cout
+ * with no prefix.
+ */
 Logger::Logger()
 {
 	this->output = &std::cout;
+	this->output_supports_colour = (isatty(fileno(stdout)) == 1);
 }
 
-Logger::Logger(std::string _prefix) : prefix(std::move(_prefix))
+/**
+ * Construct a Logger object. Log messages will be output to std::cout
+ * with the given prefix.
+ *
+ * @param _prefix - The prefix to prepend to log messages.
+ */
+Logger::Logger(const std::string &_prefix)
 {
+	this->prefix = _prefix + ": ";
 	this->output = &std::cout;
+	this->output_supports_colour = (isatty(fileno(stdout)) == 1);
 }
 
-Logger::Logger(std::string _prefix, const std::string &file_path)
-    : prefix(std::move(_prefix))
+/**
+ * Construct a Logger object. Log messages will be output to the given
+ * file path with the given prefix.
+ *
+ * @param _prefix - The prefix to prepend to log messages.
+ * @param file_path - The file to output the log messages to.
+ */
+Logger::Logger(const std::string &_prefix, const std::string &file_path)
 {
+	this->prefix = _prefix + ": ";
 	this->file_output = std::make_unique<std::ofstream>(file_path);
 	this->output = this->file_output.get();
 }
 
+/**
+ * Output a log message.
+ *
+ * @param str - The string to output.
+ */
 void Logger::log(const std::string &str)
 {
-	auto msg = boost::format{"%1%: %2%"} % this->prefix % str;
+	auto msg = boost::format{"%1%%2%"} % this->prefix % str;
 	*this->output << msg << std::endl;
 }
 
+/**
+ * Output a log message.
+ *
+ * @param str - The boost::format object containing the string to output.
+ */
 void Logger::log(const boost::format &str)
 {
 	this->log(str.str());
 }
 
-static inline const char *get_color(const std::string &mesg)
+/**
+ * Get the colour code required for the given log message. Messages that
+ * start with "error:" should print in red, while messages that begin
+ * with "warning:" should output in blue. All other messages should not
+ * have a colour.
+ *
+ * @param str - The log message to get the colour for.
+ *
+ * @returns The colour to print the message in.
+ */
+const char *Logger::get_colour(const std::string &str)
 {
-	if(mesg.find("error:") != std::string::npos) {
-		return COLOR_BOLD_RED;
-	}
-	if(mesg.find("warning:") != std::string::npos) {
-		return COLOR_BOLD_BLUE;
+	const std::string error_str("error:");
+	const std::string warning_str("warning:");
+
+	if(this->output_supports_colour) {
+		if(str.compare(0, error_str.size(), error_str) == 0) {
+			return Logger::COLOUR_BOLD_RED;
+		}
+		if(str.compare(0, warning_str.size(), warning_str) == 0) {
+			return Logger::COLOUR_BOLD_BLUE;
+		}
 	}
 
-	return nullptr;
+	return Logger::COLOUR_NORMAL;
 }
 
-void Logger::program_output(const std::string &mesg)
+/**
+ * Output the given message (program output). If the output supports colour
+ * (i.e. a terminal) then the message will be coloured if it is an error or
+ * warning message.
+ *
+ * @param str - The log message to print.
+ */
+void Logger::program_output(const std::string &str)
 {
-	static int isATTY = isatty(fileno(stdout));
-	const char *color;
-	boost::format msg;
-	bool output_is_cout = (this->output == &std::cout);
+	const char *colour = this->get_colour(str);
 
-	if(output_is_cout && (isATTY != 0) && ((color = get_color(mesg)) != nullptr)) {
-		msg = boost::format{"%1%: %2%%3%%4%"} % this->prefix % color % mesg % COLOR_RESET;
+	if(colour != Logger::COLOUR_NORMAL) {
+		auto coloured_str =
+		    boost::format{"%1%%2%%3%"} % colour % str % Logger::COLOUR_RESET;
+		this->log(coloured_str);
 	} else {
-		msg = boost::format{"%1%: %2%"} % this->prefix % mesg;
+		this->log(str);
 	}
-	*this->output << msg << std::endl;
+}
+
+/**
+ * Force the Logger object to output in colour.
+ *
+ * NOTE: This should only be used by the unit-tests.
+ *
+ * @param set - Whether to enable/disable colour output.
+ */
+void Logger::force_colour_output(bool set)
+{
+	this->output_supports_colour = set;
 }
