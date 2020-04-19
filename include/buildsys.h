@@ -126,9 +126,6 @@ namespace buildsys
 	class World;
 
 	bool interfaceSetup(Lua *lua);
-	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
-	        const std::string &path, const std::vector<std::string> &newenvp,
-	        bool log_output);
 
 	void hash_setup();
 	std::string hash_file(const std::string &fname);
