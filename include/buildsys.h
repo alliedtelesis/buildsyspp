@@ -127,7 +127,8 @@ namespace buildsys
 
 	bool interfaceSetup(Lua *lua);
 	int run(Package *P, const std::string &program, const std::vector<std::string> &argv,
-	        const std::string &path, const std::vector<std::string> &newenvp);
+	        const std::string &path, const std::vector<std::string> &newenvp,
+	        bool log_output);
 
 	void hash_setup();
 	std::string hash_file(const std::string &fname);
@@ -358,6 +359,7 @@ namespace buildsys
 		std::string app;
 		std::vector<std::string> args;
 		std::vector<std::string> envp;
+		bool log_output{true};
 
 	public:
 		/** Create a Package Command
@@ -393,6 +395,11 @@ namespace buildsys
 
 		//! Print the command line
 		void printCmd() const;
+
+		void disableLogging()
+		{
+			this->log_output = false;
+		}
 	};
 
 	/* A Downloaded Object
@@ -1483,7 +1490,6 @@ namespace buildsys
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
 		int threads_limit{0};
-		bool outputPrefix{true};
 
 		mutable std::mutex dlobjects_lock;
 		const DLObject *_findDLObject(const std::string &);
@@ -1582,20 +1588,6 @@ namespace buildsys
 			return this->quietly;
 		}
 
-		/** Are we expected to output the package name as a prefix
-		 *  If --no-output-prefix is parsed as a parameter, we don't prefix package output.
-		 *  This will make it so that menuconfig doesn't look horrible.
-		 *  At the expense of making it much harder to debug when the build breaks.
-		 */
-		bool areOutputPrefix() const
-		{
-			return this->outputPrefix;
-		}
-		//! clear output prefix mode
-		void clearOutputPrefix()
-		{
-			this->outputPrefix = false;
-		}
 		//! Ignore a feature for build.info
 		void ignoreFeature(const std::string &feature)
 		{

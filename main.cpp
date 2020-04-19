@@ -57,8 +57,6 @@ int main(int argc, char *argv[])
 	while(a < argList.size() && !foundDashDash) {
 		if(argList[a] == "--clean") {
 			WORLD.setCleaning();
-		} else if(argList[a] == "--no-output-prefix" || argList[a] == "--nop") {
-			WORLD.clearOutputPrefix();
 		} else if(argList[a] == "--cache-server" || argList[a] == "--ff") {
 			WORLD.setFetchFrom(argList[a + 1]);
 			a++;

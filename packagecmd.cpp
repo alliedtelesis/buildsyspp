@@ -42,7 +42,7 @@ bool PackageCmd::Run(Package *P)
 	}
 
 	bool res = true;
-	if(run(P, this->args[0], this->args, this->path, ne) != 0) {
+	if(run(P, this->args[0], this->args, this->path, ne, this->log_output) != 0) {
 		this->printCmd();
 		res = false;
 	}

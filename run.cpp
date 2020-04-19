@@ -81,10 +81,10 @@ static void exec_process(const std::string &program,
 
 int buildsys::run(Package *P, const std::string &program,
                   const std::vector<std::string> &argv, const std::string &path,
-                  const std::vector<std::string> &newenvp)
+                  const std::vector<std::string> &newenvp, bool log_output)
 {
 	std::vector<int> fds(2);
-	if(P->getWorld()->areOutputPrefix()) {
+	if(log_output) {
 		int res = pipe(&fds[0]);
 
 		if(res != 0) {
@@ -100,7 +100,7 @@ int buildsys::run(Package *P, const std::string &program,
 		P->log("fork() failed: " + std::string(strerror(errno)));
 		exit(-1);
 	} else if(pid == 0) { // child process
-		if(P->getWorld()->areOutputPrefix()) {
+		if(log_output) {
 			close(fds[0]);
 			dup2(fds[1], STDOUT_FILENO);
 			dup2(fds[1], STDERR_FILENO);
@@ -114,7 +114,7 @@ int buildsys::run(Package *P, const std::string &program,
 		P->log("Failed Running " + program);
 		exit(-1);
 	} else {
-		if(P->getWorld()->areOutputPrefix()) {
+		if(log_output) {
 			close(fds[1]);
 		}
 		int status = 0;

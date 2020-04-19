@@ -337,11 +337,13 @@ int li_bd_extract(lua_State *L)
 int li_bd_cmd(lua_State *L)
 {
 	int argc = lua_gettop(L);
+	bool log_output = true;
+
 	if(argc < 4) {
 		throw CustomException("cmd() requires at least 3 arguments");
 	}
-	if(argc > 5) {
-		throw CustomException("cmd() requires at most 4 arguments");
+	if(argc > 6) {
+		throw CustomException("cmd() requires at most 5 arguments");
 	}
 	if(!lua_istable(L, 1)) {
 		throw CustomException("cmd() must be called using : not .");
@@ -358,6 +360,13 @@ int li_bd_cmd(lua_State *L)
 	if(argc == 5 && !lua_istable(L, 5)) {
 		throw CustomException(
 		    "cmd() expects a table of strings as the fourth argument, if present");
+	}
+	if(argc == 6) {
+		if(!lua_isboolean(L, 6)) {
+			throw CustomException(
+			    "cmd() expects a boolean as the fifth argument, if present");
+		}
+		log_output = (lua_toboolean(L, 6) != 0);
 	}
 
 	auto *d = CHECK_ARGUMENT_TYPE<BuildDir>(L, "cmd", 1, "BuildDir");
@@ -393,6 +402,10 @@ int li_bd_cmd(lua_State *L)
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
 		}
+	}
+
+	if(!log_output) {
+		pc.disableLogging();
 	}
 
 	add_env(P, &pc);
