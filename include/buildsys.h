@@ -363,11 +363,7 @@ namespace buildsys
 		 *  \param path The path to run this command in
 		 *  \param app The program to invoke
 		 */
-		PackageCmd(std::string _path, std::string _app)
-		    : path(std::move(_path)), app(std::move(_app))
-		{
-			this->addArg(app);
-		};
+		PackageCmd(std::string _path, std::string _app);
 
 		/** Add an argument to this command
 		 *  \param arg The argument to append to this command

@@ -25,6 +25,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
+/**
+ * Construct a Package Command
+ * @param path - The path to run this command in.
+ * @param app - The program to invoke.
+ */
+PackageCmd::PackageCmd(std::string _path, std::string _app)
+    : path(std::move(_path)), app(std::move(_app))
+{
+	this->addArg(app);
+
+	// collect the current environment
+	size_t e = 0;
+	while(environ[e] != nullptr) {           // NOLINT
+		this->envp.emplace_back(environ[e]); // NOLINT
+		e++;
+	}
+}
+
 static void pipe_data(int fd, Package *P)
 {
 	if(P == nullptr) {
@@ -131,22 +149,8 @@ static int run(Package *P, const std::string &program, const std::vector<std::st
 
 bool PackageCmd::Run(Package *P)
 {
-	std::vector<std::string> ne;
-
-	// collect the current enviroment
-	size_t e = 0;
-	while(environ[e] != nullptr) {   // NOLINT
-		ne.emplace_back(environ[e]); // NOLINT
-		e++;
-	}
-
-	// append any new enviroment to it
-	for(auto &env : this->envp) {
-		ne.push_back(env);
-	}
-
 	bool res = true;
-	if(run(P, this->args[0], this->args, this->path, ne, this->log_output) != 0) {
+	if(run(P, this->args[0], this->args, this->path, this->envp, this->log_output) != 0) {
 		this->printCmd();
 		res = false;
 	}
