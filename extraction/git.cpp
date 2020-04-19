@@ -141,7 +141,7 @@ bool GitExtractionUnit::updateOrigin()
 		}
 		pc.addArg("origin");
 		pc.addArg(location);
-		if(!pc.Run(this->P)) {
+		if(!pc.Run(this->P->getLogger())) {
 			throw CustomException("Failed: git remote set-url origin");
 		}
 
@@ -149,7 +149,7 @@ bool GitExtractionUnit::updateOrigin()
 		pc.addArg("fetch");
 		pc.addArg("origin");
 		pc.addArg("--tags");
-		if(!pc.Run(this->P)) {
+		if(!pc.Run(this->P->getLogger())) {
 			throw CustomException("Failed: git fetch origin --tags");
 		}
 	}
@@ -178,7 +178,7 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 			pc.addArg("fetch");
 			pc.addArg("origin");
 			pc.addArg("--tags");
-			if(!pc.Run(this->P)) {
+			if(!pc.Run(this->P->getLogger())) {
 				throw CustomException("Failed: git fetch origin --tags");
 			}
 		}
@@ -187,7 +187,7 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 		pc.addArg("-n");
 		pc.addArg(location);
 		pc.addArg(source_dir);
-		if(!pc.Run(this->P)) {
+		if(!pc.Run(this->P->getLogger())) {
 			throw CustomException("Failed to git clone");
 		}
 	}
@@ -211,7 +211,7 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 			pc.addArg("-q");
 			pc.addArg("--detach");
 			pc.addArg(this->refspec);
-			if(!pc.Run(this->P)) {
+			if(!pc.Run(this->P->getLogger())) {
 				throw CustomException("Failed to checkout");
 			}
 		}
@@ -266,7 +266,7 @@ bool GitExtractionUnit::extract(Package *_P)
 	pc.addArg("-dpRuf");
 	pc.addArg(this->localPath());
 	pc.addArg(".");
-	if(!pc.Run(_P)) {
+	if(!pc.Run(_P->getLogger())) {
 		throw CustomException("Failed to checkout");
 	}
 
@@ -287,7 +287,7 @@ bool LinkGitDirExtractionUnit::extract(Package *P)
 	}
 	pc.addArg(this->toDir);
 
-	if(!pc.Run(P)) {
+	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Operation failed");
 	}
 
@@ -307,7 +307,7 @@ bool CopyGitDirExtractionUnit::extract(Package *P)
 	}
 	pc.addArg(this->toDir);
 
-	if(!pc.Run(P)) {
+	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Operation failed");
 	}
 

@@ -99,7 +99,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 			std::string url = this->P->getWorld()->tarballCache() + "/" + fname;
 			pc.addArg(url);
 			pc.addArg("-O" + fullname + ".tmp");
-			localCacheHit = pc.Run(this->P);
+			localCacheHit = pc.Run(this->P->getLogger());
 			if(localCacheHit) {
 				filesystem::rename("dl/" + fullname + ".tmp", "dl/" + fullname);
 			}
@@ -110,7 +110,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 			PackageCmd pc("dl", "wget");
 			pc.addArg(this->fetch_uri);
 			pc.addArg("-O" + fullname + ".tmp");
-			if(!pc.Run(this->P)) {
+			if(!pc.Run(this->P->getLogger())) {
 				throw CustomException("Failed to fetch file");
 			}
 			filesystem::rename("dl/" + fullname + ".tmp", "dl/" + fullname);
@@ -172,7 +172,7 @@ bool LinkFetch::fetch(BuildDir *d)
 	std::string l = P->relative_fetch_path(this->fetch_uri);
 	pc.addArg(l);
 	pc.addArg(".");
-	if(!pc.Run(this->P)) {
+	if(!pc.Run(this->P->getLogger())) {
 		// An error occured, try remove the file, then relink
 		PackageCmd rmpc(d->getPath(), "rm");
 		rmpc.addArg("-fr");
@@ -183,11 +183,11 @@ bool LinkFetch::fetch(BuildDir *d)
 		// Strip the directory from the file name
 		l2 = l2.substr(l2.rfind('/') + 1);
 		rmpc.addArg(l2);
-		if(!rmpc.Run(this->P)) {
+		if(!rmpc.Run(this->P->getLogger())) {
 			throw CustomException(
 			    "Failed to ln (symbolically), could not remove target first");
 		}
-		if(!pc.Run(this->P)) {
+		if(!pc.Run(this->P->getLogger())) {
 			throw CustomException(
 			    "Failed to ln (symbolically), even after removing target first");
 		}
@@ -221,7 +221,7 @@ bool CopyFetch::fetch(BuildDir *d)
 	std::string l = P->absolute_fetch_path(this->fetch_uri);
 	pc.addArg(l);
 	pc.addArg(".");
-	if(!pc.Run(this->P)) {
+	if(!pc.Run(this->P->getLogger())) {
 		throw CustomException("Failed to copy (recursively)");
 	}
 	P->log("Copied data in, considering code updated");

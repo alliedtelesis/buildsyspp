@@ -114,7 +114,7 @@ bool TarExtractionUnit::extract(Package *P)
 	pc.addArg("xf");
 	pc.addArg(P->getPwd() + "/" + this->uri);
 
-	if(!pc.Run(P)) {
+	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Failed to extract file");
 	}
 
@@ -130,7 +130,7 @@ bool ZipExtractionUnit::extract(Package *P)
 	pc.addArg("-o");
 	pc.addArg(P->getPwd() + "/" + this->uri);
 
-	if(!pc.Run(P)) {
+	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Failed to extract file");
 	}
 
@@ -168,12 +168,12 @@ bool PatchExtractionUnit::extract(Package *P)
 
 	pc_dry.addArg("--dry-run");
 
-	if(!pc_dry.Run(P)) {
+	if(!pc_dry.Run(P->getLogger())) {
 		P->log("Patch file: " + this->uri);
 		throw CustomException("Will fail to patch");
 	}
 
-	if(!pc.Run(P)) {
+	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Truely failed to patch");
 	}
 
@@ -203,7 +203,7 @@ bool FileCopyExtractionUnit::extract(Package *P)
 
 	pc.addArg(".");
 
-	if(!pc.Run(P)) {
+	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Failed to copy file");
 	}
 
@@ -240,7 +240,7 @@ bool FetchedFileCopyExtractionUnit::extract(Package *P)
 
 	pc.addArg(".");
 
-	if(!pc.Run(P)) {
+	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Failed to copy file");
 	}
 

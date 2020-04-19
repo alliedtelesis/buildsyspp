@@ -358,6 +358,8 @@ namespace buildsys
 		std::vector<std::string> envp;
 		bool log_output{true};
 
+		int exec_process(Logger *logger, const std::vector<int> *pipe_fds);
+
 	public:
 		/** Create a Package Command
 		 *  \param path The path to run this command in
@@ -381,13 +383,15 @@ namespace buildsys
 			this->envp.push_back(env);
 		}
 
-		/** Run this command
-		 *  \param P The package to use in the command logging
+		/**
+		 * Run this command
+		 *
+		 * @param logger - The logger to log the command output with
 		 */
-		bool Run(Package *P);
+		bool Run(Logger *logger);
 
 		//! Print the command line
-		void printCmd() const;
+		void printCmd(Logger *logger) const;
 
 		void disableLogging()
 		{
@@ -1311,9 +1315,9 @@ namespace buildsys
 		{
 			this->logger.log(str);
 		}
-		void program_output(const std::string &mesg)
+		Logger *getLogger()
 		{
-			this->logger.program_output(mesg);
+			return &this->logger;
 		}
 	};
 

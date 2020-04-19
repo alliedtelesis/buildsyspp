@@ -202,7 +202,7 @@ bool Package::extract_staging(const std::string &dir)
 	                  this->name + ".tar";
 	pc.addArg(arg);
 
-	if(!pc.Run(this)) {
+	if(!pc.Run(&this->logger)) {
 		this->log("Failed to extract staging_dir");
 		return false;
 	}
@@ -229,7 +229,7 @@ bool Package::extract_install(const std::string &dir)
 			pc.addArg(arg);
 			pc.addArg(*it);
 
-			if(!pc.Run(this)) {
+			if(!pc.Run(&this->logger)) {
 				this->log(boost::format{"Failed to copy %1% (for install)"} % *it);
 				return false;
 			}
@@ -243,7 +243,7 @@ bool Package::extract_install(const std::string &dir)
 		std::string arg = this->pwd + "/output/" + this->getNS()->getName() + "/install/" +
 		                  this->name + ".tar";
 		pc.addArg(arg);
-		if(!pc.Run(this)) {
+		if(!pc.Run(&this->logger)) {
 			this->log("Failed to extract install_dir");
 			return false;
 		}
@@ -549,7 +549,7 @@ bool Package::extractInstallDepends()
 	PackageCmd pc(this->pwd, "/bin/rm");
 	pc.addArg("-fr");
 	pc.addArg(this->depsExtraction);
-	if(!pc.Run(this)) {
+	if(!pc.Run(&this->logger)) {
 		this->log(boost::format{"Failed to remove %1% (pre-install)"} %
 		          this->depsExtraction);
 		return false;
@@ -604,7 +604,7 @@ bool Package::packageNewStaging()
 	pc.addArg(arg);
 	pc.addArg(".");
 
-	if(!pc.Run(this)) {
+	if(!pc.Run(&this->logger)) {
 		this->log("Failed to compress staging directory");
 		return false;
 	}
@@ -624,7 +624,7 @@ bool Package::packageNewInstall()
 			    this->pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
 			pc.addArg(arg);
 
-			if(!pc.Run(this)) {
+			if(!pc.Run(&this->logger)) {
 				this->log(boost::format{"Failed to copy install file (%1%)"} % *it);
 				return false;
 			}
@@ -640,7 +640,7 @@ bool Package::packageNewInstall()
 		pc.addArg(arg);
 		pc.addArg(".");
 
-		if(!pc.Run(this)) {
+		if(!pc.Run(&this->logger)) {
 			this->log("Failed to compress install directory");
 			return false;
 		}
@@ -740,7 +740,7 @@ bool Package::build(bool locally)
 
 	this->log("Running Commands");
 	for(; cIt != cEnd; cIt++) {
-		if(!(*cIt).Run(this)) {
+		if(!(*cIt).Run(&this->logger)) {
 			return false;
 		}
 	}
