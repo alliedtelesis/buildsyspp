@@ -7,6 +7,9 @@ FetchContent_MakeAvailable(catch2)
 
 find_package(Lua REQUIRED)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 include_directories(${LUA_INCLUDE_DIR})
 
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -30,3 +33,11 @@ target_include_directories(logger_unittests PRIVATE ../)
 target_compile_features(logger_unittests PRIVATE cxx_std_14)
 target_link_libraries(logger_unittests PRIVATE Catch2::Catch2)
 add_test(NAME logger_unittests COMMAND logger_unittests)
+
+add_executable(packagecmd_unittests packagecmd_unittests.cpp ../packagecmd.cpp ../logger.cpp ../filesystem.cpp)
+append_coverage_compiler_flags()
+target_include_directories(packagecmd_unittests PRIVATE ../)
+target_compile_features(packagecmd_unittests PRIVATE cxx_std_14)
+target_link_libraries(packagecmd_unittests PRIVATE Catch2::Catch2)
+target_link_libraries(packagecmd_unittests PRIVATE Threads::Threads)
+add_test(NAME packagecmd_unittests COMMAND packagecmd_unittests)

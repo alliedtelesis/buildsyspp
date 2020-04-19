@@ -43,6 +43,14 @@ PackageCmd::PackageCmd(std::string _path, std::string _app)
 	}
 }
 
+/**
+ * The thread for printing the output of the command executed
+ * via fork + exec.
+ *
+ * @param logger - The Logger to use to print the output.
+ * @param fd - The file descriptor for the read end of the pipe used to
+ *             get the output of the executed program.
+ */
 static void pipe_data_thread(Logger *logger, int fd)
 {
 	// get the data until there is a breakchar ...
@@ -66,9 +74,17 @@ static void pipe_data_thread(Logger *logger, int fd)
 			recv_buf.push_back(recv_byte);
 		}
 	}
-	close(fd);
 }
 
+/**
+ * Execute the command via a new process.
+ *
+ * @param logger - The Logger to use to print any output.
+ * @param pipe_fds - Pointer to a vector containing the file descriptors for a
+ *                   pipe to write the command output to. If the vector is not
+ *                   provided then the output of the command will not be captured
+ *                   for logging purposes.
+ */
 int PackageCmd::exec_process(Logger *logger, const std::vector<int> *pipe_fds)
 {
 	int pid = fork();
@@ -111,6 +127,11 @@ int PackageCmd::exec_process(Logger *logger, const std::vector<int> *pipe_fds)
 	return pid;
 }
 
+/**
+ * Run this command
+ *
+ * @param logger - The logger to log the command output with
+ */
 bool PackageCmd::Run(Logger *logger)
 {
 	int status = 0;
@@ -128,8 +149,9 @@ bool PackageCmd::Run(Logger *logger)
 
 		close(pipe_fds[1]);
 		std::thread thr(pipe_data_thread, logger, pipe_fds[0]);
-		thr.detach();
 		waitpid(pid, &status, 0);
+		thr.join();
+		close(pipe_fds[0]);
 	} else {
 		int pid = this->exec_process(logger, nullptr);
 		waitpid(pid, &status, 0);
@@ -146,10 +168,93 @@ bool PackageCmd::Run(Logger *logger)
 	return true;
 }
 
+/**
+ * Print the details of the PackageCmd.
+ *
+ * @param logger - The Logger to print the details to.
+ */
 void PackageCmd::printCmd(Logger *logger) const
 {
 	logger->log("Path: " + this->path);
 	for(size_t i = 0; i < this->args.size(); i++) {
 		logger->log(boost::format{"Arg[%1%] = '%2%'"} % i % this->args[i]);
 	}
+}
+
+/**
+ * Disable logging the output of the command when it is executed.
+ */
+void PackageCmd::disableLogging()
+{
+	this->log_output = false;
+}
+
+/**
+ * Add an enviroment variable to this command.
+ *
+ * @param env - The enviroment variable to append to this command.
+ */
+void PackageCmd::addEnv(const std::string &env)
+{
+	this->envp.push_back(env);
+}
+
+/**
+ * Add an argument to this command.
+ *
+ * @param arg - The argument to append to this command.
+ */
+void PackageCmd::addArg(const std::string &arg)
+{
+	this->args.push_back(arg);
+}
+
+/**
+ * Get the path configured for this command.
+ *
+ * @returns The path configured.
+ */
+const std::string &PackageCmd::getPath() const
+{
+	return this->path;
+}
+
+/**
+ * Get the application name configured for this command.
+ *
+ * @returns The application name configured.
+ */
+const std::string &PackageCmd::getApp() const
+{
+	return this->app;
+}
+
+/**
+ * Get the arguments configured for this command.
+ *
+ * @returns The arguments configured.
+ */
+const std::vector<std::string> &PackageCmd::getArgs() const
+{
+	return this->args;
+}
+
+/**
+ * Get the environment configured for this command.
+ *
+ * @returns The environment configured.
+ */
+const std::vector<std::string> &PackageCmd::getEnvp() const
+{
+	return this->envp;
+}
+
+/**
+ * Get whether logging the output is configured for this command.
+ *
+ * @returns Whether logging the output is configured.
+ */
+bool PackageCmd::getLogOutput() const
+{
+	return this->log_output;
 }

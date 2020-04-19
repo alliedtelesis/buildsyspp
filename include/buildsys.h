@@ -68,6 +68,7 @@ extern "C" {
 #include <boost/utility.hpp>
 
 #include "../logger.hpp"
+#include "../packagecmd.hpp"
 #include "include/filesystem.h"
 
 using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
@@ -343,60 +344,6 @@ namespace buildsys
 			LUA_ADD_TABLE_STRING(L, "path", path.c_str());
 			LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
 		};
-	};
-
-	/** A command to run as part of a packages build step
-	 *  Stores the enviroment and arguements for a given command
-	 *  Used to hold commands betwen the config loading step and package build steps.
-	 */
-	class PackageCmd
-	{
-	private:
-		std::string path;
-		std::string app;
-		std::vector<std::string> args;
-		std::vector<std::string> envp;
-		bool log_output{true};
-
-		int exec_process(Logger *logger, const std::vector<int> *pipe_fds);
-
-	public:
-		/** Create a Package Command
-		 *  \param path The path to run this command in
-		 *  \param app The program to invoke
-		 */
-		PackageCmd(std::string _path, std::string _app);
-
-		/** Add an argument to this command
-		 *  \param arg The argument to append to this command
-		 */
-		void addArg(const std::string &arg)
-		{
-			this->args.push_back(arg);
-		}
-
-		/** Add an enviroment variable to this command
-		 *  \param env The enviroment variable to append to this command
-		 */
-		void addEnv(const std::string &env)
-		{
-			this->envp.push_back(env);
-		}
-
-		/**
-		 * Run this command
-		 *
-		 * @param logger - The logger to log the command output with
-		 */
-		bool Run(Logger *logger);
-
-		//! Print the command line
-		void printCmd(Logger *logger) const;
-
-		void disableLogging()
-		{
-			this->log_output = false;
-		}
 	};
 
 	/* A Downloaded Object
