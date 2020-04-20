@@ -241,10 +241,6 @@ int li_bd_restore(lua_State *L)
 	std::string location(lua_tostring(L, 2));
 	std::string method(lua_tostring(L, 3));
 
-	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
-		return 0;
-	}
-
 	if(method == "copyfile") {
 		PackageCmd pc(d->getPath(), "cp");
 
@@ -316,10 +312,6 @@ int li_bd_extract(lua_State *L)
 	Package *P = li_get_package();
 
 	P->log("Using deprecated extract API");
-
-	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
-		return 0;
-	}
 
 	std::string fName(lua_tostring(L, 2));
 	std::string realFName = relative_path(d, fName, true);
@@ -433,10 +425,6 @@ int li_bd_patch(lua_State *L)
 	}
 
 	Package *P = li_get_package();
-
-	if(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName())) {
-		return 1;
-	}
 
 	auto *d = CHECK_ARGUMENT_TYPE<BuildDir>(L, "patch", 1, "BuildDir");
 
