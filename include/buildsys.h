@@ -67,6 +67,8 @@ extern "C" {
 #include <boost/property_map/property_map.hpp>
 #include <boost/utility.hpp>
 
+#include "../buildinfo.hpp"
+#include "../hash.hpp"
 #include "../logger.hpp"
 #include "../packagecmd.hpp"
 #include "include/filesystem.h"
@@ -127,10 +129,6 @@ namespace buildsys
 	class World;
 
 	bool interfaceSetup(Lua *lua);
-
-	void hash_setup();
-	std::string hash_file(const std::string &fname);
-	void hash_shutdown();
 
 	/*! The catchable exception */
 	class Exception : public std::exception
@@ -508,17 +506,6 @@ namespace buildsys
 		};
 	};
 
-	/** A build unit
-	 *  Describes a single piece required to re-build a package
-	 */
-	class BuildUnit
-	{
-	public:
-		virtual ~BuildUnit() = default;
-		virtual void print(std::ostream &out) = 0;
-		virtual std::string type() = 0;
-	};
-
 	//! A compressed file extraction unit
 	class CompressedFileExtractionUnit : public ExtractionUnit
 	{
@@ -727,142 +714,6 @@ namespace buildsys
 		};
 	};
 
-	//! A feature/value as part of the build step
-	class FeatureValueUnit : public BuildUnit
-	{
-	private:
-		const std::string feature;
-		const std::string value;
-		const bool ignored;
-
-	public:
-		FeatureValueUnit(bool _ignored, std::string _feature, std::string _value)
-		    : feature(std::move(_feature)), value(std::move(_value)), ignored(_ignored)
-		{
-		}
-		void print(std::ostream &out) override
-		{
-			if(!this->ignored) {
-				out << this->type() << " " << this->feature << " " << this->value
-				    << std::endl;
-			}
-		}
-		std::string type() override
-		{
-			return std::string("FeatureValue");
-		}
-	};
-
-	//! A feature that is nil as part of the build step
-	class FeatureNilUnit : public BuildUnit
-	{
-	private:
-		const std::string feature;
-
-	public:
-		explicit FeatureNilUnit(std::string _feature) : feature(std::move(_feature))
-		{
-		}
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->feature << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("FeatureNil");
-		}
-	};
-
-	//! A lua package file as part of the build step
-	class PackageFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this package file
-		std::string hash; //!< Hash of this package file
-	public:
-		PackageFileUnit(const std::string &fname, const std::string &_fname_short);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("PackageFile");
-		}
-	};
-
-	//! A lua require file as part of the build step
-	class RequireFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this package file
-		std::string hash; //!< Hash of this package file
-	public:
-		RequireFileUnit(const std::string &fname, const std::string &_fname_short);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("RequireFile");
-		}
-	};
-
-	//! An extraction info file as part of the build step
-	class ExtractionInfoFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this extraction info file
-		std::string hash; //!< Hash of this extraction info file
-	public:
-		explicit ExtractionInfoFileUnit(const std::string &fname);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("ExtractionInfoFile");
-		}
-	};
-
-	//! A build info file as part of the build step
-	class BuildInfoFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this build info file
-		std::string hash; //!< Hash of this build info file
-	public:
-		BuildInfoFileUnit(const std::string &fname, const std::string &_hash);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("BuildInfoFile");
-		}
-	};
-
-	//! An output (hash) info file as part of the build step
-	class OutputInfoFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this output info file
-		std::string hash; //!< Hash of this output info file
-	public:
-		explicit OutputInfoFileUnit(const std::string &fname);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("OutputInfoFile");
-		}
-	};
-
 	/** A fetch description
 	 *  Describes all the fetching required for a package
 	 *  Used for checking if a package needs anything downloaded
@@ -907,24 +758,6 @@ namespace buildsys
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
 		bool extractionRequired(Package *P, BuildDir *bd) const;
 		std::unique_ptr<ExtractionInfoFileUnit> extractionInfo(BuildDir *bd) const;
-	};
-
-	/** A build description
-	 *  Describes relevant information to determine if a package needs rebuilding
-	 */
-	class BuildDescription
-	{
-	private:
-		std::vector<std::unique_ptr<BuildUnit>> BUs;
-
-	public:
-		void add(std::unique_ptr<BuildUnit> bu);
-		void print(std::ostream &out) const
-		{
-			for(auto &unit : this->BUs) {
-				unit->print(out);
-			}
-		}
 	};
 
 	//! A namespace

@@ -1,5 +1,5 @@
 /******************************************************************************
- Copyright 2019 Allied Telesis Labs Ltd. All rights reserved.
+ Copyright 2020 Allied Telesis Labs Ltd. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -23,42 +23,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include "buildinfo.hpp"
-#include "hash.hpp"
+#ifndef HASH_HPP_
+#define HASH_HPP_
 
-using namespace buildsys;
-
-void BuildDescription::add(std::unique_ptr<BuildUnit> bu)
+namespace buildsys
 {
-	this->BUs.push_back(std::move(bu));
-}
+	void hash_setup();
+	std::string hash_file(const std::string &fname);
+	void hash_shutdown();
+} // namespace buildsys
 
-PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_fname_short)
-{
-	this->uri = _fname_short;
-	this->hash = hash_file(fname);
-}
-
-RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &_fname_short)
-{
-	this->uri = _fname_short;
-	this->hash = hash_file(fname);
-}
-
-ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string &fname)
-{
-	this->uri = fname;
-	this->hash = hash_file(fname + ".new");
-}
-
-BuildInfoFileUnit::BuildInfoFileUnit(const std::string &fname, const std::string &_hash)
-{
-	this->uri = fname;
-	this->hash = _hash;
-}
-
-OutputInfoFileUnit::OutputInfoFileUnit(const std::string &fname)
-{
-	this->uri = fname;
-	this->hash = hash_file(this->uri);
-}
+#endif // HASH_HPP_
