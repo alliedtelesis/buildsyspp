@@ -59,10 +59,3 @@ OutputInfoFileUnit::OutputInfoFileUnit(const std::string &fname)
 	this->uri = fname;
 	this->hash = hash_file(this->uri);
 }
-
-void FeatureValueUnit::print(std::ostream &out)
-{
-	if(!this->WORLD->isIgnoredFeature(this->feature)) {
-		out << this->type() << " " << this->feature << " " << this->value << std::endl;
-	}
-}

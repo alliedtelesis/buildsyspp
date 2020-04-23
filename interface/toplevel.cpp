@@ -55,8 +55,8 @@ static int li_feature(lua_State *L)
 		try {
 			std::string value = P->getFeature(key);
 			lua_pushstring(L, value.c_str());
-			P->buildDescription()->add(
-			    std::make_unique<FeatureValueUnit>(P->getWorld(), key, value));
+			P->buildDescription()->add(std::make_unique<FeatureValueUnit>(
+			    P->getWorld()->isIgnoredFeature(key), key, value));
 		} catch(NoKeyException &E) {
 			lua_pushnil(L);
 			P->buildDescription()->add(std::make_unique<FeatureNilUnit>(key));

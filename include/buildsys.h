@@ -733,14 +733,20 @@ namespace buildsys
 	private:
 		const std::string feature;
 		const std::string value;
-		World *WORLD;
+		const bool ignored;
 
 	public:
-		FeatureValueUnit(World *_WORLD, std::string _feature, std::string _value)
-		    : feature(std::move(_feature)), value(std::move(_value)), WORLD(_WORLD)
+		FeatureValueUnit(bool _ignored, std::string _feature, std::string _value)
+		    : feature(std::move(_feature)), value(std::move(_value)), ignored(_ignored)
 		{
 		}
-		void print(std::ostream &out) override;
+		void print(std::ostream &out) override
+		{
+			if(!this->ignored) {
+				out << this->type() << " " << this->feature << " " << this->value
+				    << std::endl;
+			}
+		}
 		std::string type() override
 		{
 			return std::string("FeatureValue");
