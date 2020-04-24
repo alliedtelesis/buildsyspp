@@ -28,9 +28,112 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace buildsys;
 
+//! A feature/value as part of the build step
+class FeatureValueUnit : public BuildUnit
+{
+private:
+	const std::string feature;
+	const std::string value;
+	const bool ignored;
+
+public:
+	FeatureValueUnit(bool _ignored, std::string _feature, std::string _value)
+		: feature(std::move(_feature)), value(std::move(_value)), ignored(_ignored)
+	{
+	}
+	void print(std::ostream &out) override
+	{
+		if(!this->ignored) {
+			out << this->type() << " " << this->feature << " " << this->value
+				<< std::endl;
+		}
+	}
+	std::string type() override
+	{
+		return std::string("FeatureValue");
+	}
+};
+
+
+//! A feature that is nil as part of the build step
+class FeatureNilUnit : public BuildUnit
+{
+private:
+	const std::string feature;
+
+public:
+	explicit FeatureNilUnit(std::string _feature) : feature(std::move(_feature))
+	{
+	}
+	void print(std::ostream &out) override
+	{
+		out << this->type() << " " << this->feature << std::endl;
+	}
+	std::string type() override
+	{
+		return std::string("FeatureNil");
+	}
+};
+
+//! A lua package file as part of the build step
+class PackageFileUnit : public BuildUnit
+{
+private:
+	std::string uri;  //!< URI of this package file
+	std::string hash; //!< Hash of this package file
+public:
+	PackageFileUnit(const std::string &fname, const std::string &_fname_short);
+	void print(std::ostream &out) override
+	{
+		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+	}
+	std::string type() override
+	{
+		return std::string("PackageFile");
+	}
+};
+
+//! A lua require file as part of the build step
+class RequireFileUnit : public BuildUnit
+{
+private:
+	std::string uri;  //!< URI of this package file
+	std::string hash; //!< Hash of this package file
+public:
+	RequireFileUnit(const std::string &fname, const std::string &_fname_short);
+	void print(std::ostream &out) override
+	{
+		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+	}
+	std::string type() override
+	{
+		return std::string("RequireFile");
+	}
+};
+
 void BuildDescription::add(std::unique_ptr<BuildUnit> bu)
 {
 	this->BUs.push_back(std::move(bu));
+}
+
+void BuildDescription::add_feature_value(bool _ignored, std::string _feature, std::string _value)
+{
+	this->BUs.push_back(std::make_unique<FeatureValueUnit>(_ignored, _feature, _value));
+}
+
+void BuildDescription::add_nil_feature_value(std::string _feature)
+{
+	this->BUs.push_back(std::make_unique<FeatureNilUnit>(_feature));
+}
+
+void BuildDescription::add_package_file(const std::string &fname, const std::string &_fname_short)
+{
+	this->BUs.push_back(std::make_unique<PackageFileUnit>(fname, _fname_short));
+}
+
+void BuildDescription::add_require_file(const std::string &fname, const std::string &_fname_short)
+{
+	this->BUs.push_back(std::make_unique<RequireFileUnit>(fname, _fname_short));
 }
 
 PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_fname_short)

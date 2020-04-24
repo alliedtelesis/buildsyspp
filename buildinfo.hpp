@@ -44,88 +44,6 @@ namespace buildsys
 		virtual std::string type() = 0;
 	};
 
-	//! A feature/value as part of the build step
-	class FeatureValueUnit : public BuildUnit
-	{
-	private:
-		const std::string feature;
-		const std::string value;
-		const bool ignored;
-
-	public:
-		FeatureValueUnit(bool _ignored, std::string _feature, std::string _value)
-		    : feature(std::move(_feature)), value(std::move(_value)), ignored(_ignored)
-		{
-		}
-		void print(std::ostream &out) override
-		{
-			if(!this->ignored) {
-				out << this->type() << " " << this->feature << " " << this->value
-				    << std::endl;
-			}
-		}
-		std::string type() override
-		{
-			return std::string("FeatureValue");
-		}
-	};
-
-	//! A feature that is nil as part of the build step
-	class FeatureNilUnit : public BuildUnit
-	{
-	private:
-		const std::string feature;
-
-	public:
-		explicit FeatureNilUnit(std::string _feature) : feature(std::move(_feature))
-		{
-		}
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->feature << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("FeatureNil");
-		}
-	};
-
-	//! A lua package file as part of the build step
-	class PackageFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this package file
-		std::string hash; //!< Hash of this package file
-	public:
-		PackageFileUnit(const std::string &fname, const std::string &_fname_short);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("PackageFile");
-		}
-	};
-
-	//! A lua require file as part of the build step
-	class RequireFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this package file
-		std::string hash; //!< Hash of this package file
-	public:
-		RequireFileUnit(const std::string &fname, const std::string &_fname_short);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("RequireFile");
-		}
-	};
-
 	//! An extraction info file as part of the build step
 	class ExtractionInfoFileUnit : public BuildUnit
 	{
@@ -190,6 +108,10 @@ namespace buildsys
 
 	public:
 		void add(std::unique_ptr<BuildUnit> bu);
+		void add_feature_value(bool _ignored, std::string _feature, std::string _value);
+		void add_nil_feature_value(std::string _feature);
+		void add_package_file(const std::string &fname, const std::string &_fname_short);
+		void add_require_file(const std::string &fname, const std::string &_fname_short);
 		void print(std::ostream &out) const
 		{
 			for(auto &unit : this->BUs) {
