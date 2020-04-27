@@ -75,10 +75,11 @@ bool Extraction::extract(Package *P)
 	return true;
 }
 
-std::unique_ptr<ExtractionInfoFileUnit> Extraction::extractionInfo(BuildDir *bd) const
+void Extraction::extractionInfo(BuildDir *bd, std::string *file_path,
+                                std::string *hash) const
 {
-	std::string fname = bd->getShortPath() + "/.extraction.info";
-	return std::make_unique<ExtractionInfoFileUnit>(fname);
+	*file_path = bd->getShortPath() + "/.extraction.info";
+	*hash = hash_file(*file_path + ".new");
 }
 
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit *f)

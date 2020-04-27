@@ -317,7 +317,11 @@ void Package::prepareBuildInfo()
 		return;
 	}
 	// Add the extraction info file
-	this->build_description.add(this->Extract.extractionInfo(&this->bd));
+	std::string extraction_file_path;
+	std::string extraction_file_hash;
+	this->Extract.extractionInfo(&this->bd, &extraction_file_path, &extraction_file_hash);
+	this->build_description.add_extraction_info_file(extraction_file_path,
+	                                                 extraction_file_hash);
 
 	// Add each of our dependencies build info files
 	for(auto &dp : this->depends) {

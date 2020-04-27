@@ -44,24 +44,6 @@ namespace buildsys
 		virtual std::string type() = 0;
 	};
 
-	//! An extraction info file as part of the build step
-	class ExtractionInfoFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this extraction info file
-		std::string hash; //!< Hash of this extraction info file
-	public:
-		explicit ExtractionInfoFileUnit(const std::string &fname);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("ExtractionInfoFile");
-		}
-	};
-
 	/** A build description
 	 *  Describes relevant information to determine if a package needs rebuilding
 	 */
@@ -71,13 +53,13 @@ namespace buildsys
 		std::vector<std::unique_ptr<BuildUnit>> BUs;
 
 	public:
-		void add(std::unique_ptr<BuildUnit> bu);
 		void add_feature_value(bool _ignored, std::string _feature, std::string _value);
 		void add_nil_feature_value(std::string _feature);
 		void add_package_file(const std::string &fname, const std::string &_fname_short);
 		void add_require_file(const std::string &fname, const std::string &_fname_short);
 		void add_output_info_file(const std::string &fname, const std::string &_hash);
 		void add_build_info_file(const std::string &fname, const std::string &_hash);
+		void add_extraction_info_file(const std::string &fname, const std::string &_hash);
 		void print(std::ostream &out) const
 		{
 			for(auto &unit : this->BUs) {

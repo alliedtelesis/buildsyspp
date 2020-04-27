@@ -757,7 +757,7 @@ namespace buildsys
 		bool extract(Package *P);
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
 		bool extractionRequired(Package *P, BuildDir *bd) const;
-		std::unique_ptr<ExtractionInfoFileUnit> extractionInfo(BuildDir *bd) const;
+		void extractionInfo(BuildDir *bd, std::string *file_path, std::string *hash) const;
 	};
 
 	//! A namespace

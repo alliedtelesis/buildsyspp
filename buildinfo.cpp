@@ -147,10 +147,23 @@ public:
 	}
 };
 
-void BuildDescription::add(std::unique_ptr<BuildUnit> bu)
+//! An extraction info file as part of the build step
+class ExtractionInfoFileUnit : public BuildUnit
 {
-	this->BUs.push_back(std::move(bu));
-}
+private:
+	std::string uri;  //!< URI of this extraction info file
+	std::string hash; //!< Hash of this extraction info file
+public:
+	ExtractionInfoFileUnit(const std::string &fname, const std::string &_hash);
+	void print(std::ostream &out) override
+	{
+		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+	}
+	std::string type() override
+	{
+		return std::string("ExtractionInfoFile");
+	}
+};
 
 void BuildDescription::add_feature_value(bool _ignored, std::string _feature, std::string _value)
 {
@@ -184,6 +197,12 @@ void BuildDescription::add_build_info_file(const std::string &fname,
 	this->BUs.push_back(std::make_unique<BuildInfoFileUnit>(fname, _hash));
 }
 
+void BuildDescription::add_extraction_info_file(const std::string &fname,
+                                                const std::string &_hash)
+{
+	this->BUs.push_back(std::make_unique<ExtractionInfoFileUnit>(fname, _hash));
+}
+
 PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_fname_short)
 {
 	this->uri = _fname_short;
@@ -196,10 +215,11 @@ RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &_f
 	this->hash = hash_file(fname);
 }
 
-ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string &fname)
+ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string &fname,
+                                               const std::string &_hash)
 {
 	this->uri = fname;
-	this->hash = hash_file(fname + ".new");
+	this->hash = _hash;
 }
 
 BuildInfoFileUnit::BuildInfoFileUnit(const std::string &fname, const std::string &_hash)
