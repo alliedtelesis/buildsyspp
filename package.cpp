@@ -148,7 +148,7 @@ bool Package::process()
 {
 	this->log(boost::format{"Processing (%1%)"} % this->file);
 
-	this->build_description.add_package_file(this->file, this->file_short);
+	this->build_description.add_package_file(this->file_short, hash_file(this->file));
 
 	if(!interfaceSetup(&this->lua)) {
 		this->log("interfaceSetup: Failed");

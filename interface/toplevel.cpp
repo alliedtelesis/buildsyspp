@@ -271,7 +271,7 @@ int li_require(lua_State *L)
 	}
 
 	P->getLua()->processFile(relative_fname);
-	P->buildDescription()->add_require_file(relative_fname, fname);
+	P->buildDescription()->add_require_file(fname, hash_file(relative_fname));
 
 	return 0;
 }

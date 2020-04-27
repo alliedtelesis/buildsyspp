@@ -24,7 +24,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "buildinfo.hpp"
-#include "hash.hpp"
 
 using namespace buildsys;
 
@@ -82,7 +81,7 @@ private:
 	std::string uri;  //!< URI of this package file
 	std::string hash; //!< Hash of this package file
 public:
-	PackageFileUnit(const std::string &fname, const std::string &_fname_short);
+	PackageFileUnit(const std::string &fname, const std::string &_hash);
 	void print(std::ostream &out) override
 	{
 		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
@@ -100,7 +99,7 @@ private:
 	std::string uri;  //!< URI of this package file
 	std::string hash; //!< Hash of this package file
 public:
-	RequireFileUnit(const std::string &fname, const std::string &_fname_short);
+	RequireFileUnit(const std::string &fname, const std::string &_hash);
 	void print(std::ostream &out) override
 	{
 		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
@@ -175,14 +174,14 @@ void BuildDescription::add_nil_feature_value(std::string _feature)
 	this->BUs.push_back(std::make_unique<FeatureNilUnit>(_feature));
 }
 
-void BuildDescription::add_package_file(const std::string &fname, const std::string &_fname_short)
+void BuildDescription::add_package_file(const std::string &fname, const std::string &_hash)
 {
-	this->BUs.push_back(std::make_unique<PackageFileUnit>(fname, _fname_short));
+	this->BUs.push_back(std::make_unique<PackageFileUnit>(fname, _hash));
 }
 
-void BuildDescription::add_require_file(const std::string &fname, const std::string &_fname_short)
+void BuildDescription::add_require_file(const std::string &fname, const std::string &_hash)
 {
-	this->BUs.push_back(std::make_unique<RequireFileUnit>(fname, _fname_short));
+	this->BUs.push_back(std::make_unique<RequireFileUnit>(fname, _hash));
 }
 
 void BuildDescription::add_output_info_file(const std::string &fname,
@@ -203,16 +202,16 @@ void BuildDescription::add_extraction_info_file(const std::string &fname,
 	this->BUs.push_back(std::make_unique<ExtractionInfoFileUnit>(fname, _hash));
 }
 
-PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_fname_short)
+PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_hash)
 {
-	this->uri = _fname_short;
-	this->hash = hash_file(fname);
+	this->uri = fname;
+	this->hash = _hash;
 }
 
-RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &_fname_short)
+RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &_hash)
 {
-	this->uri = _fname_short;
-	this->hash = hash_file(fname);
+	this->uri = fname;
+	this->hash = _hash;
 }
 
 ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string &fname,

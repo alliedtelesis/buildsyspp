@@ -55,8 +55,8 @@ namespace buildsys
 	public:
 		void add_feature_value(bool _ignored, std::string _feature, std::string _value);
 		void add_nil_feature_value(std::string _feature);
-		void add_package_file(const std::string &fname, const std::string &_fname_short);
-		void add_require_file(const std::string &fname, const std::string &_fname_short);
+		void add_package_file(const std::string &fname, const std::string &_hash);
+		void add_require_file(const std::string &fname, const std::string &_hash);
 		void add_output_info_file(const std::string &fname, const std::string &_hash);
 		void add_build_info_file(const std::string &fname, const std::string &_hash);
 		void add_extraction_info_file(const std::string &fname, const std::string &_hash);
