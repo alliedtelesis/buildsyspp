@@ -5,7 +5,6 @@
 #include <catch2/catch.hpp>
 
 using namespace buildsys;
-using namespace std::string_literals;
 
 class PackageCmdTestsFixture
 {
@@ -92,8 +91,7 @@ TEST_CASE_METHOD(PackageCmdTestsFixture, "Test Run() function logs output if con
 	std::stringstream file_contents;
 	file_contents << t.rdbuf();
 
-	// The output will include the NULL byte
-	std::string expected = "test_prefix: echoed_output\0\n"s;
+	std::string expected = "test_prefix: echoed_output\n";
 	REQUIRE(file_contents.str() == expected);
 
 	filesystem::remove(file_path);

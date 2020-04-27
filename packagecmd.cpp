@@ -53,7 +53,6 @@ PackageCmd::PackageCmd(std::string _path, std::string _app)
  */
 static void pipe_data_thread(Logger *logger, int fd)
 {
-	// get the data until there is a breakchar ...
 	std::string recv_buf;
 	char recv_byte;
 
@@ -66,7 +65,6 @@ static void pipe_data_thread(Logger *logger, int fd)
 			break;
 		}
 		if(recv_byte == '\n') {
-			recv_buf.push_back('\0');
 			// Print the line, clear the string and start again
 			logger->program_output(recv_buf);
 			recv_buf.clear();
