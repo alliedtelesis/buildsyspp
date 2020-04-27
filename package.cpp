@@ -298,21 +298,17 @@ void Package::updateBuildInfoHash()
 	this->log("Hash: " + this->buildinfo_hash);
 }
 
-std::unique_ptr<BuildUnit> Package::buildInfo()
+Package::BuildInfoType Package::buildInfo(std::string *file_path, std::string *hash)
 {
 	if(this->isHashingOutput()) {
-		std::string info_file = this->bd.getShortPath() + "/.output.info";
-		return std::make_unique<OutputInfoFileUnit>(info_file);
+		*file_path = this->bd.getShortPath() + "/.output.info";
+		*hash = hash_file(*file_path);
+		return BuildInfoType::Output;
 	}
 
-	if(this->buildinfo_hash.empty()) {
-		this->log(boost::format{"build.info (in %1%) is empty"} % this->bd.getShortPath());
-		this->log("You probably need to build this package");
-		return nullptr;
-	}
-
-	std::string info_file = this->bd.getShortPath() + "/.build.info";
-	return std::make_unique<BuildInfoFileUnit>(info_file, this->buildinfo_hash);
+	*file_path = this->bd.getShortPath() + "/.build.info";
+	*hash = this->buildinfo_hash;
+	return BuildInfoType::Build;
 }
 
 void Package::prepareBuildInfo()
@@ -325,12 +321,22 @@ void Package::prepareBuildInfo()
 
 	// Add each of our dependencies build info files
 	for(auto &dp : this->depends) {
-		std::unique_ptr<BuildUnit> bi = dp.getPackage()->buildInfo();
-		if(bi == nullptr) {
-			this->log("bi is nullptr :(");
+		std::string file_path;
+		std::string hash;
+		auto type = dp.getPackage()->buildInfo(&file_path, &hash);
+
+		if(hash.empty()) {
+			this->log(boost::format{"build info for %1% is empty"} %
+			          dp.getPackage()->getName());
+			this->log("You probably need to build that package");
 			exit(-1);
 		}
-		this->build_description.add(std::move(bi));
+
+		if(type == BuildInfoType::Output) {
+			this->build_description.add_output_info_file(file_path, hash);
+		} else {
+			this->build_description.add_build_info_file(file_path, hash);
+		}
 	}
 
 	// Create the new build info file

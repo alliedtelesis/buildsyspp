@@ -860,14 +860,16 @@ namespace buildsys
 		                         bool include_children, bool ignore_intercept);
 
 	protected:
+		enum class BuildInfoType { Output, Build };
+
 		//! prepare the (new) build.info file
 		void prepareBuildInfo();
 		//! update the build.info file
 		void updateBuildInfo(bool updateOutputHash = true);
 		//! Attempt to fetchFrom
 		bool fetchFrom();
-		//! Return a new build unit (the build info) for this package
-		std::unique_ptr<BuildUnit> buildInfo();
+		//! Return the build information for this package
+		BuildInfoType buildInfo(std::string *file_path, std::string *hash);
 		//! Prepare the (new) staging/install directories for the building of this package
 		bool prepareBuildDirs();
 		//! Extract all dependencies install dirs for this package (if bd:fetch(,'deps') was

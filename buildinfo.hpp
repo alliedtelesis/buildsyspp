@@ -62,42 +62,6 @@ namespace buildsys
 		}
 	};
 
-	//! A build info file as part of the build step
-	class BuildInfoFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this build info file
-		std::string hash; //!< Hash of this build info file
-	public:
-		BuildInfoFileUnit(const std::string &fname, const std::string &_hash);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("BuildInfoFile");
-		}
-	};
-
-	//! An output (hash) info file as part of the build step
-	class OutputInfoFileUnit : public BuildUnit
-	{
-	private:
-		std::string uri;  //!< URI of this output info file
-		std::string hash; //!< Hash of this output info file
-	public:
-		explicit OutputInfoFileUnit(const std::string &fname);
-		void print(std::ostream &out) override
-		{
-			out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-		}
-		std::string type() override
-		{
-			return std::string("OutputInfoFile");
-		}
-	};
-
 	/** A build description
 	 *  Describes relevant information to determine if a package needs rebuilding
 	 */
@@ -112,6 +76,8 @@ namespace buildsys
 		void add_nil_feature_value(std::string _feature);
 		void add_package_file(const std::string &fname, const std::string &_fname_short);
 		void add_require_file(const std::string &fname, const std::string &_fname_short);
+		void add_output_info_file(const std::string &fname, const std::string &_hash);
+		void add_build_info_file(const std::string &fname, const std::string &_hash);
 		void print(std::ostream &out) const
 		{
 			for(auto &unit : this->BUs) {

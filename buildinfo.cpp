@@ -111,6 +111,42 @@ public:
 	}
 };
 
+//! A build info file as part of the build step
+class BuildInfoFileUnit : public BuildUnit
+{
+private:
+	std::string uri;  //!< URI of this build info file
+	std::string hash; //!< Hash of this build info file
+public:
+	BuildInfoFileUnit(const std::string &fname, const std::string &_hash);
+	void print(std::ostream &out) override
+	{
+		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+	}
+	std::string type() override
+	{
+		return std::string("BuildInfoFile");
+	}
+};
+
+//! An output (hash) info file as part of the build step
+class OutputInfoFileUnit : public BuildUnit
+{
+private:
+	std::string uri;  //!< URI of this output info file
+	std::string hash; //!< Hash of this output info file
+public:
+	OutputInfoFileUnit(const std::string &fname, const std::string &hash);
+	void print(std::ostream &out) override
+	{
+		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
+	}
+	std::string type() override
+	{
+		return std::string("OutputInfoFile");
+	}
+};
+
 void BuildDescription::add(std::unique_ptr<BuildUnit> bu)
 {
 	this->BUs.push_back(std::move(bu));
@@ -134,6 +170,18 @@ void BuildDescription::add_package_file(const std::string &fname, const std::str
 void BuildDescription::add_require_file(const std::string &fname, const std::string &_fname_short)
 {
 	this->BUs.push_back(std::make_unique<RequireFileUnit>(fname, _fname_short));
+}
+
+void BuildDescription::add_output_info_file(const std::string &fname,
+                                            const std::string &_hash)
+{
+	this->BUs.push_back(std::make_unique<OutputInfoFileUnit>(fname, _hash));
+}
+
+void BuildDescription::add_build_info_file(const std::string &fname,
+                                           const std::string &_hash)
+{
+	this->BUs.push_back(std::make_unique<BuildInfoFileUnit>(fname, _hash));
 }
 
 PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_fname_short)
@@ -160,8 +208,8 @@ BuildInfoFileUnit::BuildInfoFileUnit(const std::string &fname, const std::string
 	this->hash = _hash;
 }
 
-OutputInfoFileUnit::OutputInfoFileUnit(const std::string &fname)
+OutputInfoFileUnit::OutputInfoFileUnit(const std::string &fname, const std::string &_hash)
 {
 	this->uri = fname;
-	this->hash = hash_file(this->uri);
+	this->hash = _hash;
 }
