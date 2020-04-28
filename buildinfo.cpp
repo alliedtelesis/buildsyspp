@@ -28,17 +28,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace buildsys;
 
+static std::vector<std::string> ignored_features;
+
+/**
+ * Add an ignored feature for all BuildDescription instances.
+ *
+ * @param feature - The name of the feature to ignore.
+ */
+void BuildDescription::ignore_feature(const std::string &feature)
+{
+	ignored_features.push_back(feature);
+}
+
 /**
  * Add a feature value pair to the BuildDescription.
  *
- * @param ignored - If this feature value pair should be ignored.
  * @param feature - The name of the feature.
  * @param value - The value for the feature.
  */
-void BuildDescription::add_feature_value(bool ignored, const std::string &feature,
+void BuildDescription::add_feature_value(const std::string &feature,
                                          const std::string &value)
 {
-	if(!ignored) {
+	bool is_ignored = (std::find(ignored_features.begin(), ignored_features.end(),
+	                             feature) != ignored_features.end());
+	if(!is_ignored) {
 		auto desc = boost::format{"FeatureValue %1% %2%"} % feature % value;
 		this->BUs.push_back(desc.str());
 	}

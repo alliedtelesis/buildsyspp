@@ -55,8 +55,7 @@ static int li_feature(lua_State *L)
 		try {
 			std::string value = P->getFeature(key);
 			lua_pushstring(L, value.c_str());
-			P->buildDescription()->add_feature_value(
-			    P->getWorld()->isIgnoredFeature(key), key, value);
+			P->buildDescription()->add_feature_value(key, value);
 		} catch(NoKeyException &E) {
 			lua_pushnil(L);
 			P->buildDescription()->add_nil_feature_value(key);

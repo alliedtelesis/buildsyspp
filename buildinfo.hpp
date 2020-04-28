@@ -43,8 +43,8 @@ namespace buildsys
 		std::vector<std::string> BUs;
 
 	public:
-		void add_feature_value(bool ignored, const std::string &feature,
-		                       const std::string &value);
+		static void ignore_feature(const std::string &feature);
+		void add_feature_value(const std::string &feature, const std::string &value);
 		void add_nil_feature_value(const std::string &feature);
 		void add_package_file(const std::string &fname, const std::string &hash);
 		void add_require_file(const std::string &fname, const std::string &hash);

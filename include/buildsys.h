@@ -1265,7 +1265,6 @@ namespace buildsys
 		std::string fetch_from;
 		std::string tarball_cache;
 		std::string pwd;
-		string_list ignoredFeatures;
 		bool failed{false};
 		bool cleaning{false};
 		bool parseOnly{false};
@@ -1371,23 +1370,6 @@ namespace buildsys
 		bool isQuietly()
 		{
 			return this->quietly;
-		}
-
-		//! Ignore a feature for build.info
-		void ignoreFeature(const std::string &feature)
-		{
-			this->ignoredFeatures.push_back(feature);
-		}
-		//! Is a feature ignored
-		bool isIgnoredFeature(const std::string &feature)
-		{
-			return (std::find(this->ignoredFeatures.begin(), this->ignoredFeatures.end(),
-			                  feature) != this->ignoredFeatures.end());
-		}
-		//! Is the ignore list empty ?
-		bool noIgnoredFeatures() const
-		{
-			return this->ignoredFeatures.empty();
 		}
 
 		//! Find (or create) a DLObject for a given full file name
