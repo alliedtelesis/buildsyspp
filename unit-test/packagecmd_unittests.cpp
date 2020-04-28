@@ -124,3 +124,18 @@ TEST_CASE_METHOD(PackageCmdTestsFixture,
 
 	filesystem::remove(file_path);
 }
+
+TEST_CASE_METHOD(PackageCmdTestsFixture,
+                 "Test Run() function returns false if underlying command failed", "")
+{
+	PackageCmd pc(".", "/bin/false");
+	pc.disableLogging();
+
+	Logger logger;
+
+	std::stringstream buffer;
+	std::cout.rdbuf(buffer.rdbuf());
+
+	bool ret = pc.Run(&logger);
+	REQUIRE(!ret);
+}

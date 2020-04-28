@@ -156,7 +156,7 @@ bool PackageCmd::Run(Logger *logger)
 	}
 
 	// check return status ...
-	if(WEXITSTATUS(status) < 0) { // NOLINT
+	if(WEXITSTATUS(status) != 0) { // NOLINT
 		logger->log(boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
 		            this->app % this->path % status);
 		this->printCmd(logger);
