@@ -23,9 +23,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include "include/buildsys.h"
-
+#include "hash.hpp"
+#include "logger.hpp"
+#include <iomanip>
 #include <openssl/evp.h>
+#include <sstream>
+#include <vector>
 
 void buildsys::hash_setup()
 {

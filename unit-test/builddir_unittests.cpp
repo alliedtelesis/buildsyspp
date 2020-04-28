@@ -6,7 +6,7 @@
 class BuildDirTestsFixture
 {
 protected:
-	std::string cwd{"test_dir"};
+	std::string cwd{"builddir_test_dir"};
 
 public:
 	BuildDirTestsFixture()

@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef HASH_HPP_
 #define HASH_HPP_
 
+#include <string>
+
 namespace buildsys
 {
 	void hash_setup();
