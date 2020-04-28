@@ -24,211 +24,108 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "buildinfo.hpp"
+#include <boost/format.hpp>
 
 using namespace buildsys;
 
-//! A feature/value as part of the build step
-class FeatureValueUnit : public BuildUnit
+/**
+ * Add a feature value pair to the BuildDescription.
+ *
+ * @param ignored - If this feature value pair should be ignored.
+ * @param feature - The name of the feature.
+ * @param value - The value for the feature.
+ */
+void BuildDescription::add_feature_value(bool ignored, const std::string &feature,
+                                         const std::string &value)
 {
-private:
-	const std::string feature;
-	const std::string value;
-	const bool ignored;
-
-public:
-	FeatureValueUnit(bool _ignored, std::string _feature, std::string _value)
-		: feature(std::move(_feature)), value(std::move(_value)), ignored(_ignored)
-	{
+	if(!ignored) {
+		auto desc = boost::format{"FeatureValue %1% %2%"} % feature % value;
+		this->BUs.push_back(desc.str());
 	}
-	void print(std::ostream &out) override
-	{
-		if(!this->ignored) {
-			out << this->type() << " " << this->feature << " " << this->value
-				<< std::endl;
-		}
-	}
-	std::string type() override
-	{
-		return std::string("FeatureValue");
-	}
-};
-
-
-//! A feature that is nil as part of the build step
-class FeatureNilUnit : public BuildUnit
-{
-private:
-	const std::string feature;
-
-public:
-	explicit FeatureNilUnit(std::string _feature) : feature(std::move(_feature))
-	{
-	}
-	void print(std::ostream &out) override
-	{
-		out << this->type() << " " << this->feature << std::endl;
-	}
-	std::string type() override
-	{
-		return std::string("FeatureNil");
-	}
-};
-
-//! A lua package file as part of the build step
-class PackageFileUnit : public BuildUnit
-{
-private:
-	std::string uri;  //!< URI of this package file
-	std::string hash; //!< Hash of this package file
-public:
-	PackageFileUnit(const std::string &fname, const std::string &_hash);
-	void print(std::ostream &out) override
-	{
-		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-	}
-	std::string type() override
-	{
-		return std::string("PackageFile");
-	}
-};
-
-//! A lua require file as part of the build step
-class RequireFileUnit : public BuildUnit
-{
-private:
-	std::string uri;  //!< URI of this package file
-	std::string hash; //!< Hash of this package file
-public:
-	RequireFileUnit(const std::string &fname, const std::string &_hash);
-	void print(std::ostream &out) override
-	{
-		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-	}
-	std::string type() override
-	{
-		return std::string("RequireFile");
-	}
-};
-
-//! A build info file as part of the build step
-class BuildInfoFileUnit : public BuildUnit
-{
-private:
-	std::string uri;  //!< URI of this build info file
-	std::string hash; //!< Hash of this build info file
-public:
-	BuildInfoFileUnit(const std::string &fname, const std::string &_hash);
-	void print(std::ostream &out) override
-	{
-		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-	}
-	std::string type() override
-	{
-		return std::string("BuildInfoFile");
-	}
-};
-
-//! An output (hash) info file as part of the build step
-class OutputInfoFileUnit : public BuildUnit
-{
-private:
-	std::string uri;  //!< URI of this output info file
-	std::string hash; //!< Hash of this output info file
-public:
-	OutputInfoFileUnit(const std::string &fname, const std::string &hash);
-	void print(std::ostream &out) override
-	{
-		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-	}
-	std::string type() override
-	{
-		return std::string("OutputInfoFile");
-	}
-};
-
-//! An extraction info file as part of the build step
-class ExtractionInfoFileUnit : public BuildUnit
-{
-private:
-	std::string uri;  //!< URI of this extraction info file
-	std::string hash; //!< Hash of this extraction info file
-public:
-	ExtractionInfoFileUnit(const std::string &fname, const std::string &_hash);
-	void print(std::ostream &out) override
-	{
-		out << this->type() << " " << this->uri << " " << this->hash << std::endl;
-	}
-	std::string type() override
-	{
-		return std::string("ExtractionInfoFile");
-	}
-};
-
-void BuildDescription::add_feature_value(bool _ignored, std::string _feature, std::string _value)
-{
-	this->BUs.push_back(std::make_unique<FeatureValueUnit>(_ignored, _feature, _value));
 }
 
-void BuildDescription::add_nil_feature_value(std::string _feature)
+/**
+ * Add a nil feature to the BuildDescription.
+ *
+ * @param feature - The name of the feature that was nil.
+ */
+void BuildDescription::add_nil_feature_value(const std::string &feature)
 {
-	this->BUs.push_back(std::make_unique<FeatureNilUnit>(_feature));
+	auto desc = boost::format{"FeatureNil %1%"} % feature;
+	this->BUs.push_back(desc.str());
 }
 
-void BuildDescription::add_package_file(const std::string &fname, const std::string &_hash)
+/**
+ * Add the package file to the BuildDescription.
+ *
+ * @param fname - The name of the file describing the package being built.
+ * @param hash - The hash of the file.
+ */
+void BuildDescription::add_package_file(const std::string &fname, const std::string &hash)
 {
-	this->BUs.push_back(std::make_unique<PackageFileUnit>(fname, _hash));
+	auto desc = boost::format{"PackageFile %1% %2%"} % fname % hash;
+	this->BUs.push_back(desc.str());
 }
 
-void BuildDescription::add_require_file(const std::string &fname, const std::string &_hash)
+/**
+ * Add a require file to the BuildDescription.
+ *
+ * @param fname - The name of the file required by the package being built.
+ * @param hash - The hash of the file.
+ */
+void BuildDescription::add_require_file(const std::string &fname, const std::string &hash)
 {
-	this->BUs.push_back(std::make_unique<RequireFileUnit>(fname, _hash));
+	auto desc = boost::format{"RequireFile %1% %2%"} % fname % hash;
+	this->BUs.push_back(desc.str());
 }
 
+/**
+ * Add an output info file of a depended package to the BuildDescription.
+ *
+ * @param fname - The name of the output info file of a depended package.
+ * @param hash - The hash of the file.
+ */
 void BuildDescription::add_output_info_file(const std::string &fname,
-                                            const std::string &_hash)
+                                            const std::string &hash)
 {
-	this->BUs.push_back(std::make_unique<OutputInfoFileUnit>(fname, _hash));
+	auto desc = boost::format{"OutputInfoFile %1% %2%"} % fname % hash;
+	this->BUs.push_back(desc.str());
 }
 
+/**
+ * Add a build info file of a depended package to the BuildDescription.
+ *
+ * @param fname - The name of the build info file of a depended package.
+ * @param hash - The hash of the file.
+ */
 void BuildDescription::add_build_info_file(const std::string &fname,
-                                           const std::string &_hash)
+                                           const std::string &hash)
 {
-	this->BUs.push_back(std::make_unique<BuildInfoFileUnit>(fname, _hash));
+	auto desc = boost::format{"BuildInfoFile %1% %2%"} % fname % hash;
+	this->BUs.push_back(desc.str());
 }
 
+/**
+ * Add the extraction info for the package being built to the BuildDescription.
+ *
+ * @param fname - The name of the extraction info file.
+ * @param hash - The hash of the file.
+ */
 void BuildDescription::add_extraction_info_file(const std::string &fname,
-                                                const std::string &_hash)
+                                                const std::string &hash)
 {
-	this->BUs.push_back(std::make_unique<ExtractionInfoFileUnit>(fname, _hash));
+	auto desc = boost::format{"ExtractionInfoFile %1% %2%"} % fname % hash;
+	this->BUs.push_back(desc.str());
 }
 
-PackageFileUnit::PackageFileUnit(const std::string &fname, const std::string &_hash)
+/**
+ * Print the BuildDescription.
+ *
+ * @param out - The std::ostream to print to.
+ */
+void BuildDescription::print(std::ostream &out) const
 {
-	this->uri = fname;
-	this->hash = _hash;
-}
-
-RequireFileUnit::RequireFileUnit(const std::string &fname, const std::string &_hash)
-{
-	this->uri = fname;
-	this->hash = _hash;
-}
-
-ExtractionInfoFileUnit::ExtractionInfoFileUnit(const std::string &fname,
-                                               const std::string &_hash)
-{
-	this->uri = fname;
-	this->hash = _hash;
-}
-
-BuildInfoFileUnit::BuildInfoFileUnit(const std::string &fname, const std::string &_hash)
-{
-	this->uri = fname;
-	this->hash = _hash;
-}
-
-OutputInfoFileUnit::OutputInfoFileUnit(const std::string &fname, const std::string &_hash)
-{
-	this->uri = fname;
-	this->hash = _hash;
+	for(auto &unit : this->BUs) {
+		out << unit << std::endl;
+	}
 }

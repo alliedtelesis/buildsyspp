@@ -33,39 +33,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace buildsys
 {
-	/** A build unit
-	 *  Describes a single piece required to re-build a package
-	 */
-	class BuildUnit
-	{
-	public:
-		virtual ~BuildUnit() = default;
-		virtual void print(std::ostream &out) = 0;
-		virtual std::string type() = 0;
-	};
-
-	/** A build description
-	 *  Describes relevant information to determine if a package needs rebuilding
+	/**
+	 * A build description. Describes relevant steps taken to build a Package.
+	 * This information is used to determine if a package needs rebuilding.
 	 */
 	class BuildDescription
 	{
 	private:
-		std::vector<std::unique_ptr<BuildUnit>> BUs;
+		std::vector<std::string> BUs;
 
 	public:
-		void add_feature_value(bool _ignored, std::string _feature, std::string _value);
-		void add_nil_feature_value(std::string _feature);
-		void add_package_file(const std::string &fname, const std::string &_hash);
-		void add_require_file(const std::string &fname, const std::string &_hash);
-		void add_output_info_file(const std::string &fname, const std::string &_hash);
-		void add_build_info_file(const std::string &fname, const std::string &_hash);
-		void add_extraction_info_file(const std::string &fname, const std::string &_hash);
-		void print(std::ostream &out) const
-		{
-			for(auto &unit : this->BUs) {
-				unit->print(out);
-			}
-		}
+		void add_feature_value(bool ignored, const std::string &feature,
+		                       const std::string &value);
+		void add_nil_feature_value(const std::string &feature);
+		void add_package_file(const std::string &fname, const std::string &hash);
+		void add_require_file(const std::string &fname, const std::string &hash);
+		void add_output_info_file(const std::string &fname, const std::string &hash);
+		void add_build_info_file(const std::string &fname, const std::string &hash);
+		void add_extraction_info_file(const std::string &fname, const std::string &hash);
+		void print(std::ostream &out) const;
 	};
 } // namespace buildsys
 
