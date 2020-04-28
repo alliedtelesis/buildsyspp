@@ -31,13 +31,13 @@ using namespace buildsys;
 static std::vector<std::string> ignored_features;
 
 /**
- * Add an ignored feature for all BuildDescription instances.
+ * Set the ignored features for all BuildDescription instances.
  *
- * @param feature - The name of the feature to ignore.
+ * @param features - The name of the feature to ignore.
  */
-void BuildDescription::ignore_feature(const std::string &feature)
+void BuildDescription::set_ignored_features(const std::vector<std::string> &features)
 {
-	ignored_features.push_back(feature);
+	ignored_features = features;
 }
 
 /**

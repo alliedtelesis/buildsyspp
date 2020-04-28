@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	// without first building their dependencies
 	size_t a = 2;
 	bool foundDashDash = false;
-	bool added_ignored_fv = false;
+	std::vector<std::string> ignored_features;
 	while(a < argList.size() && !foundDashDash) {
 		if(argList[a] == "--clean") {
 			WORLD.setCleaning();
@@ -69,8 +69,7 @@ int main(int argc, char *argv[])
 			WORLD.addOverlayPath(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--build-info-ignore-fv") {
-			added_ignored_fv = true;
-			BuildDescription::ignore_feature(argList[a + 1]);
+			ignored_features.push_back(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--parse-only") {
 			WORLD.setParseOnly();
@@ -106,10 +105,11 @@ int main(int argc, char *argv[])
 		target = target + ".lua";
 	}
 
-	if(!added_ignored_fv) {
+	if(ignored_features.empty()) {
 		// Implement old behaviour
-		BuildDescription::ignore_feature("job-limit");
-		BuildDescription::ignore_feature("load-limit");
+		BuildDescription::set_ignored_features({"job-limit", "load-limit"});
+	} else {
+		BuildDescription::set_ignored_features(ignored_features);
 	}
 
 	if(!WORLD.basePackage(target)) {
