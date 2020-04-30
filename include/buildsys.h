@@ -68,6 +68,7 @@ extern "C" {
 #include <boost/utility.hpp>
 
 #include "../buildinfo.hpp"
+#include "../exceptions.hpp"
 #include "../hash.hpp"
 #include "../logger.hpp"
 #include "../packagecmd.hpp"
@@ -130,50 +131,6 @@ namespace buildsys
 
 	bool interfaceSetup(Lua *lua);
 
-	/*! An exception with a custom error message */
-	class CustomException : public std::runtime_error
-	{
-	public:
-		/** Construct an exception with a specific error message
-		 *  \param err The erorr message
-		 */
-		explicit CustomException(std::string err) : std::runtime_error(std::move(err))
-		{
-		}
-	};
-
-	/*! A Lua fault */
-	class LuaException : public std::runtime_error
-	{
-	public:
-		LuaException() : std::runtime_error("Lua Error")
-		{
-		}
-	};
-
-	/*! No Such Key fault */
-	class NoKeyException : public std::runtime_error
-	{
-	public:
-		NoKeyException() : std::runtime_error("Key does not exist")
-		{
-		}
-	};
-
-	/*! File not found */
-	class FileNotFoundException : public std::runtime_error
-	{
-	public:
-		/** Create a file not found exception
-		 *  \param file the file that was not found
-		 *  \param where The location where the error occurred
-		 */
-		FileNotFoundException(const std::string &file, const std::string &where)
-		    : std::runtime_error(where + ": File not found '" + file + "'")
-		{
-		}
-	};
-
 	/*! A C++ wrapper for a lua state (instance) */
 	class Lua
 	{
@@ -188,7 +145,7 @@ namespace buildsys
 		{
 			state = luaL_newstate();
 			if(state == nullptr) {
-				throw LuaException();
+				throw CustomException("Lua Error");
 			}
 			luaL_openlibs(state);
 		};
