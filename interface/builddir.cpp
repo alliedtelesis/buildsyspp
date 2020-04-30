@@ -263,13 +263,16 @@ int li_bd_restore(lua_State *L)
 	return 0;
 }
 
-int li_bd_extract_table(lua_State *L)
+int li_bd_extract(lua_State *L)
 {
 	if(lua_gettop(L) != 2) {
 		throw CustomException("extract() requires exactly 1 argument");
 	}
 	if(!lua_istable(L, 1)) {
 		throw CustomException("extract() must be called using : not .");
+	}
+	if(!lua_istable(L, 2)) {
+		throw CustomException("extract() expects a table as the only argument");
 	}
 
 	Package *P = li_get_package();
@@ -281,46 +284,6 @@ int li_bd_extract_table(lua_State *L)
 	} else {
 		// The catch all for tar compressed files
 		P->extraction()->add(std::make_unique<TarExtractionUnit>(f));
-	}
-
-	return 0;
-}
-
-int li_bd_extract(lua_State *L)
-{
-	if(lua_gettop(L) != 2) {
-		throw CustomException("extract() requires exactly 1 argument");
-	}
-	if(!lua_istable(L, 1)) {
-		throw CustomException("extract() must be called using : not .");
-	}
-	if(lua_istable(L, 2)) {
-		return li_bd_extract_table(L);
-	}
-	if(lua_isstring(L, 2) == 0) {
-		throw CustomException("extract() expects a string as the only argument");
-	}
-
-	lua_pushstring(L, "data");
-	lua_gettable(L, 1);
-	if(!lua_islightuserdata(L, -1)) {
-		throw CustomException("extract() must be called using : not .");
-	}
-	const auto *d = reinterpret_cast<const BuildDir *>(lua_topointer(L, -1)); // NOLINT
-	lua_pop(L, 1);
-
-	Package *P = li_get_package();
-
-	P->log("Using deprecated extract API");
-
-	std::string fName(lua_tostring(L, 2));
-	std::string realFName = relative_path(d, fName, true);
-
-	if(fName.find(".zip") != std::string::npos) {
-		P->extraction()->add(std::make_unique<ZipExtractionUnit>(realFName));
-	} else {
-		// The catch all for tar compressed files
-		P->extraction()->add(std::make_unique<TarExtractionUnit>(realFName));
 	}
 
 	return 0;
