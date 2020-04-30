@@ -130,86 +130,47 @@ namespace buildsys
 
 	bool interfaceSetup(Lua *lua);
 
-	/*! The catchable exception */
-	class Exception : public std::exception
-	{
-	public:
-		~Exception() override = default;
-		//! Return the error message for this exception
-		virtual std::string error_msg()
-		{
-			return "";
-		};
-	};
-
 	/*! An exception with a custom error message */
-	class CustomException : public Exception
+	class CustomException : public std::runtime_error
 	{
-	private:
-		std::string errmsg;
-
 	public:
 		/** Construct an exception with a specific error message
 		 *  \param err The erorr message
 		 */
-		explicit CustomException(std::string err) : errmsg(std::move(err))
+		explicit CustomException(std::string err) : std::runtime_error(std::move(err))
 		{
-		}
-		std::string error_msg() override
-		{
-			return errmsg;
 		}
 	};
 
 	/*! A Lua fault */
-	class LuaException : public Exception
+	class LuaException : public std::runtime_error
 	{
 	public:
-		std::string error_msg() override
+		LuaException() : std::runtime_error("Lua Error")
 		{
-			return "Lua Error";
-		}
-	};
-
-	/*! A Memory fault */
-	class MemoryException : public Exception
-	{
-	public:
-		std::string error_msg() override
-		{
-			return "Memory Error";
 		}
 	};
 
 	/*! No Such Key fault */
-	class NoKeyException : public Exception
+	class NoKeyException : public std::runtime_error
 	{
 	public:
-		std::string error_msg() override
+		NoKeyException() : std::runtime_error("Key does not exist")
 		{
-			return "Key does not exist";
 		}
 	};
 
 	/*! File not found */
-	class FileNotFoundException : public Exception
+	class FileNotFoundException : public std::runtime_error
 	{
-	private:
-		std::string errmsg;
-
 	public:
 		/** Create a file not found exception
 		 *  \param file the file that was not found
 		 *  \param where The location where the error occurred
 		 */
 		FileNotFoundException(const std::string &file, const std::string &where)
+		    : std::runtime_error(where + ": File not found '" + file + "'")
 		{
-			auto msg = boost::format{"%1%: File not found '%2%'"} % where % file;
-			this->errmsg = msg.str();
-		}
-		std::string error_msg() override
-		{
-			return errmsg;
 		}
 	};
 

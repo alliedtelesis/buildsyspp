@@ -49,8 +49,8 @@ static void build_thread(Package *p)
 			w->setFailed();
 			p->log("Building failed");
 		}
-	} catch(Exception &E) {
-		p->log(E.error_msg());
+	} catch(std::exception &e) {
+		p->log(e.what());
 		throw;
 	}
 	w->threadEnded();
@@ -64,8 +64,8 @@ static void process_package(Package *p, PackageQueue *pq)
 		if(!p->process()) {
 			p->log("Processing failed");
 		}
-	} catch(Exception &E) {
-		p->log(E.error_msg());
+	} catch(std::exception &e) {
+		p->log(e.what());
 		throw;
 	}
 
