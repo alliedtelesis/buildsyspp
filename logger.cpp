@@ -106,10 +106,10 @@ const char *Logger::get_colour(const std::string &str)
 	const std::string warning_str("warning:");
 
 	if(this->output_supports_colour) {
-		if(str.compare(0, error_str.size(), error_str) == 0) {
+		if(str.find(error_str) != std::string::npos) {
 			return Logger::COLOUR_BOLD_RED;
 		}
-		if(str.compare(0, warning_str.size(), warning_str) == 0) {
+		if(str.find(warning_str) != std::string::npos) {
 			return Logger::COLOUR_BOLD_BLUE;
 		}
 	}

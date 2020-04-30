@@ -98,7 +98,24 @@ TEST_CASE_METHOD(LoggerTestsFixture, "Test Logger program_output() with coloured
 
 	buffer.str("");
 
+	test_string = std::string("Random text at start && error: This is a test log message");
+	logger.program_output(test_string);
+
+	REQUIRE(buffer.str() == std::string(Logger::COLOUR_BOLD_RED) + test_string +
+	                            std::string(Logger::COLOUR_RESET) + "\n");
+
+	buffer.str("");
+
 	test_string = std::string("warning: This is a test log message");
+	logger.program_output(test_string);
+
+	REQUIRE(buffer.str() == std::string(Logger::COLOUR_BOLD_BLUE) + test_string +
+	                            std::string(Logger::COLOUR_RESET) + "\n");
+
+	buffer.str("");
+
+	test_string =
+	    std::string("Random text at start && warning: This is a test log message");
 	logger.program_output(test_string);
 
 	REQUIRE(buffer.str() == std::string(Logger::COLOUR_BOLD_BLUE) + test_string +
