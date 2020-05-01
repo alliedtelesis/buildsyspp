@@ -12,6 +12,7 @@ find_package(Threads REQUIRED)
 
 find_package(OpenSSL REQUIRED)
 
+include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
 
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -66,3 +67,11 @@ target_include_directories(exceptions_unittests PRIVATE ../)
 target_compile_features(exceptions_unittests PRIVATE cxx_std_14)
 target_link_libraries(exceptions_unittests PRIVATE Catch2::Catch2)
 add_test(NAME exceptions_unittests COMMAND exceptions_unittests)
+
+add_executable(lua_unittests lua_unittests.cpp ../lua.cpp ../filesystem.cpp)
+append_coverage_compiler_flags()
+target_include_directories(lua_unittests PRIVATE ../)
+target_compile_features(lua_unittests PRIVATE cxx_std_14)
+target_link_libraries(lua_unittests PRIVATE Catch2::Catch2)
+target_link_libraries(lua_unittests PRIVATE ${LUA_LIBRARIES})
+add_test(NAME lua_unittests COMMAND lua_unittests)
