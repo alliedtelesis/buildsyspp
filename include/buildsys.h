@@ -71,6 +71,7 @@ extern "C" {
 #include "../exceptions.hpp"
 #include "../hash.hpp"
 #include "../logger.hpp"
+#include "../lua.hpp"
 #include "../packagecmd.hpp"
 #include "include/filesystem.h"
 
@@ -125,54 +126,10 @@ namespace buildsys
 {
 	using string_list = std::list<std::string>;
 
-	class Lua;
 	class Package;
 	class World;
 
 	bool interfaceSetup(Lua *lua);
-
-	/*! A C++ wrapper for a lua state (instance) */
-	class Lua
-	{
-	private:
-		lua_State *state;
-
-	public:
-		/** Create a lua state
-		 * Creates a new lua state, and opens loads our libraries into it
-		 */
-		Lua()
-		{
-			state = luaL_newstate();
-			if(state == nullptr) {
-				throw CustomException("Lua Error");
-			}
-			luaL_openlibs(state);
-		};
-
-		~Lua()
-		{
-			lua_close(state);
-			this->state = nullptr;
-		}
-		/** Load and exexcute a lua file in this instance
-		 *  \param filename The name of the lua file to load and run
-		 */
-		void processFile(const std::string &filename)
-		{
-			if(luaL_dofile(state, filename.c_str()) != 0) {
-				throw CustomException(lua_tostring(state, -1));
-			}
-		}
-		/** Register a function in this lua instance
-		 *  \param name The name of the function
-		 *  \param fn The function to call
-		 */
-		void registerFunc(const std::string &name, lua_CFunction fn)
-		{
-			lua_register(state, name.c_str(), fn);
-		}
-	};
 
 	/** A directory for building a package in
 	 *  Each package has one build directory which is used to run all the commands in
