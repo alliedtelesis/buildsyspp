@@ -172,20 +172,6 @@ namespace buildsys
 		{
 			lua_register(state, name.c_str(), fn);
 		}
-		/** Set a global variable to given data
-		 *  \param name the name to store this data as
-		 *  \param data the data
-		 */
-		void setGlobal(const std::string &name, void *data)
-		{
-			lua_pushlightuserdata(state, data);
-			lua_setglobal(state, name.c_str());
-		}
-		//! Get the lua_State
-		lua_State *luaState()
-		{
-			return state;
-		}
 	};
 
 	/** A directory for building a package in
