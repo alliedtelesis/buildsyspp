@@ -692,6 +692,10 @@ bool Package::build(bool locally)
 		this->getWorld()->packageFinished(this);
 		return true;
 	}
+
+	// Hold the lock for the whole build, to avoid multiple running at once
+	std::unique_lock<std::mutex> lk(this->lock);
+
 	// Create the new extraction.info file
 	this->Extract.prepareNewExtractInfo(this, &this->bd);
 
@@ -775,7 +779,6 @@ bool Package::build(bool locally)
 
 	this->log(boost::format{"Built in %1% seconds"} % this->run_secs);
 
-	std::unique_lock<std::mutex> lk(this->lock);
 	this->building = false;
 	this->built = true;
 	this->was_built = true;
