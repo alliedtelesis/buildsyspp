@@ -1135,7 +1135,7 @@ namespace buildsys
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
 		int threads_limit{0};
-
+		mutable std::mutex namespaces_lock;
 		mutable std::mutex dlobjects_lock;
 		const DLObject *_findDLObject(const std::string &);
 
@@ -1244,6 +1244,7 @@ namespace buildsys
 		bool basePackage(const std::string &filename);
 
 		//! Get the namespace list
+		// todo: This is not thread safe...
 		const std::list<NameSpace> &getNameSpaces() const
 		{
 			return this->namespaces;

@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 NameSpace *World::findNameSpace(const std::string &name)
 {
+	std::unique_lock<std::mutex> lk(this->namespaces_lock);
 	for(auto &ns : this->namespaces) {
 		if(ns.getName() == name) {
 			return &ns;
@@ -194,6 +195,7 @@ const DLObject *World::_findDLObject(const std::string &fname)
 
 void World::printNameSpaces() const
 {
+	std::unique_lock<std::mutex> lk(this->namespaces_lock);
 	std::cout << std::endl << "----BEGIN NAMESPACES----" << std::endl;
 	for(auto &ns : this->namespaces) {
 		std::cout << ns.getName() << std::endl;
