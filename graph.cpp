@@ -25,34 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-//! Used to print out the names of packages in the dependency graph
-/** Allows a package to print any information it likes for its label
- */
-template <class Name> class graphnode_property_writer
-{
-private:
-	Name names;
-
-public:
-	//! Construct a property writer
-	/** \param _name the mapping from vertices/edges to objects
-	 */
-	explicit graphnode_property_writer(Name _name) : names(std::move(_name))
-	{
-	}
-	//! The outputting function
-	/** Gets the given vertex or edge label
-	 * \param out The stream to write the data to
-	 * \param v The vertex or edge to get the data from
-	 */
-	template <class VertexOrEdge> void operator()(std::ostream &out, VertexOrEdge v)
-	{
-		if(names[v] != nullptr) {
-			names[v]->printLabel(out);
-		}
-	}
-};
-
 void Internal_Graph::fill(World *W)
 {
 	for(const auto &ns : W->getNameSpaces()) {
@@ -60,11 +32,11 @@ void Internal_Graph::fill(World *W)
 			NodeVertexMap::iterator pos;
 			bool inserted;
 			boost::tie(pos, inserted) =
-			    Nodes.insert(std::make_pair(package.get(), Vertex()));
+			    this->Nodes.insert(std::make_pair(package.get(), Vertex()));
 			if(inserted) {
-				Vertex u = add_vertex(g);
+				Vertex u = add_vertex(this->g);
 				pos->second = u;
-				NodeMap.insert(std::make_pair(u, package.get()));
+				this->NodeMap.insert(std::make_pair(u, package.get()));
 			}
 		}
 	}
@@ -75,7 +47,8 @@ void Internal_Graph::fill(World *W)
 				Edge e;
 				bool inserted;
 				boost::tie(e, inserted) =
-				    add_edge(Nodes[(package.get())], Nodes[depend.getPackage()], g);
+				    add_edge(this->Nodes[(package.get())], this->Nodes[depend.getPackage()],
+				             this->g);
 			}
 		}
 	}
@@ -84,7 +57,7 @@ void Internal_Graph::fill(World *W)
 void Internal_Graph::output() const
 {
 	std::ofstream dotFile("dependencies.dot");
-	write_graphviz(dotFile, g, graphnode_property_writer<VertexNodeMap>(NodeMap));
+	write_graphviz(dotFile, this->g, VertexNodeMap_property_writer(this->NodeMap));
 	dotFile.flush();
 }
 
@@ -92,12 +65,12 @@ void Internal_Graph::topological()
 {
 	this->c.clear();
 
-	topological_sort(this->g, std::back_inserter(c));
+	topological_sort(this->g, std::back_inserter(this->c));
 }
 
 void Internal_Graph::deleteNode(Package *p)
 {
-	clear_vertex(Nodes[p], this->g);
+	clear_vertex(this->Nodes[p], this->g);
 }
 
 Package *Internal_Graph::topoNext()
@@ -105,7 +78,7 @@ Package *Internal_Graph::topoNext()
 	Package *n = nullptr;
 
 	for(auto &ii : c) {
-		Package *p = NodeMap[ii];
+		Package *p = this->NodeMap[ii];
 		if(!(p->isBuilt()) && !(p->isBuilding()) && p->canBuild()) {
 			n = p;
 		}

@@ -982,6 +982,38 @@ namespace buildsys
 		VertexNodeMap NodeMap;
 		container c;
 
+		/**
+		 * Used to print out the names of packages in the dependency graph.
+		 */
+		class VertexNodeMap_property_writer
+		{
+		private:
+			const VertexNodeMap &map;
+
+		public:
+			/**
+			 * Construct a VertexNodeMap_property_writer
+			 *
+			 * @param _map - The VertexNodeMap of the graph (i.e. the mapping between
+			 *               vertices and packages).
+			 */
+			explicit VertexNodeMap_property_writer(const VertexNodeMap &_map) : map(_map)
+			{
+			}
+			/**
+			 * The outputting function for each vertex in the graph (i.e. each package).
+			 *
+			 * @param out - The stream to write the data to
+			 * @param v - The vertex to write the data for
+			 */
+			void operator()(std::ostream &out, Vertex v)
+			{
+				if(this->map.at(v) != nullptr) {
+					this->map.at(v)->printLabel(out);
+				}
+			}
+		};
+
 	public:
 		//! Fill the Internal_Graph
 		void fill(World *W);
