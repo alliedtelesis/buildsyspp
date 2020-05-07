@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
+using namespace boost;
+
 void Internal_Graph::fill(World *W)
 {
 	for(const auto &ns : W->getNameSpaces()) {
@@ -52,6 +54,40 @@ void Internal_Graph::fill(World *W)
 			}
 		}
 	}
+}
+
+std::unordered_set<Package *> Internal_Graph::get_cycled_packages() const
+{
+	struct cycle_detector : public dfs_visitor<> {
+		cycle_detector(const VertexNodeMap &_map,
+		               std::unordered_set<Package *> *_cycled_packages)
+		    : map(_map), packages(_cycled_packages)
+
+		{
+		}
+
+		/**
+		 * Called if the DFS traverses a back edge (i.e. a cycle is found)
+		 */
+		void back_edge(Edge e, const Graph &g)
+		{
+			Vertex vertex1 = source(e, g);
+			Vertex vertex2 = target(e, g);
+
+			packages->insert(this->map.at(vertex1));
+			packages->insert(this->map.at(vertex2));
+		}
+
+		const VertexNodeMap &map;
+		std::unordered_set<Package *> *packages;
+	};
+
+	std::unordered_set<Package *> cycled_packages;
+
+	cycle_detector vis(this->NodeMap, &cycled_packages);
+	depth_first_search(this->g, visitor(vis));
+
+	return cycled_packages;
 }
 
 void Internal_Graph::output() const

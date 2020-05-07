@@ -1025,6 +1025,7 @@ namespace buildsys
 		Package *topoNext();
 		//! Remove a package from this graph
 		void deleteNode(Package *p);
+		std::unordered_set<Package *> get_cycled_packages() const;
 	};
 
 	class PackageQueue

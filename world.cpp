@@ -125,6 +125,20 @@ bool World::basePackage(const std::string &filename)
 
 	process_packages(base_package);
 
+	this->graph.fill(this);
+	this->topo_graph.fill(this);
+
+	std::unordered_set<Package *> cycled_packages = this->graph.get_cycled_packages();
+	if(!cycled_packages.empty()) {
+		err_logger.log("Dependency Loop Detected");
+		err_logger.log("Cycled Packages:");
+		for(auto &package : cycled_packages) {
+			err_logger.log(boost::format{"    %1%,%2%"} % package->getNS()->getName() %
+			               package->getName());
+		}
+		return false;
+	}
+
 	// Check for dependency loops
 	if(!base_package->checkForDependencyLoops()) {
 		err_logger.log("Dependency Loop Detected");
@@ -135,9 +149,6 @@ bool World::basePackage(const std::string &filename)
 		// We are done, no building required
 		return true;
 	}
-
-	this->graph.fill(this);
-	this->topo_graph.fill(this);
 
 	this->topo_graph.topological();
 	while(!this->isFailed() && !base_package->isBuilt()) {
