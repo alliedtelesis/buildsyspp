@@ -697,7 +697,6 @@ namespace buildsys
 		std::string depsExtraction;
 		bool depsExtractionDirectOnly{false};
 		string_list installFiles;
-		bool visiting{false};
 		bool processing_queued{false};
 		bool buildInfoPrepared{false};
 		std::atomic<bool> built{false};
@@ -912,9 +911,6 @@ namespace buildsys
 		{
 			return this->hash_output;
 		};
-
-		//! Check for any dependency loops
-		bool checkForDependencyLoops();
 
 		//! Build this package
 		bool build(bool locally = false);

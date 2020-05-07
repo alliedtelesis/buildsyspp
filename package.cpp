@@ -162,27 +162,6 @@ bool Package::process()
 	return true;
 }
 
-bool Package::checkForDependencyLoops()
-{
-	if(this->visiting) {
-		this->log("Cyclic Dependency");
-		return false;
-	}
-
-	this->visiting = true;
-
-	for(auto &dp : this->depends) {
-		if(!dp.getPackage()->checkForDependencyLoops()) {
-			this->log("Child failed dependency loop check");
-			return false;
-		}
-	}
-
-	this->visiting = false;
-
-	return true;
-}
-
 /**
  * Extract the staging output for the package into the given directory.
  *

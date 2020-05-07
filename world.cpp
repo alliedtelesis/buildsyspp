@@ -139,12 +139,6 @@ bool World::basePackage(const std::string &filename)
 		return false;
 	}
 
-	// Check for dependency loops
-	if(!base_package->checkForDependencyLoops()) {
-		err_logger.log("Dependency Loop Detected");
-		return false;
-	}
-
 	if(this->areParseOnly()) {
 		// We are done, no building required
 		return true;
