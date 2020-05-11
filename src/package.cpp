@@ -30,6 +30,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TAR_CMD "/bin/tar"
 #endif
 
+bool Package::quiet_packages = false;
+
+/**
+ * Configure created packages to be 'quiet'.
+ *
+ * @param set - true to enable, false to disable.
+ */
+void Package::set_quiet_packages(bool set)
+{
+	quiet_packages = set;
+}
+
 Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
                  std::string _file, std::string _pwd)
     : name(std::move(_name)), file(std::move(_file)), file_short(std::move(_file_short)),
@@ -37,7 +49,7 @@ Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
 {
 	std::string prefix = this->ns->getName() + "," + this->name;
 
-	if(this->getWorld()->isQuietly()) {
+	if(this->quiet_packages) {
 		auto log_path = boost::format{"%1%/output/%2%/%3%/build.log"} % this->pwd %
 		                this->getNS()->getName() % this->name;
 		this->logger = std::move(Logger(prefix, log_path.str()));

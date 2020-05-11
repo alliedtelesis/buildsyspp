@@ -680,6 +680,7 @@ namespace buildsys
 	class Package
 	{
 	private:
+		static bool quiet_packages;
 		std::list<PackageDepend> depends;
 		std::list<PackageCmd> commands;
 		std::string name;
@@ -953,6 +954,7 @@ namespace buildsys
 		{
 			return &this->logger;
 		}
+		static void set_quiet_packages(bool set);
 	};
 
 	//! A graph of dependencies between packages
@@ -1169,20 +1171,6 @@ namespace buildsys
 		void setKeepGoing()
 		{
 			this->keepGoing = true;
-		}
-
-		//! Set quietly mode
-		void setQuietly()
-		{
-			this->quietly = true;
-		}
-
-		/**
-		 * Are we operating in 'quietly' mode
-		 */
-		bool isQuietly()
-		{
-			return this->quietly;
 		}
 
 		//! Find (or create) a DLObject for a given full file name

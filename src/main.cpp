@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 		} else if(argList[a] == "--keep-going") {
 			WORLD.setKeepGoing();
 		} else if(argList[a] == "--quietly") {
-			WORLD.setQuietly();
+			Package::set_quiet_packages(true);
 		} else if(argList[a] == "--parallel-packages" || argList[a] == "-j") {
 			WORLD.setThreadsLimit(std::stoi(argList[a + 1]));
 			a++;
