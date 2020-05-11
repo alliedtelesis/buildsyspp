@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 			a++;
 		} else if(argList[a] == "--tarball-cache") {
 			logger.log(boost::format{"Setting tarball cache to %1%"} % (argList[a + 1]));
-			WORLD.setTarballCache(argList[a + 1]);
+			DownloadFetch::setTarballCache(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--overlay") {
 			WORLD.addOverlayPath(argList[a + 1]);

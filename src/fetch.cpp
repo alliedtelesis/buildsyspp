@@ -25,6 +25,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
+std::string DownloadFetch::tarball_cache;
+
+/**
+ *  Set the location of the local tarball cache
+ *
+ *  @param cache - The location to set.
+ */
+void DownloadFetch::setTarballCache(std::string cache)
+{
+	tarball_cache = std::move(cache);
+}
+
 /* This is the full name of the file to be downloaded */
 std::string DownloadFetch::full_name()
 {
@@ -93,10 +105,10 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 	if(!filesystem::exists(_fpath)) {
 		bool localCacheHit = false;
 		// Attempt to get file from local tarball cache if one is configured.
-		if(this->P->getWorld()->haveTarballCache()) {
+		if(!this->tarball_cache.empty()) {
 			filesystem::remove("dl/" + fullname + ".tmp");
 			PackageCmd pc("dl", "wget");
-			std::string url = this->P->getWorld()->tarballCache() + "/" + fname;
+			std::string url = this->tarball_cache + "/" + fname;
 			pc.addArg(url);
 			pc.addArg("-O" + fullname + ".tmp");
 			localCacheHit = pc.Run(this->P->getLogger());

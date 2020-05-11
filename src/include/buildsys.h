@@ -286,6 +286,9 @@ namespace buildsys
 	 */
 	class DownloadFetch : public FetchUnit
 	{
+	private:
+		static std::string tarball_cache;
+
 	protected:
 		const bool decompress;
 		const std::string filename;
@@ -306,6 +309,7 @@ namespace buildsys
 		{
 			return "dl/" + this->final_name();
 		};
+		static void setTarballCache(std::string cache);
 	};
 
 	/* A linked file/directory
@@ -1078,7 +1082,6 @@ namespace buildsys
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
 		std::string fetch_from;
-		std::string tarball_cache;
 		std::string pwd;
 		bool failed{false};
 		bool cleaning{false};
@@ -1220,22 +1223,6 @@ namespace buildsys
 		const std::string &fetchFrom() const
 		{
 			return this->fetch_from;
-		}
-
-		//! Set the location of the local tarball cache
-		void setTarballCache(std::string cache)
-		{
-			this->tarball_cache = std::move(cache);
-		}
-		//! Test if the tarball cache location is set
-		bool haveTarballCache() const
-		{
-			return (!this->tarball_cache.empty());
-		}
-		//! Get the the tarball Cache location
-		const std::string &tarballCache() const
-		{
-			return this->tarball_cache;
 		}
 
 		//! Get 'pwd'
