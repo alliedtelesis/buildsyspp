@@ -60,5 +60,6 @@ T *CHECK_ARGUMENT_TYPE(lua_State *L, const std::string &func, int num_args,
 
 void li_set_package(Package *p);
 Package *li_get_package();
+FeatureMap *li_get_feature_map();
 
 #endif // INTERFACE_LUAINTERFACE_H_

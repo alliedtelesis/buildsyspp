@@ -1,11 +1,11 @@
 /******************************************************************************
- Copyright 2019 Allied Telesis Labs Ltd. All rights reserved.
+ Copyright 2020 Allied Telesis Labs Ltd. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-    1. Redistributions of source code must retain the above copyright
-       notice, this list of conditions and the following disclaimer.
+    1. Redistributions of source code must retain the above copyright notice,
+       this list of conditions and the following disclaimer.
 
     2. Redistributions in binary form must reproduce the above copyright
        notice, this list of conditions and the following disclaimer in the
@@ -23,23 +23,27 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include "interface/luainterface.h"
-#include "include/buildsys.h"
+#ifndef FEATUREMAP_HPP_
+#define FEATUREMAP_HPP_
 
-static thread_local Package *__current_package = nullptr;
-static FeatureMap __feature_map;
+#include <map>
+#include <mutex>
+#include <string>
 
-void li_set_package(Package *p)
+namespace buildsys
 {
-	__current_package = p;
-}
+	class FeatureMap
+	{
+	private:
+		std::map<std::string, std::string> features;
+		mutable std::mutex lock;
 
-Package *li_get_package()
-{
-	return __current_package;
-}
+	public:
+		void setFeature(std::string key, std::string value, bool override = false);
+		bool setFeature(const std::string &kv);
+		std::string getFeature(const std::string &key) const;
+		void printFeatureValues() const;
+	};
+} // namespace buildsys
 
-FeatureMap *li_get_feature_map()
-{
-	return &__feature_map;
-}
+#endif // FEATUREMAP_HPP_

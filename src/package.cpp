@@ -52,16 +52,6 @@ BuildDir *Package::builddir()
 	return &this->bd;
 }
 
-std::string Package::getFeature(const std::string &key)
-{
-	/* Try the feature prefixed with our package name first */
-	try {
-		return this->getWorld()->featureMap()->getFeature(this->name + ":" + key);
-	} catch(NoKeyException &E) {
-		return this->getWorld()->featureMap()->getFeature(key);
-	}
-}
-
 std::string Package::absolute_fetch_path(const std::string &location)
 {
 	return this->pwd + "/" + this->relative_fetch_path(location);

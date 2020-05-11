@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "include/buildsys.h"
+#include "interface/luainterface.h"
 #include "logger.hpp"
 
 int main(int argc, char *argv[])
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
 	if(foundDashDash) {
 		// then we can preload the feature set
 		while(a < argList.size()) {
-			if(!WORLD.featureMap()->setFeature(argList[a])) {
+			if(!li_get_feature_map()->setFeature(argList[a])) {
 				logger.log(
 				    "setFeature Failed: Features must be described as feature=value");
 				exit(-1);
@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
 
 	if(WORLD.areParseOnly()) {
 		// Print all the feature/values
-		WORLD.featureMap()->printFeatureValues();
+		li_get_feature_map()->printFeatureValues();
 		WORLD.printNameSpaces();
 	}
 	// Write out the dependency graph

@@ -53,7 +53,13 @@ static int li_feature(lua_State *L)
 		}
 		std::string key(lua_tostring(L, 1));
 		try {
-			std::string value = P->getFeature(key);
+			std::string value;
+			/* Try the feature prefixed with our package name first */
+			try {
+				value = li_get_feature_map()->getFeature(P->getName() + ":" + key);
+			} catch(NoKeyException &E) {
+				value = li_get_feature_map()->getFeature(key);
+			}
 			lua_pushstring(L, value.c_str());
 			P->buildDescription()->add_feature_value(key, value);
 		} catch(NoKeyException &E) {
@@ -75,10 +81,10 @@ static int li_feature(lua_State *L)
 	std::string value(lua_tostring(L, 2));
 
 	if(lua_gettop(L) == 3) {
-		P->getWorld()->featureMap()->setFeature(key, value, lua_toboolean(L, -3) != 0);
+		li_get_feature_map()->setFeature(key, value, lua_toboolean(L, -3) != 0);
 	}
 
-	P->getWorld()->featureMap()->setFeature(key, value);
+	li_get_feature_map()->setFeature(key, value);
 	return 0;
 }
 

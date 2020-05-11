@@ -69,6 +69,7 @@ extern "C" {
 
 #include "../buildinfo.hpp"
 #include "../exceptions.hpp"
+#include "../featuremap.hpp"
 #include "../hash.hpp"
 #include "../logger.hpp"
 #include "../lua.hpp"
@@ -935,11 +936,6 @@ namespace buildsys
 		 */
 		void printLabel(std::ostream &out);
 
-		/** Get the value of a specific feature (for this package)
-		 *  lua: feature('magic-support')
-		 */
-		std::string getFeature(const std::string &key);
-
 		//! Return the lua instance being used
 		Lua *getLua()
 		{
@@ -1076,76 +1072,10 @@ namespace buildsys
 		}
 	};
 
-	class FeatureMap
-	{
-	private:
-		std::map<std::string, std::string> features;
-		mutable std::mutex lock;
-
-	public:
-		/** Set a feature to a specific value
-		 *  Note that the default is to not set already-set features to new values
-		 *  pass override=true to ignore this safety
-		 *  lua: feature('magic-support','yes',true)
-		 */
-		void setFeature(std::string key, std::string value, bool override = false)
-		{
-			std::unique_lock<std::mutex> lk(this->lock);
-			// look for this key
-			if(features.find(key) != features.end()) {
-				if(override) {
-					// only over-write the value if we are explicitly told to
-					features[key] = value;
-				}
-			} else {
-				features.insert(std::pair<std::string, std::string>(key, value));
-			}
-		}
-		/** Set a feature using a key=value string
-		 *  This is used to handle the command line input of feature/value settings
-		 */
-		bool setFeature(const std::string &kv)
-		{
-			auto pos = kv.find('=');
-			if(pos == std::string::npos) {
-				return false;
-			}
-
-			std::string key = kv.substr(0, pos);
-			std::string value = kv.substr(pos + 1);
-
-			this->setFeature(key, value, true);
-			return true;
-		}
-		/** Get the value of a specific feature
-		 *  lua: feature('magic-support')
-		 */
-		std::string getFeature(const std::string &key) const
-		{
-			std::unique_lock<std::mutex> lk(this->lock);
-			if(features.find(key) != features.end()) {
-				return features.at(key);
-			}
-			throw NoKeyException();
-		}
-		/** Print all feature/values to the console
-		 */
-		void printFeatureValues() const
-		{
-			std::unique_lock<std::mutex> lk(this->lock);
-			std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
-			for(auto &feature : this->features) {
-				std::cout << feature.first << "\t" << feature.second << std::endl;
-			}
-			std::cout << "----END FEATURE VALUES----" << std::endl;
-		}
-	};
-
 	//! The world, everything that everything needs to access
 	class World
 	{
 	private:
-		FeatureMap features;
 		string_list forcedDeps;
 		std::list<NameSpace> namespaces;
 		std::list<DLObject> dlobjects;
@@ -1376,10 +1306,6 @@ namespace buildsys
 			graph.output();
 			return true;
 		};
-		FeatureMap *featureMap()
-		{
-			return &this->features;
-		}
 		void printNameSpaces() const;
 	};
 } // namespace buildsys
