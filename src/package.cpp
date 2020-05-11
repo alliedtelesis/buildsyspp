@@ -31,10 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
-                 std::string _file, std::string _overlay, std::string _pwd)
+                 std::string _file, std::string _pwd)
     : name(std::move(_name)), file(std::move(_file)), file_short(std::move(_file_short)),
-      overlay(std::move(_overlay)), pwd(std::move(_pwd)), ns(_ns),
-      bd(BuildDir(this->pwd, _ns->getName(), this->name))
+      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(this->pwd, _ns->getName(), this->name))
 {
 	std::string prefix = this->ns->getName() + "," + this->name;
 

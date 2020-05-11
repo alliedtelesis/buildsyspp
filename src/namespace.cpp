@@ -43,7 +43,6 @@ Package *NameSpace::findPackage(const std::string &_name)
 {
 	std::string file;
 	std::string file_short;
-	std::string overlay;
 
 	std::unique_lock<std::mutex> lk(this->lock);
 
@@ -70,7 +69,6 @@ Package *NameSpace::findPackage(const std::string &_name)
 			lua_file = ov + "/" + relative_fname.str();
 			if(filesystem::exists(lua_file)) {
 				found = true;
-				overlay = ov;
 				break;
 			}
 		}
@@ -83,8 +81,8 @@ Package *NameSpace::findPackage(const std::string &_name)
 		file_short = relative_fname.str();
 	}
 
-	std::unique_ptr<Package> p = std::make_unique<Package>(
-	    this, _name, file_short, file, overlay, this->WORLD->getWorkingDir());
+	std::unique_ptr<Package> p = std::make_unique<Package>(this, _name, file_short, file,
+	                                                       this->WORLD->getWorkingDir());
 	Package *ret = p.get();
 	this->packages.push_back(std::move(p));
 

@@ -685,7 +685,6 @@ namespace buildsys
 		std::string name;
 		std::string file;
 		std::string file_short;
-		std::string overlay;
 		std::string buildinfo_hash;
 		const std::string pwd;
 		NameSpace *ns;
@@ -758,11 +757,10 @@ namespace buildsys
 		 * @param _name - The name of the package.
 		 * @param _file_short - The relative path to the lua file describing this package.
 		 * @param _file - The full path to the lua file describing this package.
-		 * @param _overlay - The overlay the package comes from.
 		 * @param _pwd - The working directory for buildsys++.
 		 */
 		Package(NameSpace *_ns, std::string _name, std::string _file_short,
-		        std::string _file, std::string _overlay, std::string _pwd);
+		        std::string _file, std::string _pwd);
 		//! Returns the namespace this package is in
 		NameSpace *getNS()
 		{
@@ -812,11 +810,6 @@ namespace buildsys
 		const std::string &getName() const
 		{
 			return this->name;
-		};
-		//! Return the overlay this package is from
-		const std::string &getOverlay() const
-		{
-			return this->overlay;
 		};
 
 		/** Depend on another package

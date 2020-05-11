@@ -117,7 +117,7 @@ bool World::basePackage(const std::string &filename)
 	NameSpace *ns = this->findNameSpace(nsname);
 
 	std::unique_ptr<Package> p =
-	    std::make_unique<Package>(ns, pname, filename_copy, filename_copy, "", this->pwd);
+	    std::make_unique<Package>(ns, pname, filename_copy, filename_copy, this->pwd);
 	Package *base_package = p.get();
 	ns->addPackage(std::move(p));
 
