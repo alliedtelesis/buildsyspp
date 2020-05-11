@@ -10,6 +10,15 @@ include(FetchContent)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+file(GLOB_RECURSE SOURCE_FILES 
+    ${CMAKE_SOURCE_DIR}/src/*.cpp 
+    ${CMAKE_SOURCE_DIR}/src/*.hpp
+    ${CMAKE_SOURCE_DIR}/src/*.h)
+
+include(cpplint)
+include(clang-format)
+include(clang-tidy)
+
 enable_testing()
 
 add_subdirectory(unit-test)

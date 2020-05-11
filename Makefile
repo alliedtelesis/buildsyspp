@@ -1,9 +1,9 @@
-CXXFILES	:= $(wildcard *.cpp) $(wildcard dir/*.cpp) $(wildcard interface/*.cpp) $(wildcard extraction/*.cpp)
+CXXFILES	:= $(wildcard src/*.cpp) $(wildcard src/dir/*.cpp) $(wildcard src/interface/*.cpp) $(wildcard src/extraction/*.cpp)
 CFILES		:= 
 
-HEADERS		:= $(wildcard include/*.h) include/buildsys.h.gch
+HEADERS		:= $(wildcard src/include/*.h)
 
-CPPFLAGS	:= -I. -D_GNU_SOURCE
+CPPFLAGS	:= -Isrc/ -D_GNU_SOURCE
 LUAVERSION := $(shell pkg-config --exists lua && echo lua || (pkg-config --exists lua5.2 && echo lua5.2 || echo none))
 ifeq ($(LUAVERSION),none)
 $(error Can't find Lua development support. Please install Lua development support \
@@ -24,9 +24,6 @@ all: buildsys
 
 $(OBJS): Makefile $(HEADERS)
 
-%.h.gch : %.h
-	$(COMPILE.cpp) $(OUTPUT_OPTION) $<
-
 buildsys: Makefile $(OBJS)
 	$(LINK.cpp) -o $@ $(OBJS) $(LDFLAGS)
 
@@ -35,17 +32,5 @@ clean:
 
 test:
 	$(MAKE) -C test
-
-indent:
-	find \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -not -path "output/*" -and -not -path "test/*" -exec clang-format -i -style=file {} \;
-
-cpplint:
-	find \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -not -path "*test/*" -exec cpplint {} \;
-
-tidy:
-	find \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \)  -not -path "*test/*" -exec clang-tidy \
-		-checks=*,-fuchsia-default-arguments,-cert-env33-c,-llvm-header-guard,-fuchsia-overloaded-operator,\
--google-build-using-namespace,-google-global-names-in-headers,-performance-inefficient-string-concatenation \
-		-quiet -extra-arg-before=-xc++ {} -- $(CPPFLAGS) $(shell pkg-config --cflags $(LUAVERSION)) \;
 
 .PHONY: test

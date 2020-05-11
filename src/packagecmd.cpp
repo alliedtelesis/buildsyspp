@@ -23,7 +23,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#include "packagecmd.hpp"
 #include "include/buildsys.h"
+#include <algorithm>
+#include <string>
+#include <utility>
 
 /**
  * Construct a Package Command
