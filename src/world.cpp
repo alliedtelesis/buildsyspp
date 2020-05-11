@@ -38,10 +38,8 @@ NameSpace *World::findNameSpace(const std::string &name)
 	return &this->namespaces.back();
 }
 
-static void build_thread(Package *p)
+static void build_thread(World *w, Package *p)
 {
-	World *w = p->getNS()->getWorld();
-
 	p->log("Build Thread");
 	p->log(boost::format{"Building (%1% others running)"} % (w->threadsRunning() - 1));
 
@@ -159,7 +157,7 @@ bool World::basePackage(const std::string &filename)
 
 			toBuild->setBuilding();
 			this->threadStarted();
-			std::thread thr(build_thread, toBuild);
+			std::thread thr(build_thread, this, toBuild);
 			thr.detach();
 		} else {
 			this->cond.wait(lk);
