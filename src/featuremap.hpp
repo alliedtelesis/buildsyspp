@@ -42,7 +42,7 @@ namespace buildsys
 		void setFeature(std::string key, std::string value, bool override = false);
 		bool setFeature(const std::string &kv);
 		std::string getFeature(const std::string &key) const;
-		void printFeatureValues() const;
+		void printFeatureValues(std::ostream &out) const;
 	};
 } // namespace buildsys
 

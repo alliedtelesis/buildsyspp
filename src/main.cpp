@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
 	if(WORLD.areParseOnly()) {
 		// Print all the feature/values
-		li_get_feature_map()->printFeatureValues();
+		li_get_feature_map()->printFeatureValues(std::cout);
 		WORLD.printNameSpaces();
 	}
 	// Write out the dependency graph

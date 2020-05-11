@@ -92,12 +92,12 @@ std::string FeatureMap::getFeature(const std::string &key) const
 /**
  * Print all feature/values to std::cout.
  */
-void FeatureMap::printFeatureValues() const
+void FeatureMap::printFeatureValues(std::ostream &out) const
 {
 	std::unique_lock<std::mutex> lk(this->lock);
-	std::cout << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
+	out << std::endl << "----BEGIN FEATURE VALUES----" << std::endl;
 	for(auto &feature : this->features) {
-		std::cout << feature.first << "\t" << feature.second << std::endl;
+		out << feature.first << "\t" << feature.second << std::endl;
 	}
-	std::cout << "----END FEATURE VALUES----" << std::endl;
+	out << "----END FEATURE VALUES----" << std::endl;
 }
