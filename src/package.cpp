@@ -640,6 +640,9 @@ bool Package::build(bool locally)
 	struct timespec start {}, end {};
 	// clang-format on
 
+	// Hold the lock for the whole build, to avoid multiple running at once
+	std::unique_lock<std::mutex> lk(this->lock);
+
 	// Already build, pretend to successfully build
 	if((locally && this->was_built) || (!locally && this->isBuilt())) {
 		return true;
@@ -661,9 +664,6 @@ bool Package::build(bool locally)
 		this->getWorld()->packageFinished(this);
 		return true;
 	}
-
-	// Hold the lock for the whole build, to avoid multiple running at once
-	std::unique_lock<std::mutex> lk(this->lock);
 
 	// Create the new extraction.info file
 	this->Extract.prepareNewExtractInfo(this, &this->bd);
