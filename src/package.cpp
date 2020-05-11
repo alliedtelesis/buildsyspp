@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 bool Package::quiet_packages = false;
+bool Package::extract_in_parallel = true;
 
 /**
  * Configure created packages to be 'quiet'.
@@ -40,6 +41,16 @@ bool Package::quiet_packages = false;
 void Package::set_quiet_packages(bool set)
 {
 	quiet_packages = set;
+}
+
+/**
+ * Configure packages to extract in parallel.
+ *
+ * @param set - true to enable, false to disable.
+ */
+void Package::set_extract_in_parallel(bool set)
+{
+	extract_in_parallel = set;
 }
 
 Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
@@ -497,11 +508,10 @@ bool Package::prepareBuildDirs()
 	std::unordered_set<Package *> packages;
 	this->getAllDependedPackages(&packages);
 
-	bool use_threads = this->getWorld()->getThreadsLimit() == 0;
 	std::list<std::thread> threads;
 	std::atomic<bool> result{true};
 	for(auto p : packages) {
-		if(use_threads) {
+		if(this->extract_in_parallel) {
 			std::thread th([p, this, &result] {
 				bool ret = p->extract_staging(this->bd.getStaging());
 				if(!ret) {
@@ -552,11 +562,10 @@ bool Package::extractInstallDepends()
 	std::unordered_set<Package *> packages;
 	this->getDependedPackages(&packages, !this->depsExtractionDirectOnly, false);
 
-	bool use_threads = this->getWorld()->getThreadsLimit() == 0;
 	std::list<std::thread> threads;
 	std::atomic<bool> result{true};
 	for(auto p : packages) {
-		if(use_threads) {
+		if(this->extract_in_parallel) {
 			std::thread th([p, this, &result] {
 				bool ret = p->extract_install(this->depsExtraction);
 				if(!ret) {

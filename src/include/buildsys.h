@@ -685,6 +685,7 @@ namespace buildsys
 	{
 	private:
 		static bool quiet_packages;
+		static bool extract_in_parallel;
 		std::list<PackageDepend> depends;
 		std::list<PackageCmd> commands;
 		std::string name;
@@ -959,6 +960,7 @@ namespace buildsys
 			return &this->logger;
 		}
 		static void set_quiet_packages(bool set);
+		static void set_extract_in_parallel(bool set);
 	};
 
 	//! A graph of dependencies between packages

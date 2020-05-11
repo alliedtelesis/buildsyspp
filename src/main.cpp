@@ -80,6 +80,9 @@ int main(int argc, char *argv[])
 			Package::set_quiet_packages(true);
 		} else if(argList[a] == "--parallel-packages" || argList[a] == "-j") {
 			WORLD.setThreadsLimit(std::stoi(argList[a + 1]));
+			// If a thread limit is specified then don't allow packages to extract
+			// in parallel.
+			Package::set_extract_in_parallel(false);
 			a++;
 		} else if(argList[a] == "--") {
 			foundDashDash = true;
