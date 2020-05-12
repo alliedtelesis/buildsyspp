@@ -397,7 +397,7 @@ bool Package::fetchFrom()
 	return ret;
 }
 
-bool Package::shouldBuild(bool locally)
+bool Package::shouldBuild()
 {
 	// we need to rebuild if the code is updated
 	if(this->codeUpdated) {
@@ -433,16 +433,12 @@ bool Package::shouldBuild(bool locally)
 	// if there are changes,
 	if(res != 0 || ret) {
 		// see if we can grab new staging/install files
-		if(!locally && this->getWorld()->canFetchFrom()) {
+		if(this->getWorld()->canFetchFrom()) {
 			ret = this->fetchFrom();
 		} else {
 			// otherwise, make sure we get (re)built
 			ret = true;
 		}
-	}
-
-	if(locally) {
-		ret = true;
 	}
 
 	return ret;
@@ -692,9 +688,7 @@ bool Package::build(bool locally)
 	this->prepareBuildInfo();
 
 	// Check if building is required
-	bool sb = this->shouldBuild(locally);
-
-	if(!sb) {
+	if(!locally && !this->shouldBuild()) {
 		this->log("Not required");
 		// Already built
 		this->built = true;

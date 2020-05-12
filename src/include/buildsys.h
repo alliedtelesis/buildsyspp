@@ -752,7 +752,7 @@ namespace buildsys
 		 *  - The package file changes
 		 *  - Any of the feature values that are used by the package change
 		 */
-		bool shouldBuild(bool locally);
+		bool shouldBuild();
 
 	public:
 		/**
