@@ -44,7 +44,9 @@ static void build_thread(World *w, Package *p)
 	p->log(boost::format{"Building (%1% others running)"} % (w->threadsRunning() - 1));
 
 	try {
-		if(!p->build()) {
+		if(p->build()) {
+			w->packageFinished(p);
+		} else {
 			w->setFailed();
 			p->log("Building failed");
 		}

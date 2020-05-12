@@ -677,7 +677,6 @@ bool Package::build(bool locally)
 		this->log("Building suppressed");
 		// Just pretend we are built
 		this->built = true;
-		this->getWorld()->packageFinished(this);
 		return true;
 	}
 
@@ -692,7 +691,6 @@ bool Package::build(bool locally)
 		this->log("Not required");
 		// Already built
 		this->built = true;
-		this->getWorld()->packageFinished(this);
 		return true;
 	}
 	// Need to check that any packages that need to have been built locally
@@ -766,8 +764,6 @@ bool Package::build(bool locally)
 	this->built = true;
 	this->was_built = true;
 	lk.unlock();
-
-	this->getWorld()->packageFinished(this);
 
 	return true;
 }
