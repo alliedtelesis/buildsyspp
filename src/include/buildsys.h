@@ -709,7 +709,6 @@ namespace buildsys
 		std::atomic<bool> building{false};
 		std::atomic<bool> was_built{false};
 		bool codeUpdated{false};
-		bool no_fetch_from{false};
 		bool hash_output{false};
 		bool suppress_remove_staging{false};
 		mutable std::mutex lock;
@@ -891,16 +890,6 @@ namespace buildsys
 		{
 			return this->built;
 		}
-		//! Disable fetch-from for this package
-		void disableFetchFrom()
-		{
-			this->no_fetch_from = true;
-		};
-		//! Can we fetch-from ?
-		bool canFetchFrom() const
-		{
-			return !this->no_fetch_from;
-		};
 		//! Hash the output for this package
 		void setHashOutput()
 		{

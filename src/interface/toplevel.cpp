@@ -221,21 +221,6 @@ int li_depend(lua_State *L)
 	return 0;
 }
 
-int li_buildlocally(lua_State *L)
-{
-	if(lua_gettop(L) != 0) {
-		throw CustomException("buildlocally() takes no arguments");
-	}
-
-	Package *P = li_get_package();
-
-	// Do not try and download the final result for this package
-	// probably because it breaks something else that builds later
-	P->disableFetchFrom();
-
-	return 0;
-}
-
 int li_hashoutput(lua_State *L)
 {
 	if(lua_gettop(L) != 0) {
@@ -289,7 +274,6 @@ bool buildsys::interfaceSetup(Lua *lua)
 	lua->registerFunc("intercept", li_intercept);
 	lua->registerFunc("keepstaging", li_keepstaging);
 	lua->registerFunc("name", li_name);
-	lua->registerFunc("buildlocally", li_buildlocally);
 	lua->registerFunc("hashoutput", li_hashoutput);
 	lua->registerFunc("require", li_require);
 

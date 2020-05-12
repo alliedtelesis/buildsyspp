@@ -433,7 +433,7 @@ bool Package::shouldBuild(bool locally)
 	// if there are changes,
 	if(res != 0 || ret) {
 		// see if we can grab new staging/install files
-		if(!locally && this->canFetchFrom() && this->getWorld()->canFetchFrom()) {
+		if(!locally && this->getWorld()->canFetchFrom()) {
 			ret = this->fetchFrom();
 		} else {
 			// otherwise, make sure we get (re)built
