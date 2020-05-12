@@ -680,6 +680,11 @@ bool Package::build(bool locally)
 		return true;
 	}
 
+	if(this->clean_before_build || this->getWorld()->areCleaning()) {
+		this->log("Cleaning");
+		this->bd.clean();
+	}
+
 	// Create the new extraction.info file
 	this->Extract.prepareNewExtractInfo(this, &this->bd);
 

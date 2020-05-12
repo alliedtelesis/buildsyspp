@@ -1,6 +1,7 @@
 local _builddir = builddir
 
 function builddir(arg)
+    local arg = arg or false
     local obj = _builddir(arg)
 
     obj.sed = function(obj, dir, expr, files)

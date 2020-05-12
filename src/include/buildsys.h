@@ -714,6 +714,7 @@ namespace buildsys
 		mutable std::mutex lock;
 		time_t run_secs{0};
 		Logger logger;
+		bool clean_before_build{false};
 		//! Set the buildinfo file hash from the new .build.info.new file
 		void updateBuildInfoHash();
 		//! Set the buildinfo file hash from the existing .build.info file
@@ -947,6 +948,10 @@ namespace buildsys
 		Logger *getLogger()
 		{
 			return &this->logger;
+		}
+		void set_clean_before_build()
+		{
+			this->clean_before_build = true;
 		}
 		static void set_quiet_packages(bool set);
 		static void set_extract_in_parallel(bool set);

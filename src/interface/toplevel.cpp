@@ -90,9 +90,18 @@ static int li_feature(lua_State *L)
 
 int li_builddir(lua_State *L)
 {
+	bool clean_requested = false;
 	int args = lua_gettop(L);
 	if(args > 1) {
 		throw CustomException("builddir() takes 1 or no arguments");
+	}
+
+	if(args == 1) {
+		if(!lua_isboolean(L, 1)) {
+			throw CustomException(
+			    "builddir() expects a boolean as the first argument, if present");
+		}
+		clean_requested = (lua_toboolean(L, 1) != 0);
 	}
 
 	Package *P = li_get_package();
@@ -101,13 +110,8 @@ int li_builddir(lua_State *L)
 	CREATE_TABLE(L, P->builddir());
 	P->builddir()->lua_table(L);
 
-	bool clean_requested = (args == 1 && (lua_toboolean(L, 1) != 0));
-
-	if((clean_requested || P->getWorld()->areCleaning()) &&
-	   !P->getWorld()->areParseOnly() &&
-	   !(P->getWorld()->forcedMode() && !P->getWorld()->isForced(P->getName()))) {
-		P->log("Cleaning");
-		P->builddir()->clean();
+	if(clean_requested) {
+		P->set_clean_before_build();
 	}
 
 	return 1;
