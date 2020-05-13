@@ -686,6 +686,7 @@ namespace buildsys
 	private:
 		static bool quiet_packages;
 		static bool extract_in_parallel;
+		static std::string build_cache;
 		std::list<PackageDepend> depends;
 		std::list<PackageCmd> commands;
 		std::string name;
@@ -724,6 +725,9 @@ namespace buildsys
 		void getAllDependedPackages(std::unordered_set<Package *> *packages);
 		void getDependedPackages(std::unordered_set<Package *> *packages,
 		                         bool include_children, bool ignore_intercept);
+		bool ff_file(const std::string &hash, const std::string &rfile,
+		             const std::string &path, const std::string &fname,
+		             const std::string &fext);
 
 	protected:
 		enum class BuildInfoType { Output, Build };
@@ -955,6 +959,7 @@ namespace buildsys
 		}
 		static void set_quiet_packages(bool set);
 		static void set_extract_in_parallel(bool set);
+		static void set_build_cache(std::string cache);
 	};
 
 	//! A graph of dependencies between packages
@@ -1077,7 +1082,6 @@ namespace buildsys
 		std::list<std::string> overlays;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
-		std::string fetch_from;
 		std::string pwd;
 		bool failed{false};
 		bool cleaning{false};
@@ -1204,22 +1208,6 @@ namespace buildsys
 		}
 		//! Declare a package built
 		bool packageFinished(Package *_p);
-
-		//! Allow the fetch from location to be set
-		void setFetchFrom(std::string from)
-		{
-			this->fetch_from = std::move(from);
-		}
-		//! Test if the fetch from location is set
-		bool canFetchFrom() const
-		{
-			return (!this->fetch_from.empty());
-		}
-		//! Test if the fetch from location is set
-		const std::string &fetchFrom() const
-		{
-			return this->fetch_from;
-		}
 
 		//! Get 'pwd'
 		const std::string &getWorkingDir() const

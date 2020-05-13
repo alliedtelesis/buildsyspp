@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 bool Package::quiet_packages = false;
 bool Package::extract_in_parallel = true;
+std::string Package::build_cache;
 
 /**
  * Configure created packages to be 'quiet'.
@@ -51,6 +52,16 @@ void Package::set_quiet_packages(bool set)
 void Package::set_extract_in_parallel(bool set)
 {
 	extract_in_parallel = set;
+}
+
+/**
+ *  Set the location of the build output cache
+ *
+ *  @param cache - The location to set.
+ */
+void Package::set_build_cache(std::string cache)
+{
+	build_cache = std::move(cache);
 }
 
 Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
@@ -257,17 +268,17 @@ bool Package::canBuild()
 	return true;
 }
 
-static bool ff_file(Package *P, const std::string &hash, const std::string &rfile,
-                    const std::string &path, const std::string &fname,
-                    const std::string &fext)
+bool Package::ff_file(const std::string &hash, const std::string &rfile,
+                      const std::string &path, const std::string &fname,
+                      const std::string &fext)
 {
 	bool ret = false;
-	std::string url = P->getWorld()->fetchFrom() + "/" + P->getNS()->getName() + "/" +
-	                  P->getName() + "/" + hash + "/" + rfile;
+	std::string url = this->build_cache + "/" + this->getNS()->getName() + "/" +
+	                  this->getName() + "/" + hash + "/" + rfile;
 	std::string cmd = "wget -q " + url + " -O " + path + "/" + fname + fext;
 	int res = std::system(cmd.c_str());
 	if(res != 0) {
-		P->log("Failed to get " + rfile);
+		this->log("Failed to get " + rfile);
 		ret = true;
 	}
 	return ret;
@@ -371,7 +382,7 @@ bool Package::fetchFrom()
 	    {"output.info", this->bd.getPath(), ".output", ".info"},
 	};
 
-	this->log(boost::format{"FF URL: %1%/%2%/%3%/%4%"} % this->getWorld()->fetchFrom() %
+	this->log(boost::format{"FF URL: %1%/%2%/%3%/%4%"} % this->build_cache %
 	          this->getNS()->getName() % this->name % this->buildinfo_hash);
 
 	if(!this->isHashingOutput()) {
@@ -379,8 +390,8 @@ bool Package::fetchFrom()
 	}
 
 	for(auto &element : files) {
-		ret = ff_file(this, this->buildinfo_hash, element.at(0), element.at(1),
-		              element.at(2), element.at(3));
+		ret = this->ff_file(this->buildinfo_hash, element.at(0), element.at(1),
+		                    element.at(2), element.at(3));
 		if(ret) {
 			break;
 		}
@@ -433,7 +444,7 @@ bool Package::shouldBuild()
 	// if there are changes,
 	if(res != 0 || ret) {
 		// see if we can grab new staging/install files
-		if(this->getWorld()->canFetchFrom()) {
+		if(!this->build_cache.empty()) {
 			ret = this->fetchFrom();
 		} else {
 			// otherwise, make sure we get (re)built

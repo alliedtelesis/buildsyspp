@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 		if(argList[a] == "--clean") {
 			WORLD.setCleaning();
 		} else if(argList[a] == "--cache-server" || argList[a] == "--ff") {
-			WORLD.setFetchFrom(argList[a + 1]);
+			Package::set_build_cache(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--tarball-cache") {
 			logger.log(boost::format{"Setting tarball cache to %1%"} % (argList[a + 1]));
