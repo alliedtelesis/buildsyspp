@@ -687,6 +687,7 @@ namespace buildsys
 		static bool quiet_packages;
 		static bool extract_in_parallel;
 		static std::string build_cache;
+		static bool clean_all_packages;
 		std::list<PackageDepend> depends;
 		std::list<PackageCmd> commands;
 		std::string name;
@@ -960,6 +961,7 @@ namespace buildsys
 		static void set_quiet_packages(bool set);
 		static void set_extract_in_parallel(bool set);
 		static void set_build_cache(std::string cache);
+		static void set_clean_packages(bool set);
 	};
 
 	//! A graph of dependencies between packages
@@ -1084,7 +1086,6 @@ namespace buildsys
 		Internal_Graph topo_graph;
 		std::string pwd;
 		bool failed{false};
-		bool cleaning{false};
 		bool parseOnly{false};
 		bool keepGoing{false};
 		bool quietly{false};
@@ -1128,21 +1129,6 @@ namespace buildsys
 		{
 			return (std::find(this->forcedDeps.begin(), this->forcedDeps.end(), name) !=
 			        this->forcedDeps.end());
-		}
-		/** Are we operating in 'cleaning' mode
-		 *  If --clean is parsed as a parameter, we run in cleaning mode
-		 *  This will make any package that would have been built
-		 *  clean out its working directory instead
-		 *  (Ignoring dependency scanning, but obeying forced mode)
-		 */
-		bool areCleaning() const
-		{
-			return this->cleaning;
-		}
-		//! Set cleaning mode
-		void setCleaning()
-		{
-			this->cleaning = true;
 		}
 
 		/** Are we operating in 'parse only' mode

@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool Package::quiet_packages = false;
 bool Package::extract_in_parallel = true;
 std::string Package::build_cache;
+bool Package::clean_all_packages = false;
 
 /**
  * Configure created packages to be 'quiet'.
@@ -64,6 +65,16 @@ void Package::set_build_cache(std::string cache)
 	build_cache = std::move(cache);
 }
 
+/**
+ * Configure all packages to clean before building.
+ *
+ * @param set - true to enable, false to disable.
+ */
+void Package::set_clean_packages(bool set)
+{
+	clean_all_packages = set;
+}
+
 Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
                  std::string _file, std::string _pwd)
     : name(std::move(_name)), file(std::move(_file)), file_short(std::move(_file_short)),
@@ -77,6 +88,10 @@ Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
 		this->logger = std::move(Logger(prefix, log_path.str()));
 	} else {
 		this->logger = std::move(Logger(prefix));
+	}
+
+	if(this->clean_all_packages) {
+		this->clean_before_build = true;
 	}
 }
 
@@ -691,7 +706,7 @@ bool Package::build(bool locally)
 		return true;
 	}
 
-	if(this->clean_before_build || this->getWorld()->areCleaning()) {
+	if(this->clean_before_build) {
 		this->log("Cleaning");
 		this->bd.clean();
 	}

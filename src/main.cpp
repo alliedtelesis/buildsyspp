@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 	std::vector<std::string> ignored_features;
 	while(a < argList.size() && !foundDashDash) {
 		if(argList[a] == "--clean") {
-			WORLD.setCleaning();
+			Package::set_clean_packages(true);
 		} else if(argList[a] == "--cache-server" || argList[a] == "--ff") {
 			Package::set_build_cache(argList[a + 1]);
 			a++;
