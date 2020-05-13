@@ -1088,7 +1088,6 @@ namespace buildsys
 		bool failed{false};
 		bool parseOnly{false};
 		bool keepGoing{false};
-		bool quietly{false};
 		mutable std::mutex cond_lock;
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
