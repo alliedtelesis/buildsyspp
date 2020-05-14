@@ -288,6 +288,9 @@ namespace buildsys
 	{
 	private:
 		static std::string tarball_cache;
+		static std::list<DLObject> dlobjects;
+		static std::mutex dlobjects_lock;
+		const DLObject *findDLObject(const std::string &fname);
 
 	protected:
 		const bool decompress;
@@ -1080,7 +1083,6 @@ namespace buildsys
 	private:
 		string_list forcedDeps;
 		std::list<NameSpace> namespaces;
-		std::list<DLObject> dlobjects;
 		std::list<std::string> overlays;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
@@ -1093,8 +1095,6 @@ namespace buildsys
 		std::atomic<int> threads_running{0};
 		int threads_limit{0};
 		mutable std::mutex namespaces_lock;
-		mutable std::mutex dlobjects_lock;
-		const DLObject *_findDLObject(const std::string &);
 
 	public:
 		World()
@@ -1159,13 +1159,6 @@ namespace buildsys
 		void setKeepGoing()
 		{
 			this->keepGoing = true;
-		}
-
-		//! Find (or create) a DLObject for a given full file name
-		const DLObject *findDLObject(const std::string &fname)
-		{
-			std::unique_lock<std::mutex> lk(this->dlobjects_lock);
-			return this->_findDLObject(fname);
 		}
 
 		//! Start the processing and building steps with the given meta package

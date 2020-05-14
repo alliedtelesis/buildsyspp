@@ -184,20 +184,6 @@ bool World::packageFinished(Package *_p)
 	return true;
 }
 
-const DLObject *World::_findDLObject(const std::string &fname)
-{
-	auto iter = this->dlobjects.begin();
-	auto iterEnd = this->dlobjects.end();
-	for(; iter != iterEnd; iter++) {
-		if((*iter).fileName() == fname) {
-			return &(*iter);
-		}
-	}
-
-	this->dlobjects.emplace_back(fname);
-	return &this->dlobjects.back();
-}
-
 void World::printNameSpaces() const
 {
 	std::unique_lock<std::mutex> lk(this->namespaces_lock);

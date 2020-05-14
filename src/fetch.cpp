@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "include/buildsys.h"
 
 std::string DownloadFetch::tarball_cache;
+std::list<DLObject> DownloadFetch::dlobjects;
+std::mutex DownloadFetch::dlobjects_lock;
 
 /**
  *  Set the location of the local tarball cache
@@ -35,6 +37,22 @@ std::string DownloadFetch::tarball_cache;
 void DownloadFetch::setTarballCache(std::string cache)
 {
 	tarball_cache = std::move(cache);
+}
+
+//! Find (or create) a DLObject for a given full file name
+const DLObject *DownloadFetch::findDLObject(const std::string &fname)
+{
+	std::unique_lock<std::mutex> lk(this->dlobjects_lock);
+	auto iter = this->dlobjects.begin();
+	auto iterEnd = this->dlobjects.end();
+	for(; iter != iterEnd; iter++) {
+		if((*iter).fileName() == fname) {
+			return &(*iter);
+		}
+	}
+
+	this->dlobjects.emplace_back(fname);
+	return &this->dlobjects.back();
 }
 
 /* This is the full name of the file to be downloaded */
@@ -80,7 +98,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 	/* Hold a lock while we download this file
 	 * Also checks for conflicting hashes for the same file
 	 */
-	const DLObject *dlobj = this->P->getWorld()->findDLObject(fullname);
+	const DLObject *dlobj = this->findDLObject(fullname);
 	if(dlobj == nullptr) {
 		this->P->log("Failed to get the DLObject for " + fullname);
 		return false;
