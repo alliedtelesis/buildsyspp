@@ -691,6 +691,7 @@ namespace buildsys
 		static bool extract_in_parallel;
 		static std::string build_cache;
 		static bool clean_all_packages;
+		static std::list<std::string> overlays;
 		std::list<PackageDepend> depends;
 		std::list<PackageCmd> commands;
 		std::string name;
@@ -976,6 +977,7 @@ namespace buildsys
 		static void set_extract_in_parallel(bool set);
 		static void set_build_cache(std::string cache);
 		static void set_clean_packages(bool set);
+		static void add_overlay_path(std::string path);
 	};
 
 	//! A graph of dependencies between packages
@@ -1094,7 +1096,6 @@ namespace buildsys
 	private:
 		string_list forcedDeps;
 		std::list<NameSpace> namespaces;
-		std::list<std::string> overlays;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
 		std::string pwd;
@@ -1110,7 +1111,6 @@ namespace buildsys
 	public:
 		World()
 		{
-			overlays.emplace_back(std::string("."));
 			char *_pwd = getcwd(nullptr, 0);
 			this->pwd = std::string(_pwd);
 			free(_pwd); // NOLINT
@@ -1204,16 +1204,6 @@ namespace buildsys
 			return this->pwd;
 		}
 
-		//! Add an overlay to search for packages
-		void addOverlayPath(const std::string &path)
-		{
-			this->overlays.push_back(path);
-		};
-		//! Get the overlay list
-		const std::list<std::string> &getOverlays() const
-		{
-			return this->overlays;
-		}
 		//! A thread has started
 		void threadStarted()
 		{

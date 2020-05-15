@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 			DownloadFetch::setTarballCache(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--overlay") {
-			WORLD.addOverlayPath(argList[a + 1]);
+			Package::add_overlay_path(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--build-info-ignore-fv") {
 			ignored_features.push_back(argList[a + 1]);

@@ -34,6 +34,7 @@ bool Package::quiet_packages = false;
 bool Package::extract_in_parallel = true;
 std::string Package::build_cache;
 bool Package::clean_all_packages = false;
+std::list<std::string> Package::overlays = {"."};
 
 /**
  * Configure created packages to be 'quiet'.
@@ -75,6 +76,16 @@ void Package::set_clean_packages(bool set)
 	clean_all_packages = set;
 }
 
+/**
+ *  Add an overlay to search for package files
+ *
+ *  @param path - The overlay path to add.
+ */
+void Package::add_overlay_path(std::string path)
+{
+	overlays.push_back(std::move(path));
+}
+
 void Package::common_init()
 {
 	std::string prefix = this->ns->getName() + "," + this->name;
@@ -114,7 +125,7 @@ Package::Package(NameSpace *_ns, std::string _name, std::string _pwd)
 
 	bool found = false;
 	auto relative_fname = boost::format{"package/%1%/%2%.lua"} % this->name % lastPart;
-	for(const auto &ov : _ns->getWorld()->getOverlays()) {
+	for(const auto &ov : this->overlays) {
 		lua_file = ov + "/" + relative_fname.str();
 		if(filesystem::exists(lua_file)) {
 			found = true;
@@ -152,7 +163,7 @@ std::string Package::relative_fetch_path(const std::string &location, bool also_
 		bool exists(false);
 
 		if(location.at(0) == '.') {
-			for(const auto &ov : this->getWorld()->getOverlays()) {
+			for(const auto &ov : this->overlays) {
 				src_path = ov + "/" + location;
 				if(filesystem::exists(src_path)) {
 					exists = true;
@@ -160,7 +171,7 @@ std::string Package::relative_fetch_path(const std::string &location, bool also_
 				}
 			}
 		} else {
-			for(const auto &ov : this->getWorld()->getOverlays()) {
+			for(const auto &ov : this->overlays) {
 				src_path = ov + "/package/" + this->getName() + "/" + location;
 				if(filesystem::exists(src_path)) {
 					exists = true;
