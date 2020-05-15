@@ -35,6 +35,7 @@ bool Package::extract_in_parallel = true;
 std::string Package::build_cache;
 bool Package::clean_all_packages = false;
 std::list<std::string> Package::overlays = {"."};
+std::list<std::string> Package::forced_packages;
 
 /**
  * Configure created packages to be 'quiet'.
@@ -84,6 +85,29 @@ void Package::set_clean_packages(bool set)
 void Package::add_overlay_path(std::string path)
 {
 	overlays.push_back(std::move(path));
+}
+
+/**
+ * Add a package to be 'forced' built. This will automatically
+ * turn on forced mode building.
+ *
+ * @param name - The name of the package to force build.
+ */
+void Package::add_forced_package(std::string name)
+{
+	forced_packages.push_back(std::move(name));
+}
+
+/**
+ * Get whether we operating in 'forced' mode. This means that we ignore
+ * any detection of what needs building, and build only a specific set
+ * of packages.
+ *
+ * @returns true if we are in forced mode, false otherwise.
+ */
+bool Package::is_forced_mode()
+{
+	return !forced_packages.empty();
 }
 
 void Package::common_init()
@@ -724,6 +748,18 @@ void Package::cleanStaging() const
 	this->bd.cleanStaging();
 }
 
+/**
+ * Should we suppress building of this package.
+ *
+ * @returns true if building should be suppressed, false otherwise.
+ */
+bool Package::should_suppress_building()
+{
+	bool is_forced = (std::find(this->forced_packages.begin(), this->forced_packages.end(),
+	                            this->name) != this->forced_packages.end());
+	return (this->is_forced_mode() && !is_forced);
+}
+
 bool Package::build(bool locally)
 {
 	// clang-format off
@@ -745,7 +781,7 @@ bool Package::build(bool locally)
 		}
 	}
 
-	if((this->getWorld()->forcedMode() && !this->getWorld()->isForced(this->name))) {
+	if(this->should_suppress_building()) {
 		// Set the build.info hash based on what is currently present
 		this->updateBuildInfoHashExisting();
 		this->log("Building suppressed");

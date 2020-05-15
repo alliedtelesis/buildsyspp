@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		} else if(argList[a] == "--") {
 			foundDashDash = true;
 		} else {
-			WORLD.forceBuild(argList[a]);
+			Package::add_forced_package(argList[a]);
 		}
 		a++;
 	}

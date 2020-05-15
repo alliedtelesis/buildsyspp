@@ -692,6 +692,7 @@ namespace buildsys
 		static std::string build_cache;
 		static bool clean_all_packages;
 		static std::list<std::string> overlays;
+		static std::list<std::string> forced_packages;
 		std::list<PackageDepend> depends;
 		std::list<PackageCmd> commands;
 		std::string name;
@@ -734,6 +735,7 @@ namespace buildsys
 		             const std::string &path, const std::string &fname,
 		             const std::string &fext);
 		void common_init();
+		bool should_suppress_building();
 
 	protected:
 		enum class BuildInfoType { Output, Build };
@@ -978,6 +980,8 @@ namespace buildsys
 		static void set_build_cache(std::string cache);
 		static void set_clean_packages(bool set);
 		static void add_overlay_path(std::string path);
+		static void add_forced_package(std::string name);
+		static bool is_forced_mode();
 	};
 
 	//! A graph of dependencies between packages
@@ -1094,7 +1098,6 @@ namespace buildsys
 	class World
 	{
 	private:
-		string_list forcedDeps;
 		std::list<NameSpace> namespaces;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
@@ -1115,31 +1118,6 @@ namespace buildsys
 			this->pwd = std::string(_pwd);
 			free(_pwd); // NOLINT
 		};
-
-		/** Are we operating in 'forced' mode
-		 *  If more than 1 parameter was passed on the command line,
-		 *  we are operating in forced mode.
-		 *  This means that we ignore any detection of what needs building,
-		 *  and build only a specific set of packages (all the arguments, except the first
-		 * one)
-		 */
-		bool forcedMode() const
-		{
-			return !forcedDeps.empty();
-		};
-		/** Add a package to 'forced' mode
-		 *  This will automatically turn on forced mode
-		 */
-		void forceBuild(const std::string &name)
-		{
-			forcedDeps.push_back(name);
-		};
-		//! Check if a specific package is being forced
-		bool isForced(const std::string &name) const
-		{
-			return (std::find(this->forcedDeps.begin(), this->forcedDeps.end(), name) !=
-			        this->forcedDeps.end());
-		}
 
 		/** Are we operating in 'parse only' mode
 		 *  If --parse-only is parsed as a parameter, we run in 'parse-only' mode
