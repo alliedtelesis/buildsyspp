@@ -53,36 +53,8 @@ Package *NameSpace::findPackage(const std::string &_name)
 	}
 
 	// Package not found, create it
-	{
-		// check that the dependency exists
-		std::string lua_file;
-		std::string lastPart = _name;
-
-		size_t lastSlash = _name.rfind('/');
-		if(lastSlash != std::string::npos) {
-			lastPart = _name.substr(lastSlash + 1);
-		}
-
-		bool found = false;
-		auto relative_fname = boost::format{"package/%1%/%2%.lua"} % _name % lastPart;
-		for(const auto &ov : this->WORLD->getOverlays()) {
-			lua_file = ov + "/" + relative_fname.str();
-			if(filesystem::exists(lua_file)) {
-				found = true;
-				break;
-			}
-		}
-
-		if(!found) {
-			throw CustomException("Package not found: " + _name);
-		}
-
-		file = lua_file;
-		file_short = relative_fname.str();
-	}
-
-	std::unique_ptr<Package> p = std::make_unique<Package>(this, _name, file_short, file,
-	                                                       this->WORLD->getWorkingDir());
+	std::unique_ptr<Package> p =
+	    std::make_unique<Package>(this, _name, this->WORLD->getWorkingDir());
 	Package *ret = p.get();
 	this->packages.push_back(std::move(p));
 

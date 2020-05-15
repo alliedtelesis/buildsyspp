@@ -75,10 +75,7 @@ void Package::set_clean_packages(bool set)
 	clean_all_packages = set;
 }
 
-Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
-                 std::string _file, std::string _pwd)
-    : name(std::move(_name)), file(std::move(_file)), file_short(std::move(_file_short)),
-      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(this->pwd, _ns->getName(), this->name))
+void Package::common_init()
 {
 	std::string prefix = this->ns->getName() + "," + this->name;
 
@@ -93,6 +90,46 @@ Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
 	if(this->clean_all_packages) {
 		this->clean_before_build = true;
 	}
+}
+
+Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
+                 std::string _file, std::string _pwd)
+    : name(std::move(_name)), file(std::move(_file)), file_short(std::move(_file_short)),
+      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(this->pwd, _ns->getName(), this->name))
+{
+	this->common_init();
+}
+
+Package::Package(NameSpace *_ns, std::string _name, std::string _pwd)
+    : name(std::move(_name)), pwd(std::move(_pwd)), ns(_ns),
+      bd(BuildDir(this->pwd, _ns->getName(), this->name))
+{
+	std::string lua_file;
+	std::string lastPart = this->name;
+
+	size_t lastSlash = this->name.rfind('/');
+	if(lastSlash != std::string::npos) {
+		lastPart = this->name.substr(lastSlash + 1);
+	}
+
+	bool found = false;
+	auto relative_fname = boost::format{"package/%1%/%2%.lua"} % this->name % lastPart;
+	for(const auto &ov : _ns->getWorld()->getOverlays()) {
+		lua_file = ov + "/" + relative_fname.str();
+		if(filesystem::exists(lua_file)) {
+			found = true;
+			break;
+		}
+	}
+
+	if(!found) {
+		throw CustomException("Package not found: " + this->name);
+	}
+
+	this->file = lua_file;
+	this->file_short = relative_fname.str();
+
+	this->common_init();
 }
 
 BuildDir *Package::builddir()

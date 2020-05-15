@@ -732,6 +732,7 @@ namespace buildsys
 		bool ff_file(const std::string &hash, const std::string &rfile,
 		             const std::string &path, const std::string &fname,
 		             const std::string &fext);
+		void common_init();
 
 	protected:
 		enum class BuildInfoType { Output, Build };
@@ -775,6 +776,16 @@ namespace buildsys
 		 */
 		Package(NameSpace *_ns, std::string _name, std::string _file_short,
 		        std::string _file, std::string _pwd);
+
+		/**
+		 * Create a package.
+		 *
+		 * @param _ns - The namespace the package is in.
+		 * @param _name - The name of the package.
+		 * @param _pwd - The working directory for buildsys++.
+		 */
+		Package(NameSpace *_ns, std::string _name, std::string _pwd);
+
 		//! Returns the namespace this package is in
 		NameSpace *getNS()
 		{
