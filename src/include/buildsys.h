@@ -148,6 +148,9 @@ namespace buildsys
 		std::string work_src;
 
 	public:
+		BuildDir()
+		{
+		}
 		/** Create a build directory
 		 *  @param pwd - The current working directory
 		 *  @param gname - The namespace name of the package
@@ -699,7 +702,7 @@ namespace buildsys
 		std::string file;
 		std::string file_short;
 		std::string buildinfo_hash;
-		const std::string pwd;
+		std::string pwd;
 		NameSpace *ns;
 		BuildDir bd;
 		Fetch f;
@@ -775,19 +778,17 @@ namespace buildsys
 		 * @param _name - The name of the package.
 		 * @param _file_short - The relative path to the lua file describing this package.
 		 * @param _file - The full path to the lua file describing this package.
-		 * @param _pwd - The working directory for buildsys++.
 		 */
 		Package(NameSpace *_ns, std::string _name, std::string _file_short,
-		        std::string _file, std::string _pwd);
+		        std::string _file);
 
 		/**
 		 * Create a package.
 		 *
 		 * @param _ns - The namespace the package is in.
 		 * @param _name - The name of the package.
-		 * @param _pwd - The working directory for buildsys++.
 		 */
-		Package(NameSpace *_ns, std::string _name, std::string _pwd);
+		Package(NameSpace *_ns, std::string _name);
 
 		//! Returns the namespace this package is in
 		NameSpace *getNS()
@@ -1101,7 +1102,6 @@ namespace buildsys
 		std::list<NameSpace> namespaces;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
-		std::string pwd;
 		bool failed{false};
 		bool parseOnly{false};
 		bool keepGoing{false};
@@ -1112,13 +1112,6 @@ namespace buildsys
 		mutable std::mutex namespaces_lock;
 
 	public:
-		World()
-		{
-			char *_pwd = getcwd(nullptr, 0);
-			this->pwd = std::string(_pwd);
-			free(_pwd); // NOLINT
-		};
-
 		/** Are we operating in 'parse only' mode
 		 *  If --parse-only is parsed as a parameter, we run in 'parse-only' mode
 		 *  This will make buildsys stop after parsing all packages (package filtering rules
@@ -1175,12 +1168,6 @@ namespace buildsys
 		}
 		//! Declare a package built
 		bool packageFinished(Package *_p);
-
-		//! Get 'pwd'
-		const std::string &getWorkingDir() const
-		{
-			return this->pwd;
-		}
 
 		//! A thread has started
 		void threadStarted()

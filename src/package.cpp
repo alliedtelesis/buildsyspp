@@ -125,19 +125,23 @@ void Package::common_init()
 	if(this->clean_all_packages) {
 		this->clean_before_build = true;
 	}
+
+	char *_pwd = getcwd(nullptr, 0);
+	this->pwd = std::string(_pwd);
+	free(_pwd); // NOLINT
+
+	this->bd = BuildDir(this->pwd, this->getNS()->getName(), this->name);
 }
 
 Package::Package(NameSpace *_ns, std::string _name, std::string _file_short,
-                 std::string _file, std::string _pwd)
+                 std::string _file)
     : name(std::move(_name)), file(std::move(_file)), file_short(std::move(_file_short)),
-      pwd(std::move(_pwd)), ns(_ns), bd(BuildDir(this->pwd, _ns->getName(), this->name))
+      ns(_ns)
 {
 	this->common_init();
 }
 
-Package::Package(NameSpace *_ns, std::string _name, std::string _pwd)
-    : name(std::move(_name)), pwd(std::move(_pwd)), ns(_ns),
-      bd(BuildDir(this->pwd, _ns->getName(), this->name))
+Package::Package(NameSpace *_ns, std::string _name) : name(std::move(_name)), ns(_ns)
 {
 	std::string lua_file;
 	std::string lastPart = this->name;

@@ -53,8 +53,7 @@ Package *NameSpace::findPackage(const std::string &_name)
 	}
 
 	// Package not found, create it
-	std::unique_ptr<Package> p =
-	    std::make_unique<Package>(this, _name, this->WORLD->getWorkingDir());
+	std::unique_ptr<Package> p = std::make_unique<Package>(this, _name);
 	Package *ret = p.get();
 	this->packages.push_back(std::move(p));
 
