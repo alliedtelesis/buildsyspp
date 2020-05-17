@@ -25,19 +25,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
-NameSpace *World::findNameSpace(const std::string &name)
-{
-	std::unique_lock<std::mutex> lk(this->namespaces_lock);
-	for(auto &ns : this->namespaces) {
-		if(ns.getName() == name) {
-			return &ns;
-		}
-	}
-
-	this->namespaces.emplace_back(this, name);
-	return &this->namespaces.back();
-}
-
 static void build_thread(World *w, Package *p)
 {
 	p->log("Build Thread");
@@ -116,7 +103,7 @@ bool World::basePackage(const std::string &filename)
 	// Strip the '.lua' from end of the filename for the namespace name
 	std::string nsname = pname.substr(0, pname.find(".lua"));
 
-	NameSpace *ns = this->findNameSpace(nsname);
+	NameSpace *ns = NameSpace::findNameSpace(nsname);
 
 	std::unique_ptr<Package> p =
 	    std::make_unique<Package>(ns, pname, filename_copy, filename_copy);
@@ -125,8 +112,8 @@ bool World::basePackage(const std::string &filename)
 
 	process_packages(base_package);
 
-	this->graph.fill(this);
-	this->topo_graph.fill(this);
+	this->graph.fill();
+	this->topo_graph.fill();
 
 	std::unordered_set<Package *> cycled_packages = this->graph.get_cycled_packages();
 	if(!cycled_packages.empty()) {
@@ -182,14 +169,4 @@ bool World::packageFinished(Package *_p)
 	this->topo_graph.topological();
 	this->cond.notify_all();
 	return true;
-}
-
-void World::printNameSpaces() const
-{
-	std::unique_lock<std::mutex> lk(this->namespaces_lock);
-	std::cout << std::endl << "----BEGIN NAMESPACES----" << std::endl;
-	for(auto &ns : this->namespaces) {
-		std::cout << ns.getName() << std::endl;
-	}
-	std::cout << "----END NAMESPACES----" << std::endl;
 }

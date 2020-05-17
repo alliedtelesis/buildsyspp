@@ -25,6 +25,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
+std::list<NameSpace> namespaces;
+std::mutex namespaces_lock;
+
+/**
+ * Get the namespace list
+ * todo: This is not thread safe...
+ */
+const std::list<NameSpace> &NameSpace::getNameSpaces()
+{
+	return namespaces;
+}
+
+void NameSpace::printNameSpaces()
+{
+	std::unique_lock<std::mutex> lk(namespaces_lock);
+	std::cout << std::endl << "----BEGIN NAMESPACES----" << std::endl;
+	for(auto &ns : namespaces) {
+		std::cout << ns.getName() << std::endl;
+	}
+	std::cout << "----END NAMESPACES----" << std::endl;
+}
+
+/**
+ * Find (or create) a namespace
+ *
+ * @param name - The name of the namespace to find.
+ *
+ * @returns The pointer to the namespace.
+ */
+NameSpace *NameSpace::findNameSpace(const std::string &name)
+{
+	std::unique_lock<std::mutex> lk(namespaces_lock);
+	for(auto &ns : namespaces) {
+		if(ns.getName() == name) {
+			return &ns;
+		}
+	}
+
+	namespaces.emplace_back(name);
+	return &namespaces.back();
+}
+
 std::string NameSpace::getStagingDir() const
 {
 	std::stringstream res;
@@ -64,9 +106,4 @@ void NameSpace::addPackage(std::unique_ptr<Package> p)
 {
 	std::unique_lock<std::mutex> lk(this->lock);
 	this->packages.push_back(std::move(p));
-}
-
-World *NameSpace::getWorld()
-{
-	return this->WORLD;
 }

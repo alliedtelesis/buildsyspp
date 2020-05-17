@@ -166,7 +166,7 @@ int li_depend(lua_State *L)
 			if(lua_type(L, 2) != LUA_TSTRING) {
 				throw CustomException("depend() takes a string as the second argument");
 			}
-			ns = P->getWorld()->findNameSpace(std::string(lua_tostring(L, 2)));
+			ns = NameSpace::findNameSpace(std::string(lua_tostring(L, 2)));
 		}
 		depend(P, ns, false, std::string(lua_tostring(L, 1)));
 	} else if(lua_istable(L, 1)) {
@@ -201,7 +201,7 @@ int li_depend(lua_State *L)
 					throw CustomException(
 					    "depend() requires a string for the namespace name\n");
 				}
-				ns = P->getWorld()->findNameSpace(std::string(lua_tostring(L, -1)));
+				ns = NameSpace::findNameSpace(std::string(lua_tostring(L, -1)));
 			} else if(key == "locally") {
 				if(lua_type(L, -1) == LUA_TBOOLEAN) {
 					locally = (lua_toboolean(L, -1) != 0);

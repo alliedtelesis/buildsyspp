@@ -128,7 +128,6 @@ namespace buildsys
 	using string_list = std::list<std::string>;
 
 	class Package;
-	class World;
 
 	bool interfaceSetup(Lua *lua);
 
@@ -639,10 +638,9 @@ namespace buildsys
 		const std::string name;
 		std::list<std::unique_ptr<Package>> packages;
 		mutable std::mutex lock;
-		World *WORLD;
 
 	public:
-		NameSpace(World *_W, std::string _name) : name(std::move(_name)), WORLD(_W)
+		NameSpace(std::string _name) : name(std::move(_name))
 		{
 		}
 		const std::string &getName() const
@@ -658,8 +656,9 @@ namespace buildsys
 		void addPackage(std::unique_ptr<Package> p);
 		std::string getStagingDir() const;
 		std::string getInstallDir() const;
-		//! Get the World this NS belongs to
-		World *getWorld();
+		static const std::list<NameSpace> &getNameSpaces();
+		static void printNameSpaces();
+		static NameSpace *findNameSpace(const std::string &name);
 	};
 
 	//! A dependency on another Package
@@ -794,11 +793,6 @@ namespace buildsys
 		NameSpace *getNS()
 		{
 			return this->ns;
-		};
-		//! Return the world this package is in
-		World *getWorld()
-		{
-			return this->ns->getWorld();
 		};
 		//! Returns the build directory being used by this package
 		BuildDir *builddir();
@@ -1031,7 +1025,7 @@ namespace buildsys
 
 	public:
 		//! Fill the Internal_Graph
-		void fill(World *W);
+		void fill();
 		//! Output the graph to dependencies.dot
 		void output() const;
 		//! Perform a topological sort
@@ -1099,7 +1093,6 @@ namespace buildsys
 	class World
 	{
 	private:
-		std::list<NameSpace> namespaces;
 		Internal_Graph graph;
 		Internal_Graph topo_graph;
 		bool failed{false};
@@ -1109,7 +1102,6 @@ namespace buildsys
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
 		int threads_limit{0};
-		mutable std::mutex namespaces_lock;
 
 	public:
 		/** Are we operating in 'parse only' mode
@@ -1145,16 +1137,6 @@ namespace buildsys
 
 		//! Start the processing and building steps with the given meta package
 		bool basePackage(const std::string &filename);
-
-		//! Get the namespace list
-		// todo: This is not thread safe...
-		const std::list<NameSpace> &getNameSpaces() const
-		{
-			return this->namespaces;
-		}
-
-		//! Find (or create) a namespace
-		NameSpace *findNameSpace(const std::string &name);
 
 		//! Tell everything that we have failed
 		void setFailed()
@@ -1202,7 +1184,6 @@ namespace buildsys
 			graph.output();
 			return true;
 		};
-		void printNameSpaces() const;
 	};
 } // namespace buildsys
 

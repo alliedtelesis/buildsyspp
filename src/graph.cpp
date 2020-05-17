@@ -27,9 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace boost;
 
-void Internal_Graph::fill(World *W)
+void Internal_Graph::fill()
 {
-	for(const auto &ns : W->getNameSpaces()) {
+	for(const auto &ns : NameSpace::getNameSpaces()) {
 		for(const auto &package : ns.getPackages()) {
 			NodeVertexMap::iterator pos;
 			bool inserted;
@@ -43,7 +43,7 @@ void Internal_Graph::fill(World *W)
 		}
 	}
 
-	for(const auto &ns : W->getNameSpaces()) {
+	for(const auto &ns : NameSpace::getNameSpaces()) {
 		for(const auto &package : ns.getPackages()) {
 			for(auto &depend : package->getDepends()) {
 				Edge e;
