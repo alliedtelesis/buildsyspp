@@ -109,12 +109,7 @@ int main(int argc, char *argv[])
 		target = target + ".lua";
 	}
 
-	if(ignored_features.empty()) {
-		// Implement old behaviour
-		BuildDescription::set_ignored_features({"job-limit", "load-limit"});
-	} else {
-		BuildDescription::set_ignored_features(ignored_features);
-	}
+	BuildDescription::set_ignored_features(ignored_features);
 
 	if(!WORLD.basePackage(target)) {
 		logger.log("Building: Failed");
