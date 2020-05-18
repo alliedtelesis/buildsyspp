@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	while(a < argList.size() && !foundDashDash) {
 		if(argList[a] == "--clean") {
 			Package::set_clean_packages(true);
-		} else if(argList[a] == "--cache-server" || argList[a] == "--ff") {
+		} else if(argList[a] == "--cache-server") {
 			Package::set_build_cache(argList[a + 1]);
 			a++;
 		} else if(argList[a] == "--tarball-cache") {
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 			WORLD.setKeepGoing();
 		} else if(argList[a] == "--quietly") {
 			Package::set_quiet_packages(true);
-		} else if(argList[a] == "--parallel-packages" || argList[a] == "-j") {
+		} else if(argList[a] == "--parallel-packages") {
 			WORLD.setThreadsLimit(std::stoi(argList[a + 1]));
 			// If a thread limit is specified then don't allow packages to extract
 			// in parallel.
