@@ -156,6 +156,7 @@ bool World::basePackage(const std::string &filename)
 		std::unique_lock<std::mutex> lk(this->cond_lock);
 		while(!base_package->isBuilt() && this->threads_running > 0) {
 			this->cond.wait(lk);
+			lk.unlock();
 			lk.lock();
 		}
 	}
