@@ -645,7 +645,6 @@ namespace buildsys
 		NameSpace(std::string _name);
 		const std::string &getName() const;
 		void for_each_package(std::function<void(Package &)> func) const;
-		//! Find or create a package with the given name
 		Package *findPackage(const std::string &_name);
 		void addPackage(std::unique_ptr<Package> p);
 		const std::string &getStagingDir() const;
@@ -653,6 +652,7 @@ namespace buildsys
 		static void for_each(std::function<void(const NameSpace &)> func);
 		static void printNameSpaces();
 		static NameSpace *findNameSpace(const std::string &name);
+		static void deleteAll();
 	};
 
 	//! A dependency on another Package

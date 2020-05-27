@@ -82,3 +82,18 @@ target_include_directories(featuremap_unittests PRIVATE ../src/)
 target_compile_features(featuremap_unittests PRIVATE cxx_std_14)
 target_link_libraries(featuremap_unittests PRIVATE Catch2::Catch2)
 add_test(NAME featuremap_unittests COMMAND featuremap_unittests)
+
+add_executable(namespace_unittests namespace_unittests.cpp ../src/namespace.cpp ../src/lua.cpp
+                                   ../src/package.cpp ../src/logger.cpp ../src/packagecmd.cpp
+                                   ../src/hash.cpp ../src/dir/builddir.cpp ../src/filesystem.cpp
+                                   ../src/buildinfo.cpp ../src/extraction.cpp ../src/interface/luainterface.cpp
+                                   ../src/interface/toplevel.cpp ../src/featuremap.cpp ../src/interface/builddir.cpp
+                                   ../src/fetch.cpp ../src/extraction/git.cpp ../src/interface/fetchunit.cpp)
+append_coverage_compiler_flags()
+target_include_directories(namespace_unittests PRIVATE ../src/)
+target_compile_features(namespace_unittests PRIVATE cxx_std_14)
+target_link_libraries(namespace_unittests PRIVATE Catch2::Catch2)
+target_link_libraries(namespace_unittests PRIVATE OpenSSL::Crypto)
+target_link_libraries(namespace_unittests PRIVATE ${LUA_LIBRARIES})
+target_link_libraries(namespace_unittests PRIVATE Threads::Threads)
+add_test(NAME namespace_unittests COMMAND namespace_unittests)

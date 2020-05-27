@@ -162,3 +162,12 @@ void NameSpace::addPackage(std::unique_ptr<Package> p)
 	std::unique_lock<std::mutex> lk(this->lock);
 	this->packages.push_back(std::move(p));
 }
+
+/**
+ * Delete all namespaces.
+ */
+void NameSpace::deleteAll()
+{
+	std::unique_lock<std::mutex> lk(namespaces_lock);
+	namespaces.clear();
+}
