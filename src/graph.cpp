@@ -29,7 +29,7 @@ using namespace boost;
 
 void Internal_Graph::fill()
 {
-	for(const auto &ns : NameSpace::getNameSpaces()) {
+	NameSpace::for_each([this](const NameSpace &ns) {
 		for(const auto &package : ns.getPackages()) {
 			NodeVertexMap::iterator pos;
 			bool inserted;
@@ -41,9 +41,9 @@ void Internal_Graph::fill()
 				this->NodeMap.insert(std::make_pair(u, package.get()));
 			}
 		}
-	}
+	});
 
-	for(const auto &ns : NameSpace::getNameSpaces()) {
+	NameSpace::for_each([this](const NameSpace &ns) {
 		for(const auto &package : ns.getPackages()) {
 			for(auto &depend : package->getDepends()) {
 				Edge e;
@@ -53,7 +53,7 @@ void Internal_Graph::fill()
 				             this->g);
 			}
 		}
-	}
+	});
 }
 
 std::unordered_set<Package *> Internal_Graph::get_cycled_packages() const

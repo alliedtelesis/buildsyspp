@@ -55,12 +55,16 @@ const std::list<std::unique_ptr<Package>> &NameSpace::getPackages() const
 }
 
 /**
- * Get the namespace list
- * todo: This is not thread safe...
+ * Call a function for each NameSpace that exists.
+ *
+ * @param func - The function to call with each NameSpace.
  */
-const std::list<NameSpace> &NameSpace::getNameSpaces()
+void NameSpace::for_each(std::function<void(const NameSpace &)> func)
 {
-	return namespaces;
+	std::unique_lock<std::mutex> lk(namespaces_lock);
+	for(const auto &ns : namespaces) {
+		func(ns);
+	}
 }
 
 /**
@@ -68,11 +72,9 @@ const std::list<NameSpace> &NameSpace::getNameSpaces()
  */
 void NameSpace::printNameSpaces()
 {
-	std::unique_lock<std::mutex> lk(namespaces_lock);
 	std::cout << std::endl << "----BEGIN NAMESPACES----" << std::endl;
-	for(auto &ns : namespaces) {
-		std::cout << ns.getName() << std::endl;
-	}
+	NameSpace::for_each(
+	    [](const NameSpace &ns) { std::cout << ns.getName() << std::endl; });
 	std::cout << "----END NAMESPACES----" << std::endl;
 }
 

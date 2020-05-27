@@ -650,7 +650,7 @@ namespace buildsys
 		void addPackage(std::unique_ptr<Package> p);
 		const std::string &getStagingDir() const;
 		const std::string &getInstallDir() const;
-		static const std::list<NameSpace> &getNameSpaces();
+		static void for_each(std::function<void(const NameSpace &)> func);
 		static void printNameSpaces();
 		static NameSpace *findNameSpace(const std::string &name);
 	};
