@@ -636,26 +636,20 @@ namespace buildsys
 	{
 	private:
 		const std::string name;
+		const std::string staging_dir;
+		const std::string install_dir;
 		std::list<std::unique_ptr<Package>> packages;
 		mutable std::mutex lock;
 
 	public:
-		NameSpace(std::string _name) : name(std::move(_name))
-		{
-		}
-		const std::string &getName() const
-		{
-			return name;
-		};
-		const std::list<std::unique_ptr<Package>> &getPackages() const
-		{
-			return packages;
-		}
+		NameSpace(std::string _name);
+		const std::string &getName() const;
+		const std::list<std::unique_ptr<Package>> &getPackages() const;
 		//! Find or create a package with the given name
 		Package *findPackage(const std::string &_name);
 		void addPackage(std::unique_ptr<Package> p);
-		std::string getStagingDir() const;
-		std::string getInstallDir() const;
+		const std::string &getStagingDir() const;
+		const std::string &getInstallDir() const;
 		static const std::list<NameSpace> &getNameSpaces();
 		static void printNameSpaces();
 		static NameSpace *findNameSpace(const std::string &name);

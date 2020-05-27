@@ -29,6 +29,32 @@ std::list<NameSpace> namespaces;
 std::mutex namespaces_lock;
 
 /**
+ * Construct the NameSpace object.
+ *
+ * @param _name - The name of the namespace.
+ */
+NameSpace::NameSpace(std::string _name)
+    : name(std::move(_name)), staging_dir("output/" + this->name + "/staging"),
+      install_dir("output/" + this->name + "/install")
+{
+}
+
+/**
+ * Get the name of the NameSpace.
+ *
+ * @returns The name.
+ */
+const std::string &NameSpace::getName() const
+{
+	return this->name;
+}
+
+const std::list<std::unique_ptr<Package>> &NameSpace::getPackages() const
+{
+	return this->packages;
+}
+
+/**
  * Get the namespace list
  * todo: This is not thread safe...
  */
@@ -37,6 +63,9 @@ const std::list<NameSpace> &NameSpace::getNameSpaces()
 	return namespaces;
 }
 
+/**
+ * Print the names of all the created NameSpaces to stdout.
+ */
 void NameSpace::printNameSpaces()
 {
 	std::unique_lock<std::mutex> lk(namespaces_lock);
@@ -67,25 +96,36 @@ NameSpace *NameSpace::findNameSpace(const std::string &name)
 	return &namespaces.back();
 }
 
-std::string NameSpace::getStagingDir() const
+/**
+ * Get the path to the staging directory for this NameSpace.
+ *
+ * @returns The staging directory path.
+ */
+const std::string &NameSpace::getStagingDir() const
 {
-	std::stringstream res;
-	res << "output/" << this->getName() << "/staging";
-	return res.str();
+	return this->staging_dir;
 }
 
-std::string NameSpace::getInstallDir() const
+/**
+ * Get the path to the install directory for this NameSpace.
+ *
+ * @returns The install directory path.
+ */
+const std::string &NameSpace::getInstallDir() const
 {
-	std::stringstream res;
-	res << "output/" << this->getName() << "/install";
-	return res.str();
+	return this->install_dir;
 }
 
+/**
+ * Lookup the package by name. If it doesn't exist then it will
+ * be created.
+ *
+ * @param _name - The name of the package to lookup.
+ *
+ * @returns A pointer to the package.
+ */
 Package *NameSpace::findPackage(const std::string &_name)
 {
-	std::string file;
-	std::string file_short;
-
 	std::unique_lock<std::mutex> lk(this->lock);
 
 	for(const auto &package : this->getPackages()) {
@@ -102,6 +142,11 @@ Package *NameSpace::findPackage(const std::string &_name)
 	return ret;
 }
 
+/**
+ * Add a package to this NameSpace.
+ *
+ * @param p - The package to add.
+ */
 void NameSpace::addPackage(std::unique_ptr<Package> p)
 {
 	std::unique_lock<std::mutex> lk(this->lock);
