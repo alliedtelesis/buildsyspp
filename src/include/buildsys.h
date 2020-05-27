@@ -644,7 +644,7 @@ namespace buildsys
 	public:
 		NameSpace(std::string _name);
 		const std::string &getName() const;
-		const std::list<std::unique_ptr<Package>> &getPackages() const;
+		void for_each_package(std::function<void(Package &)> func) const;
 		//! Find or create a package with the given name
 		Package *findPackage(const std::string &_name);
 		void addPackage(std::unique_ptr<Package> p);

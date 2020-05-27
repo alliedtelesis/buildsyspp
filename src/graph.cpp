@@ -30,29 +30,28 @@ using namespace boost;
 void Internal_Graph::fill()
 {
 	NameSpace::for_each([this](const NameSpace &ns) {
-		for(const auto &package : ns.getPackages()) {
+		ns.for_each_package([this](Package &package) {
 			NodeVertexMap::iterator pos;
 			bool inserted;
 			boost::tie(pos, inserted) =
-			    this->Nodes.insert(std::make_pair(package.get(), Vertex()));
+			    this->Nodes.insert(std::make_pair(&package, Vertex()));
 			if(inserted) {
 				Vertex u = add_vertex(this->g);
 				pos->second = u;
-				this->NodeMap.insert(std::make_pair(u, package.get()));
+				this->NodeMap.insert(std::make_pair(u, &package));
 			}
-		}
+		});
 	});
 
 	NameSpace::for_each([this](const NameSpace &ns) {
-		for(const auto &package : ns.getPackages()) {
-			for(auto &depend : package->getDepends()) {
+		ns.for_each_package([this](Package &package) {
+			for(auto &depend : package.getDepends()) {
 				Edge e;
 				bool inserted;
-				boost::tie(e, inserted) =
-				    add_edge(this->Nodes[(package.get())], this->Nodes[depend.getPackage()],
-				             this->g);
+				boost::tie(e, inserted) = add_edge(
+				    this->Nodes[(&package)], this->Nodes[depend.getPackage()], this->g);
 			}
-		}
+		});
 	});
 }
 

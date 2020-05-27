@@ -49,9 +49,17 @@ const std::string &NameSpace::getName() const
 	return this->name;
 }
 
-const std::list<std::unique_ptr<Package>> &NameSpace::getPackages() const
+/**
+ * Call a function for each Package in the NameSpace.
+ *
+ * @param func - The function to call with each Package.
+ */
+void NameSpace::for_each_package(std::function<void(Package &)> func) const
 {
-	return this->packages;
+	std::unique_lock<std::mutex> lk(this->lock);
+	for(const auto &package : this->packages) {
+		func(*package.get());
+	}
 }
 
 /**
@@ -130,7 +138,7 @@ Package *NameSpace::findPackage(const std::string &_name)
 {
 	std::unique_lock<std::mutex> lk(this->lock);
 
-	for(const auto &package : this->getPackages()) {
+	for(const auto &package : this->packages) {
 		if(package->getName() == _name) {
 			return package.get();
 		}
