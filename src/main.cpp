@@ -58,7 +58,16 @@ int main(int argc, char *argv[])
 		target = target + ".lua";
 	}
 
-	if(!WORLD.basePackage(target)) {
+	// Resolve any symbolic links
+	char *resolved_path = realpath(target.c_str(), nullptr);
+	if(resolved_path == nullptr) {
+		logger.log("Base package path does not exist");
+		return false;
+	}
+	std::string filename = std::string(resolved_path);
+	free(resolved_path); // NOLINT
+
+	if(!WORLD.basePackage(filename)) {
 		logger.log("Building: Failed");
 		if(WORLD.areKeepGoing()) {
 			hash_shutdown();
