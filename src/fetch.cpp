@@ -36,6 +36,7 @@ std::mutex DownloadFetch::dlobjects_lock;
  */
 void DownloadFetch::setTarballCache(std::string cache)
 {
+	Logger("BuildSys").log(boost::format{"Setting tarball cache to %1%"} % cache);
 	tarball_cache = std::move(cache);
 }
 
