@@ -766,10 +766,6 @@ bool Package::should_suppress_building()
 
 bool Package::build(bool locally)
 {
-	// clang-format off
-	struct timespec start {}, end {};
-	// clang-format on
-
 	// Hold the lock for the whole build, to avoid multiple running at once
 	std::unique_lock<std::mutex> lk(this->lock);
 
@@ -829,7 +825,7 @@ bool Package::build(bool locally)
 		return false;
 	}
 
-	clock_gettime(CLOCK_REALTIME, &start);
+	steady_clock::time_point start = steady_clock::now();
 
 	if(this->Extract.extractionRequired(this, &this->bd)) {
 		this->log("Extracting ...");
@@ -873,10 +869,9 @@ bool Package::build(bool locally)
 
 	this->updateBuildInfo();
 
-	clock_gettime(CLOCK_REALTIME, &end);
+	steady_clock::time_point end = steady_clock::now();
 
-	this->run_secs = (end.tv_sec - start.tv_sec);
-
+	this->run_secs = duration_cast<std::chrono::seconds>(end - start).count();
 	this->log(boost::format{"Built in %1% seconds"} % this->run_secs);
 
 	this->building = false;

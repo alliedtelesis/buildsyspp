@@ -30,13 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, char *argv[])
 {
-	// clang-format off
-	struct timespec start {}, end {};
-	// clang-format on
+	steady_clock::time_point start = steady_clock::now();
+
 	Logger logger("BuildSys");
-
-	clock_gettime(CLOCK_REALTIME, &start);
-
 	logger.log("Buildsys (C++ version)");
 	logger.log(boost::format{"Built: %1% %2%"} % __TIME__ % __DATE__);
 
@@ -83,17 +79,12 @@ int main(int argc, char *argv[])
 	// Write out the dependency graph
 	WORLD.output_graph();
 
-	clock_gettime(CLOCK_REALTIME, &end);
-
 	logger.log("Finished: " + target);
-	if(end.tv_nsec >= start.tv_nsec) {
-		logger.log(boost::format{"Total time: %1%s and %2%ms"} %
-		           (end.tv_sec - start.tv_sec) % ((end.tv_nsec - start.tv_nsec) / 1000000));
-	} else {
-		logger.log(boost::format{"Total time: %1%s and %2%ms"} %
-		           (end.tv_sec - start.tv_sec - 1) %
-		           ((1000 + end.tv_nsec / 1000000) - start.tv_nsec / 1000000));
-	}
+
+	steady_clock::time_point end = steady_clock::now();
+	auto duration = duration_cast<std::chrono::milliseconds>(end - start).count();
+	logger.log(boost::format{"Total time: %1%s and %2%ms"} % (duration / 1000) %
+	           (duration % 1000));
 
 	hash_shutdown();
 

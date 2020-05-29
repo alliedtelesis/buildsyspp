@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INCLUDE_BUILDSYS_H_
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <iostream>
 #include <list>
@@ -79,6 +80,9 @@ extern "C" {
 using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
 using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
 using Edge = boost::graph_traits<Graph>::edge_descriptor;
+
+using std::chrono::duration_cast;
+using std::chrono::steady_clock;
 
 #define LUA_SET_TABLE_TYPE(L, T)                                                           \
 	lua_pushstring(L, #T);                                                                 \
