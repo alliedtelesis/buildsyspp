@@ -231,10 +231,10 @@ int li_depend(lua_State *L)
 	return 0;
 }
 
-int li_hashoutput(lua_State *L)
+static int li_hashoutput(lua_State *L)
 {
 	if(lua_gettop(L) != 0) {
-		throw CustomException("buildlocally() takes no arguments");
+		throw CustomException("hashoutput() takes no arguments");
 	}
 
 	Package *P = li_get_package();
@@ -245,7 +245,6 @@ int li_hashoutput(lua_State *L)
 	// that produce data that changes less often
 	// than the sources
 	P->setHashOutput();
-
 	return 0;
 }
 
