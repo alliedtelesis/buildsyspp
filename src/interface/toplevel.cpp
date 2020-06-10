@@ -117,12 +117,15 @@ int li_builddir(lua_State *L)
 	return 1;
 }
 
-int li_intercept(lua_State *) // NOLINT
+static int li_intercept(lua_State *L)
 {
+	if(lua_gettop(L) != 0) {
+		throw CustomException("intercept() takes no arguments");
+	}
+
 	Package *P = li_get_package();
 
 	P->setIntercept();
-
 	return 0;
 }
 
