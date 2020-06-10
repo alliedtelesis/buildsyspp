@@ -126,12 +126,15 @@ int li_intercept(lua_State *) // NOLINT
 	return 0;
 }
 
-int li_keepstaging(lua_State *) // NOLINT
+static int li_keepstaging(lua_State *L)
 {
+	if(lua_gettop(L) != 0) {
+		throw CustomException("keepstaging() takes no arguments");
+	}
+
 	Package *P = li_get_package();
 
 	P->setSuppressRemoveStaging();
-
 	return 0;
 }
 

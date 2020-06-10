@@ -882,6 +882,10 @@ namespace buildsys
 		{
 			this->suppress_remove_staging = true;
 		}
+		bool getSuppressRemoveStaging()
+		{
+			return this->suppress_remove_staging;
+		}
 		//! Parse and load the lua file for this package
 		bool process();
 		//! Sets the code updated flag
