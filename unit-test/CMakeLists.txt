@@ -97,3 +97,18 @@ target_link_libraries(namespace_unittests PRIVATE OpenSSL::Crypto)
 target_link_libraries(namespace_unittests PRIVATE ${LUA_LIBRARIES})
 target_link_libraries(namespace_unittests PRIVATE Threads::Threads)
 add_test(NAME namespace_unittests COMMAND namespace_unittests)
+
+add_executable(toplevel_unittests toplevel_unittests.cpp ../src/namespace.cpp ../src/lua.cpp
+                                   ../src/package.cpp ../src/logger.cpp ../src/packagecmd.cpp
+                                   ../src/hash.cpp ../src/dir/builddir.cpp ../src/filesystem.cpp
+                                   ../src/buildinfo.cpp ../src/extraction.cpp ../src/interface/luainterface.cpp
+                                   ../src/interface/toplevel.cpp ../src/featuremap.cpp ../src/interface/builddir.cpp
+                                   ../src/fetch.cpp ../src/extraction/git.cpp ../src/interface/fetchunit.cpp)
+append_coverage_compiler_flags()
+target_include_directories(toplevel_unittests PRIVATE ../src/)
+target_compile_features(toplevel_unittests PRIVATE cxx_std_14)
+target_link_libraries(toplevel_unittests PRIVATE Catch2::Catch2)
+target_link_libraries(toplevel_unittests PRIVATE OpenSSL::Crypto)
+target_link_libraries(toplevel_unittests PRIVATE ${LUA_LIBRARIES})
+target_link_libraries(toplevel_unittests PRIVATE Threads::Threads)
+add_test(NAME toplevel_unittests COMMAND toplevel_unittests)
