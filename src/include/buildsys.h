@@ -972,6 +972,10 @@ namespace buildsys
 		{
 			this->clean_before_build = true;
 		}
+		bool get_clean_before_build()
+		{
+			return this->clean_before_build;
+		}
 		static void set_quiet_packages(bool set);
 		static void set_extract_in_parallel(bool set);
 		static void set_build_cache(std::string cache);
