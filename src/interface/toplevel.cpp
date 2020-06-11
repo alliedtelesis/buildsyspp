@@ -45,13 +45,14 @@ static int li_feature(lua_State *L)
 	if(lua_gettop(L) < 1 || lua_gettop(L) > 3) {
 		throw CustomException("feature() takes 1 to 3 arguments");
 	}
+	if(lua_type(L, 1) != LUA_TSTRING) {
+		throw CustomException("First argument to feature() must be a string");
+	}
+
 	Package *P = li_get_package();
+	std::string key(lua_tostring(L, 1));
 
 	if(lua_gettop(L) == 1) {
-		if(lua_type(L, 1) != LUA_TSTRING) {
-			throw CustomException("Argument to feature() must be a string");
-		}
-		std::string key(lua_tostring(L, 1));
 		try {
 			std::string value;
 			/* Try the feature prefixed with our package name first */
@@ -68,23 +69,22 @@ static int li_feature(lua_State *L)
 		}
 		return 1;
 	}
-	if(lua_type(L, 1) != LUA_TSTRING) {
-		throw CustomException("First argument to feature() must be a string");
-	}
+
 	if(lua_type(L, 2) != LUA_TSTRING) {
 		throw CustomException("Second argument to feature() must be a string");
 	}
-	if(lua_gettop(L) == 3 && lua_type(L, 3) != LUA_TBOOLEAN) {
-		throw CustomException("Third argument to feature() must be boolean, if present");
-	}
-	std::string key(lua_tostring(L, 1));
 	std::string value(lua_tostring(L, 2));
+	bool override = false;
 
 	if(lua_gettop(L) == 3) {
-		li_get_feature_map()->setFeature(key, value, lua_toboolean(L, -3) != 0);
+		if(lua_type(L, 3) != LUA_TBOOLEAN) {
+			throw CustomException(
+			    "Third argument to feature() must be boolean, if present");
+		}
+		override = (lua_toboolean(L, -3) != 0);
 	}
 
-	li_get_feature_map()->setFeature(key, value);
+	li_get_feature_map()->setFeature(key, value, override);
 	return 0;
 }
 

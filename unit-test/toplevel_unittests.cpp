@@ -387,3 +387,179 @@ TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'builddir' function usage (
 
 	REQUIRE(exception_caught);
 }
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'feature' function usage (get package prefixed feature)", "")
+{
+	std::string file_path = this->cwd + "/test_lua.lua";
+	std::ofstream test_file;
+	test_file.open(file_path);
+
+	test_file << "assert(feature('test_feature1') == 'value1')";
+	test_file.close();
+
+	NameSpace *ns = NameSpace::findNameSpace("test_namespace");
+	Package p(ns, "test_package", file_path, file_path);
+	li_get_feature_map()->setFeature("test_package:test_feature1", "value1", true);
+	li_get_feature_map()->setFeature("test_feature1", "value2", true);
+
+	Lua lua;
+	interfaceSetup(&lua);
+	li_set_package(&p);
+
+	bool exception_caught = false;
+	try {
+		lua.processFile(file_path);
+	} catch(CustomException &e) {
+		exception_caught = true;
+	}
+
+	REQUIRE(!exception_caught);
+
+	std::stringstream buffer;
+	p.buildDescription()->print(buffer);
+	REQUIRE(buffer.str() == "FeatureValue test_feature1 value1\n");
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'feature' function usage (get non package prefixed feature)", "")
+{
+	std::string file_path = this->cwd + "/test_lua.lua";
+	std::ofstream test_file;
+	test_file.open(file_path);
+
+	test_file << "assert(feature('test_feature2') == 'value3')";
+	test_file.close();
+
+	NameSpace *ns = NameSpace::findNameSpace("test_namespace");
+	Package p(ns, "test_package", file_path, file_path);
+	li_get_feature_map()->setFeature("test_feature2", "value3", true);
+
+	Lua lua;
+	interfaceSetup(&lua);
+	li_set_package(&p);
+
+	bool exception_caught = false;
+	try {
+		lua.processFile(file_path);
+	} catch(CustomException &e) {
+		exception_caught = true;
+	}
+
+	REQUIRE(!exception_caught);
+	std::stringstream buffer;
+	p.buildDescription()->print(buffer);
+	REQUIRE(buffer.str() == "FeatureValue test_feature2 value3\n");
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'feature' function usage (get non existent feature)", "")
+{
+	std::string file_path = this->cwd + "/test_lua.lua";
+	std::ofstream test_file;
+	test_file.open(file_path);
+
+	test_file << "assert(feature('test_feature3') == nil)";
+	test_file.close();
+
+	NameSpace *ns = NameSpace::findNameSpace("test_namespace");
+	Package p(ns, "test_package", file_path, file_path);
+
+	Lua lua;
+	interfaceSetup(&lua);
+	li_set_package(&p);
+
+	bool exception_caught = false;
+	try {
+		lua.processFile(file_path);
+	} catch(CustomException &e) {
+		exception_caught = true;
+	}
+
+	REQUIRE(!exception_caught);
+	std::stringstream buffer;
+	p.buildDescription()->print(buffer);
+	REQUIRE(buffer.str() == "FeatureNil test_feature3\n");
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'feature' function usage (set non existent feature)", "")
+{
+	std::string file_path = this->cwd + "/test_lua.lua";
+	std::ofstream test_file;
+	test_file.open(file_path);
+
+	test_file << "feature('test_feature4', 'value4')";
+	test_file.close();
+
+	NameSpace *ns = NameSpace::findNameSpace("test_namespace");
+	Package p(ns, "test_package", file_path, file_path);
+
+	Lua lua;
+	interfaceSetup(&lua);
+	li_set_package(&p);
+
+	bool exception_caught = false;
+	try {
+		lua.processFile(file_path);
+	} catch(CustomException &e) {
+		exception_caught = true;
+	}
+
+	REQUIRE(!exception_caught);
+	REQUIRE(li_get_feature_map()->getFeature("test_feature4") == "value4");
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'feature' function usage (set existent feature)", "")
+{
+	std::string file_path = this->cwd + "/test_lua.lua";
+	std::ofstream test_file;
+	test_file.open(file_path);
+
+	test_file << "feature('test_feature5', 'value5')";
+	test_file.close();
+
+	li_get_feature_map()->setFeature("test_feature5", "value10", true);
+
+	NameSpace *ns = NameSpace::findNameSpace("test_namespace");
+	Package p(ns, "test_package", file_path, file_path);
+
+	Lua lua;
+	interfaceSetup(&lua);
+	li_set_package(&p);
+
+	bool exception_caught = false;
+	try {
+		lua.processFile(file_path);
+	} catch(CustomException &e) {
+		exception_caught = true;
+	}
+
+	REQUIRE(!exception_caught);
+	REQUIRE(li_get_feature_map()->getFeature("test_feature5") == "value10");
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'feature' function usage (force set existent feature)", "")
+{
+	std::string file_path = this->cwd + "/test_lua.lua";
+	std::ofstream test_file;
+	test_file.open(file_path);
+
+	test_file << "feature('test_feature6', 'value6', true)";
+	test_file.close();
+
+	li_get_feature_map()->setFeature("test_feature6", "value12", true);
+
+	NameSpace *ns = NameSpace::findNameSpace("test_namespace");
+	Package p(ns, "test_package", file_path, file_path);
+
+	Lua lua;
+	interfaceSetup(&lua);
+	li_set_package(&p);
+
+	bool exception_caught = false;
+	try {
+		lua.processFile(file_path);
+	} catch(CustomException &e) {
+		exception_caught = true;
+	}
+
+	REQUIRE(!exception_caught);
+	REQUIRE(li_get_feature_map()->getFeature("test_feature6") == "value6");
+}
