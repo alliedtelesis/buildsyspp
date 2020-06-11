@@ -256,3 +256,27 @@ TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'feature' function usage (for
 	REQUIRE(execute_lua(p, "feature('test_feature6', 'value6', true)"));
 	REQUIRE(li_get_feature_map()->getFeature("test_feature6") == "value6");
 }
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'feature' function usage (zero arguments)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+	REQUIRE(!execute_lua(p, "feature()"));
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'feature' function usage (non string first argument)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+	REQUIRE(!execute_lua(p, "feature(true)"));
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'feature' function usage (non string second argument)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+	REQUIRE(!execute_lua(p, "feature('test_feature7', true)"));
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'feature' function usage (non boolean third argument)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+	REQUIRE(!execute_lua(p, "feature('test_feature7', 'value7', 'blah')"));
+}
