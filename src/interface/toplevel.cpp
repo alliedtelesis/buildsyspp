@@ -248,7 +248,7 @@ static int li_hashoutput(lua_State *L)
 	return 0;
 }
 
-int li_require(lua_State *L)
+static int li_require(lua_State *L)
 {
 	if(lua_gettop(L) != 1) {
 		throw CustomException("require() takes 1 argument");

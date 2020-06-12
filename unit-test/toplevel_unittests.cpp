@@ -16,11 +16,13 @@ protected:
 public:
 	TopLevelTestsFixture()
 	{
+		hash_setup();
 		filesystem::create_directories(this->cwd);
 		this->ns = NameSpace::findNameSpace("test_namespace");
 	}
 	~TopLevelTestsFixture()
 	{
+		hash_shutdown();
 		filesystem::remove_all(this->cwd);
 	}
 	/**
@@ -39,14 +41,13 @@ public:
 		test_file << lua_code;
 		test_file.close();
 
-		Lua lua;
-		interfaceSetup(&lua);
+		interfaceSetup(p.getLua());
 		li_set_package(&p);
 
 		bool exception_caught = false;
 		try {
-			lua.processFile(file_path);
-		} catch(CustomException &e) {
+			p.getLua()->processFile(file_path);
+		} catch(std::runtime_error &e) {
 			exception_caught = true;
 		}
 
@@ -279,4 +280,45 @@ TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'feature' function usage (n
 {
 	Package p(this->ns, "test_package", ".", ".");
 	REQUIRE(!execute_lua(p, "feature('test_feature7', 'value7', 'blah')"));
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'require' function usage", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+
+	std::string file_path = this->cwd + "/required_file.lua";
+	std::ofstream test_file;
+	test_file.open(file_path);
+
+	test_file << "feature('test_feature8', 'value8')";
+	test_file.close();
+
+	std::string code = "require('" + this->cwd + "/required_file')";
+	REQUIRE(execute_lua(p, code));
+	REQUIRE(li_get_feature_map()->getFeature("test_feature8") == "value8");
+
+	std::stringstream buffer;
+	p.buildDescription()->print(buffer);
+
+	// Hard code the expected hash
+	std::string expected = "RequireFile " + file_path + " 9b7131386aff90211eb564eb339f8fe8a6b4887ba2ca62ed7eb3eab7ea559a09\n";
+	REQUIRE(buffer.str() == expected);
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'require' function usage (no argument)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+	REQUIRE(!execute_lua(p, "require()"));
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'require' function usage (non string argument)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+	REQUIRE(!execute_lua(p, "require(true)"));
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'require' function usage (file does not exist)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+	REQUIRE(!execute_lua(p, "require('/dfkljdsflksdjflksdfj/sdfklsdjflksdjflk')"));
 }
