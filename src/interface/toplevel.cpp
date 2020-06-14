@@ -137,7 +137,7 @@ static int li_keepstaging(lua_State *L)
 
 	Package *P = li_get_package();
 
-	P->setSuppressRemoveStaging();
+	P->setSuppressRemoveStaging(true);
 	return 0;
 }
 

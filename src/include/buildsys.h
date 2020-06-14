@@ -757,8 +757,7 @@ namespace buildsys
 		bool packageNewStaging();
 		//! Package up the new/install directory (or installFile, if set)
 		bool packageNewInstall();
-		//! Remove the staging directory (to save space, if not suppressed)
-		void cleanStaging() const;
+
 		/** Should this package be rebuilt ?
 		 *  This returns true when any of the following occur:
 		 *  - The output staging or install tarballs are removed
@@ -878,9 +877,9 @@ namespace buildsys
 			return res;
 		}
 		//! Set to prevent the staging directory from being removed at the end of the build
-		void setSuppressRemoveStaging()
+		void setSuppressRemoveStaging(bool set)
 		{
-			this->suppress_remove_staging = true;
+			this->suppress_remove_staging = set;
 		}
 		bool getSuppressRemoveStaging()
 		{
@@ -888,6 +887,8 @@ namespace buildsys
 		}
 		//! Parse and load the lua file for this package
 		bool process();
+		//! Remove the staging directory (to save space, if not suppressed)
+		void cleanStaging() const;
 		//! Sets the code updated flag
 		void setCodeUpdated()
 		{

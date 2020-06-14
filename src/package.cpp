@@ -746,10 +746,9 @@ bool Package::packageNewInstall()
 
 void Package::cleanStaging() const
 {
-	if(this->suppress_remove_staging) {
-		return;
+	if(!this->suppress_remove_staging) {
+		this->bd.cleanStaging();
 	}
-	this->bd.cleanStaging();
 }
 
 /**
