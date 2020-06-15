@@ -6,7 +6,8 @@ endif()
 
 project(Buildsys++ LANGUAGES CXX)
 
-include(FetchContent)
+option(BUILD_TESTING "" OFF)
+include(CTest)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -19,6 +20,6 @@ include(cpplint)
 include(clang-format)
 include(clang-tidy)
 
-enable_testing()
-
-add_subdirectory(unit-test)
+if(BUILD_TESTING)
+    add_subdirectory(unit-test)
+endif()
