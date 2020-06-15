@@ -8,15 +8,19 @@ using namespace buildsys;
 class PackageTestsFixture
 {
 protected:
+	std::string cwd{"package_test_dir"};
 	NameSpace *ns{nullptr};
 
 public:
 	PackageTestsFixture()
 	{
+		filesystem::create_directories(this->cwd);
 		this->ns = NameSpace::findNameSpace("test_namespace");
 	}
 	~PackageTestsFixture()
 	{
+		filesystem::remove_all(this->cwd);
+		filesystem::remove_all("package");
 	}
 };
 
@@ -38,5 +42,93 @@ TEST_CASE_METHOD(PackageTestsFixture, "Test setSuppressRemoveStaging method", ""
 
 	p.cleanStaging();
 	REQUIRE(!filesystem::exists(p.builddir()->getStaging()));
+}
+
+TEST_CASE_METHOD(PackageTestsFixture, "Test relative_fetch_path method (non searched paths)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+
+	std::string test_path1 = "/blah";
+	REQUIRE(p.relative_fetch_path(test_path1, true) == test_path1);
+	REQUIRE(p.relative_fetch_path(test_path1, false) == test_path1);
+
+	std::string test_path2 = "dl/blah";
+	REQUIRE(p.relative_fetch_path(test_path2, true) == test_path2);
+	REQUIRE(p.relative_fetch_path(test_path2, false) == test_path2);
+}
+
+TEST_CASE_METHOD(PackageTestsFixture, "Test relative_fetch_path method (relative ('.') paths)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+
+	std::string file_path = "./" + this->cwd + "/blah";
+	std::ofstream test_file;
+	test_file.open(file_path);
+	test_file << "blah";
+	test_file.close();
+
+	REQUIRE(p.relative_fetch_path(file_path, true) == ("./" + file_path));
+	REQUIRE(p.relative_fetch_path(file_path, false) == ("./" + file_path));
+
+	filesystem::remove(file_path);
+
+	bool exception_caught = false;
+	try {
+		p.relative_fetch_path(file_path, true);
+	} catch(FileNotFoundException &e) {
+		exception_caught = true;
+	}
+	REQUIRE(exception_caught);
+
+	exception_caught = false;
+	try {
+		p.relative_fetch_path(file_path, false);
+	} catch(FileNotFoundException &e) {
+		exception_caught = true;
+	}
+	REQUIRE(exception_caught);
+}
+
+TEST_CASE_METHOD(PackageTestsFixture, "Test relative_fetch_path method (non relative ('.') paths)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+
+	std::string file_path = this->cwd + "/blah";
+	std::ofstream test_file;
+	test_file.open(file_path);
+	test_file << "blah";
+	test_file.close();
+
+	REQUIRE(p.relative_fetch_path(file_path, true) == ("./" + file_path));
+
+	bool exception_caught = false;
+	try {
+		p.relative_fetch_path(file_path, false);
+	} catch(FileNotFoundException &e) {
+		exception_caught = true;
+	}
+	REQUIRE(exception_caught);
+}
+
+TEST_CASE_METHOD(PackageTestsFixture, "Test relative_fetch_path method (package and non-package path)", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+
+	filesystem::create_directories("package/test_package/" + this->cwd);
+
+	std::string file_path1 = "package/test_package/"+ this->cwd + "/blah";
+	std::ofstream test_file1;
+	test_file1.open(file_path1);
+	test_file1 << "blah";
+	test_file1.close();
+
+	std::string file_path2 = this->cwd + "/blah";
+	std::ofstream test_file2;
+	test_file2.open(file_path2);
+	test_file2 << "blah";
+	test_file2.close();
+
+	REQUIRE(p.relative_fetch_path(file_path2, false) == ("./" + file_path1));
+	REQUIRE(p.relative_fetch_path(file_path2, true) == ("./" + file_path1));
 }
 
