@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PACKAGECMD_HPP_
 
 #include <logger.hpp>
+#include <string>
 #include <vector>
 
 namespace buildsys

@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "featuremap.hpp"
 #include "exceptions.hpp"
 #include <iostream>
+#include <utility>
 
 using namespace buildsys;
 

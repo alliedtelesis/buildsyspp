@@ -646,7 +646,7 @@ namespace buildsys
 		mutable std::mutex lock;
 
 	public:
-		NameSpace(std::string _name);
+		explicit NameSpace(std::string _name);
 		const std::string &getName() const;
 		void for_each_package(std::function<void(Package &)> func) const;
 		Package *findPackage(const std::string &_name);

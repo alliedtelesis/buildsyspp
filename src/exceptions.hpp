@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <exception>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace buildsys
 {
