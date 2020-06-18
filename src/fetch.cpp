@@ -43,17 +43,17 @@ void DownloadFetch::setTarballCache(std::string cache)
 //! Find (or create) a DLObject for a given full file name
 const DLObject *DownloadFetch::findDLObject(const std::string &fname)
 {
-	std::unique_lock<std::mutex> lk(this->dlobjects_lock);
-	auto iter = this->dlobjects.begin();
-	auto iterEnd = this->dlobjects.end();
+	std::unique_lock<std::mutex> lk(DownloadFetch::dlobjects_lock);
+	auto iter = DownloadFetch::dlobjects.begin();
+	auto iterEnd = DownloadFetch::dlobjects.end();
 	for(; iter != iterEnd; iter++) {
 		if((*iter).fileName() == fname) {
 			return &(*iter);
 		}
 	}
 
-	this->dlobjects.emplace_back(fname);
-	return &this->dlobjects.back();
+	DownloadFetch::dlobjects.emplace_back(fname);
+	return &DownloadFetch::dlobjects.back();
 }
 
 /* This is the full name of the file to be downloaded */
@@ -124,10 +124,10 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 	if(!filesystem::exists(_fpath)) {
 		bool localCacheHit = false;
 		// Attempt to get file from local tarball cache if one is configured.
-		if(!this->tarball_cache.empty()) {
+		if(!DownloadFetch::tarball_cache.empty()) {
 			filesystem::remove("dl/" + fullname + ".tmp");
 			PackageCmd pc("dl", "wget");
-			std::string url = this->tarball_cache + "/" + fname;
+			std::string url = DownloadFetch::tarball_cache + "/" + fname;
 			pc.addArg(url);
 			pc.addArg("-O" + fullname + ".tmp");
 			localCacheHit = pc.Run(this->P->getLogger());

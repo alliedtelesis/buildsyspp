@@ -114,7 +114,7 @@ void Package::common_init()
 {
 	std::string prefix = this->ns->getName() + "," + this->name;
 
-	if(this->quiet_packages) {
+	if(Package::quiet_packages) {
 		auto log_path = boost::format{"%1%/output/%2%/%3%/build.log"} % this->pwd %
 		                this->getNS()->getName() % this->name;
 		this->logger = std::move(Logger(prefix, log_path.str()));
@@ -122,7 +122,7 @@ void Package::common_init()
 		this->logger = std::move(Logger(prefix));
 	}
 
-	if(this->clean_all_packages) {
+	if(Package::clean_all_packages) {
 		this->clean_before_build = true;
 	}
 
@@ -153,7 +153,7 @@ Package::Package(NameSpace *_ns, std::string _name) : name(std::move(_name)), ns
 
 	bool found = false;
 	auto relative_fname = boost::format{"package/%1%/%2%.lua"} % this->name % lastPart;
-	for(const auto &ov : this->overlays) {
+	for(const auto &ov : Package::overlays) {
 		lua_file = ov + "/" + relative_fname.str();
 		if(filesystem::exists(lua_file)) {
 			found = true;
@@ -191,7 +191,7 @@ std::string Package::relative_fetch_path(const std::string &location, bool also_
 		bool exists(false);
 
 		if(location.at(0) == '.') {
-			for(const auto &ov : this->overlays) {
+			for(const auto &ov : Package::overlays) {
 				src_path = ov + "/" + location;
 				if(filesystem::exists(src_path)) {
 					exists = true;
@@ -199,7 +199,7 @@ std::string Package::relative_fetch_path(const std::string &location, bool also_
 				}
 			}
 		} else {
-			for(const auto &ov : this->overlays) {
+			for(const auto &ov : Package::overlays) {
 				src_path = ov + "/package/" + this->getName() + "/" + location;
 				if(filesystem::exists(src_path)) {
 					exists = true;
@@ -364,7 +364,7 @@ bool Package::ff_file(const std::string &hash, const std::string &rfile,
                       const std::string &fext)
 {
 	bool ret = false;
-	std::string url = this->build_cache + "/" + this->getNS()->getName() + "/" +
+	std::string url = Package::build_cache + "/" + this->getNS()->getName() + "/" +
 	                  this->getName() + "/" + hash + "/" + rfile;
 	std::string cmd = "wget -q " + url + " -O " + path + "/" + fname + fext;
 	int res = std::system(cmd.c_str());
@@ -473,7 +473,7 @@ bool Package::fetchFrom()
 	    {"output.info", this->bd.getPath(), ".output", ".info"},
 	};
 
-	this->log(boost::format{"FF URL: %1%/%2%/%3%/%4%"} % this->build_cache %
+	this->log(boost::format{"FF URL: %1%/%2%/%3%/%4%"} % Package::build_cache %
 	          this->getNS()->getName() % this->name % this->buildinfo_hash);
 
 	if(!this->isHashingOutput()) {
@@ -535,7 +535,7 @@ bool Package::shouldBuild()
 	// if there are changes,
 	if(res != 0 || ret) {
 		// see if we can grab new staging/install files
-		if(!this->build_cache.empty()) {
+		if(!Package::build_cache.empty()) {
 			ret = this->fetchFrom();
 		} else {
 			// otherwise, make sure we get (re)built
@@ -609,7 +609,7 @@ bool Package::prepareBuildDirs()
 	std::list<std::thread> threads;
 	std::atomic<bool> result{true};
 	for(auto p : packages) {
-		if(this->extract_in_parallel) {
+		if(Package::extract_in_parallel) {
 			std::thread th([p, this, &result] {
 				bool ret = p->extract_staging(this->bd.getStaging());
 				if(!ret) {
@@ -663,7 +663,7 @@ bool Package::extractInstallDepends()
 	std::list<std::thread> threads;
 	std::atomic<bool> result{true};
 	for(auto p : packages) {
-		if(this->extract_in_parallel) {
+		if(Package::extract_in_parallel) {
 			std::thread th([p, this, &result] {
 				bool ret = p->extract_install(this->depsExtraction);
 				if(!ret) {
@@ -758,8 +758,9 @@ void Package::cleanStaging() const
  */
 bool Package::should_suppress_building()
 {
-	bool is_forced = (std::find(this->forced_packages.begin(), this->forced_packages.end(),
-	                            this->name) != this->forced_packages.end());
+	bool is_forced =
+	    (std::find(Package::forced_packages.begin(), Package::forced_packages.end(),
+	               this->name) != Package::forced_packages.end());
 	return (this->is_forced_mode() && !is_forced);
 }
 
