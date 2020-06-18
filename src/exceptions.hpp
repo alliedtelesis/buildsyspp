@@ -44,7 +44,7 @@ namespace buildsys
 		 *
 		 * @param err - The custom error message
 		 */
-		explicit CustomException(std::string err) : std::runtime_error(std::move(err))
+		explicit CustomException(const std::string &err) : std::runtime_error(err)
 		{
 		}
 	};

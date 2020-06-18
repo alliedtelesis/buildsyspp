@@ -28,6 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "logger.hpp"
 #include "options.hpp"
 
+using std::chrono::duration_cast;
+using std::chrono::steady_clock;
+
 int main(int argc, char *argv[])
 {
 	steady_clock::time_point start = steady_clock::now();
@@ -44,10 +47,10 @@ int main(int argc, char *argv[])
 		target = parse_command_line(argc, argv, &WORLD);
 	} catch(CustomException &e) {
 		logger.log(e.what());
-		exit(-1);
+		return -1;
 	} catch(std::exception &e) {
 		logger.log("Invalid command line arguments");
-		exit(-1);
+		return -1;
 	}
 
 	if(target.find(".lua") == std::string::npos) {
@@ -58,7 +61,7 @@ int main(int argc, char *argv[])
 	char *resolved_path = realpath(target.c_str(), nullptr);
 	if(resolved_path == nullptr) {
 		logger.log("Base package path does not exist");
-		return false;
+		return -1;
 	}
 	std::string filename = std::string(resolved_path);
 	free(resolved_path); // NOLINT
@@ -68,7 +71,7 @@ int main(int argc, char *argv[])
 		if(WORLD.areKeepGoing()) {
 			hash_shutdown();
 		}
-		exit(-1);
+		return -1;
 	}
 
 	if(WORLD.areParseOnly()) {

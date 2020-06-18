@@ -54,11 +54,11 @@ const std::string &NameSpace::getName() const
  *
  * @param func - The function to call with each Package.
  */
-void NameSpace::for_each_package(std::function<void(Package &)> func) const
+void NameSpace::for_each_package(const std::function<void(Package &)> &func) const
 {
 	std::unique_lock<std::mutex> lk(this->lock);
 	for(const auto &package : this->packages) {
-		func(*package.get());
+		func(*package);
 	}
 }
 
@@ -67,7 +67,7 @@ void NameSpace::for_each_package(std::function<void(Package &)> func) const
  *
  * @param func - The function to call with each NameSpace.
  */
-void NameSpace::for_each(std::function<void(const NameSpace &)> func)
+void NameSpace::for_each(const std::function<void(const NameSpace &)> &func)
 {
 	std::unique_lock<std::mutex> lk(namespaces_lock);
 	for(const auto &ns : namespaces) {

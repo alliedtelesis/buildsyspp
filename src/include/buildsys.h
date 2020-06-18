@@ -81,9 +81,6 @@ using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
 using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
 using Edge = boost::graph_traits<Graph>::edge_descriptor;
 
-using std::chrono::duration_cast;
-using std::chrono::steady_clock;
-
 #define LUA_SET_TABLE_TYPE(L, T)                                                           \
 	lua_pushstring(L, #T);                                                                 \
 	lua_pushstring(L, "yes");                                                              \
@@ -151,9 +148,8 @@ namespace buildsys
 		std::string work_src;
 
 	public:
-		BuildDir()
-		{
-		}
+		BuildDir() = default;
+
 		/** Create a build directory
 		 *  @param pwd - The current working directory
 		 *  @param gname - The namespace name of the package
@@ -649,12 +645,12 @@ namespace buildsys
 	public:
 		explicit NameSpace(std::string _name);
 		const std::string &getName() const;
-		void for_each_package(std::function<void(Package &)> func) const;
+		void for_each_package(const std::function<void(Package &)> &func) const;
 		Package *findPackage(const std::string &_name);
 		void addPackage(std::unique_ptr<Package> p);
 		const std::string &getStagingDir() const;
 		const std::string &getInstallDir() const;
-		static void for_each(std::function<void(const NameSpace &)> func);
+		static void for_each(const std::function<void(const NameSpace &)> &func);
 		static void printNameSpaces();
 		static NameSpace *findNameSpace(const std::string &name);
 		static void deleteAll();

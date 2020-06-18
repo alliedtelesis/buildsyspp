@@ -30,6 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TAR_CMD "/bin/tar"
 #endif
 
+using std::chrono::duration_cast;
+using std::chrono::steady_clock;
+
 bool Package::quiet_packages = false;
 bool Package::extract_in_parallel = true;
 std::string Package::build_cache;
