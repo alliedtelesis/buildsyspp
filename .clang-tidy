@@ -1,2 +1,2 @@
-Checks:           '*,-fuchsia-default-arguments,-cert-env33-c,-llvm-header-guard,-fuchsia-overloaded-operator,-google-build-using-namespace,-google-global-names-in-headers,-performance-inefficient-string-concatenation'
+Checks:           '*,-fuchsia-default-arguments,-cert-env33-c,-llvm-header-guard,-fuchsia-overloaded-operator,-google-build-using-namespace,-google-global-names-in-headers,-performance-inefficient-string-concatenation,-cert-err58-cpp'
 WarningsAsErrors: '*'
