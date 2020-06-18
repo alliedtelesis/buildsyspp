@@ -43,6 +43,10 @@ namespace buildsys
 	public:
 		Lua();
 		~Lua();
+		Lua(const Lua &) = delete;
+		Lua &operator=(const Lua &) = delete;
+		Lua(Lua &&) = delete;
+		Lua &operator=(Lua &&) = delete;
 		void processFile(const std::string &filename);
 		void registerFunc(const std::string &name, lua_CFunction fn);
 	};

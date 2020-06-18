@@ -252,6 +252,10 @@ namespace buildsys
 	public:
 		HashableUnit() = default;
 		virtual ~HashableUnit() = default;
+		HashableUnit(const HashableUnit &) = delete;
+		HashableUnit &operator=(const HashableUnit &) = delete;
+		HashableUnit(HashableUnit &&) = delete;
+		HashableUnit &operator=(HashableUnit &&) = delete;
 		virtual std::string HASH() = 0;
 	};
 
@@ -270,7 +274,6 @@ namespace buildsys
 		{
 		}
 		FetchUnit() = default;
-		~FetchUnit() override = default;
 		virtual bool fetch(BuildDir *d) = 0;
 		virtual bool force_updated()
 		{
@@ -367,7 +370,6 @@ namespace buildsys
 		ExtractionUnit() : uri(std::string()), hash(std::string())
 		{
 		}
-		~ExtractionUnit() override = default;
 		virtual void print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 		virtual bool extract(Package *P) = 0;
@@ -447,7 +449,6 @@ namespace buildsys
 		PatchExtractionUnit(int _level, const std::string &_patch_path,
 		                    const std::string &patch_fname,
 		                    const std::string &_fname_short);
-		~PatchExtractionUnit() override = default;
 		void print(std::ostream &out) override
 		{
 			out << this->type() << " " << this->level << " " << this->patch_path << " "
