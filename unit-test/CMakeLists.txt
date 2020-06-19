@@ -7,13 +7,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(catch2)
 
-find_package(Lua REQUIRED)
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
-find_package(OpenSSL REQUIRED)
-
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${LUA_INCLUDE_DIR})
 
@@ -23,7 +16,7 @@ if(CMAKE_COMPILER_IS_GNUCXX AND CODE_COVERAGE)
     setup_target_for_coverage_gcovr_html(
                NAME coverage
                BASE_DIRECTORY "${PROJECT_SOURCE_DIR}/src"
-               EXCLUDE "unit-test/*" "test/*" "build/*")
+               EXCLUDE "unit-test/*" "functional-test/*" "build/*")
     append_coverage_compiler_flags()
 endif()
 

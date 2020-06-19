@@ -30,7 +30,4 @@ buildsys: Makefile $(OBJS)
 clean:
 	rm -f $(OBJS) buildsys
 
-test:
-	$(MAKE) -C test
-
 .PHONY: test

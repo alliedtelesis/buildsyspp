@@ -20,6 +20,22 @@ include(cpplint)
 include(clang-format)
 include(clang-tidy)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+find_package(Lua REQUIRED)
+find_package(OpenSSL REQUIRED)
+
 if(BUILD_TESTING)
     add_subdirectory(unit-test)
+else()
+    FILE(GLOB_RECURSE sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+    add_executable(buildsyspp ${sources})
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/)
+    include_directories(${LUA_INCLUDE_DIR})
+    target_link_libraries(buildsyspp PRIVATE Threads::Threads)
+    target_link_libraries(buildsyspp PRIVATE ${LUA_LIBRARIES})
+    target_link_libraries(buildsyspp PRIVATE OpenSSL::Crypto)
 endif()
+
+add_subdirectory(functional-test)
+
