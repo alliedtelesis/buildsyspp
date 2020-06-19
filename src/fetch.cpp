@@ -44,11 +44,10 @@ void DownloadFetch::setTarballCache(std::string cache)
 const DLObject *DownloadFetch::findDLObject(const std::string &fname)
 {
 	std::unique_lock<std::mutex> lk(DownloadFetch::dlobjects_lock);
-	auto iter = DownloadFetch::dlobjects.begin();
-	auto iterEnd = DownloadFetch::dlobjects.end();
-	for(; iter != iterEnd; iter++) {
-		if((*iter).fileName() == fname) {
-			return &(*iter);
+
+	for(const auto &obj : DownloadFetch::dlobjects) {
+		if(obj.fileName() == fname) {
+			return &obj;
 		}
 	}
 

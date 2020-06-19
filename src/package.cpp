@@ -315,17 +315,15 @@ bool Package::extract_staging(const std::string &dir)
 bool Package::extract_install(const std::string &dir)
 {
 	if(!this->installFiles.empty()) {
-		auto it = this->installFiles.begin();
-		auto end = this->installFiles.end();
-		for(; it != end; it++) {
+		for(const auto &install_file : this->installFiles) {
 			PackageCmd pc(dir, "cp");
-			std::string arg =
-			    this->pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
+			std::string arg = this->pwd + "/output/" + this->getNS()->getName() +
+			                  "/install/" + install_file;
 			pc.addArg(arg);
-			pc.addArg(*it);
+			pc.addArg(install_file);
 
 			if(!pc.Run(&this->logger)) {
-				this->log(boost::format{"Failed to copy %1% (for install)"} % *it);
+				this->log(boost::format{"Failed to copy %1% (for install)"} % install_file);
 				return false;
 			}
 		}
@@ -713,18 +711,17 @@ bool Package::packageNewStaging()
 bool Package::packageNewInstall()
 {
 	if(!this->installFiles.empty()) {
-		auto it = this->installFiles.begin();
-		auto end = this->installFiles.end();
-		for(; it != end; it++) {
-			this->log("Copying " + *it + " to install folder");
+		for(const auto &install_file : this->installFiles) {
+			this->log("Copying " + install_file + " to install folder");
 			PackageCmd pc(this->bd.getNewInstall(), "cp");
-			pc.addArg(*it);
-			std::string arg =
-			    this->pwd + "/output/" + this->getNS()->getName() + "/install/" + *it;
+			pc.addArg(install_file);
+			std::string arg = this->pwd + "/output/" + this->getNS()->getName() +
+			                  "/install/" + install_file;
 			pc.addArg(arg);
 
 			if(!pc.Run(&this->logger)) {
-				this->log(boost::format{"Failed to copy install file (%1%)"} % *it);
+				this->log(boost::format{"Failed to copy install file (%1%)"} %
+				          install_file);
 				return false;
 			}
 		}
