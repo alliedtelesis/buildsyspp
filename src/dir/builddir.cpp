@@ -23,9 +23,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#include "dir/builddir.hpp"
 #include "include/buildsys.h"
 
 #include <cerrno>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -73,4 +75,19 @@ void BuildDir::clean() const
 void BuildDir::cleanStaging() const
 {
 	filesystem::remove_all(this->staging);
+}
+
+void BuildDir::lua_table(lua_State *L)
+{
+	LUA_SET_TABLE_TYPE(L, BuildDir);
+	LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
+	LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
+	LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
+	LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
+	LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
+	LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
+	LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
+	LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
+	LUA_ADD_TABLE_STRING(L, "path", path.c_str());
+	LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
 }

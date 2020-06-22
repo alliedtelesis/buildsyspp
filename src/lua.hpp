@@ -33,6 +33,32 @@ extern "C" {
 }
 #include <string>
 
+#define LUA_SET_TABLE_TYPE(L, T)                                                           \
+	lua_pushstring(L, #T);                                                                 \
+	lua_pushstring(L, "yes");                                                              \
+	lua_settable(L, -3);
+
+#define LUA_ADD_TABLE_FUNC(L, N, F)                                                        \
+	lua_pushstring(L, N);                                                                  \
+	lua_pushcfunction(L, F);                                                               \
+	lua_settable(L, -3);
+
+#define CREATE_TABLE(L, D)                                                                 \
+	lua_newtable(L);                                                                       \
+	lua_pushstring(L, "data");                                                             \
+	lua_pushlightuserdata(L, D);                                                           \
+	lua_settable(L, -3);
+
+#define SET_TABLE_TYPE(L, T)                                                               \
+	lua_pushstring(L, #T);                                                                 \
+	lua_pushstring(L, "yes");                                                              \
+	lua_settable(L, -3);
+
+#define LUA_ADD_TABLE_STRING(L, N, S)                                                      \
+	lua_pushstring(L, N);                                                                  \
+	lua_pushstring(L, S);                                                                  \
+	lua_settable(L, -3);
+
 namespace buildsys
 {
 	class Lua

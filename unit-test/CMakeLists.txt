@@ -38,10 +38,19 @@ add_library(interface_toplevel OBJECT ../src/interface/toplevel.cpp)
 add_library(interface_fetchunit OBJECT ../src/interface/fetchunit.cpp)
 add_library(extraction_git OBJECT ../src/extraction/git.cpp)
 
-add_executable(builddir_unittests builddir_unittests.cpp $<TARGET_OBJECTS:builddir> $<TARGET_OBJECTS:filesystem>)
+add_executable(builddir_unittests builddir_unittests.cpp $<TARGET_OBJECTS:builddir> $<TARGET_OBJECTS:filesystem>
+                                  $<TARGET_OBJECTS:interface_builddir> $<TARGET_OBJECTS:packagecmd> $<TARGET_OBJECTS:logger>
+                                  $<TARGET_OBJECTS:extraction> $<TARGET_OBJECTS:package> $<TARGET_OBJECTS:namespace>
+                                  $<TARGET_OBJECTS:buildinfo> $<TARGET_OBJECTS:lua> $<TARGET_OBJECTS:hash>
+                                  $<TARGET_OBJECTS:interface_luainterface> $<TARGET_OBJECTS:fetch> $<TARGET_OBJECTS:featuremap>
+                                  $<TARGET_OBJECTS:extraction_git> $<TARGET_OBJECTS:interface_toplevel>
+                                  $<TARGET_OBJECTS:interface_fetchunit>)
 target_include_directories(builddir_unittests PRIVATE ../src/)
 target_compile_features(builddir_unittests PRIVATE cxx_std_14)
 target_link_libraries(builddir_unittests PRIVATE Catch2::Catch2)
+target_link_libraries(builddir_unittests PRIVATE ${LUA_LIBRARIES})
+target_link_libraries(builddir_unittests PRIVATE Threads::Threads)
+target_link_libraries(builddir_unittests PRIVATE OpenSSL::Crypto)
 add_test(NAME builddir_unittests COMMAND builddir_unittests)
 
 add_executable(logger_unittests logger_unittests.cpp $<TARGET_OBJECTS:logger> $<TARGET_OBJECTS:filesystem>)

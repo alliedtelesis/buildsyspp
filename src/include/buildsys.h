@@ -69,6 +69,7 @@ extern "C" {
 #include <boost/utility.hpp>
 
 #include "../buildinfo.hpp"
+#include "../dir/builddir.hpp"
 #include "../exceptions.hpp"
 #include "../featuremap.hpp"
 #include "../hash.hpp"
@@ -81,46 +82,7 @@ using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
 using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
 using Edge = boost::graph_traits<Graph>::edge_descriptor;
 
-#define LUA_SET_TABLE_TYPE(L, T)                                                           \
-	lua_pushstring(L, #T);                                                                 \
-	lua_pushstring(L, "yes");                                                              \
-	lua_settable(L, -3);
-
-#define LUA_ADD_TABLE_FUNC(L, N, F)                                                        \
-	lua_pushstring(L, N);                                                                  \
-	lua_pushcfunction(L, F);                                                               \
-	lua_settable(L, -3);
-
-#define CREATE_TABLE(L, D)                                                                 \
-	lua_newtable(L);                                                                       \
-	lua_pushstring(L, "data");                                                             \
-	lua_pushlightuserdata(L, D);                                                           \
-	lua_settable(L, -3);
-
-#define SET_TABLE_TYPE(L, T)                                                               \
-	lua_pushstring(L, #T);                                                                 \
-	lua_pushstring(L, "yes");                                                              \
-	lua_settable(L, -3);
-
-#define LUA_ADD_TABLE_TABLE(L, N, D)                                                       \
-	lua_pushstring(L, N);                                                                  \
-	CREATE_TABLE(D)                                                                        \
-	(D)->lua_table(L);                                                                     \
-	lua_settable(L, -3);
-
-#define LUA_ADD_TABLE_STRING(L, N, S)                                                      \
-	lua_pushstring(L, N);                                                                  \
-	lua_pushstring(L, S);                                                                  \
-	lua_settable(L, -3);
-
 extern "C" {
-int li_bd_cmd(lua_State *L);
-int li_bd_extract(lua_State *L);
-int li_bd_fetch(lua_State *L);
-int li_bd_installfile(lua_State *L);
-int li_bd_patch(lua_State *L);
-int li_bd_restore(lua_State *L);
-
 int li_fu_path(lua_State *L);
 }
 
@@ -131,82 +93,6 @@ namespace buildsys
 	class Package;
 
 	bool interfaceSetup(Lua *lua);
-
-	/** A directory for building a package in
-	 *  Each package has one build directory which is used to run all the commands in
-	 */
-	class BuildDir
-	{
-	private:
-		std::string path;
-		std::string rpath;
-		std::string staging;
-		std::string new_path;
-		std::string new_staging;
-		std::string new_install;
-		std::string work_build;
-		std::string work_src;
-
-	public:
-		BuildDir() = default;
-
-		/** Create a build directory
-		 *  @param pwd - The current working directory
-		 *  @param gname - The namespace name of the package
-		 *  @param pname - The package name
-		 */
-		BuildDir(const std::string &pwd, const std::string &gname,
-		         const std::string &pname);
-		//! Return the full path to this directory
-		const std::string &getPath() const
-		{
-			return this->path;
-		};
-		//! Get the short version (relative only) of the working directory
-		const std::string &getShortPath() const
-		{
-			return this->rpath;
-		};
-		//! Return the full path to the staging directory
-		const std::string &getStaging() const
-		{
-			return this->staging;
-		};
-		//! Return the full path to the new directory
-		const std::string &getNewPath() const
-		{
-			return this->new_path;
-		};
-		//! Return the full path to the new staging directory
-		const std::string &getNewStaging() const
-		{
-			return this->new_staging;
-		};
-		//! Return the full path to the new install directory
-		const std::string &getNewInstall() const
-		{
-			return this->new_install;
-		};
-		//! Remove all of the work directory contents
-		void clean() const;
-		//! Remove all of the staging directory contents
-		void cleanStaging() const;
-
-		void lua_table(lua_State *L)
-		{
-			LUA_SET_TABLE_TYPE(L, BuildDir);
-			LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
-			LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
-			LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
-			LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
-			LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
-			LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
-			LUA_ADD_TABLE_STRING(L, "new_staging", new_staging.c_str());
-			LUA_ADD_TABLE_STRING(L, "new_install", new_install.c_str());
-			LUA_ADD_TABLE_STRING(L, "path", path.c_str());
-			LUA_ADD_TABLE_STRING(L, "staging", staging.c_str());
-		};
-	};
 
 	/* A Downloaded Object
 	 * Used to prevent multiple packages downloading the same file at the same time
