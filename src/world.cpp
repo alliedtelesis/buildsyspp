@@ -101,10 +101,9 @@ bool World::basePackage(const std::string &filename)
 
 	process_packages(base_package);
 
-	this->graph.fill();
 	this->topo_graph.fill();
 
-	std::unordered_set<Package *> cycled_packages = this->graph.get_cycled_packages();
+	std::unordered_set<Package *> cycled_packages = this->topo_graph.get_cycled_packages();
 	if(!cycled_packages.empty()) {
 		err_logger.log("Dependency Loop Detected");
 		err_logger.log("Cycled Packages:");

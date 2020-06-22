@@ -79,8 +79,11 @@ int main(int argc, char *argv[])
 		li_get_feature_map()->printFeatureValues(std::cout);
 		NameSpace::printNameSpaces();
 	}
+
 	// Write out the dependency graph
-	WORLD.output_graph();
+	Internal_Graph graph;
+	graph.fill();
+	graph.output();
 
 	logger.log("Finished: " + target);
 

@@ -941,7 +941,6 @@ namespace buildsys
 	class World
 	{
 	private:
-		Internal_Graph graph;
 		Internal_Graph topo_graph;
 		bool failed{false};
 		bool parseOnly{false};
@@ -1026,12 +1025,6 @@ namespace buildsys
 		{
 			return this->threads_limit;
 		}
-		//! output the dependency graph
-		bool output_graph()
-		{
-			graph.output();
-			return true;
-		};
 	};
 } // namespace buildsys
 
