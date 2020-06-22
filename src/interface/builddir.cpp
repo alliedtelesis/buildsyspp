@@ -61,7 +61,7 @@ static void add_env(Package *P, PackageCmd *pc)
 	pc->addEnv(pn_env);
 }
 
-int li_bd_fetch(lua_State *L)
+static int li_bd_fetch(lua_State *L)
 {
 	/* the first argument is the table, and is implicit */
 	int argc = lua_gettop(L);
@@ -221,7 +221,7 @@ int li_bd_fetch(lua_State *L)
 	return 1;
 }
 
-int li_bd_restore(lua_State *L)
+static int li_bd_restore(lua_State *L)
 {
 	/* the first argument is the table, and is implicit */
 	int argc = lua_gettop(L);
@@ -267,7 +267,7 @@ int li_bd_restore(lua_State *L)
 	return 0;
 }
 
-int li_bd_extract(lua_State *L)
+static int li_bd_extract(lua_State *L)
 {
 	if(lua_gettop(L) != 2) {
 		throw CustomException("extract() requires exactly 1 argument");
@@ -293,7 +293,7 @@ int li_bd_extract(lua_State *L)
 	return 0;
 }
 
-int li_bd_cmd(lua_State *L)
+static int li_bd_cmd(lua_State *L)
 {
 	int argc = lua_gettop(L);
 	bool log_output = true;
@@ -373,7 +373,7 @@ int li_bd_cmd(lua_State *L)
 	return 0;
 }
 
-int li_bd_patch(lua_State *L)
+static int li_bd_patch(lua_State *L)
 {
 	if(lua_gettop(L) != 4) {
 		throw CustomException("patch() requires exactly 3 arguments");
@@ -418,7 +418,7 @@ int li_bd_patch(lua_State *L)
 	return 0;
 }
 
-int li_bd_installfile(lua_State *L)
+static int li_bd_installfile(lua_State *L)
 {
 	if(lua_gettop(L) != 2) {
 		throw CustomException("installfile() requires exactly 1 argument");
@@ -434,4 +434,19 @@ int li_bd_installfile(lua_State *L)
 	P->setInstallFile(std::string(lua_tostring(L, 2)));
 
 	return 0;
+}
+
+void buildsys::li_builddir_create(lua_State *L, BuildDir *bd)
+{
+	LUA_SET_TABLE_TYPE(L, BuildDir);
+	LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
+	LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
+	LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
+	LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
+	LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
+	LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
+	LUA_ADD_TABLE_STRING(L, "new_staging", bd->getNewStaging().c_str());
+	LUA_ADD_TABLE_STRING(L, "new_install", bd->getNewInstall().c_str());
+	LUA_ADD_TABLE_STRING(L, "path", bd->getPath().c_str());
+	LUA_ADD_TABLE_STRING(L, "staging", bd->getStaging().c_str());
 }

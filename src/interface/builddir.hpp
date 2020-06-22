@@ -30,13 +30,12 @@ extern "C" {
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
-
-int li_bd_cmd(lua_State *L);
-int li_bd_extract(lua_State *L);
-int li_bd_fetch(lua_State *L);
-int li_bd_installfile(lua_State *L);
-int li_bd_patch(lua_State *L);
-int li_bd_restore(lua_State *L);
 }
+#include "dir/builddir.hpp"
+
+namespace buildsys
+{
+	void li_builddir_create(lua_State *L, BuildDir *bd);
+} // namespace buildsys
 
 #endif // INTERFACE_BUILDDIR_HPP_

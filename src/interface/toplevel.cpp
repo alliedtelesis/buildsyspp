@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "include/buildsys.h"
+#include "interface/builddir.hpp"
 #include "interface/luainterface.h"
 #include <sys/stat.h>
 
@@ -88,7 +89,7 @@ static int li_feature(lua_State *L)
 	return 0;
 }
 
-int li_builddir(lua_State *L)
+static int li_builddir(lua_State *L)
 {
 	bool clean_requested = false;
 	int args = lua_gettop(L);
@@ -108,7 +109,7 @@ int li_builddir(lua_State *L)
 
 	// create a table, since this is actually an object
 	CREATE_TABLE(L, P->builddir());
-	P->builddir()->lua_table(L);
+	li_builddir_create(L, P->builddir());
 
 	if(clean_requested) {
 		P->set_clean_before_build();

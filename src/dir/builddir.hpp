@@ -26,14 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef DIR_BUILDDIR_HPP_
 #define DIR_BUILDDIR_HPP_
 
-#include "../interface/builddir.hpp"
 #include <string>
-
-extern "C" {
-#include <lauxlib.h>
-#include <lua.h>
-#include <lualib.h>
-}
 
 namespace buildsys
 {
@@ -97,8 +90,6 @@ namespace buildsys
 		void clean() const;
 		//! Remove all of the staging directory contents
 		void cleanStaging() const;
-
-		void lua_table(lua_State *L);
 	};
 } // namespace buildsys
 
