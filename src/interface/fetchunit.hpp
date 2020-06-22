@@ -23,50 +23,16 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#ifndef INTERFACE_FETCHUNIT_HPP_
+#define INTERFACE_FETCHUNIT_HPP_
+
 extern "C" {
-#include <lauxlib.h>
-#include <lualib.h>
+#include <lua.h>
 }
 
-#include "exceptions.hpp"
-#include "lua.hpp"
-
-using namespace buildsys;
-
-Lua::Lua()
+namespace buildsys
 {
-	this->state = luaL_newstate();
-	if(this->state == nullptr) {
-		throw CustomException("Lua Error");
-	}
-	luaL_openlibs(this->state);
-}
+	void li_fetchunit_create(lua_State *L);
+} // namespace buildsys
 
-Lua::~Lua()
-{
-	lua_close(state);
-	this->state = nullptr;
-}
-
-/**
- * Load and execute a lua file in this instance
- *
- * @param filename - The name of the lua file to load and run
- */
-void Lua::processFile(const std::string &filename)
-{
-	if(luaL_dofile(state, filename.c_str()) != 0) {
-		throw CustomException(lua_tostring(state, -1));
-	}
-}
-
-/**
- * Register a function in this lua instance
- *
- * @param name - The name of the function
- * @param fn - The function to call
- */
-void Lua::registerFunc(const std::string &name, lua_CFunction fn)
-{
-	lua_register(state, name.c_str(), fn);
-}
+#endif // INTERFACE_FETCHUNIT_HPP_

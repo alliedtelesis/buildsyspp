@@ -23,10 +23,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#include "include/buildsys.h"
+#include "interface/fetchunit.hpp"
 #include "interface/luainterface.h"
 
-int li_fu_path(lua_State *L)
+static int li_fu_path(lua_State *L)
 {
 	if(!lua_istable(L, 1)) {
 		throw CustomException("fetch() must be called using : not .");
@@ -37,4 +37,10 @@ int li_fu_path(lua_State *L)
 	lua_pushstring(L, f->relative_path().c_str());
 
 	return 1;
+}
+
+void buildsys::li_fetchunit_create(lua_State *L)
+{
+	LUA_SET_TABLE_TYPE(L, FetchUnit);
+	LUA_ADD_TABLE_FUNC(L, "path", li_fu_path);
 }

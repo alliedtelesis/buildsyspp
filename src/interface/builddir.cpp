@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "interface/builddir.hpp"
 #include "include/buildsys.h"
+#include "interface/fetchunit.hpp"
 #include "interface/luainterface.h"
 #include <memory>
 #include <string>
@@ -213,7 +214,7 @@ static int li_bd_fetch(lua_State *L)
 
 		/* Return the fetch object here */
 		CREATE_TABLE(L, f.get());
-		f->lua_table(L);
+		li_fetchunit_create(L);
 
 		P->fetch()->add(std::move(f));
 	}

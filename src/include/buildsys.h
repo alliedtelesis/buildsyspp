@@ -40,12 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <utility>
 #include <vector>
 
-extern "C" {
-#include <lauxlib.h>
-#include <lua.h>
-#include <lualib.h>
-}
-
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -81,10 +75,6 @@ extern "C" {
 using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
 using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
 using Edge = boost::graph_traits<Graph>::edge_descriptor;
-
-extern "C" {
-int li_fu_path(lua_State *L);
-}
 
 namespace buildsys
 {
@@ -162,15 +152,6 @@ namespace buildsys
 			return false;
 		};
 		virtual std::string relative_path() = 0;
-		static void lua_table_r(lua_State *L)
-		{
-			LUA_SET_TABLE_TYPE(L, FetchUnit);
-			LUA_ADD_TABLE_FUNC(L, "path", li_fu_path);
-		}
-		virtual void lua_table(lua_State *L)
-		{
-			lua_table_r(L);
-		};
 	};
 
 	/* A downloaded file

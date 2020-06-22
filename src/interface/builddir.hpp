@@ -27,9 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INTERFACE_BUILDDIR_HPP_
 
 extern "C" {
-#include <lauxlib.h>
 #include <lua.h>
-#include <lualib.h>
 }
 #include "dir/builddir.hpp"
 
