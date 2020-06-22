@@ -48,47 +48,15 @@ namespace buildsys
 
 	public:
 		BuildDir() = default;
-
-		/** Create a build directory
-		 *  @param pwd - The current working directory
-		 *  @param gname - The namespace name of the package
-		 *  @param pname - The package name
-		 */
 		BuildDir(const std::string &pwd, const std::string &gname,
 		         const std::string &pname);
-		//! Return the full path to this directory
-		const std::string &getPath() const
-		{
-			return this->path;
-		};
-		//! Get the short version (relative only) of the working directory
-		const std::string &getShortPath() const
-		{
-			return this->rpath;
-		};
-		//! Return the full path to the staging directory
-		const std::string &getStaging() const
-		{
-			return this->staging;
-		};
-		//! Return the full path to the new directory
-		const std::string &getNewPath() const
-		{
-			return this->new_path;
-		};
-		//! Return the full path to the new staging directory
-		const std::string &getNewStaging() const
-		{
-			return this->new_staging;
-		};
-		//! Return the full path to the new install directory
-		const std::string &getNewInstall() const
-		{
-			return this->new_install;
-		};
-		//! Remove all of the work directory contents
+		const std::string &getPath() const;
+		const std::string &getShortPath() const;
+		const std::string &getStaging() const;
+		const std::string &getNewPath() const;
+		const std::string &getNewStaging() const;
+		const std::string &getNewInstall() const;
 		void clean() const;
-		//! Remove all of the staging directory contents
 		void cleanStaging() const;
 	};
 } // namespace buildsys

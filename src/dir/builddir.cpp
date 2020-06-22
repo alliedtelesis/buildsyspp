@@ -24,13 +24,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "dir/builddir.hpp"
-#include "include/buildsys.h"
+#include "include/filesystem.h"
 
-#include <cerrno>
-#include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
+using namespace buildsys;
 
+/**
+ * Create a build directory.
+ *
+ * @param pwd - The current working directory
+ * @param gname - The namespace name of the package
+ * @param pname - The package name
+ */
 BuildDir::BuildDir(const std::string &pwd, const std::string &gname,
                    const std::string &pname)
 {
@@ -66,12 +70,66 @@ BuildDir::BuildDir(const std::string &pwd, const std::string &gname,
 	filesystem::create_directories(this->new_install);
 }
 
+/**
+ * Return the full path to this directory.
+ */
+const std::string &BuildDir::getPath() const
+{
+	return this->path;
+}
+
+/**
+ * Get the short version (relative only) of the working directory.
+ */
+const std::string &BuildDir::getShortPath() const
+{
+	return this->rpath;
+}
+
+/**
+ * Return the full path to the staging directory.
+ */
+const std::string &BuildDir::getStaging() const
+{
+	return this->staging;
+}
+
+/**
+ * Return the full path to the new directory.
+ */
+const std::string &BuildDir::getNewPath() const
+{
+	return this->new_path;
+}
+
+/**
+ * Return the full path to the new staging directory.
+ */
+const std::string &BuildDir::getNewStaging() const
+{
+	return this->new_staging;
+}
+
+/**
+ * Return the full path to the new install directory.
+ */
+const std::string &BuildDir::getNewInstall() const
+{
+	return this->new_install;
+}
+
+/**
+ * Remove all of the work directory contents.
+ */
 void BuildDir::clean() const
 {
 	filesystem::remove_all(this->path);
 	filesystem::create_directories(this->path);
 }
 
+/**
+ * Remove all of the staging directory contents.
+ */
 void BuildDir::cleanStaging() const
 {
 	filesystem::remove_all(this->staging);
