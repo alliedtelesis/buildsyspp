@@ -23,10 +23,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#include "namespace.hpp"
 #include "include/buildsys.h"
+#include <utility>
 
-std::list<NameSpace> namespaces;
-std::mutex namespaces_lock;
+using namespace buildsys;
+
+static std::list<NameSpace> namespaces;
+static std::mutex namespaces_lock;
 
 /**
  * Construct the NameSpace object.

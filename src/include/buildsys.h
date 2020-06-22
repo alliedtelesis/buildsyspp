@@ -69,6 +69,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../hash.hpp"
 #include "../logger.hpp"
 #include "../lua.hpp"
+#include "../namespace.hpp"
 #include "../packagecmd.hpp"
 #include "include/filesystem.h"
 
@@ -497,30 +498,6 @@ namespace buildsys
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
 		bool extractionRequired(Package *P, BuildDir *bd) const;
 		void extractionInfo(BuildDir *bd, std::string *file_path, std::string *hash) const;
-	};
-
-	//! A namespace
-	class NameSpace
-	{
-	private:
-		const std::string name;
-		const std::string staging_dir;
-		const std::string install_dir;
-		std::list<std::unique_ptr<Package>> packages;
-		mutable std::mutex lock;
-
-	public:
-		explicit NameSpace(std::string _name);
-		const std::string &getName() const;
-		void for_each_package(const std::function<void(Package &)> &func) const;
-		Package *findPackage(const std::string &_name);
-		void addPackage(std::unique_ptr<Package> p);
-		const std::string &getStagingDir() const;
-		const std::string &getInstallDir() const;
-		static void for_each(const std::function<void(const NameSpace &)> &func);
-		static void printNameSpaces();
-		static NameSpace *findNameSpace(const std::string &name);
-		static void deleteAll();
 	};
 
 	//! A dependency on another Package
