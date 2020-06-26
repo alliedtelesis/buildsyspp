@@ -579,16 +579,12 @@ namespace buildsys
 		bool should_suppress_building();
 
 	protected:
-		enum class BuildInfoType { Output, Build };
-
 		//! prepare the (new) build.info file
 		void prepareBuildInfo();
 		//! update the build.info file
 		void updateBuildInfo(bool updateOutputHash = true);
 		//! Attempt to fetchFrom
 		bool fetchFrom();
-		//! Return the build information for this package
-		BuildInfoType buildInfo(std::string *file_path, std::string *hash);
 		//! Prepare the (new) staging/install directories for the building of this package
 		bool prepareBuildDirs();
 		//! Extract all dependencies install dirs for this package (if bd:fetch(,'deps') was
@@ -608,6 +604,7 @@ namespace buildsys
 		bool shouldBuild();
 
 	public:
+		enum class BuildInfoType { Output, Build };
 		/**
 		 * Create a package.
 		 *
@@ -753,16 +750,17 @@ namespace buildsys
 			return this->built;
 		}
 		//! Hash the output for this package
-		void setHashOutput()
+		void setHashOutput(bool set)
 		{
-			this->hash_output = true;
+			this->hash_output = set;
 		};
 		//! Is this package hashing its' output ?
 		bool isHashingOutput() const
 		{
 			return this->hash_output;
 		};
-
+		//! Return the build information for this package
+		BuildInfoType buildInfo(std::string *file_path, std::string *hash);
 		//! Build this package
 		bool build(bool locally = false);
 		//! Has building of this package already started ?

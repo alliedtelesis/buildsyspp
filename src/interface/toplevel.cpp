@@ -245,7 +245,7 @@ static int li_hashoutput(lua_State *L)
 	// useful for kernel-headers and other packages
 	// that produce data that changes less often
 	// than the sources
-	P->setHashOutput();
+	P->setHashOutput(true);
 	return 0;
 }
 
