@@ -42,22 +42,13 @@ namespace buildsys
 		std::ostream *output{nullptr};
 		bool output_supports_colour{false};
 
-		const char *get_colour(const std::string &str);
-
 	public:
-		// VT100 terminal color escape sequences
-		static constexpr const char *COLOUR_NORMAL{""};
-		static constexpr const char *COLOUR_RESET{"\033[m"};
-		static constexpr const char *COLOUR_BOLD_RED{"\033[1;31m"};
-		static constexpr const char *COLOUR_BOLD_BLUE{"\033[1;34m"};
-
 		Logger();
 		explicit Logger(const std::string &_prefix);
 		Logger(const std::string &_prefix, const std::string &file_path);
 		void log(const std::string &str);
 		void log(const boost::format &str);
-		void program_output(const std::string &str);
-		void force_colour_output(bool set);
+		bool supports_colour_output() const;
 	};
 } // namespace buildsys
 

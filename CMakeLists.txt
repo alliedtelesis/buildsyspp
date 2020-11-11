@@ -35,6 +35,7 @@ else()
     target_link_libraries(buildsyspp PRIVATE Threads::Threads)
     target_link_libraries(buildsyspp PRIVATE ${LUA_LIBRARIES})
     target_link_libraries(buildsyspp PRIVATE OpenSSL::Crypto)
+    target_link_libraries(buildsyspp PRIVATE util)
 endif()
 
 add_subdirectory(functional-test)

@@ -41,7 +41,7 @@ namespace buildsys
 		std::vector<std::string> envp;
 		bool log_output{true};
 
-		int exec_process(Logger *logger, const std::vector<int> *pipe_fds);
+		int exec_process(Logger *logger, int *fd);
 
 	public:
 		PackageCmd(std::string _path, std::string _app);

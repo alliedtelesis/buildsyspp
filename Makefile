@@ -15,7 +15,7 @@ WARNFLAGS	:= -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wcast-align -Wun
 BASEFLAGS	:= $(WARNFLAGS) -ggdb2 -pthread $(shell pkg-config --cflags $(LUAVERSION)) $(USER_DEFINES)
 CXXFLAGS	:= -std=c++14 $(BASEFLAGS)
 CFLAGS		:= -std=c99 $(BASEFLAGS)
-LDFLAGS		:= $(shell pkg-config --libs $(LUAVERSION)) -lrt -pthread -lssl -lcrypto
+LDFLAGS		:= $(shell pkg-config --libs $(LUAVERSION)) -lrt -pthread -lssl -lcrypto -lutil
 
 OBJS		:= $(CXXFILES:.cpp=.o) $(CFILES:.c=.o)
 

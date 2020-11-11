@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "packagecmd.hpp"
 #include "include/buildsys.h"
 #include <algorithm>
+#include <pty.h>
 #include <string>
 #include <utility>
 
@@ -64,13 +65,13 @@ static void pipe_data_thread(Logger *logger, int fd)
 		ssize_t res = read(fd, reinterpret_cast<void *>(&recv_byte), 1); // NOLINT
 		if(res <= 0) {
 			if(!recv_buf.empty()) {
-				logger->program_output(recv_buf);
+				logger->log(recv_buf);
 			}
 			break;
 		}
 		if(recv_byte == '\n') {
 			// Print the line, clear the string and start again
-			logger->program_output(recv_buf);
+			logger->log(recv_buf);
 			recv_buf.clear();
 		} else {
 			recv_buf.push_back(recv_byte);
@@ -82,23 +83,43 @@ static void pipe_data_thread(Logger *logger, int fd)
  * Execute the command via a new process.
  *
  * @param logger - The Logger to use to print any output.
- * @param pipe_fds - Pointer to a vector containing the file descriptors for a
- *                   pipe to write the command output to. If the vector is not
- *                   provided then the output of the command will not be captured
- *                   for logging purposes.
+ * @param fd - Pointer to store the stdout file descriptor of the forked process.
+ *             If nullptr is provided then the output of the command will not be
+ *             captured for logging purposes.
  */
-int PackageCmd::exec_process(Logger *logger, const std::vector<int> *pipe_fds)
+int PackageCmd::exec_process(Logger *logger, int *fd)
 {
-	int pid = fork();
+	int pid;
+	std::vector<int> pipe_fds(2);
+
+	if(fd != nullptr) {
+		if(logger->supports_colour_output()) {
+			pid = forkpty(fd, nullptr, nullptr, nullptr);
+		} else {
+			int res = pipe(&pipe_fds[0]);
+
+			if(res != 0) {
+				logger->log("pipe() failed: " + std::string(strerror(errno)));
+			}
+
+			pid = fork();
+		}
+
+	} else {
+		pid = fork();
+	}
+
 	if(pid < 0) { // something bad happened ...
 		logger->log("fork() failed: " + std::string(strerror(errno)));
 		exit(-1);
-	} else if(pid == 0) { // Child process
-		if(pipe_fds != nullptr) {
-			close(pipe_fds->at(0));
-			dup2(pipe_fds->at(1), STDOUT_FILENO);
-			dup2(pipe_fds->at(1), STDERR_FILENO);
-			close(pipe_fds->at(1));
+	}
+
+	if(pid == 0) { // Child process
+		if(fd != nullptr && !logger->supports_colour_output()) {
+			close(pipe_fds.at(0));
+			dup2(pipe_fds.at(1), STDOUT_FILENO);
+			dup2(pipe_fds.at(1), STDERR_FILENO);
+			close(pipe_fds.at(1));
 		}
 
 		if(chdir(this->path.c_str()) != 0) {
@@ -126,6 +147,11 @@ int PackageCmd::exec_process(Logger *logger, const std::vector<int> *pipe_fds)
 	}
 
 	// Parent process
+	if(fd != nullptr && !logger->supports_colour_output()) {
+		close(pipe_fds.at(1));
+		*fd = pipe_fds.at(0);
+	}
+
 	return pid;
 }
 
@@ -139,21 +165,14 @@ bool PackageCmd::Run(Logger *logger)
 	int status = 0;
 
 	if(this->log_output) {
-		std::vector<int> pipe_fds(2);
+		int fd;
 
-		int res = pipe(&pipe_fds[0]);
+		int pid = this->exec_process(logger, &fd);
 
-		if(res != 0) {
-			logger->log("pipe() failed: " + std::string(strerror(errno)));
-		}
-
-		int pid = this->exec_process(logger, &pipe_fds);
-
-		close(pipe_fds[1]);
-		std::thread thr(pipe_data_thread, logger, pipe_fds[0]);
+		std::thread thr(pipe_data_thread, logger, fd);
 		waitpid(pid, &status, 0);
 		thr.join();
-		close(pipe_fds[0]);
+		close(fd);
 	} else {
 		int pid = this->exec_process(logger, nullptr);
 		waitpid(pid, &status, 0);

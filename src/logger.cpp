@@ -27,11 +27,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace buildsys;
 
-constexpr const char *Logger::COLOUR_NORMAL;
-constexpr const char *Logger::COLOUR_RESET;
-constexpr const char *Logger::COLOUR_BOLD_RED;
-constexpr const char *Logger::COLOUR_BOLD_BLUE;
-
 /**
  * Construct a Logger object. Log messages will be output to std::cout
  * with no prefix.
@@ -91,60 +86,11 @@ void Logger::log(const boost::format &str)
 }
 
 /**
- * Get the colour code required for the given log message. Messages that
- * start with "error:" should print in red, while messages that begin
- * with "warning:" should output in blue. All other messages should not
- * have a colour.
+ * Returns whether the logging supports colour output.
  *
- * @param str - The log message to get the colour for.
- *
- * @returns The colour to print the message in.
+ * @returns true if supported, false otherwise.
  */
-const char *Logger::get_colour(const std::string &str)
+bool Logger::supports_colour_output() const
 {
-	const std::string error_str("error:");
-	const std::string warning_str("warning:");
-
-	if(this->output_supports_colour) {
-		if(str.find(error_str) != std::string::npos) {
-			return Logger::COLOUR_BOLD_RED;
-		}
-		if(str.find(warning_str) != std::string::npos) {
-			return Logger::COLOUR_BOLD_BLUE;
-		}
-	}
-
-	return Logger::COLOUR_NORMAL;
-}
-
-/**
- * Output the given message (program output). If the output supports colour
- * (i.e. a terminal) then the message will be coloured if it is an error or
- * warning message.
- *
- * @param str - The log message to print.
- */
-void Logger::program_output(const std::string &str)
-{
-	const char *colour = this->get_colour(str);
-
-	if(colour != Logger::COLOUR_NORMAL) {
-		auto coloured_str =
-		    boost::format{"%1%%2%%3%"} % colour % str % Logger::COLOUR_RESET;
-		this->log(coloured_str);
-	} else {
-		this->log(str);
-	}
-}
-
-/**
- * Force the Logger object to output in colour.
- *
- * NOTE: This should only be used by the unit-tests.
- *
- * @param set - Whether to enable/disable colour output.
- */
-void Logger::force_colour_output(bool set)
-{
-	this->output_supports_colour = set;
+	return this->output_supports_colour;
 }
