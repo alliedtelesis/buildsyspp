@@ -14,11 +14,13 @@ protected:
 public:
 	PackageTestsFixture()
 	{
+		hash_setup();
 		filesystem::create_directories(this->cwd);
 		this->ns = NameSpace::findNameSpace("test_namespace");
 	}
 	~PackageTestsFixture()
 	{
+		hash_shutdown();
 		filesystem::remove_all(this->cwd);
 		filesystem::remove_all("package");
 		filesystem::remove_all("output");
