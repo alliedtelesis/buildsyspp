@@ -7,7 +7,7 @@ if (CLANG_TIDY)
             ${SOURCE_FILES}
             -quiet -extra-arg-before=-xc++
             --
-            -std=c++14
+            -std=c++17
             -I ${CMAKE_SOURCE_DIR}/src
             -I ${CMAKE_SOURCE_DIR}/src/include
             -I ${LUA_INCLUDE_DIR}

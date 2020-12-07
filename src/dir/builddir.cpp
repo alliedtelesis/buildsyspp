@@ -24,9 +24,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "dir/builddir.hpp"
-#include "include/filesystem.h"
+#include <filesystem>
 
 using namespace buildsys;
+namespace filesystem = std::filesystem;
 
 /**
  * Create a build directory.
@@ -38,7 +39,6 @@ using namespace buildsys;
 BuildDir::BuildDir(const std::string &pwd, const std::string &gname,
                    const std::string &pname)
 {
-	filesystem::create_directories("output");
 	filesystem::create_directories("output/" + gname);
 	filesystem::create_directories("output/" + gname + "/staging");
 	filesystem::create_directories("output/" + gname + "/install");

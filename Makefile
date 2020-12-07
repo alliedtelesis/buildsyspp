@@ -13,9 +13,9 @@ WARNFLAGS	:= -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wcast-align -Wun
 		   -Wpedantic -Wconversion -Wsign-conversion -Wlogical-op -Wuseless-cast -Wdouble-promotion \
 		   -Wold-style-cast -Wno-missing-field-initializers
 BASEFLAGS	:= $(WARNFLAGS) -ggdb2 -pthread $(shell pkg-config --cflags $(LUAVERSION)) $(USER_DEFINES)
-CXXFLAGS	:= -std=c++14 $(BASEFLAGS)
+CXXFLAGS	:= -std=c++17 $(BASEFLAGS)
 CFLAGS		:= -std=c99 $(BASEFLAGS)
-LDFLAGS		:= $(shell pkg-config --libs $(LUAVERSION)) -lrt -pthread -lssl -lcrypto -lutil
+LDFLAGS		:= $(shell pkg-config --libs $(LUAVERSION)) -lrt -pthread -lssl -lcrypto -lutil -lstdc++fs
 
 OBJS		:= $(CXXFILES:.cpp=.o) $(CFILES:.c=.o)
 

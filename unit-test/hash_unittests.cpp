@@ -1,12 +1,13 @@
 #define CATCH_CONFIG_MAIN
 
+#include <filesystem>
 #include "hash.hpp"
-#include "include/filesystem.h"
 #include "packagecmd.hpp"
 #include <boost/format.hpp>
 #include <catch2/catch.hpp>
 
 using namespace buildsys;
+namespace filesystem = std::filesystem;
 
 class HashTestsFixture
 {

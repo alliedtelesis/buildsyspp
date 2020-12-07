@@ -90,8 +90,6 @@ std::string DownloadFetch::final_name()
 
 bool DownloadFetch::fetch(BuildDir *) // NOLINT
 {
-	filesystem::create_directories("dl");
-
 	std::string fullname = this->full_name();
 	std::string fname = this->final_name();
 

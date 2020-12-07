@@ -110,8 +110,6 @@ bool TarExtractionUnit::extract(Package *P)
 {
 	PackageCmd pc(P->builddir()->getPath(), "tar");
 
-	filesystem::create_directories("dl");
-
 	pc.addArg("xf");
 	pc.addArg(P->getPwd() + "/" + this->uri);
 
@@ -125,8 +123,6 @@ bool TarExtractionUnit::extract(Package *P)
 bool ZipExtractionUnit::extract(Package *P)
 {
 	PackageCmd pc(P->builddir()->getPath(), "unzip");
-
-	filesystem::create_directories("dl");
 
 	pc.addArg("-o");
 	pc.addArg(P->getPwd() + "/" + this->uri);

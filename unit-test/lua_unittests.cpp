@@ -1,12 +1,13 @@
 #define CATCH_CONFIG_MAIN
 
+#include <filesystem>
 #include "exceptions.hpp"
-#include "include/filesystem.h"
 #include "lua.hpp"
 
 #include <catch2/catch.hpp>
 
 using namespace buildsys;
+namespace filesystem = std::filesystem;
 
 class LuaTestsFixture
 {

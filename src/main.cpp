@@ -66,6 +66,13 @@ int main(int argc, char *argv[])
 	std::string filename = std::string(resolved_path);
 	free(resolved_path); // NOLINT
 
+	if(!filesystem::exists("dl")) {
+		filesystem::create_directories("dl");
+	}
+	if(!filesystem::exists("output")) {
+		filesystem::create_directories("output");
+	}
+
 	if(!WORLD.basePackage(filename)) {
 		logger.log("Building: Failed");
 		if(WORLD.areKeepGoing()) {

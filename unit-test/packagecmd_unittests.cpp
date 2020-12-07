@@ -1,10 +1,11 @@
 #define CATCH_CONFIG_MAIN
 
-#include "include/filesystem.h"
+#include <filesystem>
 #include "packagecmd.hpp"
 #include <catch2/catch.hpp>
 
 using namespace buildsys;
+namespace filesystem = std::filesystem;
 
 class PackageCmdTestsFixture
 {

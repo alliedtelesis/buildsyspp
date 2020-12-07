@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <filesystem>
 #include <iostream>
 #include <list>
 #include <map>
@@ -71,11 +72,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../lua.hpp"
 #include "../namespace.hpp"
 #include "../packagecmd.hpp"
-#include "include/filesystem.h"
 
 using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS>;
 using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
 using Edge = boost::graph_traits<Graph>::edge_descriptor;
+
+namespace filesystem = std::filesystem; // NOLINT
 
 namespace buildsys
 {
@@ -231,9 +233,7 @@ namespace buildsys
 		std::string uri;  //!< URI of this unit
 		std::string hash; //!< Hash of this unit
 	public:
-		ExtractionUnit() : uri(std::string()), hash(std::string())
-		{
-		}
+		ExtractionUnit() = default;
 		virtual void print(std::ostream &out) = 0;
 		virtual std::string type() = 0;
 		virtual bool extract(Package *P) = 0;
