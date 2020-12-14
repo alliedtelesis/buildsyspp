@@ -27,9 +27,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interface/luainterface.h"
 #include "logger.hpp"
 #include "options.hpp"
+#include <csignal>
 
 using std::chrono::duration_cast;
 using std::chrono::steady_clock;
+
+/**
+ * Signal handler for SIGINT, SIGHUP and SIGQUIT. This handler
+ * ensures that buildsys++ exits.
+ */
+static void signal_handler([[maybe_unused]] int signal)
+{
+	std::_Exit(EXIT_FAILURE);
+}
 
 int main(int argc, char *argv[])
 {
@@ -38,6 +48,10 @@ int main(int argc, char *argv[])
 	Logger logger("BuildSys");
 	logger.log("Buildsys (C++ version)");
 	logger.log(boost::format{"Built: %1% %2%"} % __TIME__ % __DATE__);
+
+	std::signal(SIGINT, signal_handler);
+	std::signal(SIGHUP, signal_handler);
+	std::signal(SIGQUIT, signal_handler);
 
 	World WORLD;
 	hash_setup();
