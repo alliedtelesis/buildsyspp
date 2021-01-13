@@ -712,7 +712,8 @@ bool Package::packageNewInstall()
 {
 	if(!this->installFiles.empty()) {
 		for(const auto &install_file : this->installFiles) {
-			this->log("Copying " + install_file + " to install folder");
+			this->log("Copying " + install_file + " to output/" + this->getNS()->getName() +
+			          "/install/");
 			PackageCmd pc(this->bd.getNewInstall(), "cp");
 			pc.addArg(install_file);
 			std::string arg = this->pwd + "/output/" + this->getNS()->getName() +
