@@ -70,6 +70,8 @@ std::string buildsys::parse_command_line(int argc, char *argv[], World *WORLD)
 			WORLD->setKeepGoing();
 		} else if(argList[a] == "--quietly") {
 			Package::set_quiet_packages(true);
+		} else if(argList[a] == "--keep-staging") {
+			Package::set_keep_all_staging(true);
 		} else if(argList[a] == "--parallel-packages") {
 			WORLD->setThreadsLimit(std::stoi(argList[a + 1]));
 			// If a thread limit is specified then don't allow packages to extract

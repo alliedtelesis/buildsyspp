@@ -529,6 +529,7 @@ namespace buildsys
 	{
 	private:
 		static bool quiet_packages;
+		static bool keep_staging;
 		static bool extract_in_parallel;
 		static std::string build_cache;
 		static bool clean_all_packages;
@@ -817,6 +818,7 @@ namespace buildsys
 			return this->clean_before_build;
 		}
 		static void set_quiet_packages(bool set);
+		static void set_keep_all_staging(bool set);
 		static void set_extract_in_parallel(bool set);
 		static void set_build_cache(std::string cache);
 		static void set_clean_packages(bool set);

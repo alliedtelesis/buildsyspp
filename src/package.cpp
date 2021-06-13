@@ -34,6 +34,7 @@ using std::chrono::duration_cast;
 using std::chrono::steady_clock;
 
 bool Package::quiet_packages = false;
+bool Package::keep_staging = false;
 bool Package::extract_in_parallel = true;
 std::string Package::build_cache;
 bool Package::clean_all_packages = false;
@@ -48,6 +49,16 @@ std::list<std::string> Package::forced_packages;
 void Package::set_quiet_packages(bool set)
 {
 	quiet_packages = set;
+}
+
+/**
+ * Configure created packages to keep their staging directories.
+ *
+ * @param set - true to enable, false to disable.
+ */
+void Package::set_keep_all_staging(bool set)
+{
+	keep_staging = set;
 }
 
 /**
@@ -747,7 +758,7 @@ bool Package::packageNewInstall()
 
 void Package::cleanStaging() const
 {
-	if(!this->suppress_remove_staging) {
+	if(!Package::keep_staging && !this->suppress_remove_staging) {
 		this->bd.cleanStaging();
 	}
 }
