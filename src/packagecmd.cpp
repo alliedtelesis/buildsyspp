@@ -115,6 +115,18 @@ int PackageCmd::exec_process(Logger *logger, int *fd)
 	}
 
 	if(pid == 0) { // Child process
+		// Reset the signal handlers
+		struct sigaction sa = {};
+		sa.sa_handler = SIG_DFL; // NOLINT
+		sa.sa_flags = 0;         // NOLINT
+		for(int i = 0; i < _NSIG; i++) {
+			sigaction(i, &sa, nullptr);
+		}
+		// Unblock all signals
+		sigset_t sigset;
+		sigfillset(&sigset);
+		sigprocmask(SIG_UNBLOCK, &sigset, nullptr);
+
 		if(fd != nullptr && !logger->supports_colour_output()) {
 			close(pipe_fds.at(0));
 			dup2(pipe_fds.at(1), STDOUT_FILENO);
