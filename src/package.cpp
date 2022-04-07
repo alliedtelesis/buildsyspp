@@ -95,10 +95,17 @@ void Package::set_clean_packages(bool set)
  *  Add an overlay to search for package files
  *
  *  @param path - The overlay path to add.
+ *  @param top - Make this more important than other overlays
  */
-void Package::add_overlay_path(std::string path)
+void Package::add_overlay_path(std::string path, bool top)
 {
-	overlays.push_back(std::move(path));
+	if(top) {
+		auto iter = overlays.begin();
+		advance(iter, 1); // skip over the "." path
+		overlays.insert(iter, std::move(path));
+	} else {
+		overlays.push_back(std::move(path));
+	}
 }
 
 /**

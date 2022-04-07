@@ -276,6 +276,22 @@ static int li_require(lua_State *L)
 	return 0;
 }
 
+static int li_overlay_add(lua_State *L)
+{
+	if(lua_gettop(L) != 1) {
+		throw CustomException("overlayadd() takes 1 argument");
+	}
+
+	if(lua_isstring(L, 1) == 0) {
+		throw CustomException("Argument to overlayadd() must be a string");
+	}
+
+	std::string overlay_path = std::string(lua_tostring(L, 1));
+	Package::add_overlay_path(overlay_path, true);
+
+	return 0;
+}
+
 bool buildsys::interfaceSetup(Lua *lua)
 {
 	lua->registerFunc("builddir", li_builddir);
@@ -286,6 +302,7 @@ bool buildsys::interfaceSetup(Lua *lua)
 	lua->registerFunc("name", li_name);
 	lua->registerFunc("hashoutput", li_hashoutput);
 	lua->registerFunc("require", li_require);
+	lua->registerFunc("overlayadd", li_overlay_add);
 
 	return true;
 }

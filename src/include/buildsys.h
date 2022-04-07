@@ -822,7 +822,7 @@ namespace buildsys
 		static void set_extract_in_parallel(bool set);
 		static void set_build_cache(std::string cache);
 		static void set_clean_packages(bool set);
-		static void add_overlay_path(std::string path);
+		static void add_overlay_path(std::string path, bool top = false);
 		static void add_forced_package(std::string name);
 		static bool is_forced_mode();
 	};
