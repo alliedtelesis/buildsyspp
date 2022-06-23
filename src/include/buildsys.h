@@ -949,6 +949,7 @@ namespace buildsys
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
 		int threads_limit{0};
+		std::list<Package *> failed_packages;
 
 	public:
 		/** Are we operating in 'parse only' mode
@@ -986,8 +987,9 @@ namespace buildsys
 		bool basePackage(const std::string &filename);
 
 		//! Tell everything that we have failed
-		void setFailed()
+		void setFailed(Package *p)
 		{
+			this->failed_packages.push_back(p);
 			this->failed = true;
 		};
 		//! Test if we have failed

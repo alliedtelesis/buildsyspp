@@ -34,7 +34,7 @@ static void build_thread(World *w, Package *p)
 		if(p->build()) {
 			w->packageFinished(p);
 		} else {
-			w->setFailed();
+			w->setFailed(p);
 			p->log("Building failed");
 		}
 	} catch(std::exception &e) {
@@ -146,6 +146,11 @@ bool World::basePackage(const std::string &filename)
 			this->cond.wait(lk);
 			lk.unlock();
 			lk.lock();
+		}
+		if(this->failed) {
+			for(auto pfailed : this->failed_packages) {
+				pfailed->log("Build Failed");
+			}
 		}
 	}
 	return !this->failed;
