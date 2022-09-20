@@ -52,12 +52,17 @@ Lua::~Lua()
  * Load and execute a lua file in this instance
  *
  * @param filename - The name of the lua file to load and run
+ * @return the number of return values from the function
  */
-void Lua::processFile(const std::string &filename)
+int Lua::processFile(const std::string &filename)
 {
+	int start_sp = lua_gettop(state);
+
 	if(luaL_dofile(state, filename.c_str()) != 0) {
 		throw CustomException(lua_tostring(state, -1));
 	}
+
+	return lua_gettop(state) - start_sp;
 }
 
 /**

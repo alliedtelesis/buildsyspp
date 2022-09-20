@@ -270,10 +270,10 @@ static int li_require(lua_State *L)
 		throw FileNotFoundException("require", fname);
 	}
 
-	P->getLua()->processFile(relative_fname);
+	int ret_values = P->getLua()->processFile(relative_fname);
 	P->buildDescription()->add_require_file(fname, hash_file(relative_fname));
 
-	return 0;
+	return ret_values;
 }
 
 static int li_overlay_add(lua_State *L)

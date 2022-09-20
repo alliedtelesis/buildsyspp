@@ -45,7 +45,7 @@ namespace buildsys
 		Lua &operator=(const Lua &) = delete;
 		Lua(Lua &&) = delete;
 		Lua &operator=(Lua &&) = delete;
-		void processFile(const std::string &filename);
+		int processFile(const std::string &filename);
 		void registerFunc(const std::string &name, lua_CFunction fn);
 	};
 } // namespace buildsys
