@@ -276,6 +276,33 @@ static int li_require(lua_State *L)
 	return ret_values;
 }
 
+static int li_optionally_require(lua_State *L)
+{
+	if(lua_gettop(L) != 1) {
+		throw CustomException("optionally_require() takes 1 argument");
+	}
+
+	if(lua_isstring(L, 1) == 0) {
+		throw CustomException("Argument to optionally_require() must be a string");
+	}
+
+	Package *P = li_get_package();
+
+	std::string fname = std::string(lua_tostring(L, 1)) + ".lua";
+
+	try {
+		std::string relative_fname = P->relative_fetch_path(fname, true);
+
+		int ret_values = P->getLua()->processFile(relative_fname);
+		P->buildDescription()->add_require_file(fname, hash_file(relative_fname));
+
+		return ret_values;
+	} catch(FileNotFoundException &fnf) {
+		/* This action was optional, so we don't care */
+	}
+	return 0;
+}
+
 static int li_overlay_add(lua_State *L)
 {
 	if(lua_gettop(L) != 1) {
@@ -302,6 +329,7 @@ bool buildsys::interfaceSetup(Lua *lua)
 	lua->registerFunc("name", li_name);
 	lua->registerFunc("hashoutput", li_hashoutput);
 	lua->registerFunc("require", li_require);
+	lua->registerFunc("optionally_require", li_optionally_require);
 	lua->registerFunc("overlayadd", li_overlay_add);
 
 	return true;
