@@ -548,7 +548,8 @@ namespace buildsys
 		Extraction Extract;
 		BuildDescription build_description;
 		Lua lua;
-		bool intercept{false};
+		bool intercept_install{false};
+		bool intercept_staging{false};
 		std::string depsExtraction;
 		bool depsExtractionDirectOnly{false};
 		string_list installFiles;
@@ -570,7 +571,7 @@ namespace buildsys
 		void updateBuildInfoHashExisting();
 		bool extract_staging(const std::string &dir);
 		bool extract_install(const std::string &dir);
-		void getAllDependedPackages(std::unordered_set<Package *> *packages);
+		void getStagingPackages(std::unordered_set<Package *> *);
 		void getDependedPackages(std::unordered_set<Package *> *packages,
 		                         bool include_children, bool ignore_intercept);
 		bool ff_file(const std::string &hash, const std::string &rfile,
@@ -657,13 +658,18 @@ namespace buildsys
 		/** Convert this package to the intercepting type
 		 *  Intercepting packages stop the extract install method from recursing past them.
 		 */
-		void setIntercept()
+		void setIntercept(bool install, bool staging)
 		{
-			this->intercept = true;
+			this->intercept_install = install;
+			this->intercept_staging = staging;
 		};
-		bool getIntercept() const
+		bool getInterceptInstall() const
 		{
-			return this->intercept;
+			return this->intercept_install;
+		}
+		bool getInterceptStaging() const
+		{
+			return this->intercept_staging;
 		}
 		//! Return the name of this package
 		const std::string &getName() const

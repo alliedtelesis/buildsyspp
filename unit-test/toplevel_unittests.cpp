@@ -103,12 +103,15 @@ TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'intercept' function usage", 
 	Package p(this->ns, "test_package", ".", ".");
 
 	// Should default to false
-	REQUIRE(!p.getIntercept());
+	REQUIRE(!p.getInterceptInstall());
+	REQUIRE(!p.getInterceptStaging());
 
 	REQUIRE(execute_lua(p, "intercept()"));
 
-	// Should now be true
-	REQUIRE(p.getIntercept());
+	// install, should now be true
+	REQUIRE(p.getInterceptInstall());
+	// staging, show still be the default
+	REQUIRE(!p.getInterceptStaging());
 }
 
 TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'intercept' function usage", "")
@@ -116,12 +119,44 @@ TEST_CASE_METHOD(TopLevelTestsFixture, "Test invalid 'intercept' function usage"
 	Package p(this->ns, "test_package", ".", ".");
 
 	// Should default to false
-	REQUIRE(!p.getIntercept());
+	REQUIRE(!p.getInterceptInstall());
 
 	REQUIRE(!execute_lua(p, "intercept(true)"));
 
 	// Should still be false
-	REQUIRE(!p.getIntercept());
+	REQUIRE(!p.getInterceptInstall());
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'intercept' staging function usage", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+
+	// Should default to false
+	REQUIRE(!p.getInterceptInstall());
+	REQUIRE(!p.getInterceptStaging());
+
+	REQUIRE(execute_lua(p, "intercept{staging=true}"));
+
+	// install, should still be false
+	REQUIRE(!p.getInterceptInstall());
+	// staging, should now be true
+	REQUIRE(p.getInterceptStaging());
+}
+
+TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'intercept' install function usage", "")
+{
+	Package p(this->ns, "test_package", ".", ".");
+
+	// Should default to false
+	REQUIRE(!p.getInterceptInstall());
+	REQUIRE(!p.getInterceptStaging());
+
+	REQUIRE(execute_lua(p, "intercept{install=true}"));
+
+	// install, should now be true
+	REQUIRE(p.getInterceptInstall());
+	// staging, should still be false
+	REQUIRE(!p.getInterceptStaging());
 }
 
 TEST_CASE_METHOD(TopLevelTestsFixture, "Test valid 'hashoutput' function usage", "")

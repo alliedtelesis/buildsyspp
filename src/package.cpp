@@ -586,7 +586,8 @@ void Package::getDependedPackages(std::unordered_set<Package *> *packages,
 
 		packages->insert(dp.getPackage());
 
-		if(include_children && (ignore_intercept || !dp.getPackage()->getIntercept())) {
+		if(include_children &&
+		   (ignore_intercept || !dp.getPackage()->getInterceptInstall())) {
 			dp.getPackage()->getDependedPackages(packages, include_children,
 			                                     ignore_intercept);
 		}
@@ -594,14 +595,25 @@ void Package::getDependedPackages(std::unordered_set<Package *> *packages,
 }
 
 /**
- * Get the set of all packages that this package depends on. Note that this includes
- * the packages that the directly depended packages depend on and so forth.
+ * Get the set of packages required to populate the staging directory
  *
- * @param The set to fill with all of the depended packages.
+ * @param The set to fill with the staging packages.
  */
-void Package::getAllDependedPackages(std::unordered_set<Package *> *packages)
+void Package::getStagingPackages(std::unordered_set<Package *> *packages)
 {
-	this->getDependedPackages(packages, true, true);
+	for(auto &dp : this->depends) {
+		// This depended package is already in the set, don't add it again.
+		if(packages->find(dp.getPackage()) != packages->end()) {
+			continue;
+		}
+
+		packages->insert(dp.getPackage());
+
+		// Recurse if this package doesn't intercept staging
+		if(!dp.getPackage()->getInterceptStaging()) {
+			dp.getPackage()->getStagingPackages(packages);
+		}
+	}
 }
 
 static void cleanDir(const std::string &dir)
@@ -623,7 +635,7 @@ bool Package::prepareBuildDirs()
 	cleanDir(this->bd.getStaging());
 
 	std::unordered_set<Package *> packages;
-	this->getAllDependedPackages(&packages);
+	this->getStagingPackages(&packages);
 
 	std::list<std::thread> threads;
 	std::atomic<bool> result{true};

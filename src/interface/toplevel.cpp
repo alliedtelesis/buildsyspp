@@ -120,13 +120,52 @@ static int li_builddir(lua_State *L)
 
 static int li_intercept(lua_State *L)
 {
-	if(lua_gettop(L) != 0) {
-		throw CustomException("intercept() takes no arguments");
+	bool install = false;
+	bool staging = false;
+
+	if(lua_gettop(L) == 0) {
+		/* Default behaviour is to only intercept the install directories */
+		staging = false;
+		install = true;
+	} else if(lua_gettop(L) == 1) {
+		if(lua_istable(L, 1)) {
+			lua_pushnil(L); /* first key */
+			while(lua_next(L, 1) != 0) {
+				/* uses 'key' (at index -2) and 'value' (at index -1) */
+				if(lua_type(L, -2) != LUA_TSTRING) {
+					throw CustomException(
+					    "intercept() requires a table with strings as keys\n");
+				}
+				std::string key(lua_tostring(L, -2));
+				if(key == "staging") {
+					if(lua_type(L, -1) == LUA_TBOOLEAN) {
+						staging = (lua_toboolean(L, -1) != 0);
+					} else {
+						throw CustomException("intercept() requires a boolean argument to "
+						                      "the staging parameter");
+					}
+				} else if(key == "install") {
+					if(lua_type(L, -1) == LUA_TBOOLEAN) {
+						install = (lua_toboolean(L, -1) != 0);
+					} else {
+						throw CustomException("intercept() requires a boolean argument to "
+						                      "the install parameter");
+					}
+				}
+				/* removes 'value'; keeps 'key' for next iteration */
+				lua_pop(L, 1);
+			}
+		} else {
+			throw CustomException(
+			    "intercept() requires a table as the first argument if present");
+		}
+	} else {
+		throw CustomException("intercept() takes no or 1 argument(s)");
 	}
 
 	Package *P = li_get_package();
 
-	P->setIntercept();
+	P->setIntercept(install, staging);
 	return 0;
 }
 
