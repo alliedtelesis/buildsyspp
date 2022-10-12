@@ -96,30 +96,47 @@ static int li_bd_fetch(lua_State *L)
 
 	while(lua_next(L, -2) != 0) {
 		lua_pushvalue(L, -2);
-		if((lua_isstring(L, -1) != 0) && (lua_isstring(L, -2) != 0)) {
+		if(lua_isstring(L, -1) != 0) {
 			std::string key(lua_tostring(L, -1));
-			std::string value(lua_tostring(L, -2));
-			if(key == "uri") {
-				uri = value;
-			} else if(key == "method") {
-				method = value;
-			} else if(key == "filename") {
-				filename = value;
-			} else if(key == "decompress") {
-				decompress = (value == "true");
-			} else if(key == "branch") {
-				branch = value;
-			} else if(key == "reponame") {
-				reponame = value;
-			} else if(key == "to") {
-				to = value;
-			} else if(key == "listedonly") {
-				listedonly = (value == "true");
-			} else if(key == "copyto") {
-				copyto = value;
+			if(lua_isstring(L, -2) != 0) {
+				std::string value(lua_tostring(L, -2));
+				if(key == "uri") {
+					uri = value;
+				} else if(key == "method") {
+					method = value;
+				} else if(key == "filename") {
+					filename = value;
+				} else if(key == "decompress") {
+					decompress = (value == "true");
+				} else if(key == "branch") {
+					branch = value;
+				} else if(key == "reponame") {
+					reponame = value;
+				} else if(key == "to") {
+					to = value;
+				} else if(key == "listedonly") {
+					listedonly = (value == "true");
+				} else if(key == "copyto") {
+					copyto = value;
+				} else {
+					P->log(boost::format{"Unknown key %1% (%2%)"} % key % value);
+				}
+			} else if(lua_isboolean(L, -2) != 0) {
+				bool value = lua_toboolean(L, -2) == 1;
+				if(key == "decompress") {
+					decompress = value;
+				} else if(key == "listedonly") {
+					listedonly = value;
+				} else {
+					P->log(boost::format{"Unknown key %1%"} % key);
+				}
 			} else {
-				P->log(boost::format{"Unknown key %1% (%2%)"} % key % value);
+				P->log(
+				    boost::format{"Key %1% has unknown value type (not string or bool)"} %
+				    key);
 			}
+		} else {
+			P->log("Unsupported type for key");
 		}
 		lua_pop(L, 2);
 	}
