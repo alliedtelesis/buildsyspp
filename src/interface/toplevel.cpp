@@ -41,6 +41,27 @@ static int li_name(lua_State *L)
 	return 1;
 }
 
+static std::string get_feature_value(const std::string &package_name,
+                                     const std::string &key)
+{
+	/* Allow the NoKeyException to fall-thru if all possible package namespaces have been
+	 * tried */
+	if(package_name.empty()) {
+		return li_get_feature_map()->getFeature(key);
+	}
+	/* Try the feature prefixed with our package name */
+	try {
+		return li_get_feature_map()->getFeature(package_name + ":" + key);
+	} catch(NoKeyException &E) {
+		/* Try the parent package directory name(s) too */
+		std::size_t found = package_name.find_last_of('/');
+		if(found == std::string::npos) {
+			return get_feature_value("", key);
+		}
+		return get_feature_value(package_name.substr(0, found), key);
+	}
+}
+
 static int li_feature(lua_State *L)
 {
 	if(lua_gettop(L) < 1 || lua_gettop(L) > 3) {
@@ -55,13 +76,7 @@ static int li_feature(lua_State *L)
 
 	if(lua_gettop(L) == 1) {
 		try {
-			std::string value;
-			/* Try the feature prefixed with our package name first */
-			try {
-				value = li_get_feature_map()->getFeature(P->getName() + ":" + key);
-			} catch(NoKeyException &E) {
-				value = li_get_feature_map()->getFeature(key);
-			}
+			std::string value = get_feature_value(P->getName(), key);
 			lua_pushstring(L, value.c_str());
 			P->buildDescription()->add_feature_value(key, value);
 		} catch(NoKeyException &E) {
