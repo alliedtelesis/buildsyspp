@@ -136,7 +136,7 @@ void Package::common_init()
 	std::string prefix = this->ns->getName() + "," + this->name;
 
 	if(Package::quiet_packages) {
-		auto log_path = boost::format{"%1%/output/%2%/%3%/build.log"} % this->pwd %
+		auto log_path = boost::format{"output/%1%/%2%/build.log"} %
 		                this->getNS()->getName() % this->name;
 		this->logger = std::move(Logger(prefix, log_path.str()));
 	} else {
