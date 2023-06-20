@@ -242,8 +242,14 @@ std::string GitExtractionUnit::HASH()
 		this->hash = this->refspec;
 	} else {
 		std::string digest_name = this->uri + "#" + this->refspec;
+		std::string Hash;
 		/* Check if the package contains pre-computed hashes */
-		std::string Hash = P->getFileHash(digest_name);
+		try {
+			Hash = P->getFileHash(digest_name);
+		} catch(buildsys::FileNotFoundException const& e) {
+			P->log("Digest not found, will fetch code from git.");
+		}
+
 		if(Hash.empty()) {
 			this->fetch(P->builddir());
 		} else {
