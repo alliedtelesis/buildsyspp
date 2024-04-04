@@ -350,7 +350,7 @@ static int li_bd_cmd(lua_State *L)
 
 	Package *P = li_get_package();
 
-	std::string dir = relative_path(d, lua_tostring(L, 2));
+	std::string dir = relative_path(d, lua_tostring(L, 2), true);
 	std::string app(lua_tostring(L, 3));
 
 	PackageCmd pc(dir, app);
