@@ -68,6 +68,8 @@ std::string buildsys::parse_command_line(int argc, char *argv[], World *WORLD)
 			WORLD->setParseOnly();
 		} else if(argList[a] == "--keep-going") {
 			WORLD->setKeepGoing();
+		} else if(argList[a] == "--fetch-only") {
+			WORLD->setFetchOnly();
 		} else if(argList[a] == "--quietly") {
 			Package::set_quiet_packages(true);
 		} else if(argList[a] == "--keep-staging") {

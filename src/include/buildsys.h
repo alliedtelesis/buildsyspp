@@ -769,7 +769,7 @@ namespace buildsys
 		//! Return the build information for this package
 		BuildInfoType buildInfo(std::string *file_path, std::string *hash);
 		//! Build this package
-		bool build(bool locally = false);
+		bool build(bool locally = false, bool fetchOnly = false);
 		//! Has building of this package already started ?
 		bool isBuilding() const
 		{
@@ -951,6 +951,7 @@ namespace buildsys
 		bool failed{false};
 		bool parseOnly{false};
 		bool keepGoing{false};
+		bool fetchOnly{false};
 		mutable std::mutex cond_lock;
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
@@ -987,6 +988,15 @@ namespace buildsys
 		void setKeepGoing()
 		{
 			this->keepGoing = true;
+		}
+
+		bool isFetchOnly() const
+		{
+			return this->fetchOnly;
+		}
+		void setFetchOnly()
+		{
+			this->fetchOnly = true;
 		}
 
 		//! Start the processing and building steps with the given meta package

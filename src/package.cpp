@@ -795,7 +795,7 @@ bool Package::should_suppress_building()
 	return (this->is_forced_mode() && !is_forced);
 }
 
-bool Package::build(bool locally)
+bool Package::build(bool locally, bool fetchOnly)
 {
 	// Hold the lock for the whole build, to avoid multiple running at once
 	std::unique_lock<std::mutex> lk(this->lock);
@@ -807,7 +807,7 @@ bool Package::build(bool locally)
 
 	/* Check our dependencies are already built, or build them */
 	for(auto &dp : this->depends) {
-		if(!dp.getPackage()->build()) {
+		if(!dp.getPackage()->build(false, fetchOnly)) {
 			return false;
 		}
 	}
@@ -830,7 +830,9 @@ bool Package::build(bool locally)
 	this->Extract.prepareNewExtractInfo(this, &this->bd);
 
 	// Create the new build.info file
-	this->prepareBuildInfo();
+	if(!fetchOnly) {
+		this->prepareBuildInfo();
+	}
 
 	// Check if building is required
 	if(!locally && !this->shouldBuild()) {
@@ -844,7 +846,7 @@ bool Package::build(bool locally)
 	for(auto &dp : this->depends) {
 		if(dp.getLocally()) {
 			dp.getPackage()->log("Build triggered by " + this->getName());
-			if(!dp.getPackage()->build(true)) {
+			if(!dp.getPackage()->build(true, fetchOnly)) {
 				return false;
 			}
 		}
@@ -858,47 +860,49 @@ bool Package::build(bool locally)
 
 	steady_clock::time_point start = steady_clock::now();
 
-	if(this->Extract.extractionRequired(this, &this->bd)) {
-		this->log("Extracting ...");
-		if(!this->Extract.extract(this)) {
+	if(!fetchOnly) {
+		if(this->Extract.extractionRequired(this, &this->bd)) {
+			this->log("Extracting ...");
+			if(!this->Extract.extract(this)) {
+				return false;
+			}
+		}
+
+		this->log("Building ...");
+		// Clean new/{staging,install}, Extract the dependency staging directories
+		if(!this->prepareBuildDirs()) {
 			return false;
 		}
-	}
 
-	this->log("Building ...");
-	// Clean new/{staging,install}, Extract the dependency staging directories
-	if(!this->prepareBuildDirs()) {
-		return false;
-	}
-
-	if(!this->extractInstallDepends()) {
-		return false;
-	}
-
-	auto cIt = this->commands.begin();
-	auto cEnd = this->commands.end();
-
-	this->log("Running Commands");
-	for(; cIt != cEnd; cIt++) {
-		if(!(*cIt).Run(&this->logger)) {
+		if(!this->extractInstallDepends()) {
 			return false;
 		}
+
+		auto cIt = this->commands.begin();
+		auto cEnd = this->commands.end();
+
+		this->log("Running Commands");
+		for(; cIt != cEnd; cIt++) {
+			if(!(*cIt).Run(&this->logger)) {
+				return false;
+			}
+		}
+		this->log("Done Commands");
+
+		this->log("BUILT");
+
+		if(!this->packageNewStaging()) {
+			return false;
+		}
+
+		if(!this->packageNewInstall()) {
+			return false;
+		}
+
+		this->cleanStaging();
+
+		this->updateBuildInfo();
 	}
-	this->log("Done Commands");
-
-	this->log("BUILT");
-
-	if(!this->packageNewStaging()) {
-		return false;
-	}
-
-	if(!this->packageNewInstall()) {
-		return false;
-	}
-
-	this->cleanStaging();
-
-	this->updateBuildInfo();
 
 	steady_clock::time_point end = steady_clock::now();
 
