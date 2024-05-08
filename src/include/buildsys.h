@@ -640,6 +640,8 @@ namespace buildsys
 		                                bool also_root = false);
 		//! Get the file hash for the given file (if known)
 		std::string getFileHash(const std::string &filename);
+		//! Get a list of files in location
+		std::list<std::string> listFiles(const std::string &location);
 		//! Returns the extraction
 		Extraction *extraction()
 		{

@@ -267,6 +267,24 @@ std::string Package::getFileHash(const std::string &filename)
 	return hash;
 }
 
+std::list<std::string> Package::listFiles(const std::string &location)
+{
+	std::list<std::string> entries = {};
+	for(const auto &ov : this->overlays) {
+		std::string path = ov + "/package/" + this->getName() + '/' + location;
+		if(filesystem::exists(path)) {
+			for (const auto & entry : filesystem::directory_iterator(path)) {
+				std::string filename = entry.path().filename();
+				if (!filesystem::is_directory(entry.path()) &&
+					std::count(entries.begin(), entries.end(), filename) == 0) {
+					entries.push_back(filename);
+				}
+			}
+		}
+	}
+	return entries;
+}
+
 void Package::printLabel(std::ostream &out)
 {
 	out << "[label=\"";
