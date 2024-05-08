@@ -246,7 +246,7 @@ std::string GitExtractionUnit::HASH()
 		/* Check if the package contains pre-computed hashes */
 		try {
 			Hash = P->getFileHash(digest_name);
-		} catch(buildsys::FileNotFoundException const& e) {
+		} catch(buildsys::FileNotFoundException const &e) {
 			P->log("Digest not found, will fetch code from git.");
 		}
 

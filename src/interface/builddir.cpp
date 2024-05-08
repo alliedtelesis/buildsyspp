@@ -454,6 +454,29 @@ static int li_bd_installfile(lua_State *L)
 	return 0;
 }
 
+static int li_bd_ls(lua_State *L)
+{
+	if(lua_gettop(L) != 2) {
+		throw CustomException("ls() requires exactly 1 argument");
+	}
+	if(!lua_istable(L, 1)) {
+		throw CustomException("ls() must be called using : not .");
+	}
+	if(lua_isstring(L, 2) == 0) {
+		throw CustomException("ls() expects a string as the only argument");
+	}
+
+	lua_newtable(L);
+	int i = 1;
+	for(const auto &entry : li_get_package()->listFiles(lua_tostring(L, 2))) {
+		lua_pushnumber(L, i++);
+		lua_pushstring(L, entry.c_str());
+		lua_settable(L, -3);
+	}
+
+	return 1;
+}
+
 void buildsys::li_builddir_create(lua_State *L, BuildDir *bd)
 {
 	LUA_SET_TABLE_TYPE(L, BuildDir);
@@ -461,6 +484,7 @@ void buildsys::li_builddir_create(lua_State *L, BuildDir *bd)
 	LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
 	LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
 	LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
+	LUA_ADD_TABLE_FUNC(L, "ls", li_bd_ls);
 	LUA_ADD_TABLE_FUNC(L, "patch", li_bd_patch);
 	LUA_ADD_TABLE_FUNC(L, "restore", li_bd_restore);
 	LUA_ADD_TABLE_STRING(L, "new_staging", bd->getNewStaging().c_str());
