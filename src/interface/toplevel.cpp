@@ -41,6 +41,19 @@ static int li_name(lua_State *L)
 	return 1;
 }
 
+static int li_package_name(lua_State *L)
+{
+	if(lua_gettop(L) != 0) {
+		throw CustomException("package_name() takes no arguments");
+	}
+
+	Package *P = li_get_package();
+
+	const std::string &value = P->getName();
+	lua_pushstring(L, value.c_str());
+	return 1;
+}
+
 static std::string get_feature_value(const std::string &package_name,
                                      const std::string &key)
 {
@@ -381,6 +394,7 @@ bool buildsys::interfaceSetup(Lua *lua)
 	lua->registerFunc("intercept", li_intercept);
 	lua->registerFunc("keepstaging", li_keepstaging);
 	lua->registerFunc("name", li_name);
+	lua->registerFunc("package_name", li_package_name);
 	lua->registerFunc("hashoutput", li_hashoutput);
 	lua->registerFunc("require", li_require);
 	lua->registerFunc("optionally_require", li_optionally_require);
