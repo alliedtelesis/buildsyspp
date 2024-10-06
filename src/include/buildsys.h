@@ -452,6 +452,7 @@ namespace buildsys
 		{
 			return this->localPath();
 		};
+		static void add_ref_if_able_pattern(std::string pattern);
 	};
 
 	/** A fetch description

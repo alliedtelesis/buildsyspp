@@ -80,6 +80,9 @@ std::string buildsys::parse_command_line(int argc, char *argv[], World *WORLD)
 			// in parallel.
 			Package::set_extract_in_parallel(false);
 			a++;
+		} else if(argList[a] == "--git-local-mirror-map") {
+			GitExtractionUnit::add_ref_if_able_pattern(argList[a + 1]);
+			a++;
 		} else if(argList[a] == "--") {
 			foundDashDash = true;
 		} else {

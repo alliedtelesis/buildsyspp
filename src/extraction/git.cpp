@@ -25,6 +25,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 
+#include <boost/algorithm/string.hpp>
+
+std::list<std::pair<std::string, std::string>> git_ref_if_able_pairs;
+
+void GitExtractionUnit::add_ref_if_able_pattern(std::string pattern)
+{
+	std::vector<std::string> parts;
+	boost::split(parts, pattern, boost::algorithm::is_any_of(","));
+
+	git_ref_if_able_pairs.emplace_back(
+	    std::pair<std::string, std::string>(parts[0], parts[1]));
+}
+
+static std::string get_git_ref_dir(const std::string &remote)
+{
+	for(auto const &pair : git_ref_if_able_pairs) {
+		if(boost::algorithm::starts_with(remote, pair.first)) {
+			return boost::replace_all_copy(remote, pair.first, pair.second);
+		}
+	}
+	return "";
+}
+
 static bool refspec_is_commitid(const std::string &refspec)
 {
 	if(refspec.length() != 40) {
@@ -162,6 +185,7 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 	std::string location = this->uri;
 	std::string source_dir = this->local;
 	std::string cwd = this->P->getPwd();
+	std::string local_ref_dir = get_git_ref_dir(location);
 
 	bool exists = filesystem::is_directory(source_dir);
 
@@ -185,6 +209,10 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 	} else {
 		pc.addArg("clone");
 		pc.addArg("-n");
+		if(!local_ref_dir.empty()) {
+			pc.addArg("--reference-if-able");
+			pc.addArg(local_ref_dir);
+		}
 		pc.addArg(location);
 		pc.addArg(source_dir);
 		if(!pc.Run(this->P->getLogger())) {
