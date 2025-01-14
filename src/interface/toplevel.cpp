@@ -356,18 +356,19 @@ static int li_optionally_require(lua_State *L)
 	Package *P = li_get_package();
 
 	std::string fname = std::string(lua_tostring(L, 1)) + ".lua";
+	std::string relative_fname;
 
 	try {
-		std::string relative_fname = P->relative_fetch_path(fname, true);
-
-		int ret_values = P->getLua()->processFile(relative_fname);
-		P->buildDescription()->add_require_file(fname, hash_file(relative_fname));
-
-		return ret_values;
+		relative_fname = P->relative_fetch_path(fname, true);
 	} catch(FileNotFoundException &fnf) {
 		/* This action was optional, so we don't care */
+		return 0;
 	}
-	return 0;
+
+	int ret_values = P->getLua()->processFile(relative_fname);
+	P->buildDescription()->add_require_file(fname, hash_file(relative_fname));
+
+	return ret_values;
 }
 
 static int li_overlay_add(lua_State *L)
