@@ -426,10 +426,45 @@ namespace buildsys
 		};
 	};
 
+	/* A Git Repo
+	 * Used to prevent multiple packages fetching the same source at the same time
+	 */
+	class GitDir
+	{
+	private:
+		const std::string path;
+		std::string refspec;
+		mutable std::mutex lock;
+
+	public:
+		explicit GitDir(std::string _path) : path(std::move(_path))
+		{
+		}
+		const std::string &Path() const
+		{
+			return this->path;
+		}
+		const std::string &RefSpec() const
+		{
+			return this->refspec;
+		}
+		void setRefSpec(std::string _refspec)
+		{
+			this->refspec = std::move(_refspec);
+		}
+		std::mutex &getLock() const
+		{
+			return this->lock;
+		}
+	};
+
 	//! A remote git dir as part of an extraction step
 	class GitExtractionUnit : public GitDirExtractionUnit, public FetchUnit
 	{
 	private:
+		static std::list<GitDir> gdobjects;
+		static std::mutex gdobjects_lock;
+		const GitDir *findGDObject(const std::string &path);
 		std::string refspec;
 		std::string local;
 		bool updateOrigin();

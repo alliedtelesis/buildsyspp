@@ -27,6 +27,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/algorithm/string.hpp>
 
+std::list<GitDir> GitExtractionUnit::gdobjects;
+std::mutex GitExtractionUnit::gdobjects_lock;
+
+//! Find (or create) a GitDir for a given source dir
+const GitDir *GitExtractionUnit::findGDObject(const std::string &path)
+{
+	std::unique_lock<std::mutex> lk(GitExtractionUnit::gdobjects_lock);
+
+	for(const auto &obj : GitExtractionUnit::gdobjects) {
+		if(obj.Path() == path) {
+			return &obj;
+		}
+	}
+
+	GitExtractionUnit::gdobjects.emplace_back(path);
+	return &GitExtractionUnit::gdobjects.back();
+}
+
 std::list<std::pair<std::string, std::string>> git_ref_if_able_pairs;
 
 void GitExtractionUnit::add_ref_if_able_pattern(std::string pattern)
@@ -187,6 +205,25 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 	std::string cwd = this->P->getPwd();
 	std::string local_ref_dir = get_git_ref_dir(location);
 
+	/* Hold a lock while we clone/checkout this repo
+	 * Also checks for conflicting refspecs for the same repo
+	 */
+	const GitDir *gdobj = this->findGDObject(source_dir);
+	if(gdobj == nullptr) {
+		this->P->log("Failed to get the GitDir for " + source_dir);
+		return false;
+	}
+
+	std::unique_lock<std::mutex> lk(gdobj->getLock());
+
+	if(gdobj->RefSpec().length() != 0) {
+		if(gdobj->RefSpec() != this->refspec) {
+			this->P->log(
+			    boost::format{
+			        "Another package already checked out %1% in %2%, but we need %3%"} %
+			    gdobj->RefSpec() % source_dir % this->refspec);
+		}
+	}
 	bool exists = filesystem::is_directory(source_dir);
 
 	PackageCmd pc(exists ? source_dir : cwd, "git");
