@@ -16,7 +16,6 @@ file(GLOB_RECURSE SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/src/*.hpp
     ${CMAKE_SOURCE_DIR}/src/*.h)
 
-include(cpplint)
 include(clang-format)
 include(clang-tidy)
 

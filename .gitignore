@@ -2,3 +2,4 @@ buildsys
 *.o
 *.gch
 build
+.venv-cpplint
