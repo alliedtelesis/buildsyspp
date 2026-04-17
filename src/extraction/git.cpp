@@ -26,6 +26,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "include/buildsys.h"
 
 #include <boost/algorithm/string.hpp>
+#include <cstdio>
+#include <list>
+#include <string>
+#include <utility>
+#include <vector>
 
 std::list<GitDir> GitExtractionUnit::gdobjects;
 std::mutex GitExtractionUnit::gdobjects_lock;

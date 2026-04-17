@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "include/buildsys.h"
+#include <unordered_set>
+#include <utility>
 
 using namespace boost;
 

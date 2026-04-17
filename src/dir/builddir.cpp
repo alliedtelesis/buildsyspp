@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "dir/builddir.hpp"
 #include <filesystem>
+#include <string>
 
 using namespace buildsys;
 namespace filesystem = std::filesystem;

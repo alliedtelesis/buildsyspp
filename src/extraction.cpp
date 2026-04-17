@@ -24,6 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "include/buildsys.h"
+#include <string>
+#include <utility>
 
 void Extraction::add(std::unique_ptr<ExtractionUnit> eu)
 {

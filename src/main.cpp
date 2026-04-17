@@ -28,6 +28,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "logger.hpp"
 #include "options.hpp"
 #include <csignal>
+#include <iostream>
+#include <string>
 
 using std::chrono::duration_cast;
 using std::chrono::steady_clock;

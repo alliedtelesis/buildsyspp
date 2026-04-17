@@ -24,6 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "logger.hpp"
+#include <iostream>
+#include <memory>
+#include <string>
 
 using namespace buildsys;
 

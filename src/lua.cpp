@@ -30,6 +30,7 @@ extern "C" {
 
 #include "exceptions.hpp"
 #include "lua.hpp"
+#include <string>
 
 using namespace buildsys;
 

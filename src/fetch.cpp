@@ -24,6 +24,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "include/buildsys.h"
+#include <list>
+#include <string>
+#include <utility>
 
 std::string DownloadFetch::tarball_cache;
 std::list<DLObject> DownloadFetch::dlobjects;

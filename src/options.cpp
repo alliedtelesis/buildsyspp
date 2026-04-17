@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "exceptions.hpp"
 #include "include/buildsys.h"
 #include "interface/luainterface.h"
+#include <string>
 #include <vector>
 
 /**

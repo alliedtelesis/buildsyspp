@@ -25,6 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "include/buildsys.h"
 #include "interface/luainterface.h"
+#include <list>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #ifndef TAR_CMD
 #define TAR_CMD "/bin/tar"

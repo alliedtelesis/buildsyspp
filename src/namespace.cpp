@@ -25,6 +25,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "namespace.hpp"
 #include "include/buildsys.h"
+#include <iostream>
+#include <list>
+#include <memory>
+#include <string>
 #include <utility>
 
 using namespace buildsys;

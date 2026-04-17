@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pty.h>
 #include <string>
 #include <utility>
+#include <vector>
 
 /**
  * Construct a Package Command

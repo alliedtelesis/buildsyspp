@@ -24,6 +24,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "include/buildsys.h"
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <utility>
 
 static void build_thread(World *w, Package *p)
 {

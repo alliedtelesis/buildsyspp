@@ -26,6 +26,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "include/buildsys.h"
 #include "interface/builddir.hpp"
 #include "interface/luainterface.h"
+#include <list>
+#include <string>
 #include <sys/stat.h>
 
 static int li_name(lua_State *L)

@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <openssl/evp.h>
 #include <sstream>
+#include <string>
 #include <vector>
 
 void buildsys::hash_setup()
