@@ -149,7 +149,7 @@ bool World::basePackage(const std::string &filename)
 		}
 		if(this->failed) {
 			for(auto pfailed : this->failed_packages) {
-				pfailed->log("Build Failed");
+				pfailed->log_always("Build Failed");
 			}
 		}
 	}

@@ -849,6 +849,14 @@ namespace buildsys
 		{
 			this->logger.log(str);
 		}
+		void log_always(const std::string &str)
+		{
+			this->logger.log_always(str);
+		}
+		void log_always(const boost::format &str)
+		{
+			this->logger.log_always(str);
+		}
 		Logger *getLogger()
 		{
 			return &this->logger;

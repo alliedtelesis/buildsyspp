@@ -86,6 +86,34 @@ void Logger::log(const boost::format &str)
 }
 
 /**
+ * Output a log message, bypassing any file redirection so it always appears
+ * on the terminal. If a log file is also configured, the message is written
+ * there as well.
+ *
+ * @param str - The string to output.
+ */
+void Logger::log_always(const std::string &str)
+{
+	auto msg = boost::format{"%1%%2%"} % this->prefix % str;
+	if(this->file_output) {
+		*this->file_output << msg << std::endl;
+	}
+	std::cout << msg << std::endl;
+}
+
+/**
+ * Output a log message, bypassing any file redirection so it always appears
+ * on the terminal. If a log file is also configured, the message is written
+ * there as well.
+ *
+ * @param str - The boost::format object containing the string to output.
+ */
+void Logger::log_always(const boost::format &str)
+{
+	this->log_always(str.str());
+}
+
+/**
  * Returns whether the logging supports colour output.
  *
  * @returns true if supported, false otherwise.

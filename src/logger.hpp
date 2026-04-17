@@ -48,6 +48,8 @@ namespace buildsys
 		Logger(const std::string &_prefix, const std::string &file_path);
 		void log(const std::string &str);
 		void log(const boost::format &str);
+		void log_always(const std::string &str);
+		void log_always(const boost::format &str);
 		bool supports_colour_output() const;
 	};
 } // namespace buildsys
