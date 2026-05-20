@@ -422,7 +422,7 @@ void Package::updateBuildInfoHashExisting()
 	// populate the build.info hash
 	std::string build_info_file = this->bd.getPath() + "/.build.info";
 	this->buildinfo_hash = hash_file(build_info_file);
-	this->log("Hash: " + this->buildinfo_hash);
+	this->log_verbose("Hash: " + this->buildinfo_hash);
 }
 
 void Package::updateBuildInfoHash()
@@ -430,7 +430,7 @@ void Package::updateBuildInfoHash()
 	// populate the build.info hash
 	std::string build_info_file = this->bd.getPath() + "/.build.info.new";
 	this->buildinfo_hash = hash_file(build_info_file);
-	this->log("Hash: " + this->buildinfo_hash);
+	this->log_verbose("Hash: " + this->buildinfo_hash);
 }
 
 Package::BuildInfoType Package::buildInfo(std::string *file_path, std::string *hash)
@@ -515,8 +515,9 @@ bool Package::fetchFrom()
 	    {"output.info", this->bd.getPath(), ".output", ".info"},
 	};
 
-	this->log(boost::format{"FF URL: %1%/%2%/%3%/%4%"} % Package::build_cache %
-	          this->getNS()->getName() % this->name % this->buildinfo_hash);
+	std::string ff_url = (boost::format{"%1%/%2%/%3%/%4%"} % Package::build_cache %
+	                      this->getNS()->getName() % this->name % this->buildinfo_hash)
+	                         .str();
 
 	if(!this->isHashingOutput()) {
 		files.pop_back();
@@ -531,9 +532,9 @@ bool Package::fetchFrom()
 	}
 
 	if(ret) {
-		this->log("Could not optimize away building");
+		this->log("No build cache: " + ff_url);
 	} else {
-		this->log("Build cache used");
+		this->log("Build cache used: " + ff_url);
 
 		this->updateBuildInfo(false);
 	}
@@ -650,7 +651,7 @@ static void cleanDir(const std::string &dir)
 
 bool Package::prepareBuildDirs()
 {
-	this->log("Generating staging directory ...");
+	this->log_verbose("Generating staging directory ...");
 
 	// Clean out the (new) staging/install directories
 	cleanDir(this->bd.getNewInstall());
@@ -683,7 +684,7 @@ bool Package::prepareBuildDirs()
 	}
 
 	if(result) {
-		this->log(boost::format{"Done (%1%)"} % packages.size());
+		this->log_verbose(boost::format{"Done (%1%)"} % packages.size());
 	}
 
 	return result;
@@ -838,14 +839,14 @@ bool Package::build(bool locally, bool fetchOnly)
 	if(this->should_suppress_building()) {
 		// Set the build.info hash based on what is currently present
 		this->updateBuildInfoHashExisting();
-		this->log("Building suppressed");
+		this->log_verbose("Building suppressed");
 		// Just pretend we are built
 		this->built = true;
 		return true;
 	}
 
 	if(this->clean_before_build) {
-		this->log("Cleaning");
+		this->log_verbose("Cleaning");
 		this->bd.clean();
 	}
 
@@ -859,7 +860,7 @@ bool Package::build(bool locally, bool fetchOnly)
 
 	// Check if building is required
 	if(!locally && !this->shouldBuild()) {
-		this->log("Not required");
+		this->log_verbose("Not required");
 		// Already built
 		this->built = true;
 		return true;
@@ -885,7 +886,6 @@ bool Package::build(bool locally, bool fetchOnly)
 
 	if(!fetchOnly) {
 		if(this->Extract.extractionRequired(this, &this->bd)) {
-			this->log("Extracting ...");
 			if(!this->Extract.extract(this)) {
 				return false;
 			}
@@ -904,15 +904,13 @@ bool Package::build(bool locally, bool fetchOnly)
 		auto cIt = this->commands.begin();
 		auto cEnd = this->commands.end();
 
-		this->log("Running Commands");
+		this->log_verbose("Running Commands");
 		for(; cIt != cEnd; cIt++) {
 			if(!(*cIt).Run(&this->logger)) {
 				return false;
 			}
 		}
-		this->log("Done Commands");
-
-		this->log("BUILT");
+		this->log_verbose("Done Commands");
 
 		if(!this->packageNewStaging()) {
 			return false;

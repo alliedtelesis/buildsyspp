@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void build_thread(World *w, Package *p)
 {
-	p->log("Build Thread");
+	p->log_verbose("Build Thread");
 	p->log(boost::format{"Building (%1% others running)"} % (w->threadsRunning() - 1));
 
 	try {
