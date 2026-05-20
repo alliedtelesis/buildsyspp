@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace buildsys;
 
+bool Logger::verbose = false;
+
 /**
  * Construct a Logger object. Log messages will be output to std::cout
  * with no prefix.
@@ -124,4 +126,36 @@ void Logger::log_always(const boost::format &str)
 bool Logger::supports_colour_output() const
 {
 	return this->output_supports_colour;
+}
+
+/**
+ * Set verbose mode. When enabled, log_verbose() messages will be output.
+ *
+ * @param v - true to enable verbose output, false to disable.
+ */
+void Logger::set_verbose(bool v)
+{
+	Logger::verbose = v;
+}
+
+/**
+ * Output a log message only when verbose mode is enabled.
+ *
+ * @param str - The string to output.
+ */
+void Logger::log_verbose(const std::string &str)
+{
+	if(Logger::verbose) {
+		this->log(str);
+	}
+}
+
+/**
+ * Output a log message only when verbose mode is enabled.
+ *
+ * @param str - The boost::format object containing the string to output.
+ */
+void Logger::log_verbose(const boost::format &str)
+{
+	this->log_verbose(str.str());
 }

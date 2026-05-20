@@ -41,6 +41,7 @@ namespace buildsys
 		std::unique_ptr<std::ofstream> file_output;
 		std::ostream *output{nullptr};
 		bool output_supports_colour{false};
+		static bool verbose;
 
 	public:
 		Logger();
@@ -50,6 +51,9 @@ namespace buildsys
 		void log(const boost::format &str);
 		void log_always(const std::string &str);
 		void log_always(const boost::format &str);
+		void log_verbose(const std::string &str);
+		void log_verbose(const boost::format &str);
+		static void set_verbose(bool v);
 		bool supports_colour_output() const;
 	};
 } // namespace buildsys

@@ -73,6 +73,8 @@ std::string buildsys::parse_command_line(int argc, char *argv[], World *WORLD)
 			WORLD->setFetchOnly();
 		} else if(argList[a] == "--quietly") {
 			Package::set_quiet_packages(true);
+		} else if(argList[a] == "--verbose") {
+			Logger::set_verbose(true);
 		} else if(argList[a] == "--keep-staging") {
 			Package::set_keep_all_staging(true);
 		} else if(argList[a] == "--parallel-packages") {
