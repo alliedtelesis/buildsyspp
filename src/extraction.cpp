@@ -26,10 +26,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "include/buildsys.h"
 #include <string>
 #include <utility>
+#include <vector>
 
 void Extraction::add(std::unique_ptr<ExtractionUnit> eu)
 {
 	this->EUs.push_back(std::move(eu));
+}
+
+std::vector<FetchInfo> Extraction::sourceInfo()
+{
+	std::vector<FetchInfo> sources;
+	for(auto &unit : this->EUs) {
+		FetchInfo source = unit->fetchInfo();
+		if(!source.uri.empty() || !source.path.empty()) {
+			sources.push_back(source);
+		}
+	}
+	return sources;
 }
 
 void Extraction::prepareNewExtractInfo(Package *P, BuildDir *bd)
@@ -84,6 +97,18 @@ void Extraction::extractionInfo(BuildDir *bd, std::string *file_path,
 	*hash = hash_file(*file_path + ".new");
 }
 
+FetchInfo ExtractionUnit::fetchInfo()
+{
+	FetchInfo source;
+	source.type = this->type();
+	source.uri = this->URI();
+	source.hash = this->HASH();
+	if(!source.hash.empty()) {
+		source.hash_algorithm = "SHA-256";
+	}
+	return source;
+}
+
 CompressedFileExtractionUnit::CompressedFileExtractionUnit(FetchUnit *f)
 {
 	this->fetch = f;
@@ -106,6 +131,18 @@ std::string CompressedFileExtractionUnit::HASH()
 		}
 	}
 	return this->hash;
+}
+
+FetchInfo CompressedFileExtractionUnit::fetchInfo()
+{
+	FetchInfo source;
+	if(this->fetch != nullptr) {
+		source = this->fetch->fetchInfo();
+	} else {
+		source = ExtractionUnit::fetchInfo();
+	}
+	source.type = this->type();
+	return source;
 }
 
 bool TarExtractionUnit::extract(Package *P)
@@ -179,6 +216,13 @@ bool PatchExtractionUnit::extract(Package *P)
 	return true;
 }
 
+FetchInfo PatchExtractionUnit::fetchInfo()
+{
+	FetchInfo source = ExtractionUnit::fetchInfo();
+	source.path = this->patch_path;
+	return source;
+}
+
 FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string &fname,
                                                const std::string &_fname_short)
 {
@@ -209,6 +253,13 @@ bool FileCopyExtractionUnit::extract(Package *P)
 	return true;
 }
 
+FetchInfo FileCopyExtractionUnit::fetchInfo()
+{
+	FetchInfo source = ExtractionUnit::fetchInfo();
+	source.path = this->fname_short;
+	return source;
+}
+
 FetchedFileCopyExtractionUnit::FetchedFileCopyExtractionUnit(
     FetchUnit *_fetched, const std::string &_fname_short)
 {
@@ -224,6 +275,14 @@ std::string FetchedFileCopyExtractionUnit::HASH()
 		this->hash = this->fetched->HASH();
 	}
 	return this->hash;
+}
+
+FetchInfo FetchedFileCopyExtractionUnit::fetchInfo()
+{
+	FetchInfo source = this->fetched->fetchInfo();
+	source.type = this->type();
+	source.path = this->fname_short;
+	return source;
 }
 
 bool FetchedFileCopyExtractionUnit::extract(Package *P)

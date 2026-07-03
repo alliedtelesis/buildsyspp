@@ -160,6 +160,19 @@ std::string GitDirExtractionUnit::dirtyHash()
 	return git_diff_hash(this->localPath());
 }
 
+FetchInfo GitDirExtractionUnit::fetchInfo()
+{
+	FetchInfo source;
+	source.type = "git-" + this->modeName();
+	source.uri = this->URI();
+	source.path = this->localPath();
+	source.hash = this->hash;
+	if(!source.hash.empty()) {
+		source.hash_algorithm = "SHA-1";
+	}
+	return source;
+}
+
 GitExtractionUnit::GitExtractionUnit(const std::string &remote, const std::string &_local,
                                      std::string _refspec, Package *_P)
 {
@@ -327,6 +340,27 @@ std::string GitExtractionUnit::HASH()
 		}
 	}
 	return this->hash;
+}
+
+FetchInfo GitExtractionUnit::fetchInfo()
+{
+	FetchInfo source = GitDirExtractionUnit::fetchInfo();
+	source.ref = this->refspec;
+	if(source.hash.empty()) {
+		if(refspec_is_commitid(this->refspec)) {
+			source.hash = this->refspec;
+		} else {
+			try {
+				source.hash = this->P->getFileHash(this->uri + "#" + this->refspec);
+			} catch(buildsys::FileNotFoundException const &) {
+				source.hash.clear();
+			}
+		}
+	}
+	if(!source.hash.empty()) {
+		source.hash_algorithm = "SHA-1";
+	}
+	return source;
 }
 
 bool GitExtractionUnit::extract(Package *_P)

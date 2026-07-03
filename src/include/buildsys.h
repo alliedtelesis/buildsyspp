@@ -87,6 +87,19 @@ namespace buildsys
 
 	bool interfaceSetup(Lua *lua);
 
+	/** Source information for a single fetch/extraction unit.
+	 * Gathered per package and written to .fetch.info for external tooling
+	 * (SBOM generation, provenance/audit, cache inspection, ...).
+	 */
+	struct FetchInfo {
+		std::string type;
+		std::string uri;
+		std::string path;
+		std::string ref;
+		std::string hash;
+		std::string hash_algorithm;
+	};
+
 	/* A Downloaded Object
 	 * Used to prevent multiple packages downloading the same file at the same time
 	 */
@@ -155,6 +168,7 @@ namespace buildsys
 			return false;
 		};
 		virtual std::string relative_path() = 0;
+		virtual FetchInfo fetchInfo();
 	};
 
 	/* A downloaded file
@@ -187,6 +201,7 @@ namespace buildsys
 		{
 			return "dl/" + this->final_name();
 		};
+		FetchInfo fetchInfo() override;
 		static void setTarballCache(std::string cache);
 	};
 
@@ -205,6 +220,7 @@ namespace buildsys
 		};
 		std::string HASH() override;
 		std::string relative_path() override;
+		FetchInfo fetchInfo() override;
 	};
 
 	/* A copied file/directory
@@ -222,6 +238,7 @@ namespace buildsys
 		};
 		std::string HASH() override;
 		std::string relative_path() override;
+		FetchInfo fetchInfo() override;
 	};
 
 	/** An extraction unit
@@ -245,6 +262,7 @@ namespace buildsys
 		{
 			return this->hash;
 		};
+		virtual FetchInfo fetchInfo();
 	};
 
 	//! A compressed file extraction unit
@@ -261,6 +279,7 @@ namespace buildsys
 		{
 			out << this->type() << " " << this->uri << " " << this->HASH() << std::endl;
 		}
+		FetchInfo fetchInfo() override;
 	};
 
 	//! A tar extraction unit
@@ -323,6 +342,7 @@ namespace buildsys
 			return std::string("PatchFile");
 		}
 		bool extract(Package *P) override;
+		FetchInfo fetchInfo() override;
 	};
 
 	//! A file copy as part of the extraction step
@@ -343,6 +363,7 @@ namespace buildsys
 			return std::string("FileCopy");
 		}
 		bool extract(Package *P) override;
+		FetchInfo fetchInfo() override;
 	};
 
 	//! A file copy of a fetched file as part of the extraction step
@@ -365,6 +386,7 @@ namespace buildsys
 		}
 		bool extract(Package *P) override;
 		std::string HASH() override;
+		FetchInfo fetchInfo() override;
 	};
 
 	//! A git directory as part of the extraction step
@@ -394,6 +416,7 @@ namespace buildsys
 			return this->uri;
 		}
 		virtual std::string modeName() = 0;
+		FetchInfo fetchInfo() override;
 	};
 
 	//! A local linked-in git dir as part of an extraction step
@@ -487,6 +510,8 @@ namespace buildsys
 		{
 			return this->localPath();
 		};
+		// Resolves the fetchInfo() inherited from both GitDirExtractionUnit and FetchUnit
+		FetchInfo fetchInfo() override;
 		static void add_ref_if_able_pattern(std::string pattern);
 	};
 
@@ -501,6 +526,8 @@ namespace buildsys
 
 	public:
 		void add(std::unique_ptr<FetchUnit> fu);
+		//! Collect the source info for every fetch unit (for .fetch.info)
+		std::vector<FetchInfo> sourceInfo();
 		bool fetch(BuildDir *d)
 		{
 			for(auto &unit : this->FUs) {
@@ -534,6 +561,8 @@ namespace buildsys
 		void prepareNewExtractInfo(Package *P, BuildDir *bd);
 		bool extractionRequired(Package *P, BuildDir *bd) const;
 		void extractionInfo(BuildDir *bd, std::string *file_path, std::string *hash) const;
+		//! Collect the source info for every extraction unit (for .fetch.info)
+		std::vector<FetchInfo> sourceInfo();
 	};
 
 	//! A dependency on another Package
@@ -615,6 +644,9 @@ namespace buildsys
 		             const std::string &fext);
 		void common_init();
 		bool should_suppress_building();
+
+		//! Write the per-package .fetch.info (fetch + extraction source info)
+		void writeFetchInfo();
 
 	protected:
 		//! prepare the (new) build.info file

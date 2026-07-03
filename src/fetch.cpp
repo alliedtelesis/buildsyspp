@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <list>
 #include <string>
 #include <utility>
+#include <vector>
 
 std::string DownloadFetch::tarball_cache;
 std::list<DLObject> DownloadFetch::dlobjects;
@@ -89,6 +90,33 @@ std::string DownloadFetch::final_name()
 	}
 
 	return ret;
+}
+
+FetchInfo FetchUnit::fetchInfo()
+{
+	FetchInfo source;
+	source.uri = this->fetch_uri;
+	source.path = this->relative_path();
+	return source;
+}
+
+FetchInfo DownloadFetch::fetchInfo()
+{
+	FetchInfo source = FetchUnit::fetchInfo();
+	source.type = "download";
+	source.hash = this->hash;
+	source.hash_algorithm = "SHA-256";
+	if(source.hash.empty()) {
+		try {
+			source.hash = this->P->getFileHash(this->final_name());
+		} catch(buildsys::FileNotFoundException const &) {
+			source.hash.clear();
+		}
+	}
+	if(source.hash.empty()) {
+		source.hash_algorithm.clear();
+	}
+	return source;
 }
 
 bool DownloadFetch::fetch(BuildDir *) // NOLINT
@@ -231,6 +259,13 @@ std::string LinkFetch::HASH()
 	return std::string("");
 }
 
+FetchInfo LinkFetch::fetchInfo()
+{
+	FetchInfo source = FetchUnit::fetchInfo();
+	source.type = "link";
+	return source;
+}
+
 std::string LinkFetch::relative_path()
 {
 	auto position = this->fetch_uri.rfind('/');
@@ -265,6 +300,13 @@ std::string CopyFetch::HASH()
 	return std::string("");
 }
 
+FetchInfo CopyFetch::fetchInfo()
+{
+	FetchInfo source = FetchUnit::fetchInfo();
+	source.type = "copy";
+	return source;
+}
+
 std::string CopyFetch::relative_path()
 {
 	auto position = this->fetch_uri.rfind('/');
@@ -282,4 +324,13 @@ std::string CopyFetch::relative_path()
 void Fetch::add(std::unique_ptr<FetchUnit> fu)
 {
 	this->FUs.push_back(std::move(fu));
+}
+
+std::vector<FetchInfo> Fetch::sourceInfo()
+{
+	std::vector<FetchInfo> sources;
+	for(auto &unit : this->FUs) {
+		sources.push_back(unit->fetchInfo());
+	}
+	return sources;
 }

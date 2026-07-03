@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "include/buildsys.h"
 #include "interface/luainterface.h"
 #include <list>
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -487,6 +488,39 @@ void Package::prepareBuildInfo()
 	this->buildInfoPrepared = true;
 }
 
+void Package::writeFetchInfo()
+{
+	// Combine the fetch and extraction source info. This carries details that
+	// are deliberately absent from .extraction.info / .build.info (upstream
+	// download URLs, git refspecs, fetched-file URIs, fetch-only units) so that
+	// those files - and the build cache hashes derived from them - are not
+	// disturbed. Written for external tooling (SBOM generation, provenance).
+	std::vector<FetchInfo> sources = this->f.sourceInfo();
+	std::vector<FetchInfo> extraction = this->Extract.sourceInfo();
+	sources.insert(sources.end(), extraction.begin(), extraction.end());
+
+	std::string fname = this->bd.getPath() + "/.fetch.info";
+	std::ofstream info(fname.c_str());
+	if(!info.is_open()) {
+		return;
+	}
+	// Tab-separated: type, uri, path, ref, hash, hash-algorithm. These fields
+	// never contain tabs or newlines. De-duplicated on (uri, path, ref, hash),
+	// matching how a consumer would collapse the fetch/extraction overlap.
+	std::set<std::string> seen;
+	for(const auto &source : sources) {
+		std::string key =
+		    source.uri + "\n" + source.path + "\n" + source.ref + "\n" + source.hash;
+		if(!seen.insert(key).second) {
+			continue;
+		}
+		info << source.type << "\t" << source.uri << "\t" << source.path << "\t"
+		     << source.ref << "\t" << source.hash << "\t" << source.hash_algorithm
+		     << std::endl;
+	}
+	info.close();
+}
+
 void Package::updateBuildInfo(bool updateOutputHash)
 {
 	// mv the build info file into the regular place
@@ -852,6 +886,11 @@ bool Package::build(bool locally, bool fetchOnly)
 
 	// Create the new extraction.info file
 	this->Extract.prepareNewExtractInfo(this, &this->bd);
+
+	// Record fetch/extraction source info for external tooling. Done here (before
+	// the shouldBuild() cache check) so it is produced for every package, whether
+	// it is built locally or restored from the build cache.
+	this->writeFetchInfo();
 
 	// Create the new build.info file
 	if(!fetchOnly) {
