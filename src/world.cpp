@@ -42,8 +42,11 @@ static void build_thread(World *w, Package *p)
 			p->log("Building failed");
 		}
 	} catch(std::exception &e) {
+		// This runs in a detached thread; letting the exception escape the
+		// thread entry point would call std::terminate() and abort the whole
+		// build. Treat it as an ordinary build failure instead.
 		p->log(e.what());
-		throw;
+		w->setFailed(p);
 	}
 	w->threadEnded();
 
