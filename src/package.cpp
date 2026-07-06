@@ -154,6 +154,9 @@ void Package::common_init()
 	}
 
 	char *_pwd = getcwd(nullptr, 0);
+	if(_pwd == nullptr) {
+		throw CustomException("getcwd() failed: " + std::string(strerror(errno)));
+	}
 	this->pwd = std::string(_pwd);
 	free(_pwd); // NOLINT
 
