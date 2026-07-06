@@ -81,6 +81,23 @@ static void pipe_data_thread(Logger *logger, int fd)
 }
 
 /**
+ * Report an error from a forked child using only async-signal-safe calls.
+ *
+ * Between fork() and exec() in a multithreaded process nothing that allocates
+ * or takes a lock (including the Logger) may be used, so write directly to
+ * stderr. write()'s result is intentionally ignored -- there is nothing useful
+ * to do with it on this path.
+ */
+static void child_error(const char *msg, const std::string &detail)
+{
+	// Best-effort diagnostic; the write() results are deliberately ignored as
+	// there is nothing useful to do with them on this path.
+	(void) write(STDERR_FILENO, msg, strlen(msg));
+	(void) write(STDERR_FILENO, detail.c_str(), detail.size());
+	(void) write(STDERR_FILENO, "\n", 1);
+}
+
+/**
  * Execute the command via a new process.
  *
  * @param logger - The Logger to use to print any output.
@@ -92,6 +109,20 @@ int PackageCmd::exec_process(Logger *logger, int *fd)
 {
 	int pid;
 	std::vector<int> pipe_fds(2);
+
+	// Build the argv/envp C-arrays in the parent. Between fork() and exec() in a
+	// multithreaded process only async-signal-safe calls are permitted, so the
+	// child must not allocate. The backing std::strings live in this->args /
+	// this->envp and stay valid across fork().
+	std::vector<const char *> pargs(this->args.size());
+	std::transform(this->args.begin(), this->args.end(), pargs.begin(),
+	               [](const std::string &s) { return s.c_str(); });
+	pargs.push_back(nullptr);
+
+	std::vector<const char *> penv(this->envp.size());
+	std::transform(this->envp.begin(), this->envp.end(), penv.begin(),
+	               [](const std::string &s) { return s.c_str(); });
+	penv.push_back(nullptr);
 
 	if(fd != nullptr) {
 		if(logger->supports_colour_output()) {
@@ -136,27 +167,16 @@ int PackageCmd::exec_process(Logger *logger, int *fd)
 		}
 
 		if(chdir(this->path.c_str()) != 0) {
-			logger->log(boost::format{"chdir '%1%' failed"} % this->path);
-			exit(-1);
+			child_error("buildsys: chdir failed: ", this->path);
+			_exit(-1);
 		}
-
-		std::vector<const char *> pargs(this->args.size());
-		std::vector<const char *> penv(this->envp.size());
-
-		std::transform(this->args.begin(), this->args.end(), pargs.begin(),
-		               [](const std::string &s) { return s.c_str(); });
-		pargs.push_back(nullptr);
-
-		std::transform(this->envp.begin(), this->envp.end(), penv.begin(),
-		               [](const std::string &s) { return s.c_str(); });
-		penv.push_back(nullptr);
 
 		execvpe(this->app.c_str(), const_cast<char *const *>(pargs.data()), // NOLINT
 		        const_cast<char *const *>(penv.data()));                    // NOLINT
 
 		// Should never be reached
-		logger->log("Failed Running " + this->app);
-		exit(-1);
+		child_error("buildsys: failed to exec ", this->app);
+		_exit(-1);
 	}
 
 	// Parent process
