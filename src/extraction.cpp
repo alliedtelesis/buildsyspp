@@ -151,7 +151,8 @@ bool TarExtractionUnit::extract(Package *P)
 {
 	PackageCmd pc(P->builddir()->getPath(), "tar");
 
-	pc.addArg("xf");
+	pc.addArg("--no-same-owner");
+	pc.addArg("-xf");
 	pc.addArg(P->getPwd() + "/" + this->uri);
 
 	if(!pc.Run(P->getLogger())) {
