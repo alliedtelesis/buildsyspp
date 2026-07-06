@@ -57,8 +57,11 @@ void GitExtractionUnit::add_ref_if_able_pattern(std::string pattern)
 	std::vector<std::string> parts;
 	boost::split(parts, pattern, boost::algorithm::is_any_of(","));
 
-	git_ref_if_able_pairs.emplace_back(
-	    std::pair<std::string, std::string>(parts[0], parts[1]));
+	if(parts.size() != 2 || parts[0].empty() || parts[1].empty()) {
+		throw CustomException("--git-local-mirror-map expects 'prefix,replacement'");
+	}
+
+	git_ref_if_able_pairs.emplace_back(parts[0], parts[1]);
 }
 
 static std::string get_git_ref_dir(const std::string &remote)
