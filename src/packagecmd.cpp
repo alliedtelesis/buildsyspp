@@ -259,6 +259,20 @@ void PackageCmd::disableLogging()
  */
 void PackageCmd::addEnv(const std::string &env)
 {
+	// env is "KEY=value". The constructor snapshots the whole parent
+	// environment, so simply appending an override would leave two entries for
+	// KEY and which one getenv() sees in the child is implementation-defined.
+	// Replace an existing entry for the same key instead of appending.
+	auto eq = env.find('=');
+	if(eq != std::string::npos) {
+		std::string key = env.substr(0, eq + 1); // "KEY="
+		for(auto &entry : this->envp) {
+			if(entry.compare(0, key.size(), key) == 0) {
+				entry = env;
+				return;
+			}
+		}
+	}
 	this->envp.push_back(env);
 }
 
