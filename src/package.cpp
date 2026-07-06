@@ -408,16 +408,41 @@ bool Package::ff_file(const std::string &hash, const std::string &rfile,
                       const std::string &path, const std::string &fname,
                       const std::string &fext)
 {
-	bool ret = false;
 	std::string url = Package::build_cache + "/" + this->getNS()->getName() + "/" +
 	                  this->getName() + "/" + hash + "/" + rfile;
-	std::string cmd = "wget -q " + url + " -O " + path + "/" + fname + fext;
-	int res = std::system(cmd.c_str());
-	if(res != 0) {
+	std::string dest = path + "/" + fname + fext;
+	std::string tmp = dest + ".tmp";
+
+	// Download to a temporary file and promote it only once wget succeeds:
+	// "wget -O <file>" leaves a truncated/empty file behind on an HTTP error
+	// (e.g. a cache miss returning 404), which later stages would extract as if
+	// it were a valid cache artifact. Using PackageCmd also avoids building a
+	// shell command line. Returns true on failure, false on success.
+	//
+	// A build-cache miss must never be fatal, so use the non-throwing
+	// filesystem overloads and return true (build locally) on any error --
+	// fetchFrom() runs before the staging/install dirs are created, so the temp
+	// file's directory may not even exist yet.
+	PackageCmd pc(this->pwd, "wget");
+	pc.addArg("-q");
+	pc.addArg(url);
+	pc.addArg("-O");
+	pc.addArg(tmp);
+
+	std::error_code ec;
+	if(!pc.Run(&this->logger)) {
 		this->log("Failed to get " + rfile);
-		ret = true;
+		filesystem::remove(tmp, ec);
+		return true;
 	}
-	return ret;
+
+	filesystem::rename(tmp, dest, ec);
+	if(ec) {
+		this->log("Failed to store " + rfile + ": " + ec.message());
+		filesystem::remove(tmp, ec);
+		return true;
+	}
+	return false;
 }
 
 void Package::updateBuildInfoHashExisting()
