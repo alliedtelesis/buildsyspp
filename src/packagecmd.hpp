@@ -40,6 +40,7 @@ namespace buildsys
 		std::vector<std::string> args;
 		std::vector<std::string> envp;
 		bool log_output{true};
+		bool failure_expected{false};
 
 		int exec_process(Logger *logger, int *fd);
 
@@ -50,6 +51,7 @@ namespace buildsys
 		bool Run(Logger *logger);
 		void printCmd(Logger *logger) const;
 		void disableLogging();
+		void allowFailure();
 		const std::string &getPath() const;
 		const std::string &getApp() const;
 		const std::vector<std::string> &getArgs() const;

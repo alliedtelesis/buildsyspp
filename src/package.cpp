@@ -428,6 +428,9 @@ bool Package::ff_file(const std::string &hash, const std::string &rfile,
 	pc.addArg(url);
 	pc.addArg("-O");
 	pc.addArg(tmp);
+	// A cache miss is normal; don't dump the failed wget command line into the
+	// log -- we already log a concise "Failed to get" line below.
+	pc.allowFailure();
 
 	std::error_code ec;
 	if(!pc.Run(&this->logger)) {

@@ -217,14 +217,23 @@ bool PackageCmd::Run(Logger *logger)
 	// (often 0), which would otherwise be treated as success and poison the
 	// build cache with a partial result.
 	if(!WIFEXITED(status) || WEXITSTATUS(status) != 0) { // NOLINT
-		if(WIFSIGNALED(status)) {                        // NOLINT
+		bool report = true;
+		if(WIFSIGNALED(status)) { // NOLINT
+			// Death by signal (OOM killer, SIGSEGV, SIGKILL, ...) is abnormal, so
+			// report it even for callers that tolerate an ordinary non-zero exit.
 			logger->log(boost::format{"%1% killed by signal %2% (path = %3%)"} % this->app %
 			            WTERMSIG(status) % this->path); // NOLINT
+		} else if(this->failure_expected) {
+			// An ordinary non-zero exit that the caller expects (e.g. an optional
+			// build-cache fetch missing); stay quiet.
+			report = false;
 		} else {
 			logger->log(boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
 			            this->app % this->path % WEXITSTATUS(status)); // NOLINT
 		}
-		this->printCmd(logger);
+		if(report) {
+			this->printCmd(logger);
+		}
 		return false;
 	}
 
@@ -250,6 +259,16 @@ void PackageCmd::printCmd(Logger *logger) const
 void PackageCmd::disableLogging()
 {
 	this->log_output = false;
+}
+
+/**
+ * Mark failure as an expected outcome. When set, Run() does not log an error or
+ * dump the command line if the command exits non-zero; the caller is expected
+ * to handle the false return itself.
+ */
+void PackageCmd::allowFailure()
+{
+	this->failure_expected = true;
 }
 
 /**
