@@ -208,6 +208,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 			this->P->log(boost::format{
 			                 "Hash mismatched for %1%\n(committed to %2%, providing %3%)"} %
 			             this->final_name() % this->hash % _hash);
+			filesystem::remove(fpath.str());
 			ret = false;
 		}
 	}
