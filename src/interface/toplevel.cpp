@@ -112,7 +112,7 @@ static int li_feature(lua_State *L)
 			throw CustomException(
 			    "Third argument to feature() must be boolean, if present");
 		}
-		override = (lua_toboolean(L, -3) != 0);
+		override = (lua_toboolean(L, 3) != 0);
 	}
 
 	li_get_feature_map()->setFeature(key, value, override);
