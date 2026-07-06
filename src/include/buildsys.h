@@ -487,7 +487,7 @@ namespace buildsys
 	private:
 		static std::list<GitDir> gdobjects;
 		static std::mutex gdobjects_lock;
-		const GitDir *findGDObject(const std::string &path);
+		GitDir *findGDObject(const std::string &path);
 		std::string refspec;
 		std::string local;
 		bool updateOrigin();

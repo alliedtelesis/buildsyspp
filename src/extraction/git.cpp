@@ -36,11 +36,11 @@ std::list<GitDir> GitExtractionUnit::gdobjects;
 std::mutex GitExtractionUnit::gdobjects_lock;
 
 //! Find (or create) a GitDir for a given source dir
-const GitDir *GitExtractionUnit::findGDObject(const std::string &path)
+GitDir *GitExtractionUnit::findGDObject(const std::string &path)
 {
 	std::unique_lock<std::mutex> lk(GitExtractionUnit::gdobjects_lock);
 
-	for(const auto &obj : GitExtractionUnit::gdobjects) {
+	for(auto &obj : GitExtractionUnit::gdobjects) {
 		if(obj.Path() == path) {
 			return &obj;
 		}
@@ -226,7 +226,7 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 	/* Hold a lock while we clone/checkout this repo
 	 * Also checks for conflicting refspecs for the same repo
 	 */
-	const GitDir *gdobj = this->findGDObject(source_dir);
+	GitDir *gdobj = this->findGDObject(source_dir);
 	if(gdobj == nullptr) {
 		this->P->log("Failed to get the GitDir for " + source_dir);
 		return false;
@@ -240,7 +240,15 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 			    boost::format{
 			        "Another package already checked out %1% in %2%, but we need %3%"} %
 			    gdobj->RefSpec() % source_dir % this->refspec);
+			// Two packages sharing one source dir at different refspecs would
+			// clobber each other's checkout, so this must be fatal rather than
+			// just logged.
+			return false;
 		}
+	} else {
+		// First package to use this source dir: record its refspec so a later
+		// package needing a different one is caught above.
+		gdobj->setRefSpec(this->refspec);
 	}
 	bool exists = filesystem::is_directory(source_dir);
 
