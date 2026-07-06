@@ -53,28 +53,33 @@ static void build_thread(World *w, Package *p)
 	p->log(boost::format{"Finished (%1% others running)"} % w->threadsRunning());
 }
 
-static void process_package(Package *p, PackageQueue *pq)
+static void process_package(World *w, Package *p, PackageQueue *pq)
 {
 	try {
-		if(!p->process()) {
+		if(p->process()) {
+			for(auto &depend : p->getDepends()) {
+				Package *dp = depend.getPackage();
+				if(dp->setProcessingQueued()) {
+					pq->push(dp);
+				}
+			}
+		} else {
 			p->log("Processing failed");
+			w->setFailed(p);
 		}
 	} catch(std::exception &e) {
+		// Detached thread: an escaping exception would call std::terminate().
+		// A processing failure must not let the build proceed with an
+		// incomplete dependency graph, so record it; basePackage() checks
+		// isFailed() before building. finish() still runs so the queue drains.
 		p->log(e.what());
-		throw;
-	}
-
-	for(auto &depend : p->getDepends()) {
-		Package *dp = depend.getPackage();
-		if(dp->setProcessingQueued()) {
-			pq->push(dp);
-		}
+		w->setFailed(p);
 	}
 
 	pq->finish();
 }
 
-static void process_packages(Package *p)
+static void process_packages(World *w, Package *p)
 {
 	PackageQueue pq;
 	pq.push(p);
@@ -84,7 +89,7 @@ static void process_packages(Package *p)
 		if(toProcess != nullptr) {
 			pq.start();
 
-			std::thread thr(process_package, toProcess, &pq);
+			std::thread thr(process_package, w, toProcess, &pq);
 			thr.detach();
 		}
 		pq.wait();
@@ -106,7 +111,13 @@ bool World::basePackage(const std::string &filename)
 	Package *base_package = p.get();
 	ns->addPackage(std::move(p));
 
-	process_packages(base_package);
+	process_packages(this, base_package);
+
+	// If any package failed to process, the dependency graph is incomplete;
+	// abort rather than building against a partial graph.
+	if(this->isFailed()) {
+		return false;
+	}
 
 	this->topo_graph.fill();
 
