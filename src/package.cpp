@@ -313,8 +313,7 @@ bool Package::process()
 	this->build_description.add_package_file(this->file_short, hash_file(this->file));
 
 	if(!interfaceSetup(&this->lua)) {
-		this->log("interfaceSetup: Failed");
-		exit(-1);
+		throw CustomException("interfaceSetup: Failed");
 	}
 
 	li_set_package(this);
@@ -469,10 +468,8 @@ void Package::prepareBuildInfo()
 		auto type = dp.getPackage()->buildInfo(&file_path, &hash);
 
 		if(hash.empty()) {
-			this->log(boost::format{"build info for %1% is empty"} %
-			          dp.getPackage()->getName());
-			this->log("You probably need to build that package");
-			exit(-1);
+			throw CustomException("build info for " + dp.getPackage()->getName() +
+			                      " is empty; you probably need to build that package");
 		}
 
 		if(type == BuildInfoType::Output) {
