@@ -391,17 +391,17 @@ static int li_overlay_add(lua_State *L)
 
 bool buildsys::interfaceSetup(Lua *lua)
 {
-	lua->registerFunc("builddir", li_builddir);
-	lua->registerFunc("depend", li_depend);
-	lua->registerFunc("feature", li_feature);
-	lua->registerFunc("intercept", li_intercept);
-	lua->registerFunc("keepstaging", li_keepstaging);
-	lua->registerFunc("name", li_name);
-	lua->registerFunc("package_name", li_package_name);
-	lua->registerFunc("hashoutput", li_hashoutput);
-	lua->registerFunc("require", li_require);
-	lua->registerFunc("optionally_require", li_optionally_require);
-	lua->registerFunc("overlayadd", li_overlay_add);
+	lua->registerFunc("builddir", lua_guard<li_builddir>);
+	lua->registerFunc("depend", lua_guard<li_depend>);
+	lua->registerFunc("feature", lua_guard<li_feature>);
+	lua->registerFunc("intercept", lua_guard<li_intercept>);
+	lua->registerFunc("keepstaging", lua_guard<li_keepstaging>);
+	lua->registerFunc("name", lua_guard<li_name>);
+	lua->registerFunc("package_name", lua_guard<li_package_name>);
+	lua->registerFunc("hashoutput", lua_guard<li_hashoutput>);
+	lua->registerFunc("require", lua_guard<li_require>);
+	lua->registerFunc("optionally_require", lua_guard<li_optionally_require>);
+	lua->registerFunc("overlayadd", lua_guard<li_overlay_add>);
 
 	return true;
 }

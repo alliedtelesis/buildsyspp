@@ -33,7 +33,32 @@ extern "C" {
 }
 
 #include "include/buildsys.h"
+#include <exception>
 #include <string>
+
+/**
+ * Adapt a lua_CFunction that may throw a C++ exception into one that reports the
+ * error to Lua via lua_error(). The li_* functions are called directly by the
+ * Lua VM, whose call frames are C code using setjmp/longjmp; letting a C++
+ * exception unwind through them is undefined behaviour and leaves the lua_State
+ * corrupt. Routing errors through lua_error() keeps them on Lua's own error
+ * path so luaL_dofile/lua_pcall report them cleanly.
+ */
+template <lua_CFunction fn> int lua_guard(lua_State *L)
+{
+	try {
+		return fn(L);
+	} catch(std::exception &e) {
+		lua_pushstring(L, e.what());
+	} catch(...) {
+		lua_pushstring(L, "unknown C++ exception");
+	}
+	// Raise the pushed message via Lua's own error mechanism. lua_error() is
+	// used rather than the variadic luaL_error(), and it is called after the
+	// catch blocks so its longjmp does not jump out over the caught exception's
+	// destructor.
+	return lua_error(L); // does not return
+}
 
 #define LUA_SET_TABLE_TYPE(L, T)                                                           \
 	lua_pushstring(L, #T);                                                                 \
@@ -42,7 +67,7 @@ extern "C" {
 
 #define LUA_ADD_TABLE_FUNC(L, N, F)                                                        \
 	lua_pushstring(L, N);                                                                  \
-	lua_pushcfunction(L, F);                                                               \
+	lua_pushcfunction(L, (lua_guard<F>) );                                                 \
 	lua_settable(L, -3);
 
 #define CREATE_TABLE(L, D)                                                                 \
