@@ -45,11 +45,11 @@ void DownloadFetch::setTarballCache(std::string cache)
 }
 
 //! Find (or create) a DLObject for a given full file name
-const DLObject *DownloadFetch::findDLObject(const std::string &fname)
+DLObject *DownloadFetch::findDLObject(const std::string &fname)
 {
 	std::unique_lock<std::mutex> lk(DownloadFetch::dlobjects_lock);
 
-	for(const auto &obj : DownloadFetch::dlobjects) {
+	for(auto &obj : DownloadFetch::dlobjects) {
 		if(obj.fileName() == fname) {
 			return &obj;
 		}
@@ -127,7 +127,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 	/* Hold a lock while we download this file
 	 * Also checks for conflicting hashes for the same file
 	 */
-	const DLObject *dlobj = this->findDLObject(fullname);
+	DLObject *dlobj = this->findDLObject(fullname);
 	if(dlobj == nullptr) {
 		this->P->log("Failed to get the DLObject for " + fullname);
 		return false;
@@ -145,6 +145,11 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 				    fullname % dlobj->HASH() % this->hash);
 				return false;
 			}
+		} else {
+			// First package to fetch this file: record our expected hash so a
+			// later package asking for the same file with a different hash is
+			// caught by the check above.
+			dlobj->setHASH(this->hash);
 		}
 	}
 

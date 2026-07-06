@@ -179,7 +179,7 @@ namespace buildsys
 		static std::string tarball_cache;
 		static std::list<DLObject> dlobjects;
 		static std::mutex dlobjects_lock;
-		const DLObject *findDLObject(const std::string &fname);
+		DLObject *findDLObject(const std::string &fname);
 
 	protected:
 		const bool decompress;
