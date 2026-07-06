@@ -97,8 +97,15 @@ static std::string git_hash_ref(const std::string &gdir, const std::string &refs
 		throw CustomException("git rev-parse ref failed");
 	}
 	std::vector<char> commit(41, '\0');
-	fread(&commit[0], sizeof(char), commit.size() - 1, f);
-	pclose(f);
+	size_t got = fread(&commit[0], sizeof(char), commit.size() - 1, f);
+	int status = pclose(f);
+
+	// A bad ref makes git rev-parse exit non-zero and print nothing to stdout.
+	// Without this check that empty result would be accepted as the commit
+	// hash and flow into build-info and the cache key.
+	if(status != 0 || got == 0) {
+		throw CustomException("git rev-parse " + refspec + " failed in " + gdir);
+	}
 
 	return std::string(commit.data());
 }
