@@ -160,17 +160,15 @@ static int li_bd_fetch(lua_State *L)
 		}
 
 		if(reponame.empty()) {
-			auto last_slash = uri.rfind('/');
+			// Use the last path component of the uri as the repo name, ignoring
+			// any trailing slashes.
+			std::string path = uri;
+			boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
+			auto last_slash = path.rfind('/');
 			if(last_slash == std::string::npos) {
 				throw CustomException("fetch method = git failure parsing uri");
 			}
-
-			if(last_slash == uri.length() - 1) {
-				auto second_last_slash = uri.rfind('/', last_slash - 1);
-				reponame = uri.substr(second_last_slash + 1, last_slash);
-			} else {
-				reponame = uri.substr(last_slash + 1, std::string::npos);
-			}
+			reponame = path.substr(last_slash + 1);
 
 			if(boost::algorithm::ends_with(reponame, ".git")) {
 				reponame.resize(reponame.length() - 4);
