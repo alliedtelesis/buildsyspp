@@ -1091,8 +1091,14 @@ namespace buildsys
 		//! Tell everything that we have failed
 		void setFailed(Package *p)
 		{
+			// Called from concurrent detached build threads: guard the list and
+			// the flag with the scheduler's lock (build_thread calls this before
+			// threadEnded(), so there is no self-deadlock) and wake the scheduler
+			// so it observes the failure promptly.
+			std::unique_lock<std::mutex> lk(this->cond_lock);
 			this->failed_packages.push_back(p);
 			this->failed = true;
+			this->cond.notify_all();
 		};
 		//! Test if we have failed
 		bool isFailed() const
