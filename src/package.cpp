@@ -560,7 +560,9 @@ void Package::updateBuildInfo(bool updateOutputHash)
 		auto cmd = boost::format{"cd %1%; find -type f -exec sha256sum {} \\; | sort -k 2 "
 		                         "> %2%/.output.info"} %
 		           this->bd.getNewPath() % this->bd.getPath();
-		std::system(cmd.str().c_str());
+		if(std::system(cmd.str().c_str()) != 0) {
+			throw CustomException("Failed to compute output hash for " + this->name);
+		}
 	}
 }
 
