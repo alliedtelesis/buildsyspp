@@ -92,7 +92,15 @@ std::string buildsys::parse_command_line(int argc, char *argv[], World *WORLD)
 			GitExtractionUnit::add_ref_if_able_pattern(next());
 		} else if(argList[a] == "--") {
 			foundDashDash = true;
+		} else if(argList[a].rfind("--", 0) == 0) {
+			// A "--"-prefixed token that matched no known flag is a typo or a
+			// wrapper/binary mismatch. Fail rather than silently treating it as
+			// a package name, where it (and, for value flags, the value that was
+			// meant to follow it) would never match and its intended effect
+			// would be lost with no diagnostic.
+			throw CustomException("Unrecognized option: " + argList[a]);
 		} else {
+			// Anything else is a package name to force-build.
 			Package::add_forced_package(argList[a]);
 		}
 		a++;
