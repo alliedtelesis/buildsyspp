@@ -192,9 +192,18 @@ bool PackageCmd::Run(Logger *logger)
 	}
 
 	// check return status ...
-	if(WEXITSTATUS(status) != 0) { // NOLINT
-		logger->log(boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
-		            this->app % this->path % status);
+	// WEXITSTATUS is only meaningful when WIFEXITED is true. A child killed by
+	// a signal (OOM killer, SIGSEGV, SIGKILL, ...) leaves WEXITSTATUS undefined
+	// (often 0), which would otherwise be treated as success and poison the
+	// build cache with a partial result.
+	if(!WIFEXITED(status) || WEXITSTATUS(status) != 0) { // NOLINT
+		if(WIFSIGNALED(status)) {                        // NOLINT
+			logger->log(boost::format{"%1% killed by signal %2% (path = %3%)"} % this->app %
+			            WTERMSIG(status) % this->path); // NOLINT
+		} else {
+			logger->log(boost::format{"Error Running %1% (path = %2%, return code = %3%)"} %
+			            this->app % this->path % WEXITSTATUS(status)); // NOLINT
+		}
 		this->printCmd(logger);
 		return false;
 	}
