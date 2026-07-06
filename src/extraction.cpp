@@ -82,10 +82,12 @@ bool Extraction::extract(Package *P)
 		}
 	}
 
-	// mv the file into the regular place
+	// mv the file into the regular place. A silent failure here would leave a
+	// stale .extraction.info, which feeds cache-key and should-build decisions,
+	// so use filesystem::rename which throws on error.
 	std::string oldfname = P->builddir()->getPath() + "/.extraction.info.new";
 	std::string newfname = P->builddir()->getPath() + "/.extraction.info";
-	rename(oldfname.c_str(), newfname.c_str());
+	filesystem::rename(oldfname, newfname);
 
 	return true;
 }

@@ -523,10 +523,12 @@ void Package::writeFetchInfo()
 
 void Package::updateBuildInfo(bool updateOutputHash)
 {
-	// mv the build info file into the regular place
+	// mv the build info file into the regular place. A silent failure here
+	// would leave a stale .build.info, which feeds the cache-key and
+	// should-build logic, so use filesystem::rename which throws on error.
 	std::string oldfname = this->bd.getPath() + "/.build.info.new";
 	std::string newfname = this->bd.getPath() + "/.build.info";
-	rename(oldfname.c_str(), newfname.c_str());
+	filesystem::rename(oldfname, newfname);
 
 	if(updateOutputHash && this->isHashingOutput()) {
 		// Hash the entire new path
