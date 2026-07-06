@@ -76,22 +76,6 @@ std::string DownloadFetch::full_name()
 	return fname;
 }
 
-/* This is the final name, without any compressed extension */
-std::string DownloadFetch::final_name()
-{
-	auto fullname = this->full_name();
-	auto ret = fullname;
-
-	if(this->decompress) {
-		auto position = fullname.rfind('.');
-		if(position != std::string::npos) {
-			ret = fullname.substr(0, position);
-		}
-	}
-
-	return ret;
-}
-
 FetchInfo FetchUnit::fetchInfo()
 {
 	FetchInfo source;
@@ -108,7 +92,7 @@ FetchInfo DownloadFetch::fetchInfo()
 	source.hash_algorithm = "SHA-256";
 	if(source.hash.empty()) {
 		try {
-			source.hash = this->P->getFileHash(this->final_name());
+			source.hash = this->P->getFileHash(this->full_name());
 		} catch(buildsys::FileNotFoundException const &) {
 			source.hash.clear();
 		}
@@ -122,7 +106,6 @@ FetchInfo DownloadFetch::fetchInfo()
 bool DownloadFetch::fetch(BuildDir *) // NOLINT
 {
 	std::string fullname = this->full_name();
-	std::string fname = this->final_name();
 
 	/* Hold a lock while we download this file
 	 * Also checks for conflicting hashes for the same file
@@ -153,14 +136,14 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 		}
 	}
 
-	std::string _fpath = this->P->getPwd() + "/dl/" + fname;
+	std::string _fpath = this->P->getPwd() + "/dl/" + fullname;
 	if(!filesystem::exists(_fpath)) {
 		bool localCacheHit = false;
 		// Attempt to get file from local tarball cache if one is configured.
 		if(!DownloadFetch::tarball_cache.empty()) {
 			filesystem::remove("dl/" + fullname + ".tmp");
 			PackageCmd pc("dl", "wget");
-			std::string url = DownloadFetch::tarball_cache + "/" + fname;
+			std::string url = DownloadFetch::tarball_cache + "/" + fullname;
 			pc.addArg(url);
 			pc.addArg("-O" + fullname + ".tmp");
 			localCacheHit = pc.Run(this->P->getLogger());
@@ -179,35 +162,18 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 			}
 			filesystem::rename("dl/" + fullname + ".tmp", "dl/" + fullname);
 		}
-		if(decompress) {
-			// We want to run a command on this file
-			std::string cmd;
-
-			size_t ext_pos = fname.rfind('.');
-			if(ext_pos == std::string::npos) {
-				P->log("Could not guess decompression based on extension: " + fname);
-			} else {
-				std::string ext = fname.substr(ext_pos + 1);
-				if(ext == ".bz2") {
-					cmd = "bunzip2 -d dl/" + fullname;
-				} else if(ext == ".gz") {
-					cmd = "gunzip -d dl/" + fullname;
-				}
-				std::system(cmd.c_str());
-			}
-		}
 	}
 
 	bool ret = true;
 
 	if(this->hash.length() != 0) {
-		auto fpath = boost::format{"%1%/dl/%2%"} % this->P->getPwd() % this->final_name();
+		auto fpath = boost::format{"%1%/dl/%2%"} % this->P->getPwd() % this->full_name();
 		std::string _hash = hash_file(fpath.str());
 
 		if(this->hash != _hash) {
 			this->P->log(boost::format{
 			                 "Hash mismatched for %1%\n(committed to %2%, providing %3%)"} %
-			             this->final_name() % this->hash % _hash);
+			             this->full_name() % this->hash % _hash);
 			filesystem::remove(fpath.str());
 			ret = false;
 		}
@@ -219,10 +185,10 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 std::string DownloadFetch::HASH()
 {
 	/* Check if the package contains pre-computed hashes */
-	std::string _hash = P->getFileHash(this->final_name());
+	std::string _hash = P->getFileHash(this->full_name());
 	/* Otherwise fetch and calculate the hash */
 	if(_hash.empty()) {
-		P->log(boost::format{"No hash for %1% in package/%2%/Digest"} % this->final_name() %
+		P->log(boost::format{"No hash for %1% in package/%2%/Digest"} % this->full_name() %
 		       P->getName());
 		throw CustomException("Missing hash " + P->getName());
 	}

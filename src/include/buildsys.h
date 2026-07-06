@@ -182,24 +182,20 @@ namespace buildsys
 		DLObject *findDLObject(const std::string &fname);
 
 	protected:
-		const bool decompress;
 		const std::string filename;
 		std::string hash;
 		std::string full_name();
-		std::string final_name();
 
 	public:
-		DownloadFetch(std::string _uri, bool _decompress, std::string _filename,
-		              Package *_P)
-		    : FetchUnit(std::move(_uri), _P), decompress(_decompress),
-		      filename(std::move(_filename))
+		DownloadFetch(std::string _uri, std::string _filename, Package *_P)
+		    : FetchUnit(std::move(_uri), _P), filename(std::move(_filename))
 		{
 		}
 		bool fetch(BuildDir *d) override;
 		std::string HASH() override;
 		std::string relative_path() override
 		{
-			return "dl/" + this->final_name();
+			return "dl/" + this->full_name();
 		};
 		FetchInfo fetchInfo() override;
 		static void setTarballCache(std::string cache);

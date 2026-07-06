@@ -80,7 +80,6 @@ static int li_bd_fetch(lua_State *L)
 	std::string to;
 	std::string method;
 	std::string filename;
-	bool decompress = false;
 	std::string branch;
 	std::string reponame;
 	bool listedonly = false;
@@ -106,8 +105,6 @@ static int li_bd_fetch(lua_State *L)
 					method = value;
 				} else if(key == "filename") {
 					filename = value;
-				} else if(key == "decompress") {
-					decompress = (value == "true");
 				} else if(key == "branch") {
 					branch = value;
 				} else if(key == "reponame") {
@@ -123,9 +120,7 @@ static int li_bd_fetch(lua_State *L)
 				}
 			} else if(lua_isboolean(L, -2) != 0) {
 				bool value = lua_toboolean(L, -2) == 1;
-				if(key == "decompress") {
-					decompress = value;
-				} else if(key == "listedonly") {
+				if(key == "listedonly") {
 					listedonly = value;
 				} else {
 					P->log(boost::format{"Unknown key %1%"} % key);
@@ -149,7 +144,7 @@ static int li_bd_fetch(lua_State *L)
 			throw CustomException("fetch method = dl requires uri to be set");
 		}
 
-		f = std::make_unique<DownloadFetch>(uri, decompress, filename, P);
+		f = std::make_unique<DownloadFetch>(uri, filename, P);
 		if(!copyto.empty()) {
 			P->extraction()->add(
 			    std::make_unique<FetchedFileCopyExtractionUnit>(f.get(), copyto));
