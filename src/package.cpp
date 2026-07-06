@@ -678,11 +678,8 @@ void Package::getStagingPackages(std::unordered_set<Package *> *packages)
 
 static void cleanDir(const std::string &dir)
 {
-	std::string cmd;
-
-	cmd = "/bin/rm -fr " + dir;
-	std::system(cmd.c_str());
-	mkdir(dir.c_str(), 0777);
+	filesystem::remove_all(dir);
+	filesystem::create_directories(dir);
 }
 
 bool Package::prepareBuildDirs()
