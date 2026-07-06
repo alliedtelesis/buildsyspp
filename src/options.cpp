@@ -50,21 +50,27 @@ std::string buildsys::parse_command_line(int argc, char *argv[], World *WORLD)
 	size_t a = 2;
 	bool foundDashDash = false;
 	std::vector<std::string> ignored_features;
+	// Consume and return the value that follows a value-taking flag, erroring
+	// out if the flag was the last token rather than reading past the end of
+	// argList (operator[] does not bounds-check). argList[a] is still the flag
+	// itself at this point, so it names the flag in the error message.
+	auto next = [&]() -> const std::string & {
+		if(a + 1 >= argList.size()) {
+			throw CustomException(argList[a] + " requires an argument");
+		}
+		return argList[++a];
+	};
 	while(a < argList.size() && !foundDashDash) {
 		if(argList[a] == "--clean") {
 			Package::set_clean_packages(true);
 		} else if(argList[a] == "--cache-server") {
-			Package::set_build_cache(argList[a + 1]);
-			a++;
+			Package::set_build_cache(next());
 		} else if(argList[a] == "--tarball-cache") {
-			DownloadFetch::setTarballCache(argList[a + 1]);
-			a++;
+			DownloadFetch::setTarballCache(next());
 		} else if(argList[a] == "--overlay") {
-			Package::add_overlay_path(argList[a + 1]);
-			a++;
+			Package::add_overlay_path(next());
 		} else if(argList[a] == "--build-info-ignore-fv") {
-			ignored_features.push_back(argList[a + 1]);
-			a++;
+			ignored_features.push_back(next());
 		} else if(argList[a] == "--parse-only") {
 			WORLD->setParseOnly();
 		} else if(argList[a] == "--keep-going") {
@@ -78,14 +84,12 @@ std::string buildsys::parse_command_line(int argc, char *argv[], World *WORLD)
 		} else if(argList[a] == "--keep-staging") {
 			Package::set_keep_all_staging(true);
 		} else if(argList[a] == "--parallel-packages") {
-			WORLD->setThreadsLimit(std::stoi(argList[a + 1]));
+			WORLD->setThreadsLimit(std::stoi(next()));
 			// If a thread limit is specified then don't allow packages to extract
 			// in parallel.
 			Package::set_extract_in_parallel(false);
-			a++;
 		} else if(argList[a] == "--git-local-mirror-map") {
-			GitExtractionUnit::add_ref_if_able_pattern(argList[a + 1]);
-			a++;
+			GitExtractionUnit::add_ref_if_able_pattern(next());
 		} else if(argList[a] == "--") {
 			foundDashDash = true;
 		} else {
