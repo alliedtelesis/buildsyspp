@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace buildsys
@@ -42,6 +43,10 @@ namespace buildsys
 		std::ostream *output{nullptr};
 		bool output_supports_colour{false};
 		static bool verbose;
+		//! Serializes writes to the underlying streams. Shared across all
+		//! Loggers (kept static so Logger stays movable) so that concurrent
+		//! build/extraction/output-pump threads cannot interleave a line.
+		static std::mutex output_lock;
 
 	public:
 		Logger();

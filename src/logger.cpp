@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace buildsys;
 
 bool Logger::verbose = false;
+std::mutex Logger::output_lock;
 
 /**
  * Construct a Logger object. Log messages will be output to std::cout
@@ -77,6 +78,7 @@ Logger::Logger(const std::string &_prefix, const std::string &file_path)
 void Logger::log(const std::string &str)
 {
 	auto msg = boost::format{"%1%%2%"} % this->prefix % str;
+	std::unique_lock<std::mutex> lk(Logger::output_lock);
 	*this->output << msg << std::endl;
 }
 
@@ -100,6 +102,7 @@ void Logger::log(const boost::format &str)
 void Logger::log_always(const std::string &str)
 {
 	auto msg = boost::format{"%1%%2%"} % this->prefix % str;
+	std::unique_lock<std::mutex> lk(Logger::output_lock);
 	if(this->file_output) {
 		*this->file_output << msg << std::endl;
 	}
