@@ -116,22 +116,22 @@ static int li_bd_fetch(lua_State *L)
 				} else if(key == "copyto") {
 					copyto = value;
 				} else {
-					P->log(boost::format{"Unknown key %1% (%2%)"} % key % value);
+					throw CustomException("fetch() called with unknown key '" + key +
+					                      "' (" + value + ")");
 				}
 			} else if(lua_isboolean(L, -2) != 0) {
 				bool value = lua_toboolean(L, -2) == 1;
 				if(key == "listedonly") {
 					listedonly = value;
 				} else {
-					P->log(boost::format{"Unknown key %1%"} % key);
+					throw CustomException("fetch() called with unknown key '" + key + "'");
 				}
 			} else {
-				P->log(
-				    boost::format{"Key %1% has unknown value type (not string or bool)"} %
-				    key);
+				throw CustomException("fetch() key '" + key +
+				                      "' has unknown value type (not string or bool)");
 			}
 		} else {
-			P->log("Unsupported type for key");
+			throw CustomException("fetch() keys must be strings");
 		}
 		lua_pop(L, 2);
 	}
