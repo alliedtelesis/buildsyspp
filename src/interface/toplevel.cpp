@@ -181,6 +181,9 @@ static int li_intercept(lua_State *L)
 						throw CustomException("intercept() requires a boolean argument to "
 						                      "the install parameter");
 					}
+				} else {
+					throw CustomException("intercept() called with unknown key '" + key +
+					                      "'");
 				}
 				/* removes 'value'; keeps 'key' for next iteration */
 				lua_pop(L, 1);
@@ -279,14 +282,13 @@ int li_depend(lua_State *L)
 				}
 				ns = NameSpace::findNameSpace(std::string(lua_tostring(L, -1)));
 			} else if(key == "locally") {
-				if(lua_type(L, -1) == LUA_TBOOLEAN) {
-					locally = (lua_toboolean(L, -1) != 0);
-				} else if(lua_type(L, -1) == LUA_TSTRING) {
-					std::string value(lua_tostring(L, -1));
-					if(value == "true") {
-						locally = true;
-					}
+				if(lua_type(L, -1) != LUA_TBOOLEAN) {
+					throw CustomException(
+					    "depend() requires a boolean for the locally parameter");
 				}
+				locally = (lua_toboolean(L, -1) != 0);
+			} else {
+				throw CustomException("depend() called with unknown key '" + key + "'");
 			}
 			/* removes 'value'; keeps 'key' for next iteration */
 			lua_pop(L, 1);
