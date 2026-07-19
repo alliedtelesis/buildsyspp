@@ -626,6 +626,8 @@ namespace buildsys
 		time_t run_secs{0};
 		Logger logger;
 		bool clean_before_build{false};
+		//! Write the assembled build description to the .build.info.new file
+		void writeBuildInfoFile();
 		//! Set the buildinfo file hash from the new .build.info.new file
 		void updateBuildInfoHash();
 		//! Set the buildinfo file hash from the existing .build.info file

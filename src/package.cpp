@@ -477,9 +477,29 @@ Package::BuildInfoType Package::buildInfo(std::string *file_path, std::string *h
 	return BuildInfoType::Build;
 }
 
+/**
+ * Write the (already assembled) BuildDescription to .build.info.new and
+ * update the buildinfo hash to match.
+ */
+void Package::writeBuildInfoFile()
+{
+	std::string buildInfoFname = this->bd.getPath() + "/.build.info.new";
+	std::ofstream _buildInfo(buildInfoFname.c_str());
+	this->build_description.print(_buildInfo);
+	_buildInfo.close();
+	this->updateBuildInfoHash();
+}
+
 void Package::prepareBuildInfo()
 {
 	if(this->buildInfoPrepared) {
+		// The build description is already assembled, but updateBuildInfo()
+		// may have consumed the .build.info.new file since (e.g. a build-cache
+		// restore followed by a locally-triggered rebuild). Re-write it from
+		// the assembled description; the content (and hash) are unchanged.
+		if(!filesystem::exists(this->bd.getPath() + "/.build.info.new")) {
+			this->writeBuildInfoFile();
+		}
 		return;
 	}
 	// Add the extraction info file
@@ -508,11 +528,7 @@ void Package::prepareBuildInfo()
 	}
 
 	// Create the new build info file
-	std::string buildInfoFname = this->bd.getPath() + "/.build.info.new";
-	std::ofstream _buildInfo(buildInfoFname.c_str());
-	this->build_description.print(_buildInfo);
-	_buildInfo.close();
-	this->updateBuildInfoHash();
+	this->writeBuildInfoFile();
 	this->buildInfoPrepared = true;
 }
 
@@ -571,6 +587,15 @@ void Package::updateBuildInfo(bool updateOutputHash)
 
 bool Package::fetchFrom()
 {
+	// Without a build info hash there is nothing to look up in the build
+	// cache (fetch-only runs never prepare the build info). Attempting it
+	// anyway would construct a bogus URL and, on a hit, updateBuildInfo()
+	// would try to rename a .build.info.new file that was never written.
+	if(this->buildinfo_hash.empty()) {
+		this->log_verbose("No build info hash, skipping build cache");
+		return true;
+	}
+
 	bool ret = false;
 	std::string staging_dir = this->getNS()->getStagingDir();
 	std::string install_dir = this->getNS()->getInstallDir();
