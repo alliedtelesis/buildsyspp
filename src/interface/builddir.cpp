@@ -95,9 +95,9 @@ static int li_bd_fetch(lua_State *L)
 
 	while(lua_next(L, -2) != 0) {
 		lua_pushvalue(L, -2);
-		if(lua_isstring(L, -1) != 0) {
+		if(lua_type(L, -1) == LUA_TSTRING) {
 			std::string key(lua_tostring(L, -1));
-			if(lua_isstring(L, -2) != 0) {
+			if(lua_type(L, -2) == LUA_TSTRING) {
 				std::string value(lua_tostring(L, -2));
 				if(key == "uri") {
 					uri = value;
@@ -112,7 +112,8 @@ static int li_bd_fetch(lua_State *L)
 				} else if(key == "to") {
 					to = value;
 				} else if(key == "listedonly") {
-					listedonly = (value == "true");
+					throw CustomException(
+					    "fetch() requires a boolean for the listedonly parameter");
 				} else if(key == "copyto") {
 					copyto = value;
 				} else {
