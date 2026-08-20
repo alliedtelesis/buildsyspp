@@ -67,8 +67,16 @@ TEST_CASE_METHOD(LuaTestsFixture, "Test processFile() function with invalid lua 
 	}
 
 	REQUIRE(exception_caught);
-	REQUIRE(exception_message ==
-	        "lua_test_dir/test_lua.lua:1: attempt to concatenate a nil value");
+	// A prefix match, not equality: processFile() appends a lua backtrace, and
+	// its exact wording differs between lua versions.
+	REQUIRE_THAT(exception_message,
+	             Catch::StartsWith(
+	                 "lua_test_dir/test_lua.lua:1: attempt to concatenate a nil value"));
+	// The backtrace must be added exactly once; a second one would mean the
+	// nested-require guard in lua_msg_handler() has stopped working.
+	REQUIRE(exception_message.find("stack traceback:") != std::string::npos);
+	REQUIRE(exception_message.find("stack traceback:") ==
+	        exception_message.rfind("stack traceback:"));
 }
 
 static int test_fn(lua_State *L)

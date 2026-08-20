@@ -30,7 +30,12 @@ extern "C" {
 
 #include "exceptions.hpp"
 #include "lua.hpp"
+#include <cstring>
 #include <string>
+
+#if LUA_VERSION_NUM < 502
+#error "buildsys++ requires Lua 5.2 or newer (luaL_traceback)"
+#endif
 
 using namespace buildsys;
 
@@ -50,6 +55,34 @@ Lua::~Lua()
 }
 
 /**
+ * Message handler for lua_pcall(). This runs before the erroring stack is
+ * unwound, which is the only point at which a lua backtrace can still be
+ * captured. Errors raised by the li_* bindings arrive here as plain strings.
+ *
+ * Must hold no non-trivially-destructible C++ locals: the lua API calls it
+ * makes can raise a memory error, which longjmps.
+ */
+static int lua_msg_handler(lua_State *L)
+{
+	const char *msg = lua_tostring(L, 1);
+	if(msg == nullptr) {
+		// A non-string error object, e.g. a recipe calling error({}).
+		std::string obj_msg =
+		    std::string("(error object is a ") + luaL_typename(L, 1) + " value)";
+		lua_pushstring(L, obj_msg.c_str());
+		msg = lua_tostring(L, -1);
+	}
+	if(std::strstr(msg, "\nstack traceback:") != nullptr) {
+		// A nested require() already added one. Both run on this same
+		// lua_State, so we prefer that message.
+		lua_pushstring(L, msg);
+		return 1;
+	}
+	luaL_traceback(L, L, msg, 1);
+	return 1;
+}
+
+/**
  * Load and execute a lua file in this instance
  *
  * @param filename - The name of the lua file to load and run
@@ -59,9 +92,28 @@ int Lua::processFile(const std::string &filename)
 {
 	int start_sp = lua_gettop(state);
 
-	if(luaL_dofile(state, filename.c_str()) != 0) {
-		throw CustomException(lua_tostring(state, -1));
+	// The handler has to sit below the chunk so that its (absolute) stack
+	// index is still valid once the chunk and its results are pushed.
+	lua_pushcfunction(state, lua_msg_handler);
+	int msgh = lua_gettop(state);
+
+	if(luaL_loadfile(state, filename.c_str()) != 0) {
+		// Build the message before resetting the stack; the const char * that
+		// lua_tostring() returns dies with the value it points at.
+		std::string err = lua_tostring(state, -1);
+		lua_settop(state, start_sp);
+		throw CustomException(err);
 	}
+
+	if(lua_pcall(state, 0, LUA_MULTRET, msgh) != 0) {
+		std::string err = lua_tostring(state, -1);
+		lua_settop(state, start_sp);
+		throw CustomException(err);
+	}
+
+	// Drop the handler from underneath the results: li_require() returns them
+	// as its own return values, so a stray function here would misalign them.
+	lua_remove(state, msgh);
 
 	return lua_gettop(state) - start_sp;
 }
