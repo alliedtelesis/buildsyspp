@@ -33,6 +33,7 @@ extern "C" {
 }
 
 #include "include/buildsys.h"
+#include <cstring>
 #include <exception>
 #include <string>
 
@@ -53,10 +54,21 @@ template <lua_CFunction fn> int lua_guard(lua_State *L)
 	} catch(...) {
 		lua_pushstring(L, "unknown C++ exception");
 	}
-	// Raise the pushed message via Lua's own error mechanism. lua_error() is
-	// used rather than the variadic luaL_error(), and it is called after the
-	// catch blocks so its longjmp does not jump out over the caught exception's
-	// destructor.
+	// Everything below runs outside the catch blocks, with no C++ object alive.
+	// luaL_where(), lua_concat() and lua_error() can all longjmp; doing that
+	// would disrupt the state of the build thread
+	// __cxa_end_catch, permanently corrupting the exception state of a build
+	// thread rather than merely skipping one destructor.
+	//
+	// Prefix the message with "file:line: " the way luaL_error() would, so the
+	// first line names the offending recipe on its own. lua_error() is used
+	// rather than the variadic luaL_error() so nothing here needs a format
+	// string.
+	if(std::strstr(lua_tostring(L, -1), "\nstack traceback:") == nullptr) {
+		luaL_where(L, 1);  // "chunk:line: ", or "" when the caller is not Lua
+		lua_insert(L, -2); // stack: where, message
+		lua_concat(L, 2);
+	}
 	return lua_error(L); // does not return
 }
 
