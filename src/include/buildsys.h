@@ -1040,7 +1040,8 @@ namespace buildsys
 		mutable std::condition_variable cond;
 		std::atomic<int> threads_running{0};
 		int threads_limit{0};
-		std::list<Package *> failed_packages;
+		//! Failed packages, each with the message that explains why
+		std::list<std::pair<Package *, std::string>> failed_packages;
 
 	public:
 		/** Are we operating in 'parse only' mode
@@ -1086,18 +1087,20 @@ namespace buildsys
 		//! Start the processing and building steps with the given meta package
 		bool basePackage(const std::string &filename);
 
-		//! Tell everything that we have failed
-		void setFailed(Package *p)
+		//! Tell everything that we have failed, recording why
+		void setFailed(Package *p, const std::string &message)
 		{
 			// Called from concurrent detached build threads: guard the list and
 			// the flag with the scheduler's lock (build_thread calls this before
 			// threadEnded(), so there is no self-deadlock) and wake the scheduler
 			// so it observes the failure promptly.
 			std::unique_lock<std::mutex> lk(this->cond_lock);
-			this->failed_packages.push_back(p);
+			this->failed_packages.emplace_back(p, message);
 			this->failed = true;
 			this->cond.notify_all();
 		};
+		//! Print every recorded failure as one block, at the end of the run
+		void reportFailures() const;
 		//! Test if we have failed
 		bool isFailed() const
 		{

@@ -38,7 +38,7 @@ static void build_thread(World *w, Package *p)
 		if(p->build(false, w->isFetchOnly())) {
 			w->packageFinished(p);
 		} else {
-			w->setFailed(p);
+			w->setFailed(p, "Building failed");
 			p->log("Building failed");
 		}
 	} catch(std::exception &e) {
@@ -46,7 +46,7 @@ static void build_thread(World *w, Package *p)
 		// thread entry point would call std::terminate() and abort the whole
 		// build. Treat it as an ordinary build failure instead.
 		p->log(e.what());
-		w->setFailed(p);
+		w->setFailed(p, e.what());
 	}
 	w->threadEnded();
 
@@ -65,7 +65,7 @@ static void process_package(World *w, Package *p, PackageQueue *pq)
 			}
 		} else {
 			p->log("Processing failed");
-			w->setFailed(p);
+			w->setFailed(p, "Processing failed");
 		}
 	} catch(std::exception &e) {
 		// Detached thread: an escaping exception would call std::terminate().
@@ -73,7 +73,7 @@ static void process_package(World *w, Package *p, PackageQueue *pq)
 		// incomplete dependency graph, so record it; basePackage() checks
 		// isFailed() before building. finish() still runs so the queue drains.
 		p->log(e.what());
-		w->setFailed(p);
+		w->setFailed(p, e.what());
 	}
 
 	pq->finish();
@@ -165,13 +165,35 @@ bool World::basePackage(const std::string &filename)
 			lk.unlock();
 			lk.lock();
 		}
-		if(this->failed) {
-			for(auto pfailed : this->failed_packages) {
-				pfailed->log_always("Build Failed");
-			}
-		}
 	}
+	// Failures are reported by reportFailures() from main(), which covers this
+	// path and the processing failure above it alike.
 	return !this->failed;
+}
+
+/**
+ * Print every recorded failure as a single delimited block.
+ *
+ * Processing continues after a package fails so that the queue drains, which
+ * means the individual messages are logged interleaved with the output of every
+ * other package. Repeating them together at the end is what makes a recipe
+ * error findable in a long build log.
+ */
+void World::reportFailures() const
+{
+	std::unique_lock<std::mutex> lk(this->cond_lock);
+	if(this->failed_packages.empty()) {
+		return;
+	}
+
+	Logger logger("BuildSys");
+	std::string out = "\n----BEGIN ERRORS----\n";
+	for(const auto &failure : this->failed_packages) {
+		out += failure.first->getNS()->getName() + "," + failure.first->getName() + ": " +
+		       failure.second + "\n";
+	}
+	out += "----END ERRORS----";
+	logger.log_always(out);
 }
 
 bool World::packageFinished(Package *_p)

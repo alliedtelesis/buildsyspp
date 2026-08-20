@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 		logger.log(e.what());
 		return -1;
 	} catch(std::exception &e) {
-		logger.log("Invalid command line arguments");
+		logger.log(std::string("Invalid command line arguments: ") + e.what());
 		return -1;
 	}
 
@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(!WORLD.basePackage(filename)) {
+		WORLD.reportFailures();
 		logger.log("Building: Failed");
 		if(WORLD.areKeepGoing()) {
 			hash_shutdown();
