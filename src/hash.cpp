@@ -25,6 +25,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hash.hpp"
 #include "logger.hpp"
+#include <algorithm>
+#include <filesystem>
 #include <iomanip>
 #include <openssl/evp.h>
 #include <sstream>
@@ -75,4 +77,53 @@ std::string buildsys::hash_file(const std::string &fname)
 	}
 
 	return ss.str();
+}
+
+std::string buildsys::hash_string(const std::string &data)
+{
+	EVP_MD_CTX *mdctx;
+	const EVP_MD *md;
+	std::vector<unsigned char> md_value(EVP_MAX_MD_SIZE);
+	unsigned int md_len;
+
+	md = EVP_get_digestbyname("sha256");
+
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, md, nullptr);
+	EVP_DigestUpdate(mdctx, data.data(), data.size());
+	EVP_DigestFinal_ex(mdctx, &md_value[0], &md_len);
+	EVP_MD_CTX_destroy(mdctx);
+
+	std::stringstream ss;
+
+	for(unsigned int i = 0; i < md_len; i++) {
+		ss << std::hex << std::setfill('0') << std::setw(2)
+		   << static_cast<int>(md_value[i]);
+	}
+
+	return ss.str();
+}
+
+std::string buildsys::hash_directory(const std::string &dirpath)
+{
+	std::vector<std::string> relpaths;
+
+	// extract()'s cp runs with -L, dereferencing symlinks, so a symlinked
+	// subdirectory's contents end up copied too; follow them here as well
+	// so the hash actually covers what gets extracted.
+	auto options = std::filesystem::directory_options::follow_directory_symlink;
+	for(const auto &entry :
+	    std::filesystem::recursive_directory_iterator(dirpath, options)) {
+		if(entry.is_regular_file()) {
+			relpaths.push_back(std::filesystem::relative(entry.path(), dirpath).string());
+		}
+	}
+	std::sort(relpaths.begin(), relpaths.end());
+
+	std::string combined;
+	for(const auto &rel : relpaths) {
+		combined += rel + ":" + hash_file(dirpath + "/" + rel) + "\n";
+	}
+
+	return hash_string(combined);
 }

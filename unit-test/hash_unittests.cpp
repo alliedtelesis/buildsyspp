@@ -1,10 +1,10 @@
 #define CATCH_CONFIG_MAIN
 
-#include <filesystem>
 #include "hash.hpp"
 #include "packagecmd.hpp"
 #include <boost/format.hpp>
 #include <catch2/catch.hpp>
+#include <filesystem>
 
 using namespace buildsys;
 namespace filesystem = std::filesystem;
@@ -69,4 +69,66 @@ TEST_CASE_METHOD(HashTestsFixture, "Test hash_file() function for existent file"
 	std::string output = this->stdout_buffer.str();
 	std::string expected_hash = output.substr(0, output.find(' '));
 	REQUIRE(expected_hash == hash);
+}
+
+TEST_CASE_METHOD(HashTestsFixture, "Test hash_directory() is stable and content-sensitive",
+                 "")
+{
+	std::string dir_path = this->cwd + "/test_dir";
+	filesystem::create_directories(dir_path + "/subdir");
+
+	std::ofstream(dir_path + "/a.txt") << "a";
+	std::ofstream(dir_path + "/subdir/b.txt") << "b";
+
+	std::string hash = hash_directory(dir_path);
+	REQUIRE(!hash.empty());
+
+	// Hashing again without any change gives the same result.
+	REQUIRE(hash_directory(dir_path) == hash);
+
+	// Changing a file's content changes the directory hash.
+	std::ofstream(dir_path + "/subdir/b.txt") << "b changed";
+	REQUIRE(hash_directory(dir_path) != hash);
+}
+
+TEST_CASE_METHOD(HashTestsFixture,
+                 "Test hash_directory() is independent of the order files were created in",
+                 "")
+{
+	std::string dir_a = this->cwd + "/order_a";
+	std::string dir_b = this->cwd + "/order_b";
+	filesystem::create_directories(dir_a);
+	filesystem::create_directories(dir_b);
+
+	// Same content, opposite creation order.
+	std::ofstream(dir_a + "/one.txt") << "1";
+	std::ofstream(dir_a + "/two.txt") << "2";
+
+	std::ofstream(dir_b + "/two.txt") << "2";
+	std::ofstream(dir_b + "/one.txt") << "1";
+
+	REQUIRE(hash_directory(dir_a) == hash_directory(dir_b));
+}
+
+TEST_CASE_METHOD(HashTestsFixture, "Test hash_directory() follows symlinked subdirectories",
+                 "")
+{
+	// extract()'s cp runs with -L, so a symlink to a directory is
+	// dereferenced and its contents are copied; hash_directory() needs to
+	// see those files too, or a change inside the linked-to directory
+	// won't be noticed as a change to the copied source.
+	std::string real_dir = this->cwd + "/real_dir";
+	std::string dir_path = this->cwd + "/test_dir";
+	filesystem::create_directories(real_dir);
+	filesystem::create_directories(dir_path);
+
+	std::ofstream(real_dir + "/linked.txt") << "original";
+	filesystem::create_directory_symlink(filesystem::absolute(real_dir),
+	                                     dir_path + "/link");
+
+	std::string hash = hash_directory(dir_path);
+	REQUIRE(!hash.empty());
+
+	std::ofstream(real_dir + "/linked.txt") << "changed";
+	REQUIRE(hash_directory(dir_path) != hash);
 }

@@ -32,6 +32,8 @@ namespace buildsys
 {
 	void hash_setup();
 	std::string hash_file(const std::string &fname);
+	std::string hash_string(const std::string &data);
+	std::string hash_directory(const std::string &dirpath);
 	void hash_shutdown();
 } // namespace buildsys
 

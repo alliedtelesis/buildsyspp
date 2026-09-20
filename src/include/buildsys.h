@@ -346,13 +346,15 @@ namespace buildsys
 	{
 	private:
 		std::string fname_short;
+		std::string toDir;
 
 	public:
-		FileCopyExtractionUnit(const std::string &fname, const std::string &_fname_short);
+		FileCopyExtractionUnit(const std::string &fname, const std::string &_fname_short,
+		                       const std::string &to_dir = ".");
 		void print(std::ostream &out) override
 		{
-			out << this->type() << " " << this->fname_short << " " << this->HASH()
-			    << std::endl;
+			out << this->type() << " " << this->fname_short << " " << this->toDir << " "
+			    << this->HASH() << std::endl;
 		}
 		std::string type() override
 		{

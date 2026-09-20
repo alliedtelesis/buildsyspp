@@ -195,7 +195,9 @@ static int li_bd_fetch(lua_State *L)
 			throw CustomException("fetch method = copyfile requires uri to be set");
 		}
 		std::string file_path = P->relative_fetch_path(uri);
-		P->extraction()->add(std::make_unique<FileCopyExtractionUnit>(file_path, uri));
+		std::string copy_to = to.empty() ? "." : to;
+		P->extraction()->add(
+		    std::make_unique<FileCopyExtractionUnit>(file_path, uri, copy_to));
 	} else if(method == "copygit") {
 		if(uri.empty()) {
 			throw CustomException("fetch method = copygit requires uri to be set");

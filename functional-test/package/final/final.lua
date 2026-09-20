@@ -1,6 +1,7 @@
 require('buildsys')
 depend('interceptor')
 depend('extracttarball')
+depend('copydir')
 
 bd = builddir()
 
@@ -9,4 +10,4 @@ bd:fetch {
     to = 'test',
 }
 
-bd:shell('test','find -type f -exec sha256sum {} \\; > '..bd.new_install..'/output.txt')
+bd:shell('test','find -type f -exec sha256sum {} \\; | sort > '..bd.new_install..'/output.txt')

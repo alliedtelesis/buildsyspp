@@ -227,27 +227,34 @@ FetchInfo PatchExtractionUnit::fetchInfo()
 }
 
 FileCopyExtractionUnit::FileCopyExtractionUnit(const std::string &fname,
-                                               const std::string &_fname_short)
+                                               const std::string &_fname_short,
+                                               const std::string &to_dir)
 {
 	this->uri = fname;
 	this->fname_short = _fname_short;
-	this->hash = hash_file(this->uri);
+	this->toDir = to_dir;
+	this->hash = filesystem::is_directory(this->uri) ? hash_directory(this->uri)
+	                                                 : hash_file(this->uri);
 }
 
 bool FileCopyExtractionUnit::extract(Package *P)
 {
 	std::string path = this->uri;
+	bool is_dir = filesystem::is_directory(path);
 	PackageCmd pc(P->builddir()->getPath(), "cp");
 	pc.addArg("-pRLuf");
 
-	if(path.at(0) == '/') {
-		pc.addArg(path);
-	} else {
-		std::string arg = P->getPwd() + "/" + path;
-		pc.addArg(arg);
+	std::string src = (path.at(0) == '/') ? path : (P->getPwd() + "/" + path);
+	if(is_dir) {
+		src += "/.";
 	}
+	pc.addArg(src);
 
-	pc.addArg(".");
+	std::string dest_dir = (this->toDir.at(0) == '/')
+	                           ? this->toDir
+	                           : (P->builddir()->getPath() + "/" + this->toDir);
+	filesystem::create_directories(dest_dir);
+	pc.addArg(this->toDir);
 
 	if(!pc.Run(P->getLogger())) {
 		throw CustomException("Failed to copy file");
