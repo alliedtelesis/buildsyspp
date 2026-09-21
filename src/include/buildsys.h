@@ -219,24 +219,6 @@ namespace buildsys
 		FetchInfo fetchInfo() override;
 	};
 
-	/* A copied file/directory
-	 */
-	class CopyFetch : public FetchUnit
-	{
-	public:
-		CopyFetch(std::string uri, Package *_P) : FetchUnit(std::move(uri), _P)
-		{
-		}
-		bool fetch(BuildDir *d) override;
-		bool force_updated() override
-		{
-			return true;
-		};
-		std::string HASH() override;
-		std::string relative_path() override;
-		FetchInfo fetchInfo() override;
-	};
-
 	/** An extraction unit
 	 *  Describes a single step required to re-extract a package
 	 */

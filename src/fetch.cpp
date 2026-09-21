@@ -252,47 +252,6 @@ std::string LinkFetch::relative_path()
 	return path;
 }
 
-bool CopyFetch::fetch(BuildDir *d)
-{
-	PackageCmd pc(d->getPath(), "cp");
-	pc.addArg("-dpRuf");
-	std::string l = P->absolute_fetch_path(this->fetch_uri);
-	pc.addArg(l);
-	pc.addArg(".");
-	if(!pc.Run(this->P->getLogger())) {
-		throw CustomException("Failed to copy (recursively)");
-	}
-	P->log("Copied data in, considering code updated");
-	P->setCodeUpdated();
-	return true;
-}
-
-std::string CopyFetch::HASH()
-{
-	return std::string("");
-}
-
-FetchInfo CopyFetch::fetchInfo()
-{
-	FetchInfo source = FetchUnit::fetchInfo();
-	source.type = "copy";
-	return source;
-}
-
-std::string CopyFetch::relative_path()
-{
-	auto position = this->fetch_uri.rfind('/');
-	auto path = std::string("");
-
-	if(position != std::string::npos) {
-		path = this->fetch_uri.substr(position + 1);
-	} else {
-		path = this->fetch_uri;
-	}
-
-	return path;
-}
-
 void Fetch::add(std::unique_ptr<FetchUnit> fu)
 {
 	this->FUs.push_back(std::move(fu));

@@ -204,11 +204,6 @@ static int li_bd_fetch(lua_State *L)
 		}
 		std::string src_path = P->relative_fetch_path(uri);
 		P->extraction()->add(std::make_unique<CopyGitDirExtractionUnit>(src_path, "."));
-	} else if(method == "copy") {
-		if(uri.empty()) {
-			throw CustomException("fetch method = copy requires uri to be set");
-		}
-		f = std::make_unique<CopyFetch>(uri, P);
 	} else if(method == "deps") {
 		std::string path = absolute_path(d, to);
 		// record this directory (need to complete this operation later)
