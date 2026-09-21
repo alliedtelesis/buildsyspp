@@ -276,6 +276,28 @@ static int li_bd_restore(lua_State *L)
 	return 0;
 }
 
+static int li_bd_exists(lua_State *L)
+{
+	if(lua_gettop(L) != 2) {
+		throw CustomException("exists() requires exactly 1 argument");
+	}
+	if(!lua_istable(L, 1)) {
+		throw CustomException("exists() must be called using : not .");
+	}
+	if(lua_isstring(L, 2) == 0) {
+		throw CustomException("exists() expects a string as the only argument");
+	}
+
+	try {
+		std::string path = li_get_package()->relative_fetch_path(lua_tostring(L, 2));
+		lua_pushboolean(L, filesystem::exists(path) ? 1 : 0);
+	} catch(FileNotFoundException &fnf) {
+		lua_pushboolean(L, 0);
+	}
+
+	return 1;
+}
+
 static int li_bd_extract(lua_State *L)
 {
 	if(lua_gettop(L) != 2) {
@@ -472,6 +494,7 @@ void buildsys::li_builddir_create(lua_State *L, BuildDir *bd)
 {
 	LUA_SET_TABLE_TYPE(L, BuildDir);
 	LUA_ADD_TABLE_FUNC(L, "cmd", li_bd_cmd);
+	LUA_ADD_TABLE_FUNC(L, "exists", li_bd_exists);
 	LUA_ADD_TABLE_FUNC(L, "extract", li_bd_extract);
 	LUA_ADD_TABLE_FUNC(L, "fetch", li_bd_fetch);
 	LUA_ADD_TABLE_FUNC(L, "installfile", li_bd_installfile);
