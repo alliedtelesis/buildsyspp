@@ -108,6 +108,7 @@ namespace buildsys
 	private:
 		const std::string filename;
 		std::string hash;
+		std::string mismatched_hash;
 		mutable std::mutex lock;
 
 	public:
@@ -125,6 +126,15 @@ namespace buildsys
 		void setHASH(std::string _hash)
 		{
 			this->hash = std::move(_hash);
+		}
+		/* The hash of a download that did not match HASH(), if any */
+		const std::string &mismatchedHASH() const
+		{
+			return this->mismatched_hash;
+		}
+		void setMismatchedHASH(std::string _hash)
+		{
+			this->mismatched_hash = std::move(_hash);
 		}
 		std::mutex &getLock() const
 		{

@@ -134,6 +134,15 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 			// caught by the check above.
 			dlobj->setHASH(this->hash);
 		}
+
+		// An earlier package already downloaded this file and it did not
+		// match the hash we also expect, so don't download it again.
+		if(!dlobj->mismatchedHASH().empty()) {
+			this->P->log(boost::format{
+			                 "Hash mismatched for %1%\n(committed to %2%, providing %3%)"} %
+			             fullname % this->hash % dlobj->mismatchedHASH());
+			return false;
+		}
 	}
 
 	std::string _fpath = this->P->getPwd() + "/dl/" + fullname;
@@ -175,6 +184,7 @@ bool DownloadFetch::fetch(BuildDir *) // NOLINT
 			                 "Hash mismatched for %1%\n(committed to %2%, providing %3%)"} %
 			             this->full_name() % this->hash % _hash);
 			filesystem::remove(fpath.str());
+			dlobj->setMismatchedHASH(_hash);
 			ret = false;
 		}
 	}
