@@ -74,6 +74,30 @@ static std::string get_git_ref_dir(const std::string &remote)
 	return "";
 }
 
+// Git searches parent directories for a repository, so a dir without its own
+// .git would resolve to the enclosing one, such as the checkout running the
+// build. Stop the search at dir.
+static std::string git_ceiling(const std::string &dir)
+{
+	filesystem::path p = filesystem::absolute(dir).lexically_normal();
+	if(!p.has_filename()) {
+		p = p.parent_path();
+	}
+	return "GIT_CEILING_DIRECTORIES=" + p.parent_path().string();
+}
+
+static std::string git_in(const std::string &dir)
+{
+	return "cd " + dir + " && " + git_ceiling(dir) + " git";
+}
+
+static PackageCmd git_cmd(const std::string &dir)
+{
+	PackageCmd pc(dir, "git");
+	pc.addEnv(git_ceiling(dir));
+	return pc;
+}
+
 static bool refspec_is_commitid(const std::string &refspec)
 {
 	if(refspec.length() != 40) {
@@ -91,7 +115,7 @@ static bool refspec_is_commitid(const std::string &refspec)
 
 static std::string git_hash_ref(const std::string &gdir, const std::string &refspec)
 {
-	std::string cmd = "cd " + gdir + " && git rev-parse " + refspec;
+	std::string cmd = git_in(gdir) + " rev-parse " + refspec;
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == nullptr) {
 		throw CustomException("git rev-parse ref failed");
@@ -117,7 +141,7 @@ static std::string git_hash(const std::string &gdir)
 
 static std::string git_diff_hash(const std::string &gdir)
 {
-	std::string cmd = "cd " + gdir + " && git diff HEAD | sha1sum";
+	std::string cmd = git_in(gdir) + " diff HEAD | sha1sum";
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == nullptr) {
 		throw CustomException("git diff | sha1sum failed");
@@ -131,8 +155,7 @@ static std::string git_diff_hash(const std::string &gdir)
 
 static std::string git_remote(const std::string &gdir, const std::string &remote)
 {
-	std::string cmd =
-	    "cd " + gdir + " && git config --local --get remote." + remote + ".url";
+	std::string cmd = git_in(gdir) + " config --local --get remote." + remote + ".url";
 	FILE *f = popen(cmd.c_str(), "r");
 	if(f == nullptr) {
 		throw CustomException("git config --local --get remote. .url failed");
@@ -161,8 +184,8 @@ bool GitDirExtractionUnit::isDirty()
 		return false;
 	}
 
-	auto cmd = boost::format{"cd %1% && git diff --quiet HEAD"} % this->localPath();
-	return (std::system(cmd.str().c_str()) != 0);
+	std::string cmd = git_in(this->localPath()) + " diff --quiet HEAD";
+	return (std::system(cmd.c_str()) != 0);
 }
 
 std::string GitDirExtractionUnit::dirtyHash()
@@ -200,7 +223,7 @@ bool GitExtractionUnit::updateOrigin()
 	std::string remote_url = git_remote(source_dir, "origin");
 
 	if(remote_url != location) {
-		PackageCmd pc(source_dir, "git");
+		PackageCmd pc = git_cmd(source_dir);
 		pc.addArg("remote");
 		// If the remote doesn't exist, add it
 		if(remote_url.empty()) {
@@ -214,7 +237,7 @@ bool GitExtractionUnit::updateOrigin()
 			throw CustomException("Failed: git remote set-url origin");
 		}
 
-		pc = PackageCmd(source_dir, "git");
+		pc = git_cmd(source_dir);
 		pc.addArg("fetch");
 		pc.addArg("origin");
 		pc.addArg("--tags");
@@ -260,16 +283,17 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 		// package needing a different one is caught above.
 		gdobj->setRefSpec(this->refspec);
 	}
-	bool exists = filesystem::is_directory(source_dir);
+	bool exists = filesystem::is_directory(source_dir) && !filesystem::is_empty(source_dir);
 
 	PackageCmd pc(exists ? source_dir : cwd, "git");
+	pc.addEnv(git_ceiling(source_dir));
 
 	if(exists) {
 		/* Update the origin */
 		this->updateOrigin();
 		/* Check if the commit is already present */
 		std::string cmd =
-		    "cd " + source_dir + "; git cat-file -e " + this->refspec + " 2>/dev/null";
+		    git_in(source_dir) + " cat-file -e " + this->refspec + " 2>/dev/null";
 		if(std::system(cmd.c_str()) != 0) {
 			/* If not, fetch everything from origin */
 			pc.addArg("fetch");
@@ -296,8 +320,8 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 	if(this->refspec == "HEAD") {
 		// Don't touch it
 	} else {
-		std::string cmd = "cd " + source_dir +
-		                  "; git show-ref --quiet --verify -- refs/heads/" + this->refspec;
+		std::string cmd = git_in(source_dir) + " show-ref --quiet --verify -- refs/heads/" +
+		                  this->refspec;
 		if(std::system(cmd.c_str()) == 0) {
 			std::string head_hash = git_hash_ref(source_dir, "HEAD");
 			std::string branch_hash = git_hash_ref(source_dir, this->refspec);
@@ -306,7 +330,7 @@ bool GitExtractionUnit::fetch(BuildDir *) // NOLINT
 				                      source_dir + " is off somewhere else");
 			}
 		} else {
-			pc = PackageCmd(source_dir, "git");
+			pc = git_cmd(source_dir);
 			// switch to refspec
 			pc.addArg("checkout");
 			pc.addArg("-q");
